@@ -241,7 +241,7 @@
       "headline": ["Things", "I've written."],
       "sub": ["A reading room at the hull, with the Earth turning in its window.", "Ask at the terminal and the drone brings the volume; READ, and it is scanned into the air in front of you."],
       "facts": [["ROOM", "WRITING"], ["IN THE CATALOGUE", "{count} VOLUMES"]],
-      "reader": { "read": "READ", "scanning": "SCANNING", "mark": "LIBRARY", "label": "The volume being read", "back": "CLOSE", "backTo": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED",
+      "reader": { "read": "READ", "scanning": "SCANNING", "mark": "LIBRARY", "label": "The volume being read", "back": "CLOSE", "backTo": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code",
                   "failed": "This volume could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
       "screens": {
         "footer": "ARCADIA STATION  ·  LIBRARY",

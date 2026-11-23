@@ -69,7 +69,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
 
   // ---- the hologram: a frame with a dark veil behind the words, and a curtain of light rising to it from the book
   const uOpen = { value: 0 }, uReveal = { value: 0 }, uSize = { value: new THREE.Vector2(800, 500) };
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,     // over whatever stands in its rectangle: the drone reaches in front of it
     blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
     uniforms: { uOpen, uReveal, uSize, uTime },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }',
@@ -114,7 +114,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
       el = document.adoptNode(el);
     }
     for (const pre of el.querySelectorAll('pre')) {              // code can be copied
-      const b = Object.assign(document.createElement('button'), { className: 'copy', type: 'button', textContent: text.copy }); pre.before(b);
+      const b = Object.assign(document.createElement('button'), { className: 'copy', type: 'button', textContent: text.copy }); b.setAttribute('aria-label', text.copyCode); b.setAttribute('aria-live', 'polite'); pre.before(b);
       b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(pre.textContent); b.textContent = text.copied; setTimeout(() => { b.textContent = text.copy; }, 1600); } catch { /* no clipboard: select it by hand */ } });
     }
     articles.set(slug, el); return el;
@@ -130,12 +130,13 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   function progress() {
     const max = scroll.scrollHeight - scroll.clientHeight; bar.style.transform = `scaleX(${max > 0 ? scroll.scrollTop / max : 1})`;
     const y = scroll.getBoundingClientRect().top + 90; let now = -1; heads.forEach((h, i) => { if (h.getBoundingClientRect().top < y) now = i; });
-    [...rail.children].forEach((li, i) => li.toggleAttribute('aria-current', i === now));
+    [...rail.children].forEach((li, i) => { if (i === now) li.firstChild.setAttribute('aria-current', 'location'); else li.firstChild.removeAttribute('aria-current'); });
   }
   scroll.addEventListener('scroll', progress, { passive: true });
   host.addEventListener('click', (e) => {
     const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
     const href = a.getAttribute('href') || '';
+    if (href.startsWith('/blog/files/')) { a.target = '_blank'; a.rel = 'noopener'; return; }      // a file: beside the station, not instead of it
     if (href.startsWith('#')) { e.preventDefault(); scroll.querySelector(`#${CSS.escape(href.slice(1))}`)?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); }
     else if (href.startsWith('/') && onLink(href) !== false) e.preventDefault();       // a post or a room: the station goes there itself
   });
@@ -170,8 +171,12 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   function read() {
     const i = openVolume(); if (i < 0 || state !== 'closed') return false;
     slug = volumes[i].slug; state = 'scanning'; t0 = uTime.value - (still ? 9 : 0); ready = false; folding = 0;
-    article(slug).then(show, (err) => { console.error(err); const p = Object.assign(document.createElement('p'), { className: 'reader-error', textContent: text.failed }); scroll.replaceChildren(p); })
-      .finally(() => { ready = true; });
+    const want = slug, mine = () => state !== 'closed' && slug === want;      // an answer that arrives after the reader has moved on is dropped
+    article(want).then((el) => { if (mine()) show(el); }, (err) => {
+      console.error(err); if (!mine()) return;
+      heads = []; rail.replaceChildren(); host.querySelector('.reader-title').textContent = '';
+      scroll.replaceChildren(Object.assign(document.createElement('p'), { className: 'reader-error', textContent: text.failed }));
+    }).finally(() => { if (mine()) ready = true; });
     const b = book(); if (attached !== b) { attached?.remove(sheet); b.add(sheet); attached = b; }
     return true;
   }
@@ -181,7 +186,8 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
     if (host.contains(document.activeElement)) document.activeElement.blur();
   }
   host.querySelector('.reader-close').addEventListener('click', () => onLink(null));
-  addEventListener('resize', () => { if (state !== 'closed') layout(); });
+  const onResize = () => { if (state !== 'closed') layout(); };
+  addEventListener('resize', onResize);
 
   function update(t) {
     const can = openVolume() >= 0, T = t - t0, on = state !== 'closed';
@@ -217,7 +223,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
       if (host.hidden) { host.hidden = false; if (goTo) { scroll.querySelector(`#${CSS.escape(goTo)}`)?.scrollIntoView({ block: 'start' }); goTo = null; } progress(); }
       const r = Math.max(uReveal.value, still ? 1 : 0);
       if (r < 1) host.style.clipPath = `inset(0 0 ${((1 - r) * 100).toFixed(2)}% 0)`;
-      else if (state === 'scanning') { state = 'open'; host.style.clipPath = ''; host.classList.add('open'); if (matchMedia('(pointer: fine)').matches) scroll.focus({ preventScroll: true }); }
+      else if (state === 'scanning') { state = 'open'; host.style.clipPath = ''; host.classList.add('open'); scroll.focus({ preventScroll: true }); }
       place();
     }
   }
@@ -228,8 +234,10 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
     state: () => state, slug: () => slug,
     /** Open and at rest: nothing in the frame is changing any more (main.js then draws the room behind it less often). */
     settled: () => state === 'open' && uTime.value - t0 > REVEAL[1] + 0.8,
+    /** Go to a heading of the article that is open (by id; none: its top). */
+    jump(id) { const h = id && scroll.querySelector(`#${CSS.escape(id)}`); if (h) h.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); else scroll.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' }); },
     /** Open the next article at this heading (by id): where the reader had got to on the plain page. */
     scrollTo(id) { goTo = id; },
-    dispose() { host.remove(); for (const w of words) w.dispose(); attached?.remove(sheet); },
+    dispose() { removeEventListener('resize', onResize); host.remove(); for (const w of words) w.dispose(); attached?.remove(sheet); },
   };
 }

@@ -18,7 +18,7 @@ import { loadCatalogue } from './js/catalogue.js';
 
 const $ = (sel) => document.querySelector(sel), esc = (str) => str.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
-const html = document.documentElement, plain = () => html.classList.contains('reading');     // reading: an article shown as a page (post.css)
+const html = document.documentElement, plain = () => !html.classList.contains('station');    // an article shown as a page: the room, if loaded, is hidden behind it (post.css)
 function fail(msg) {
   if (loader.dataset.failed) return; // Preserve the first cause while outstanding requests settle.
   if ($('#page')) { loader.dataset.failed = 'true'; html.className = ''; console.error(msg); return; }      // the page has its text in it: leave that to be read
@@ -31,7 +31,6 @@ addEventListener('unhandledrejection', (e) => fail('ERROR: ' + (e.reason?.messag
 const [content, posts] = await Promise.all([fetch('content.json').then((r) => r.json()), loadCatalogue()]);
 { // the Library's volumes are the posts
   const lib = content.rooms.writing; lib.volumes = posts;
-  lib.facts = lib.facts.map(([k, v]) => [k, v.replace('{count} VOLUMES', `${posts.length} VOLUME${posts.length === 1 ? '' : 'S'}`)]);
 }
 
 // ---------------------------------------------------------------- renderer
@@ -156,7 +155,7 @@ function tourOrder() {                                 // a sweep across the roo
 function setFocus(pick = null) {
   if (pick === focus.pick) return;
   focus.pick?.onFocus?.(false, pick); pick?.onFocus?.(true);        // the one being left is told where the visitor is going
-  focus.pick = pick; focus.to = pick?.pose() ?? null; focus.f = 0;
+  focus.pick = pick; focus.to = pick?.pose() ?? null; focus.f = still ? 1 : 0;      // reduced motion: a cut, not a glide
   focus.from.pos.copy(focus.cur.pos); focus.from.tgt.copy(focus.cur.tgt);
   clearTimeout(leaving); leaving = null;
   hud.classList.toggle('inspecting', !!pick); bar.hidden = !pick; bar.classList.toggle('aside', !!pick?.aside);
@@ -168,8 +167,10 @@ function setFocus(pick = null) {
   // a door leads to one room, or (the stair down to the Ring Line) to a list of stops; '' marks one that is not built yet
   const door = pick.door, ways = !door ? [] : door.stops ?? [[`ENTER ${door.label}`, door.to]];
   $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('')
-    + (pick.options || []).map(([label, , sub], i) => `<button data-option="${i}"${pick.current?.() === i ? ' aria-current' : ''}>${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`).join('');      // or it offers choices of its own
-  $('#ways').classList.toggle('list', !!pick.list); $('#ways').classList.toggle('chosen', pick.current?.() >= 0);                         // a list: titles one under another, above the bar
+    + (pick.options || []).map(([label, , sub], i) => `<button data-option="${i}"${pick.current?.() === i ? ' aria-current="true"' : ''}>${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`).join('');      // or it offers choices of its own
+  $('#ways').classList.toggle('list', !!pick.list); $('#ways').classList.toggle('chosen', pick.current?.() >= 0);
+  if (pick.enter) $('#ways').insertAdjacentHTML('beforeend', `<button id="enter" hidden>${esc(pick.enterLabel)}</button>`);      // what Enter does here, as a button (shown by tick)
+  tick();                         // a list: titles one under another, above the bar
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
@@ -182,24 +183,28 @@ function pickHit(e) {                                // the pick under the point
 const pickAt = (e) => pickHit(e)?.pick ?? null;
 
 // ---------------------------------------------------------------- page text and room changes
-const tick = () => { const v = live(); for (const el of document.querySelectorAll('[data-live]')) el.textContent = fill(`{${el.dataset.live}}`, v); };
+const tick = () => {
+  const v = live(); for (const el of document.querySelectorAll('[data-live]')) el.textContent = fill(`{${el.dataset.live}}`, v);
+  const b = $('#enter'); if (b) b.hidden = !focus.pick?.enter?.();
+};
 function fillHud(id) {
   const r = content.rooms[id];
   document.title = r.title; $('.kicker').textContent = r.kicker; $('.headline').innerHTML = r.headline.join('<br>');
-  if (!$('#page h1')) { $('.headline').setAttribute('role', 'heading'); $('.headline').setAttribute('aria-level', '1'); }      // the page's heading, unless an article brings its own h1
   $('.sub').innerHTML = r.sub.join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
   $('.hero .cta')?.remove();
   if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${r.cta}</button>`);   // the room's call to action: its 'cta' pick
   $('#hud nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
     + `<span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">${r.close}</a>`;
-  $('#hud > footer').innerHTML = r.facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
+  const shelved = room?.volumes?.length ?? 0, facts = r.facts.map(([k, v]) => [k, v.replace('{count} VOLUMES', `${shelved} VOLUME${shelved === 1 ? '' : 'S'}`)]);
+  $('#hud > footer').innerHTML = facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
     + `<div class="hint">${content.hint}${r.credit ? `<br><small>${content.credit}</small>` : ''}</div>`;
   tick();
 }
+const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);       // not 'constructor' and the like
 // Where a URL leads: / is the Atrium, /?room=<id> another room, /blog/ the Library and /blog/<slug>/ the Library with that post read.
 function route() {
   const blog = location.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = blog ? 'writing' : new URLSearchParams(location.search).get('room');
-  return { id: content.rooms[id] ? id : 'lobby', slug: blog?.[1] ?? null };
+  return { id: isRoom(id) ? id : 'lobby', slug: blog?.[1] ?? null };
 }
 const roomInUrl = () => route().id;
 function urlFor(id, slug) {                            // other switches in the query (?tier=, ?shot= ...) are kept
@@ -207,7 +212,9 @@ function urlFor(id, slug) {                            // other switches in the 
   return (id === 'writing' ? `/blog/${slug ? `${slug}/` : ''}` : '/') + (`${p}` ? `?${p}` : '');
 }
 /** The address and the tab's title follow what is open: a room, or the post being read in it. */
+let silent = 0;                                         // > 0: a step on the way somewhere, not to be recorded
 function syncUrl() {
+  if (silent) return;
   const slug = focus.pick?.slug?.() ?? null, url = urlFor(room.id, slug);
   if (location.pathname + location.search !== url) history.pushState(null, '', url);
   document.title = posts.find((p) => p.slug === slug)?.title ?? content.rooms[room.id].title;
@@ -215,7 +222,7 @@ function syncUrl() {
 /** Have a post read in the Library: the drone fetches it (fly), or it is simply there when the page opened on it. */
 async function readPost(slug, fly) {
   if (!room?.read) return false;
-  if (fly) setFocus(room.terminal);
+  if (fly) { silent++; setFocus(room.terminal); silent--; }     // the terminal, to watch the drone go; the address waits for the article
   const here = room, pick = await room.read(slug, fly);
   if (pick && room === here) setFocus(pick);
   return !!pick;
@@ -224,26 +231,31 @@ async function readPost(slug, fly) {
 function onLink(href) {
   if (href === null) return back();
   const u = new URL(href, location.origin), blog = u.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = u.searchParams.get('room');
-  if (blog?.[1] && posts.some((p) => p.slug === blog[1])) readPost(blog[1], true);
-  else if (blog) back();
-  else if (u.pathname === '/' && (content.rooms[id] || !id)) enter(id || 'lobby');
-  else return false;
+  if (blog?.[1] && blog[1] === focus.pick?.slug?.()) room.reader.jump(u.hash.slice(1));     // the post being read: only a place in it
+  else if (blog?.[1] && room?.volumes?.some((v) => v.slug === blog[1])) readPost(blog[1], true);
+  else if (blog && !blog[1]) back();                                                        // the Library itself: close the volume
+  else if (u.pathname === '/' && (isRoom(id) || !id)) enter(id || 'lobby');
+  else return false;                                    // anything else, a post that is not on the shelves included: the browser goes there
 }
-const back = () => setFocus(focus.pick?.back?.() ?? null);
+function back() {
+  const was = focus.pick; setFocus(was?.back?.() ?? null);
+  if (was?.reads) bar.querySelector('[aria-current], [data-option]')?.focus({ preventScroll: true });       // the keyboard returns to the list it came from
+}
 const progress = (f) => { $('#progress').style.width = `${f * 100}%`; $('#pct').textContent = Math.round(f * 100); };
 /** Leave the open room (if any) and open another: cover the view, free the old room, load the new one, start its opening shot. */
 async function enter(id, push = true) {
-  if (busy || !content.rooms[id] || id === room?.id) return;
+  if (busy || !isRoom(id) || id === room?.id) return;
   busy = true; setFocus(null); intro = 0;
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink });
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, want: route().slug });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
   loader.classList.add('done'); hud.classList.remove('hidden'); busy = false;
   if (roomInUrl() !== id) enter(roomInUrl(), false);                         // Back / Forward was pressed while this was loading
+  else if (route().slug && !plain()) readPost(route().slug, false);         // came back to a post's address: it is open again
 }
 
 // ---------------------------------------------------------------- input
@@ -258,7 +270,7 @@ addEventListener('popstate', () => {
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 addEventListener('pointermove', (e) => {
   mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
-  if (room && e.timeStamp - hovered > 60) {
+  if (room && !plain() && e.timeStamp - hovered > 60) {
     hovered = e.timeStamp; const ph = pickHit(e);
     canvas.style.cursor = !ph ? '' : ph.pick === focus.pick && ph.pick.cursor ? ph.pick.cursor(ph.hit.uv) : 'pointer';
   }
@@ -267,7 +279,7 @@ addEventListener('deviceorientation', (e) => {
   if (e.gamma != null) mouse.set(THREE.MathUtils.clamp(e.gamma / 30, -1, 1), THREE.MathUtils.clamp((e.beta - 45) / 30, -1, 1));
 });
 addEventListener('click', (e) => {
-  if (!room || busy || e.target.closest('#hud nav, #inspectbar, #reader, a, button')) return;
+  if (!room || busy || plain() || e.target.closest('#hud nav, #inspectbar, #reader, a, button')) return;
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;       // that was a drag
   const ph = pickHit(e), pick = ph?.pick ?? null;
   if (pick && pick === focus.pick && pick.click) return pick.click(ph.hit.uv);     // an open terminal takes its own clicks
@@ -276,7 +288,7 @@ addEventListener('click', (e) => {
   if (pick?.door && !pick.door.stops) travel(pick.door.to, 1500);           // clicked a door: walk up to it, then through
 });
 addEventListener('keydown', (e) => {
-  if (!room || busy) return;
+  if (!room || busy || plain()) return;                                     // a page read as a page keeps its own keys
   if (focus.pick?.typing?.() && e.key !== 'Escape') return;                // writing at a terminal: the keys are the writer's
   if (e.key === 'Escape') back();
   else if (e.key === 'Enter' && focus.pick?.enter?.()) setFocus(focus.pick.enter());     // at the terminal with a book open: read it
@@ -284,11 +296,13 @@ addEventListener('keydown', (e) => {
 });
 bar.addEventListener('click', (e) => {
   if (e.target.dataset.to) travel(e.target.dataset.to);
+  if (e.target.id === 'enter' && focus.pick?.enter?.()) return setFocus(focus.pick.enter());
   const option = e.target.closest('[data-option]');
   if (option) {                                                             // on a narrow screen a list folds down to what was chosen; touching that opens it again
     const ways = $('#ways'), again = ways.classList.contains('chosen') && option.hasAttribute('aria-current') && matchMedia('(max-width: 720px)').matches;
     ways.classList.toggle('chosen', !again); if (again) return;
-    for (const b of bar.querySelectorAll('[data-option]')) b.toggleAttribute('aria-current', b === option); focus.pick?.options[option.dataset.option][1]();
+    for (const b of bar.querySelectorAll('[data-option]')) { if (b === option) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }
+    focus.pick?.options[option.dataset.option][1]();
   }
   else ({ back, prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });

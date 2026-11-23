@@ -28,7 +28,7 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  * @param text  this room's entry in content.json
  * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
  */
-export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, want }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`; let info, arrived = 0;
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
@@ -259,6 +259,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // ---------------------------------------------------------------- scene graph
   // the Library's volumes are the posts; its shelves hold as many as the room has places, and the terminal lists them
   const volumes = info.drone ? (text.volumes || []).slice(0, info.drone.slots.length) : [];
+  { // ... and always the one this page's address asks for, in the last place if it is older than those
+    const asked = info.drone && want && !volumes.some((v) => v.slug === want) && text.volumes.find((v) => v.slug === want);
+    if (asked) volumes[volumes.length - 1] = asked;
+  }
   const shelf = text.screens.list.find((x) => x.layout === 'catalogue'); if (shelf) Object.assign(shelf, { volumes, selected: -1, rev: 0 });
   const screens = createScreens(text.screens, renderer, Math.min(8, maxAniso), num('screens', 0.9));
   const screenMeshes = [], movers = [], pivots = {}, SPIN = info.chand?.spin || {};
@@ -423,7 +427,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // ---------------------------------------------------------------- interactables
   // Each has a pick mesh and a pose (where the camera stands, what it looks at); main.js glides the camera there.
   // the Library: asking for a volume marks it on the terminal's screen and sends the drone
-  const call = (i) => { if (shelf) { shelf.selected = i ?? -1; shelf.rev++; } drone.fetch(i); };
+  const call = (i) => {
+    if (waiting && waiting.i !== i) { waiting.done(null); waiting = null; }      // asked for something else, or sent home: nobody is waiting to read the other one any more
+    if (shelf) { shelf.selected = i ?? -1; shelf.rev++; }
+    if (still && i != null) drone.bring(i); else drone.fetch(i);                 // reduced motion: no flight across the room
+  };
   // ... and a volume lying open can be read: scanned, it stands over the book as a hologram (js/reader.js)
   const reader = drone && volumes.length ? createReader({ scene, camera, drone, volumes, text: text.reader, onLink,
     facing: B(info.terminal.pos).sub(B(info.drone.deliver)).setY(0).normalize() }) : null;
@@ -447,7 +455,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         return { pos: at.clone().lerp(B(info.terminal.pos), k), tgt: B(info.terminal.tgt).lerp(at.clone().setY(at.y - 0.3), 1 - k) };
       },
       options: volumes.map((v, i) => [v.title, () => call(i), `${v.date}  ·  ${v.minutes} min`]), current: () => shelf?.selected ?? -1,
-      enter: () => (reader?.available() ? reading : null), onFocus: (on, next) => on || next?.reads || call(null) });
+      enter: () => (reader?.available() ? reading : null), enterLabel: text.reader?.read, onFocus: (on, next) => on || next?.reads || call(null) });
     else picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
@@ -497,7 +505,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
      *  fly: the drone fetches it from its shelf; otherwise it is simply there (a page that opens on an article). */
     read(slug, fly) {
       const i = volumes.findIndex((v) => v.slug === slug); if (i < 0 || !reader) return Promise.resolve(null);
-      waiting?.done(null);
+      waiting?.done(null); waiting = null;
       if (drone.open() !== i) { if (fly) call(i); else { if (shelf) { shelf.selected = i; shelf.rev++; } drone.bring(i); } }
       return new Promise((done) => { waiting = { i, done }; });
     },
