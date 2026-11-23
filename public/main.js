@@ -177,6 +177,8 @@ function fillHud(id) {
   const r = content.rooms[id];
   document.title = r.title; $('.kicker').textContent = r.kicker; $('h1').innerHTML = r.headline.join('<br>');
   $('.sub').innerHTML = r.sub.join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
+  $('.hero .cta')?.remove();
+  if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${r.cta}</button>`);   // the room's call to action: its 'cta' pick
   $('nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
     + `<span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">${r.close}</a>`;
   $('footer').innerHTML = r.facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
@@ -238,6 +240,7 @@ bar.addEventListener('click', (e) => {
   if (e.target.dataset.option) focus.pick?.options[e.target.dataset.option][1]();
   else ({ back: () => setFocus(null), prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });
+$('.hero').addEventListener('click', (e) => { if (e.target.closest('.cta') && room) setFocus(room.picks.find((p) => p.cta)); });
 $('nav').addEventListener('click', (e) => {
   const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
   if (a.dataset.room) { e.preventDefault(); enter(a.dataset.room); }

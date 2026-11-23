@@ -18,9 +18,10 @@ WIN_Z0, WIN_W = 0.6, 5.6                                   # the window fills th
 _lobby_el = math.atan2(5.65 - 1.65, 26.0 + 4.2)          # same elevation to the window as the Atrium's camera to its Oculus
 PORTAL_C = Vector((0, Y1, CAM_POS.z + (Y1 - CAM_POS.y) * math.tan(_lobby_el)))
 CAM_TGT = Vector((0.6, Y1, PORTAL_C.z - 0.55))
-TERM = Vector((-1.9, Y1 - 4.4, 0))                         # the plinth; the field floats above it at FIELD_Z, facing the room
+TERM = Vector((1.6, Y1 - 7.0, 0))                          # the plinth, right of centre in the opening view and clear of the page text;
+                                                          # the field floats above it at FIELD_Z, facing the room
 FIELD_Z = 1.62
-CLOSE_POS = Vector((-1.2, TERM.y - 3.6, 1.65)); CLOSE_TGT = Vector((-1.5, Y1 + 3, 2.2))
+CLOSE_POS = Vector((-1.2, Y1 - 8.0, 1.65)); CLOSE_TGT = Vector((-1.5, Y1 + 3, 2.2))
 FLOOR_ROUGH = (0.1, 0.14); FLOOR_IOR = 1.55
 
 mat('shell', (0.66, 0.64, 0.6), 0.55, var=0.04)                                  # warm pale plaster
@@ -78,9 +79,10 @@ lathe('plinth', [(0, 0), (0.34, 0), (0.32, 0.04), (0.08, 0.14), (0.055, 0.86), (
       'white', 'props', segs=48, closed=False, M=T(TERM))
 lathe('plinth_ring', [(0.27, 1.02), (0.31, 1.02), (0.31, 1.03), (0.27, 1.03)], em='field', segs=64, M=T(TERM))
 lathe('plinth_foot', [(0.36, 0.0), (0.4, 0.0), (0.4, 0.006), (0.36, 0.006)], em='field', segs=64, M=T(TERM))
+lathe('term_halo', [(1.05, 0.0), (1.08, 0.0), (1.08, 0.004), (1.05, 0.004)], em='field', segs=96, M=T(TERM))   # inlaid in the floor: the place to stand, seen from the door
 
 # ================================================================= A CRESCENT OF SEATS facing the window, low tables
-SEAT_C, SEAT_R = Vector((2.0, Y1 - 5.0, 0)), 2.6
+SEAT_C, SEAT_R = Vector((-2.6, Y1 - 4.6, 0)), 2.6                   # left, behind the page text: the terminal has the middle
 lathe('crescent', [(SEAT_R - 0.38, 0.0), (SEAT_R + 0.38, 0.0), (SEAT_R + 0.38, 0.42), (SEAT_R - 0.38, 0.42)], 'linen', 'props',
       segs=40, a0=math.radians(200), a1=math.radians(340), bevel=0.05, M=T(SEAT_C))
 lathe('crescent_back', [(SEAT_R + 0.26, 0.42), (SEAT_R + 0.42, 0.42), (SEAT_R + 0.42, 0.82), (SEAT_R + 0.3, 0.82)], 'linen', 'props',

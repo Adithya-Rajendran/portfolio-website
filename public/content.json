@@ -268,7 +268,8 @@
       "credit": true,
       "kicker": "RING 04 · BOW · COMMS",
       "headline": ["Send", "word."],
-      "sub": ["The station's signal room. Walk up to the field over the plinth and write;", "the Mind will see it across. The addresses are placeholders for now."],
+      "sub": ["The station's signal room. The field by the window is open: write on it,", "and the Mind will see your words across. The addresses are placeholders for now."],
+      "cta": "WRITE A MESSAGE  →",
       "facts": [["ROOM", "CONTACT"], ["LIGHT-TIME TO EARTH", "2.4 MS"]],
       "screens": {
         "footer": "ARCADIA STATION  ·  COMMS",
@@ -282,7 +283,7 @@
       "comms": {
         "title": "COMMS  ·  OUTBOUND SIGNAL", "toLabel": "TO", "to": "YOUR NAME",
         "write": "Say something. It will arrive.", "replyLabel": "REPLY TO", "reply": "your address, if you would like an answer",
-        "send": "SEND", "max": 2000,
+        "send": "SEND", "standby": { "kicker": "OUTBOUND CHANNEL  ·  OPEN", "invite": "Write to me.", "click": "CLICK THE FIELD TO WRITE", "tap": "TAP THE FIELD TO WRITE" }, "max": 2000,
         "address": "you@example.com", "subject": "A signal from Arcadia Station", "endpoint": "",
         "socials": [["GITHUB", "https://github.com/your-handle"], ["LINKEDIN", "https://www.linkedin.com/in/your-handle"], ["EMAIL", "mailto:you@example.com"]],
         "mind": {

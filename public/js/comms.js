@@ -12,12 +12,14 @@ const INK = { fg: '#eef8ff', soft: 'rgba(214,236,255,0.62)', dim: 'rgba(190,220,
 const MOOD = { idle: '#8fd6ff', composing: '#ffd59a', sending: '#ffffff', sent: '#a6ffcf', handed: '#a6ffcf', empty: '#ffb4a0', failed: '#ff9c9c' };
 // Two layouts of the field: landscape, and portrait for phones held upright. Canvas pixels; size in metres;
 // regions [x0, y0, x1, y1]; lift raises a tall field clear of the plinth; drone: where it hovers beside (or above) it.
+// standby: the y of the three lines of the invitation shown while nobody is at the field (inside the half-open band).
 const LAYOUT = {
-  land: { W: 1600, H: 1000, size: [1.6, 1.0], lift: 0, drone: [1.08, 0.22], m: 70, rule: 118, MSG: [70, 168, 1530, 612], SIG: [70, 676, 1530, 742], sigX: 220,
+  land: { W: 1600, H: 1000, size: [1.92, 1.2], lift: 0, drone: [1.3, 0.26], standby: [360, 565, 680], invite: 176, m: 70, rule: 118, MSG: [70, 168, 1530, 612], SIG: [70, 676, 1530, 742], sigX: 220,
           social: [140, 170, 846, 46], SEND: [1250, 812, 1530, 892], mind: 968, size1: 44, lead: 58 },
-  port: { W: 1000, H: 1400, size: [1.0, 1.4], lift: 0.26, drone: [0.32, 0.98], m: 60, rule: 158, MSG: [60, 206, 940, 830], toY: 140, SIG: [60, 900, 940, 1010], sigX: 0,
+  port: { W: 1000, H: 1400, size: [1.15, 1.61], lift: 0.3, drone: [0.37, 1.13], standby: [540, 730, 870], invite: 132, m: 60, rule: 158, MSG: [60, 206, 940, 830], toY: 140, SIG: [60, 900, 940, 1010], sigX: 0,
           social: [130, 170, 1130, 50], SEND: [60, 1230, 940, 1300], mind: 1360, size1: 48, lead: 62 },
 };
+const STANDBY = 0.62, REACH = 0.45;                             // with nobody at it the field stays open as a band, and larger, to be seen from the door
 const inside = ([x0, y0, x1, y1], x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
 
 function field(tex) {
@@ -64,7 +66,7 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
   }
   const open = spring(0.07); let expanded = false;
 
-  // ---- folded: a slow ring of light over the plinth says "something lives here"
+  // ---- a slow ring of light under the field says "something lives here"
   const seed = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.004, 8, 96), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.2, 2.2, 3.0), ...GLOW }));
   seed.position.y = -0.56; seed.rotation.x = Math.PI / 2; root.add(seed);
 
@@ -118,9 +120,17 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
     font(300, 34); c.fillStyle = INK.fg; c.textAlign = 'center'; c.fillText(label[0], x, y + 12);
     font(500, 21, SANS, 4); c.fillStyle = INK.soft; c.fillText(label, x, y + r + 36); c.textAlign = 'left';
   }
+  function invitation() {                                       // standby: what the field says to the room from across it
+    const [y0, y1, y2] = L.standby, s = text.standby || {}, x = W / 2; c.textAlign = 'center';
+    font(500, 34, SANS, 12); c.fillStyle = INK.soft; c.fillText(s.kicker ?? '', x, y0);
+    font('italic 400', L.invite, SERIF); c.fillStyle = INK.fg; c.fillText(s.invite ?? '', x, y1);
+    font(600, 36, SANS, 10); c.fillStyle = INK.warm; c.fillText((matchMedia('(pointer: fine)').matches ? s.click : s.tap) ?? '', x, y2);
+    c.textAlign = 'left';
+  }
   function draw() {
     const { m, MSG, SIG, SEND } = L, right = W - m;
     c.clearRect(0, 0, W, H); c.textBaseline = 'alphabetic';
+    if (!expanded) return invitation();
     font(500, 27, SANS, 7); c.fillStyle = INK.soft; c.fillText(text.title, m, 92);
     c.textAlign = 'right'; c.fillText(`${text.toLabel}  ${text.to}`, right, L.toY || 92); c.textAlign = 'left';       // portrait: on a line of its own
     const g = c.createLinearGradient(m, 0, right, 0); g.addColorStop(0, INK.line); g.addColorStop(1, 'rgba(170,220,255,0)'); c.fillStyle = g; c.fillRect(m, L.rule, right - m, 2);
@@ -188,7 +198,7 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
     frame: () => ({ size: L.size, beside: L === LAYOUT.land }),
     /** Opened by inspecting it (main.js); closing hands the keyboard back to the page. */
     setExpanded(on) {
-      expanded = on;
+      expanded = on; redraw();
       if (!on) { msg.blur(); sig.blur(); }
       else if (matchMedia('(pointer: fine)').matches) setTimeout(() => expanded && msg.focus({ preventScroll: true }), 900);   // phones: wait for a tap, or the keyboard pops up mid-glide
     },
@@ -211,11 +221,14 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
     setEnv(env) { for (const m of [body.material, band.material]) { m.envMap = env; m.needsUpdate = true; } },
     update(t, dt) {
       if (layout()) redraw();
-      open.to = expanded ? 1 : 0; mat.uniforms.uOpen.value = open.step();
-      seed.scale.setScalar(1 - 0.7 * open.x); seed.rotation.z = t * 0.4;
+      open.to = expanded ? 1 : STANDBY; mat.uniforms.uOpen.value = open.step();
+      mat.uniforms.uGain.value = expanded ? 1.6 : 2.6 + 0.5 * Math.sin(t * 1.6);      // standby breathes, to be noticed
+      const k = 1 + REACH * (1 - THREE.MathUtils.clamp((open.x - STANDBY) / (1 - STANDBY), 0, 1));   // settles to its working size as you come up
+      panel.scale.setScalar(k); hit.scale.setScalar(k); panel.position.y = hit.position.y = L.lift * k;
+      seed.scale.setScalar(1 - 0.5 * open.x); seed.rotation.z = t * 0.4;
       if (this.typing()) { const b = Math.floor((blink += dt) * 2); if (b !== Math.floor((blink - dt) * 2)) redraw(); }
       // drone: hovers, turns a little toward whoever is at the field, nods while sending
-      drone.position.x = L.drone[0]; drone.position.y = L.drone[1] + Math.sin(t * 1.3) * 0.025 + (state === 'sending' ? -0.05 * Math.sin(Math.min(1, (t - (sending?.t0 ?? t)) * 2) * Math.PI) : 0);
+      drone.position.x = L.drone[0] * k; drone.position.y = L.drone[1] * k + Math.sin(t * 1.3) * 0.025 + (state === 'sending' ? -0.05 * Math.sin(Math.min(1, (t - (sending?.t0 ?? t)) * 2) * Math.PI) : 0);
       drone.rotation.y = -0.45 + Math.sin(t * 0.37) * 0.12; drone.rotation.z = Math.sin(t * 0.9) * 0.04;
       auraMat.uniforms.uCol.value.lerp(new THREE.Color(MOOD[mood]), 0.06); auraMat.uniforms.uK.value = mood === 'sending' ? 1.2 : 0.55;
       if (sending) {

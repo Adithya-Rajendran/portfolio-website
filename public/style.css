@@ -38,6 +38,11 @@ h1 { font-size: clamp(40px, 6.2vw, 96px); line-height: .95; font-weight: 200; le
   text-shadow: 0 2px 30px rgba(0,0,0,.6), 0 0 40px rgba(127,227,255,.25); }
 .sub { margin-top: 22px; font-size: 14px; line-height: 1.6; letter-spacing: .08em; color: var(--soft); }
 .sub span { color: var(--cy); font-variant-numeric: tabular-nums; }
+.cta { margin-top: 28px; pointer-events: auto; cursor: pointer; font: inherit; font-size: 13px; letter-spacing: .4em; color: var(--am);
+  background: rgba(2,5,9,.45); border: 1px solid var(--am); padding: 15px 24px 15px 28px; backdrop-filter: blur(6px);
+  box-shadow: 0 0 24px rgba(255,154,74,.18), inset 0 0 14px rgba(255,154,74,.08); transition: color .2s, box-shadow .2s, background .2s; }
+.cta:hover, .cta:focus-visible { color: #ffd2a8; background: rgba(40,20,6,.55); box-shadow: 0 0 34px rgba(255,154,74,.4), inset 0 0 18px rgba(255,154,74,.15); outline: none; }
+#hud.inspecting .cta { pointer-events: none; }
 footer { display: flex; gap: clamp(16px, 3vw, 48px); align-items: flex-end; font-size: 11px; letter-spacing: .22em; color: var(--soft); }
 footer b { display: block; font-weight: 400; color: #8aa3b1; font-size: 9px; letter-spacing: .4em; margin-bottom: 5px; }
 footer .hint { margin-left: auto; text-align: right; line-height: 1.7; color: #c5d8e2; }

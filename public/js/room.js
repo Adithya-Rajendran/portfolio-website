@@ -452,7 +452,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     picks.push({ mesh, pose: () => ({ pos: mesh.position.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: mesh.position }) });
   }
   // the comms field: stand square in front of it; once open, clicks and the pointer go to the field itself (main.js)
-  if (comms) picks.push({ mesh: comms.hit, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
+  if (comms) picks.push({ cta: true, mesh: comms.hit, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
     const c = comms.hit.getWorldPosition(V()), n = V(0, 0, 1).transformDirection(comms.hit.matrixWorld), { size: [w, h], beside } = comms.frame();
     const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
