@@ -28,14 +28,16 @@ const HULL_R = 10.5, HULL_Y = 2.3, X0 = -60, X1 = 96, LINE_Y = -4.5, CORE = [33,
 const ROOMS = [
   { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 14, 0], view: [[16, 40, 46], [16, 2, 0]],
     text: 'Beside the foot of the spoke. You come down by lift, step through a door in the bulkhead and the hall opens in front of you. Its side walls are the hull, so the only ways on are in that same bulkhead: back into the spoke core for the Lounge beyond, or down the stair to the Ring Line. The big ring between the doors is the lower end of the periscope.' },
-  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'index.html?room=projects', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -28, turn: -1, label: [-19, 11, 0], view: [[-19, 34, 40], [-19, 2, 0]],
+  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'portfolio/', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -28, turn: -1, label: [-19, 11, 0], view: [[-19, 34, 40], [-19, 2, 0]],
     text: 'Behind the Atrium. Its big door is the cargo lift down to the Ring Line, whose freight track runs to the spoke and so up to the hub dock.' },
-  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'index.html?room=experience', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -47, turn: -1, label: [-47, 11, 0], view: [[-47, 30, 30], [-47, 2, 0]],
+  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'experience/', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -47, turn: -1, label: [-47, 11, 0], view: [[-47, 30, 30], [-47, 2, 0]],
     text: 'The far end of the deck. A round chart room; its dome is a lining under the hull.' },
-  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'index.html?room=about', glb: 'assets/about/room.glb', img: 'blueprint/about.png', at: 54, turn: 1, label: [53, 9, 0], view: [[53, 26, 30], [53, 2, 0]],
+  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'about/', glb: 'assets/about/room.glb', img: 'blueprint/about.png', at: 54, turn: 1, label: [53, 9, 0], view: [[53, 26, 30], [53, 2, 0]],
     text: 'On the other side of the spoke core. Its window is the periscope\'s second eyepiece, which is why it shows the same Earth as the Oculus: the two rooms do not look at each other, they both look up the spoke.' },
-  { id: 'library', name: 'LIBRARY', page: 'WRITING · PLANNED', box: [62, 78, 6], label: [70, 8, 0], view: [[70, 26, 30], [70, 2, 0]], text: 'Not built yet.' },
-  { id: 'comms', name: 'COMMS', page: 'CONTACT · PLANNED', box: [80, 92, 6], label: [86, 8, 0], view: [[86, 26, 30], [86, 2, 0]], text: 'Not built yet.' },
+  { id: 'library', name: 'LIBRARY', page: 'WRITING', href: 'blog/', box: [62, 78, 6], label: [70, 8, 0], view: [[70, 26, 30], [70, 2, 0]],
+    text: 'A reading room at the hull, two decks of shelves and a window on the Earth. A drone brings the volume you ask for. Built; drawn here as an outline until its model is added to this plan.' },
+  { id: 'comms', name: 'COMMS', page: 'CONTACT', href: 'contact/', box: [80, 92, 6], label: [86, 8, 0], view: [[86, 26, 30], [86, 2, 0]],
+    text: 'The signal room at the bow, vaulted on the hull frames, with a field of light to write on. Built; drawn here as an outline until its model is added to this plan.' },
 ];
 const BULKHEADS = [-57, -36.5, -1.5, 33, 45, 61, 79, 93];
 const STOPS = [['NAVIGATION', -47], ['FABRICATION', -19], ['ATRIUM', 16], ['SPOKE', 39], ['LOUNGE', 53], ['LIBRARY', 70], ['COMMS', 86]];
@@ -159,7 +161,7 @@ document.querySelectorAll('.views button').forEach((b) => b.addEventListener('cl
 const list = document.getElementById('rooms');
 function select(r) { document.querySelectorAll('.room').forEach((e) => e.classList.toggle('on', !!r && e.dataset.id === r.id)); if (r) go(r.view[0], r.view[1], 'deck'); }
 for (const r of ROOMS) { const el = document.createElement('div'); el.className = 'room'; el.dataset.id = r.id;
-  el.innerHTML = `${r.img ? `<img src="${r.img}" alt="">` : '<div class="ph">PLANNED</div>'}<div><h3>${r.name}</h3><div class="pg">${r.page}${r.href ? ` · <a href="${r.href}" style="color:inherit">OPEN</a>` : ''}</div><span>${r.text}</span></div>`;
+  el.innerHTML = `${r.img ? `<img src="${r.img}" alt="">` : `<div class="ph">${r.href ? 'PLAN VIEW TO COME' : 'PLANNED'}</div>`}<div><h3>${r.name}</h3><div class="pg">${r.page}${r.href ? ` · <a href="${r.href}" style="color:inherit">OPEN</a>` : ''}</div><span>${r.text}</span></div>`;
   el.addEventListener('click', (e) => { if (e.target.tagName !== 'A') select(r); }); list.appendChild(el); }
 document.getElementById('roof').addEventListener('click', (e) => { showRoof = !showRoof; roofs.forEach((o) => (o.visible = showRoof)); shell.forEach((o) => (o.visible = showRoof)); e.target.textContent = showRoof ? 'HIDE HULL + ROOFS' : 'SHOW HULL + ROOFS'; e.target.classList.toggle('on', showRoof); });
 const ray = new THREE.Raycaster(); let down = null;

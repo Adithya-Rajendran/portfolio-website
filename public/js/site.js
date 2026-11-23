@@ -7,7 +7,7 @@ export async function loadSite() {
   return { posts: blog.posts, projects: portfolio.projects, profile };
 }
 const up = (s) => s.toUpperCase(), cut = (s, n) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s), join = (...parts) => parts.filter(Boolean).join('  ·  ');
-const role = (e) => e.title.split(' (')[0];                     // "Field Software Engineer I (promoted from ...)": the title itself
+const role = (e) => (e.title.length > 44 ? e.title.split(' (')[0] : e.title);      // "Field Software Engineer I (promoted from ...)": a long aside is left to the page
 /** Words with {name} places in them, filled from `from`; a place it has no value for is left (main.js fills the live ones). */
 const fill = (v, from) => (typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (m, k) => from[k] ?? m) : Array.isArray(v) ? v.map((x) => fill(x, from)) : v);
 

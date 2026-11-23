@@ -137,7 +137,7 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
     // the message
     const on = document.activeElement === msg, caret = Math.floor(blink * 2) % 2 === 0;
     font(300, L.size1); c.fillStyle = INK.fg;
-    if (!msg.value && !on) { font('italic 400', L.size1 - 4, SERIF); c.fillStyle = INK.dim; c.fillText(text.write, MSG[0], MSG[1] + 56); }
+    if (!msg.value && !on) { font('italic 400', L.size1 - 4, SERIF); c.fillStyle = INK.dim; lines(text.write, MSG[2] - MSG[0]).slice(0, 3).forEach(([l], k) => c.fillText(l.trim(), MSG[0], MSG[1] + 56 + k * L.lead)); }
     else {
       const ls = lines(msg.value, MSG[2] - MSG[0]), lead = L.lead, shown = Math.floor((MSG[3] - MSG[1]) / lead), at = msg.selectionEnd ?? msg.value.length;
       let row = ls.findIndex(([l, i], k) => at >= i && (k === ls.length - 1 || at < ls[k + 1][1])); if (row < 0) row = ls.length - 1;

@@ -435,7 +435,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   };
   // Things that can be read (js/reader.js): a volume lying open, a placard, an exhibit, a stop on the route map. The pick
   // that shows one offers it while it has the visitor's attention; READ then scans it and stands its article over it.
-  const reader = words ? createReader({ scene, camera, text: words, onLink, onShown }) : null;
+  const reader = words ? createReader({ scene, camera, text: { ...words, mark: text.nav }, onLink, onShown }) : null;
   if (reader) hidden.push(reader.root);                              // light addressed to the visitor: not in the floor's mirror image
   const upright = (n) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(n, V(), V(0, 1, 0)));     // a plane's turn so that it faces along n
   const toCam = (p) => CAM.clone().sub(p).setY(0).normalize();

@@ -1,6 +1,6 @@
 {
   "brand": "ARK AURORA",
-  "reader": { "read": "READ", "scanning": "SCANNING", "mark": "LIBRARY", "label": "The volume being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This volume could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
+  "reader": { "read": "READ", "scanning": "SCANNING", "label": "What is being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
   "hint": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR",
   "credit": "Earth imagery: NASA Blue Marble / Black Marble",
   "depart": "03:47:12",
