@@ -1,6 +1,6 @@
 // rooms.read.mjs [desktop|phone|reduced|all]: the rooms open at their paths, and Fabrication's projects are read the way a visitor reads them.
 //   1  every room at its path and at its ?room= alias: no error; the nav carries the paths; Back and Forward between rooms agree with the address
-//   2  Fabrication: each placard says its project; focusing a placard or an exhibit offers READ (glyph in the viewport, #enter in the bar);
+//   2  Fabrication: no wall card is a source (they are not picks); focusing an exhibit offers READ (glyph in the viewport, #enter in the bar);
 //      READ opens that project (reader.url(), address, tab title, h1), the frame fits; Escape returns to the pick that offered it; a click on it focuses it
 //   3  the hero's button reads the list of every project; its links open any project, exhibited or not; Back agrees with itself
 //   10 the keyboard alone, and reduced motion, on one flow in Fabrication
@@ -12,10 +12,6 @@ const D = await load(), { projects, content } = D, byUrl = new Map(projects.map(
 const b = await launch();
 const ROOMS = Object.entries(content.rooms).map(([id, r]) => ({ id, path: r.path, title: r.title, alias: id }));
 
-/** The text a placard has drawn on its canvas, in the order it was drawn. */
-const placardText = (p, i) => p.evaluate((i) => { const c = window.__lobby.picks[i].mesh.material.uniforms.map.value.userData.canvas; return (c.__t ?? []).map((t) => t[0]); }, i);
-const norm = (s) => s.replace(/\s+/g, ' ').trim();
-const up = (s) => s.toUpperCase();
 
 async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, W = P.viewport.width, H = P.viewport.height, errs = [];
@@ -67,13 +63,13 @@ async function run(name) {
 
   // ---------------------------------------------------------------- 2. Fabrication
   const p = await open(ctx, '/portfolio/', 'projects', errs), src = await sources(p);
-  const placards = src.filter((q) => q.kind === 'screen').sort((a, b) => a.screen - b.screen), exhibits = src.filter((q) => q.kind === 'sphere');
+  const placards = src.filter((q) => q.kind === 'screen'), exhibits = src.filter((q) => q.kind === 'sphere');
   const named = content.rooms.projects.exhibits.map((slug) => projects.find((q) => q.slug === slug) ?? null);
-  chk(2, placards.length === 4 && exhibits.length === 5, 'Fabrication has four placards and five exhibits that offer something to read', { placards: placards.length, exhibits: exhibits.length });
-  chk(2, placards.every((q, i) => q.url === named[i]?.url) && exhibits.every((q, i) => q.url === named[i]?.url), "each place offers the project content.json's exhibits names for it",
-    { placards: placards.map((q) => q.url), exhibits: exhibits.map((q) => q.url), want: named.map((q) => q?.url) });
+  chk(2, placards.length === 0 && exhibits.length === named.length, `Fabrication's wall cards are not sources (0 of them offer anything to read); its ${named.length} exhibits do`, { placards: placards.length, exhibits: exhibits.length });
+  chk(2, await p.evaluate(() => window.__lobby.picks.every((q) => q.mesh.userData?.screen === undefined)), 'no wall screen of Fabrication is a pick at all (not clickable, not on the tour)');
+  chk(2, exhibits.every((q, i) => q.url === named[i]?.url), "each exhibit offers the project content.json's exhibits names for it", { exhibits: exhibits.map((q) => q.url), want: named.map((q) => q?.url) });
   const countOf = {};                                                      // pick index -> what #count says while it is focused
-  const places = [...placards.map((q, i) => ({ ...q, what: `placard ${i + 1}`, project: named[i] })), ...exhibits.map((q, i) => ({ ...q, what: `exhibit ${i + 1}`, project: named[i] }))];
+  const places = exhibits.map((q, i) => ({ ...q, what: `exhibit ${i + 1}`, project: named[i] }));
   for (const [n, pl] of places.entries()) {
     const pr = pl.project; if (!pr) continue;
     await focus(p, pl.i); const ready = await until(p, () => { const q = window.__lobby.picks.find((x) => x.reads); return q.live() && q.mesh.parent.visible; }, null, 20000); await p.waitForTimeout(1600);
@@ -84,14 +80,7 @@ async function run(name) {
     chk(2, r.cx > 0 && r.cx < W && r.cy > 0 && r.cy < H && !r.behind && r.left >= 0 && r.right <= W && r.top >= 0 && r.bottom <= H, `${pl.what}: the READ glyph and its whole tap area lie inside the viewport`, { box: [r.left, r.top, r.right, r.bottom].map(Math.round), W, H });
     chk(2, r.bottom - r.top >= (phone ? 40 : 20), `${pl.what}: the tap area is at least ${phone ? 40 : 20} px tall`, `${(r.bottom - r.top).toFixed(1)} px`);
     chk(2, r.onTop === 'canvas#scene', `${pl.what}: nothing but the canvas lies over the glyph`, r.onTop);
-    if (pl.kind === 'screen') {                                              // what the placard says is the project's
-      const t = norm((await placardText(p, pl.i)).join(' ')), want = [up(pr.types.join(' · ')), up(pr.status_label), pr.name];
-      chk(2, want.every((w) => t.includes(w)), `${pl.what} says ${pr.name} (its types, status and name)`, { drawn: t.slice(0, 200), want });
-      chk(2, !pr.period || t.includes(up(pr.period)), `${pl.what} gives the period (${pr.period})`, t.slice(0, 200));
-      chk(2, !pr.role || t.includes(up(pr.role).slice(0, 20)), `${pl.what} gives the role (${pr.role?.slice(0, 20)})`, t.slice(0, 200));
-      chk(2, t.includes(norm(pr.summary).slice(0, 25)), `${pl.what} starts the project's summary`, { drawn: t.slice(0, 260), summary: pr.summary.slice(0, 60) });
-      if (n === 0) await shot(p, 'placard');
-    } else if (n === 4) await shot(p, 'exhibit');
+    if (n === 4) await shot(p, 'exhibit');
     // READ: the glyph for some, the bar's button for the others
     const how = n % 2 ? 'button' : 'glyph', t0 = Date.now(), reads = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.reads)), hits = await rayHits(p, r.cx, r.cy);
     chk(2, hits.some((h) => h[0] === reads), `${pl.what}: a ${phone ? 'tap' : 'click'} on the READ glyph reaches the READ pick (main.js gives it the click over anything behind it)`, { at: [Math.round(r.cx), Math.round(r.cy)], hits: hits.slice(0, 3), readPickIs: reads });

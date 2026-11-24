@@ -164,15 +164,69 @@ Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `ca
 | `reader.read(slug or path)`, `reader.close()` | what the READ button and BACK do |
 | `volumes()` | the catalogue: `[{ slug, title }]` in shelf order |
 | `held()` | slug of the book the drone presents, or `null` |
-| `display.state()` | `{ lock, named, hint, gliding }`: `lock` is `null` or `{ name, verb, rect: [left, top, width, height] }` (CSS px, of the corner marks around the pick under the pointer); `named` the text of `#named` in the bar (the pick in focus; `''` for READ); `hint` the hint's words, `''` once it has gone; `gliding` true while the camera is on its way to or from a pick |
+| `display.state()` | `{ lock, named, hint, gliding, cue }`: `lock` is `null` or `{ name, verb, rect: [left, top, width, height] }` (CSS px, of the corner marks around the pick under the pointer, 6 px out from the pick's outline); `named` the text of `#named` in the bar (the pick in focus; `''` for READ); `hint` the hint's words, `''` once it has gone: the room's own (`rooms.<id>.hint`, below) while it applies, otherwise the general one (`display.hint`) until something has been inspected; `gliding` true while the camera is on its way to or from a pick; `cue` is `null` or `{ name, words, rect }`: the cue standing on a pick (below), `rect` the corner marks in CSS px as `lock.rect`. `window.__lobby.display` has `state` only |
 | `picks[i].name`, `.verb` | what the display calls the pick (upper case) and what a click on it does; both `''` on the reading pick (`reads`), which is never locked. Optional `picks[i].bounds()`: the pick's outline as world points |
-| `scene.getObjectByName(...)` | the reader's meshes: `ReadGlyph` (the READ glyph; the reading pick's `mesh.parent`; uniforms `uShow`, `uWord`, `uHover`, `uProgress`, no `uTime`), `ScanFan`, `ScanSheet` (uniform `uSnap`), `ReadFrame`, `ReadBeam` (uniforms `uK`, `uFlow`) |
+| `scene.getObjectByName(...)`, `scene` | the reader's meshes by name. `ReadGlyph` (the READ glyph; the reading pick's `mesh.parent`; uniforms `uShow`, `uWord`, `uHover`, `uProgress`, no `uTime`), `ReadFrame`, `ReadBeam` (uniforms `uK`, `uFlow`), `ReadAnchor` (an `Object3D` on what is read). The ways of opening (below): `ScanSheet` (uniform `uSnap`) and `ScanFan` (a flat thing is scanned with one sheet and one fan; things with a shape with a `ScanBody` and a `ScanFan` each, so there can be several `ScanFan`), `ScanBody` (one box per thing with a shape), `ReadFlow` (receiving), `ReadPrint` (unfolding). A mesh that is not shown has `visible` false (itself or a parent) |
+| `turn` | `null` in a room whose map does not turn (every room but Navigation), else `{ angle(), front(), settled(), moving(), byHand(), heading(), to(i, now), nudge(radians), step(d), grip() }`: `angle()` radians the route is turned from as laid out; `front()` the station nearest the front; `settled()` at rest; `moving()` coasting or settling after a release; `byHand()` the visitor turned it last (not a focus sending it to a station); `heading()` the station it is on or going to (`null` while held or coasting); `to(i, now)` turn to station `i` (at once with `now`, and always with reduced motion); `nudge(r)` as if dragged `r` radians and let go; `step(d)` `d` stations along the line at once; `grip()` pixels of drag to a radian now. Its picks have `station: i`. While the map turns the canvas has the class `turns` |
+| `step(d)`, `enter(id)` | the tour one step on (stations first, in the line's order, then the rest), and a room change without a reload |
 
-Nothing on the visitor's display (`#hud`, `#inspectbar`, `#lock`, the READ glyph and the scan) moves by itself: a part may move once when it appears, changes or is asked for, and then it is still. The one scan, the fan of light and the line across the page, happens only when the visitor asks to READ something readable: `ScanFan` and `ScanSheet` are not visible at any other time, and once the article is open the beam's `uK` and `uFlow` stay constant. With `prefers-reduced-motion: reduce` these are cuts. `tools/docker/hud.mjs` checks this.
+Nothing on the visitor's display (`#hud`, `#inspectbar`, `#lock`, the READ glyph and the scan) moves by itself: a part may move once when it appears, changes or is asked for, and then it is still. What the reader draws (a scan, the receiving, the unfolding) happens only when the visitor asks to READ something readable: `ScanFan`, `ScanSheet`, `ScanBody`, `ReadFlow` and `ReadPrint` are not visible at any other time, and once the article is open the beam's `uK` and `uFlow` stay constant. The cue is the one thing that appears without being asked: once, when the room is seen wide, and then it is still (it follows its pick only as the view sways). With `prefers-reduced-motion: reduce` these are cuts. `tools/docker/hud.mjs` checks this.
+
+### What can be read, and the ways it opens
+
+A pick that offers something to read has `source()` (`js/reader.js` documents the fields). The ones the tests rely on:
+
+| Field | Meaning |
+|---|---|
+| `url` | the page whose article it is: `/blog/<slug>/`, `/portfolio/<slug>/`, `/experience/#<id>` |
+| `how` | the way it opens: `'scan'` (the default), `'unfold'` or `'receive'` |
+| `bodies` | for `'scan'`: the things the scan crosses instead of a flat sheet, each `{ position, quaternion, size: [w, h, d], reads }` (a box in the room; `reads`: the one the frame's light rises from) |
+| `station` | for `'unfold'`: the stop's own display, `{ page, holder }` (`page`: its sheet, a sprite with `userData.pane`; `holder`: its model) |
+
+The reader's states are `closed -> scanning -> open` for every way. READ is offered (`picks.find(p => p.reads).live()`, `ReadGlyph` shown) under a thing that asks for it:
+
+- **scan**, a flat thing (the Library's volume, a Fabrication exhibit): READ, then `scanning` with `ScanSheet` and one `ScanFan`, the glyph saying SCANNING.
+- **scan**, things with a shape (the Lounge's books, from `scene.json` `focus[].boxes`): one `ScanBody` per box and a `ScanFan` to each, no `ScanSheet`; the glyph shuts when the scan starts and never says SCANNING. The pick's `bounds()` are the boxes' corners, so the display's lock goes round the things; its pick mesh is the box that holds them.
+- **receive**, what has nothing of its own in the room (Fabrication's "ALL n PROJECTS" button; any address that names nothing in the room): no READ is offered at any time, no `ScanFan`, `ScanSheet` or `ReadBeam`; `ReadFlow` shows while it arrives (not with reduced motion: a cut). After CLOSE nothing is offered (`live()` false, `ReadGlyph` not shown) and the button opens it again.
+- **unfold**, a station of Navigation's route map: READ is offered under the station; asked, the glyph shuts saying READ, nothing is scanned, `ReadPrint` shows briefly, the station's own sheet is dark while the frame carries its print (and, to the end, while it is read), then the frame is at rest and the words come. CLOSE part-way folds the frame where it is; afterwards every sheet has `material.opacity` 1.
+
+A wall screen (a mesh with `userData.screen`) is a pick only where `rooms.<id>.screens.inspect` is not `false`.
+
+### Navigation's turn, the cue and the hint
+
+- The route map turns about the table's axis (`js/routemap.js` `TURN`, `main.js` `turning()`). A drag across the room (mouse, pen or finger; more than 6 px and at least as far across as up or down), a sideways wheel (`deltaX`) or Shift + a vertical wheel turns it; a plain vertical wheel does not and is left to the page. Released, it coasts (at most `TURN.FAST` rad/s) and settles with a station exactly at the front; with reduced motion it lands at once and a wheel steps a station (100 px) at a time. Not while something is read, not from inside `#reader`, the nav, the bar or a button; a press that stops a coasting map is not a click, nor is a click right after a drag. Focusing a station turns the map to it; turning it by hand with a station in focus moves the focus to the station that comes to the front. A synthetic `pointermove` must carry `buttons: 1`.
+- The cue (`js/hud.js`, `#cue`): a pick may carry `cue: { pointer, touch }` (`rooms.writing.cue`: "CLICK TO CHOOSE A BOOK" / "TAP TO CHOOSE A BOOK"). The display shows it on the first live pick that has one, in the room's wide view at rest only: marks on the pick's outline and a tag `<name> | <words>` (`display.catalogue`, `rooms.writing.cue`), clear of the page's words. It is not there while the lock is on anything, with anything in focus, during a glide or the opening move, while a room loads or while reading, and for good (this visit to the room) once its pick has been in focus. Pressing the tag's words does what a click on the pick does.
+- The hint: `display.hint` is the general one (`pointer`, `touch`). A room may have its own (`rooms.experience.hint = { pointer, touch, until: 'turn' }`), shown in its place until the visitor has done what `until` names (the map turned by hand), remembered for the page's life.
+
+### `scene.json`: `focus[].boxes`
+
+An entry of `focus` (a round-ish thing the camera can come to: `c`, `r`, `dir`) may carry `boxes`: `[{ c: [x, y, z], size: [w, d, h], turn, reads? }]`, in Blender's axes (the room maps (x, y, z) to (x, z, -y)): the centre, the size along x, y and z, the turn about the vertical in radians, and `reads: true` on the one the reading's light rises from. Where there are boxes the exhibit's source has `bodies`, and its pick's `bounds()` are their corners. The Lounge's `focus[0]` has the two books on the table.
+
+### `content.json`, as the tests read it
+
+- `rooms.<id>.sub` is `[]` in every room but the Atrium (`["{name}  ·  {headline}"]`) and the Lounge (`["{headline}  ·  {location}"]`); `js/site.js` fills them from `profile.json`, drops a line whose place it cannot fill, and with no profile both are `[]`. `main.js` hides `.sub` when it has no lines. There is no other explanatory line under a room's headline.
+- `rooms.projects.screens.inspect` and `rooms.experience.screens.inspect` are `false`, and their cards have no `cta`: the wall screens of those rooms are not picks, not on the tour and not sources.
+- `reader.receiving` ("RECEIVING") is what the receiving says; `reader.scanning` what the glyph says while a flat thing is scanned.
+- `display` holds the display's own words: the verbs `read`, `inspect`, `open`, `write`, `enter`, `stops`, `sealed`, `choose`, the names `catalogue` and `exhibit`, and `hint`.
+- `rooms.comms` (Contact): `cta` ("GET IN TOUCH  →"), `bright: true` (`main.js` sets `body.bright`), screens tag "COMMS" and two placeholders `js/site.js` fills, and `comms`: `title`, `standby`, `openTo`, `resume`, `opens`, `subject`, `write{…}`, `status{…}`, `address`, `endpoint`, `max`. Its mode is decided by data: `endpoint` set: `send`; else `address` (from `profile.contact.email`) set: `mail`; else `links`. `section#comms[data-mode]` holds real elements (links `a[target=_blank][rel=noopener]` with `aria-label` "<label>, opens in a new tab", `textarea`, `input[type=email]`, `[data-act=mail|send|copy]`, `[role=status]`), `inert` until the field is open. `send` POSTs JSON with exactly the keys `at, email, from, message`. The pick `picks.find(p => p.cta)` is named "CONTACT" and its verb is `display.open` in `links` mode, `display.write` otherwise.
 
 ## 5. Tests
 
 `tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`). `hud.mjs [desktop|phone|reduced|all]` tests the visitor's display (§4): the lock, the names, the bar's caption, the hint, and that the READ glyph and the scan are still unless READ is asked.
+
+The other browser scripts print `ok` or `FAIL [profile item] what` and exit 1 on a failure (`tools/check.sh` runs them all):
+
+| Script | Tests |
+|---|---|
+| `rooms.text.mjs` | the page's words (`sub`), the wall screens that are not to be pressed |
+| `opening.mjs` | the ways of opening: Fabrication (scan, receive), the Lounge's books, a station unfolding |
+| `turn.mjs` | the route map's turn (mouse, pen, touch, wheel), the tour, Navigation's hint |
+| `cue.mjs` | the Library's cue and the drone's errand |
+| `contact.mjs` | Contact in `links`, `mail` and `send`, and its legibility |
+| `rooms.read.mjs`, `rooms.others.mjs`, `rooms.cross.mjs`, `rooms.deeplink.mjs` | each room at its path; what is read in Fabrication, Navigation, the Lounge; links from one reading into another; a project's and an entry's own address |
+| `library.mjs`, `history.mjs`, `deeplink.mjs`, `hostile.mjs` | the Library; the address and Back; an article's own URL; the rooms against hostile and thin data |
+
+`rooms.kit.mjs` and `r2.kit.mjs` are what these share (the profiles, a recorder of the reader's meshes, a gate on the page's frames).
 
 ## 6. A project: `data/projects/<slug>.md`
 

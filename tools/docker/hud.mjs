@@ -266,7 +266,7 @@ async function run(name) {
     chk(7, sh2 !== true, 'and not on the screen there either', sh2 === null ? 'no #hud .hint (gone)' : sh2);
   });
 
-  // ---- Fabrication: 3 the lock (desktop, reduced), 5 a tap and the bar (phone), 1 a placard in focus
+  // ---- Fabrication: 3 the lock (desktop, reduced), 5 a tap and the bar (phone), 1 an exhibit in focus
   await guard(3, 'Fabrication', async () => {
     await p.evaluate(() => window.__lobby.setFocus(null)); await settle(p, 60000);
     await shot(p, '4-fab');
@@ -345,22 +345,22 @@ async function run(name) {
     await shot(p, '8-clicked');
   });
 
-  // ---- 1. a placard (a source in Fabrication) in focus is as quiet as the held volume (desktop)
-  if (!phone && !P.reducedMotion) await guard(1, 'a placard in Fabrication', async () => {
+  // ---- 1. an exhibit (a source in Fabrication; the wall cards are not picks) in focus is as quiet as the held volume (desktop)
+  if (!phone && !P.reducedMotion) await guard(1, 'an exhibit in Fabrication', async () => {
     const i = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.source && !q.reads));
     chk(1, i >= 0, 'Fabrication has a pick that offers something to read', i);
     if (i < 0) return;
     await p.evaluate((i) => { const l = window.__lobby; l.setFocus(null); l.setFocus(l.picks[i]); }, i);
-    chk(1, await glyphLive(p), 'a placard in focus: the READ glyph is live and shown');
-    await p.mouse.move(W - 4, 4); const calm = await settle(p); chk(1, calm, 'a placard in focus: the display comes to rest');
-    await shot(p, '9-placard');
+    chk(1, await glyphLive(p), 'an exhibit in focus: the READ glyph is live and shown');
+    await p.mouse.move(W - 4, 4); const calm = await settle(p); chk(1, calm, 'an exhibit in focus: the display comes to rest');
+    await shot(p, '9-exhibit');
     const sh = await p.evaluate(() => window.__t.shaders());
-    chk(1, !!sh && !sh.keys.includes('uTime') && !/uTime/.test(sh.frag + sh.vert), "a placard in focus: the glyph's material takes no uTime", sh ? { uniforms: sh.keys } : 'no glyph material');
+    chk(1, !!sh && !sh.keys.includes('uTime') && !/uTime/.test(sh.frag + sh.vert), "an exhibit in focus: the glyph's material takes no uTime", sh ? { uniforms: sh.keys } : 'no glyph material');
     const w = await p.evaluate(() => window.__t.watch(1500));
-    for (const k of ['uShow', 'uWord', 'uHover', 'uProgress']) { const known = w.lo[k] !== undefined; chk(1, known && Math.abs(w.hi[k] - w.lo[k]) < 1e-3, `a placard in focus: ${k} is unchanged over 1.5 s`, known ? { min: +w.lo[k].toFixed(4), max: +w.hi[k].toFixed(4) } : 'the uniform does not exist'); }
-    chk(1, !!(await state(p)) && !w.changed, 'a placard in focus: display.state() is the same over 1.5 s');
+    for (const k of ['uShow', 'uWord', 'uHover', 'uProgress']) { const known = w.lo[k] !== undefined; chk(1, known && Math.abs(w.hi[k] - w.lo[k]) < 1e-3, `an exhibit in focus: ${k} is unchanged over 1.5 s`, known ? { min: +w.lo[k].toFixed(4), max: +w.hi[k].toFixed(4) } : 'the uniform does not exist'); }
+    chk(1, !!(await state(p)) && !w.changed, 'an exhibit in focus: display.state() is the same over 1.5 s');
     await p.evaluate(() => window.__t.mark()); await p.waitForTimeout(3000); const idle = await p.evaluate(() => window.__t.mark());
-    chk(2, !idle.fanSeen && !idle.sheetSeen, 'a placard in focus 3 s with nothing asked: ScanFan and ScanSheet are not visible', { fanSeen: idle.fanSeen, sheetSeen: idle.sheetSeen });
+    chk(2, !idle.fanSeen && !idle.sheetSeen, 'an exhibit in focus 3 s with nothing asked: ScanFan and ScanSheet are not visible', { fanSeen: idle.fanSeen, sheetSeen: idle.sheetSeen });
   });
 
   // ---- 4. names and verbs, in every room (desktop)
@@ -379,12 +379,17 @@ async function run(name) {
       const odd = rest.filter((q) => q.verb && !verbs.has(q.verb) && !/^\d+ /.test(q.verb) && !(D?.stops && q.verb === D.stops));
       chk(4, rest.length > 0 && D && odd.length === 0, `${path}: every verb is one of content.json's display verbs (or "n STOPS")`, odd.slice(0, 4).map((q) => [q.name, q.verb]));
       for (const q of picks.filter((x) => x.reads)) chk(4, q.name === '', `${path}: the reading pick has the name ''`, JSON.stringify(q.name));
+      // 7. the hint: Navigation's own words until its map has been turned by hand; in every other room the visitor has inspected something, so none
+      const hs = (await state(p))?.hint, own = content.rooms[id].hint?.pointer;
+      chk(7, hs === (own ?? ''), own ? `${path}: the room's own hint stands (the map has not been turned by hand)` : `${path}: no hint (something has been inspected)`, hs);
+      const cue = (await state(p))?.cue;      // (the Library's, on a new visit, comes once the view is wide: it may or may not be there yet)
+      chk(4, id === 'writing' ? cue === null || cue.words === D.cue?.pointer || cue.name === D.catalogue : cue === null, `${path}: ${id === 'writing' ? 'the cue, if there, is the catalogue\'s' : 'no cue stands on anything (only the Library has one)'}`, cue);
     }
     // the named exhibits of the Lounge and Fabrication, and the terminal
     await goRoom(p, 'writing'); const term = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.options); return q ? [q.name, q.verb] : null; });
     chk(4, !!D && term?.[0] === D.catalogue && term?.[1] === D.choose, "the Library's terminal is the catalogue: it chooses a volume", term);
-    await goRoom(p, 'comms'); const cm = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.cta); return q ? [q.name, q.verb] : null; });
-    chk(4, !!D && cm?.[0] === content.rooms?.comms?.comms?.title && cm?.[1] === D.write, "Comms' field is named by comms.title and says WRITE", cm);
+    await goRoom(p, 'comms'); const cm = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.cta); return q ? [q.name, q.verb, document.querySelector('#comms')?.dataset.mode] : null; });
+    chk(4, !!D && cm?.[0] === content.rooms?.comms?.comms?.title.toUpperCase() && cm?.[1] === (cm?.[2] === 'links' ? D.open : D.write), "Comms' field is named by comms.title (upper case) and says OPEN (links only) or WRITE (a message box: mail or send)", cm);
     await goRoom(p, 'lobby'); const dr = await p.evaluate(() => window.__lobby.picks.filter((q) => q.door).map((q) => [q.door.label, q.name, q.verb, !!q.door.stops, !!q.door.to]));
     chk(4, !!D && dr.length > 0 && dr.every(([label, n, v, st, to]) => n === label && (v === (st ? D.stops.replace('{n}', '') : to ? D.enter : D.sealed) || (st && /^\d+ /.test(v)))), "Atrium's doors are named by their label and say ENTER, n STOPS or sealed", dr);
     await shot(p, 'atrium');

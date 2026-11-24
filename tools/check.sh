@@ -31,6 +31,11 @@ else
   step "rooms.cross.mjs (links from one room's reading into another)" dt rooms.cross.mjs
   step "rooms.deeplink.mjs (a project's and a timeline entry's own address)" dt rooms.deeplink.mjs
   step "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" dt hud.mjs all
+  step "rooms.text.mjs (no explanatory lines; wall screens do nothing)" dt rooms.text.mjs all
+  step "opening.mjs (scan, receive, unfold)" dt opening.mjs all
+  step "turn.mjs (Navigation's map turns; its hint)" dt turn.mjs all
+  step "cue.mjs (the Library's cue; the drone's errand)" dt cue.mjs all
+  step "contact.mjs (links, mail, send; legibility)" dt contact.mjs all
   step "hostile.mjs (the rooms against hostile and thin data)" dt hostile.mjs
   step "endpoints.mjs" dt endpoints.mjs
   for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do step "errs.mjs $u" dt errs.mjs "http://127.0.0.1:8080$u"; done
