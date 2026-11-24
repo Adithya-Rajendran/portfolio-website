@@ -2,6 +2,10 @@
 import { chromium } from 'playwright'; import fs from 'fs';
 const [A, B, heat] = process.argv.slice(2);
 const names = fs.readdirSync(A).filter((f) => f.endsWith('.png') && fs.existsSync(`${B}/${f}`)).sort();
+if (names.length === 0) {
+  console.error(`pdiff: no matching .png files between ${A} and ${B}`);
+  process.exit(1);
+}
 const br = await chromium.launch(); const p = await br.newPage();
 for (const n of names) {
   const r = await p.evaluate(async ([x, y]) => {

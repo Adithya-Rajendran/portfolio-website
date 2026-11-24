@@ -8,11 +8,19 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
   '.txt': 'text/plain; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.wasm': 'application/wasm', '.pdf': 'application/pdf',
   '.glb': 'model/gltf-binary', '.ktx2': 'image/ktx2', '.yaml': 'text/yaml; charset=utf-8' };
 createServer((req, res) => {
-  const path = decodeURIComponent(new URL(req.url, 'http://x').pathname), file = join(dir, normalize(path));
+  let url, path;
+  try {
+    url = new URL((req.url || '/').replace(/^\/+/, '/'), 'http://x');
+    path = decodeURIComponent(url.pathname);
+  } catch {
+    res.writeHead(400, { 'content-type': 'text/plain' }).end('Bad request');
+    return;
+  }
+  const file = join(dir, normalize(path));
   if (!file.startsWith(dir)) { res.writeHead(403).end(); return; }
   let f = file, st; try { st = statSync(f); } catch { res.writeHead(404, { 'content-type': 'text/plain' }).end('Not found'); return; }
   if (st.isDirectory()) {
-    if (!path.endsWith('/')) { res.writeHead(301, { location: path + '/' + (new URL(req.url, 'http://x').search) }).end(); return; }
+    if (!path.endsWith('/')) { res.writeHead(301, { location: path + '/' + url.search }).end(); return; }
     f = join(f, 'index.html'); try { st = statSync(f); } catch { res.writeHead(404, { 'content-type': 'text/plain' }).end('Not found'); return; }
   }
   res.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream', 'content-length': st.size, 'cache-control': 'no-cache' });
