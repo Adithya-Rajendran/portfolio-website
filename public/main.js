@@ -120,6 +120,7 @@ function renderMirror() {
 }
 function draw(t) {
   renderer.info.reset();
+  room.scene.updateMatrixWorld();
   if (!SKIP.has('sunlight')) room.prepass?.(renderer);
   room.capture?.(renderer);
   room.chart?.draw(renderer,room.scene,camera);
@@ -275,6 +276,7 @@ async function enter(id, push = true) {
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
   room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, clearance, words: content.reader, display: content.display,
     onShown: () => { if (room && !busy) syncUrl(); }, want: route().read?.split('/')[2] });
+  room.scene.matrixWorldAutoUpdate = false; room.scene.matrixAutoUpdate = false;
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   if (room.turn) unturn = turning(room.turn);                                // a route map: the visitor's drags and sideways wheel turn it
   display.room(room.picks, content.rooms[id].hint);                           // the display learns what this room has: a pick with a cue, a hint of its own
@@ -486,7 +488,7 @@ if (plain()) {
   else if (!touched && scrollY < 80) stepIn(); else offer().then(stepIn);
 }
 // Safety net: if nothing reached the canvas (seen with multisampled float targets on some drivers), drop MSAA.
-camera.position.copy(room.CAM); camera.lookAt(room.TGT); room.update(0); draw(0);
+camera.position.copy(room.CAM); camera.lookAt(room.TGT); camera.updateMatrixWorld(); room.update(0); draw(0);
 if (tier === 0 && brightness(8) < 2) { setTier(1); applyScale(); }
 if (Q.has('focus')) setTimeout(() => setFocus(room.picks[num('focus', 0)]), 300);
 frame();
