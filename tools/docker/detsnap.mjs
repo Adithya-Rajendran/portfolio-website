@@ -25,7 +25,7 @@ for (const job of jobs) {
   p.on('pageerror', (e) => console.log(`[${name}] pageerror`, e.message));
   p.on('console', (m) => { if (m.type() === 'error') console.log(`[${name}] error`, m.text().slice(0, 300)); });
   let inflight = 0, last = Date.now(); p.on('request', () => { inflight++; last = Date.now(); }); p.on('requestfinished', () => { inflight--; last = Date.now(); }); p.on('requestfailed', () => { inflight--; });
-  await p.goto(origin + '/' + q);
+  await p.goto(`${origin.replace(/\/$/, '')}/${q.replace(/^\/+/, '')}`);
   for (let i = 0; i < 600 && !(await p.evaluate(() => !!window.__lobby)); i++) await new Promise((r) => setTimeout(r, 100));
   while (inflight > 0 || Date.now() - last < 1500) await new Promise((r) => setTimeout(r, 100));
   await new Promise((r) => setTimeout(r, 1500));                    // image decodes

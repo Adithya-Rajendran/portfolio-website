@@ -2,14 +2,14 @@
 // For each: a 1280x720 screenshot after a fixed wait, plus every wall-screen canvas, into /out/<prefix>_<name>*.png
 import { chromium } from 'playwright';
 import fs from 'fs';
-const prefix = process.argv[2], jobs = fs.readFileSync(`/out/${prefix}.jobs`, 'utf8').split('\n').filter(Boolean);
+const prefix = process.argv[2], origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, ''), jobs = fs.readFileSync(`/out/${prefix}.jobs`, 'utf8').split('\n').filter(Boolean);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 for (const job of jobs) {
   const [name, url] = [job.slice(0, job.indexOf('=')), job.slice(job.indexOf('=') + 1)];
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
   p.on('pageerror', (e) => console.log(`[${name}] pageerror`, e.message));
   p.on('console', (m) => { if (m.type() === 'error') console.log(`[${name}] error`, m.text().slice(0, 300)); });
-  await p.goto('http://10.0.0.117:8080/' + url);
+  await p.goto(`${origin}/${url.replace(/^\//, '')}`);
   await p.waitForFunction(() => window.__lobby?.ready() >= 1, null, { timeout: 120000 });
   await p.waitForTimeout(4000);
   await p.evaluate(() => { const h = document.getElementById('hud'); if (h) h.style.display = 'none'; });

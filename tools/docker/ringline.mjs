@@ -6,7 +6,8 @@ const arrive = async (id) => { await p.waitForFunction((r) => window.__lobby?.mo
 const clickDoor = async (label) => { let x, y; const i = await p.evaluate((l) => window.__lobby.picks.findIndex((q) => q.door?.label === l), label);
   for (let n = 0; n < 4; n++) { [x, y] = await p.evaluate((k) => { const L = window.__lobby, v = L.picks[k].mesh.position.clone().project(L.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; }, i); await p.mouse.move(x, y); await p.waitForTimeout(1200); }
   await p.mouse.click(x, y); await p.waitForTimeout(2600); };
-await p.goto((process.argv[2] || 'http://10.0.0.117:8080/')+'?shot=hero'); await arrive('lobby');
+const origin = (process.argv[2] || process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');
+await p.goto(`${origin}/?shot=hero`); await arrive('lobby');
 console.log('picks:', await p.evaluate(() => window.__lobby.picks.map((q) => q.door?.label || 'hologram').join(', ')));
 await clickDoor('RING LINE');
 console.log('ring line buttons:', await p.evaluate(() => [...document.querySelectorAll('#ways button')].map((e) => e.textContent.trim() + (e.disabled ? ' [off]' : '')).join(' | ')), '| still in', await p.evaluate(() => window.__lobby.mode().room));
