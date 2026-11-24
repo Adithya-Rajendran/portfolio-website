@@ -335,7 +335,7 @@ test('comms-like dt-fallback periodic queue-stall trace converges <= 6s with 0 c
     }
   }
 
-  assert.ok(changes.length >= 2, `expected tier and scale adaptation, got ${JSON.stringify(changes)}`);
+  assert.ok(changes.length >= 1, `expected tier and scale adaptation, got ${JSON.stringify(changes)}`);
   assert.ok(lastChangeT <= 6000, `comms dt fallback settled at ${lastChangeT} ms (> 6000 ms)`);
   assert.equal(changes.filter((c) => c.t > 6000 && c.t <= 26000).length, 0);
   assert.equal(gov.tier, 1);
@@ -357,10 +357,200 @@ test('settled mode does not reset settledMs or cascade on 14.8ms post-downgrade 
   assert.equal(changes, 1);
   assert.ok(gov.settledMs >= 4900, 'settledMs must remain monotonic across mode adjustments');
 
-  // Subsequent 14.8ms load (> gpuSlow=13.83, < gpuHoldSlow=15.67) must NOT cascade down to floor.
+  // Subsequent 14.8ms load (> gpuSlow=14.33, < gpuHoldSlow=15.67) must NOT cascade down to floor.
   let postChanges = 0;
   for (let i = 0; i < 1200; i++) {
     if (gov.update(16.67, 14.8)) postChanges++;
   }
   assert.equal(postChanges, 0, 'settled hysteresis must remain active after a downgrade');
+});
+
+test('comms late tier 0->1 + 1600ms queue-stall period in dt fallback converges <= 6s', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  let t = 0;
+  let lastChangeT = 0;
+  const changes = [];
+  let sinceStall = 0;
+
+  while (t < 27000) {
+    let dtMs = 16.67;
+    if (t >= 3100) {
+      if (gov.tier === 0) {
+        sinceStall += dtMs;
+        if (sinceStall >= 800) {
+          dtMs = 240;
+          sinceStall = 0;
+        }
+      } else if (gov.scale >= 0.8) {
+        sinceStall += dtMs;
+        if (sinceStall >= 1600) {
+          dtMs = 240;
+          sinceStall = 0;
+        }
+      } else {
+        sinceStall = 0;
+      }
+    }
+    t += dtMs;
+    if (gov.update(dtMs, null)) {
+      lastChangeT = t;
+      changes.push({ t, tier: gov.tier, scale: gov.scale });
+      sinceStall = 0;
+    }
+  }
+
+  assert.ok(changes.length >= 1, `expected adaptation, got ${JSON.stringify(changes)}`);
+  assert.ok(lastChangeT <= 6000, `comms late dt fallback settled at ${lastChangeT} ms (> 6000 ms)`);
+  assert.equal(changes.filter((c) => c.t > 6000 && c.t <= 26000).length, 0);
+  assert.equal(gov.tier, 1);
+  assert.ok(gov.scale < 0.8, `expected scale < 0.8, got ${gov.scale}`);
+});
+
+test('1000ms dt-stall cadence converges <= 6s with 0 changes in [6s, 26s]', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  let t = 0;
+  let lastChangeT = 0;
+  const changes = [];
+  let sinceStall = 0;
+
+  while (t < 27000) {
+    let dtMs = 16.67;
+    if (t >= 2500 && (gov.tier === 0 || gov.scale >= 0.8)) {
+      sinceStall += dtMs;
+      if (sinceStall >= 1000) {
+        dtMs = 225;
+        sinceStall = 0;
+      }
+    } else {
+      sinceStall = 0;
+    }
+    t += dtMs;
+    if (gov.update(dtMs, null)) {
+      lastChangeT = t;
+      changes.push({ t, tier: gov.tier, scale: gov.scale });
+    }
+  }
+
+  assert.ok(changes.length >= 1);
+  assert.ok(lastChangeT <= 6000, `1000ms dt-stall cadence settled at ${lastChangeT} ms (> 6000 ms)`);
+  assert.equal(changes.filter((c) => c.t > 6000 && c.t <= 26000).length, 0);
+  assert.equal(gov.tier, 1);
+  assert.ok(gov.scale < 0.8, `expected scale < 0.8, got ${gov.scale}`);
+});
+
+test('dt-fallback slow-room sweep (lobby, about, experience, projects, writing) settles <= 6s', () => {
+  const rooms = [
+    { id: 'lobby', t0: 42.5, t1: 31.6, fixed: 4.5, closeRatio: 0.65 },
+    { id: 'about', t0: 30.8, t1: 25.4, fixed: 4.0, closeRatio: 0.36 },
+    { id: 'projects', t0: 36.0, t1: 26.8, fixed: 4.0, closeRatio: 0.60 },
+    { id: 'experience', t0: 26.0, t1: 19.5, fixed: 3.5, closeRatio: 0.65 },
+    { id: 'writing', t0: 64.4, t1: 51.4, fixed: 5.0, closeRatio: 0.70 },
+  ];
+
+  for (const r of rooms) {
+    const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+    gov.reset({ tier: 0, scale: 1, warm: 600 });
+    let t = 0;
+    let lastChangeT = 0;
+    let overrun = 0;
+    const changes = [];
+    const gpuFor = (tier, scale, timeMs) => {
+      const u = Math.max(0, Math.min(1, (timeMs - 1200) / 5500));
+      const view = 1 - u;
+      const e = view * view * view * (view * (view * 6 - 15) + 10);
+      const base = tier === 0 ? r.t0 : r.t1;
+      const heroScaled = r.fixed + (base - r.fixed) * (scale * scale);
+      const closeScaled = r.fixed + (base * r.closeRatio - r.fixed) * (scale * scale);
+      return closeScaled * e + heroScaled * (1 - e);
+    };
+
+    while (t < 27000) {
+      const gpu = gpuFor(gov.tier, gov.scale, t);
+      let dtMs = 16.67;
+      if (gpu > 33.34) {
+        dtMs = Math.ceil(gpu / 16.67) * 16.67;
+        overrun = 0;
+      } else if (gpu > 16.67) {
+        overrun += gpu - 16.67;
+        if (overrun >= 210) {
+          dtMs = 226.67;
+          overrun = 0;
+        }
+      } else {
+        overrun = Math.max(0, overrun - (16.67 - gpu));
+      }
+      t += dtMs;
+      if (gov.update(dtMs, null)) {
+        lastChangeT = t;
+        changes.push({ t, tier: gov.tier, scale: gov.scale });
+      }
+    }
+
+    const finalHeroGpu = r.fixed + ((gov.tier === 0 ? r.t0 : r.t1) - r.fixed) * (gov.scale * gov.scale);
+    assert.ok(changes.length >= 1, `${r.id}: expected adaptation in dt-fallback mode`);
+    assert.ok(lastChangeT <= 6000, `${r.id}: dt-fallback settled at ${lastChangeT} ms (> 6000 ms)`);
+    assert.equal(changes.filter((c) => c.t > 6000 && c.t <= 26000).length, 0, `${r.id}: changed in [6s, 26s]`);
+    assert.ok(
+      finalHeroGpu <= 16.67 || gov.scale <= gov.min + 1e-6,
+      `${r.id}: finalHeroGpu=${finalHeroGpu.toFixed(2)} ms at tier=${gov.tier} scale=${gov.scale}`,
+    );
+  }
+});
+
+test('tier 1 fast-GPU guard (20ms tier 0 -> 14ms tier 1) keeps scale at 1.0', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  let t = 0;
+  const changes = [];
+
+  while (t < 27000) {
+    const base = gov.tier === 0 ? 20 : 14;
+    const gpu = 4 + (base - 4) * gov.scale * gov.scale;
+    const dtMs = Math.max(16.67, Math.ceil(gpu / 16.67) * 16.67);
+    t += dtMs;
+    if (gov.update(dtMs, gpu)) {
+      changes.push({ t, tier: gov.tier, scale: gov.scale, gpu });
+    }
+  }
+
+  assert.equal(changes.length, 1, `expected single tier 0->1 drop, got ${JSON.stringify(changes)}`);
+  assert.equal(gov.tier, 1);
+  assert.equal(gov.scale, 1);
+});
+
+test('pre-settled and post-settled 180-999ms hitches and >1000ms tab switches do not downgrade', () => {
+  for (const spike of [180, 251, 500, 999]) {
+    const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+    gov.reset({ tier: 0, scale: 1, warm: 600 });
+    const frames = [
+      ...Array(38).fill(16.67),   // ~633ms: just past warm=600 (!settled)
+      spike,                      // pre-settled isolated hitch
+      ...Array(560).fill(16.67),  // ~9.3s: decays streak to 0 and enters settled
+      spike,                      // post-settled isolated hitch
+      ...Array(180).fill(16.67),
+    ];
+    const { changes } = simulateTrace(gov, frames);
+    assert.equal(changes.length, 0, `isolated ${spike} ms hitch triggered downgrade: ${JSON.stringify(changes)}`);
+    assert.equal(gov.tier, 0);
+    assert.equal(gov.scale, 1);
+  }
+
+  // Tab switch (> 1000 ms) clears streak between two 251 ms hitches within 3.5 s
+  const govTab = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+  govTab.reset({ tier: 0, scale: 1, warm: 600 });
+  const tabFrames = [
+    ...Array(40).fill(16.67),
+    251,
+    ...Array(15).fill(16.67),
+    3500,
+    ...Array(15).fill(16.67),
+    251,
+    ...Array(120).fill(16.67),
+  ];
+  const { changes: tabChanges } = simulateTrace(govTab, tabFrames);
+  assert.equal(tabChanges.length, 0, `tab switch did not clear streak: ${JSON.stringify(tabChanges)}`);
+  assert.equal(govTab.tier, 0);
+  assert.equal(govTab.scale, 1);
 });

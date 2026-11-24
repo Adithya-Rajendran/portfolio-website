@@ -73,7 +73,7 @@ export class Governor {
     this.hasGpuTimer = !!hasGpuTimer;
 
     this.frameBudget = 1000 / target;
-    this.gpuSlow = this.frameBudget * 0.83;    // ~13.83 ms at 60 Hz: drive below vblank with margin while settling
+    this.gpuSlow = this.frameBudget * 0.86;    // ~14.33 ms at 60 Hz: drive below vblank with margin while preserving 14 ms tier-1 GPUs
     this.gpuHoldSlow = this.frameBudget * 0.94; // ~15.67 ms at 60 Hz: hysteresis guard once settled
     this.gpuAim = this.frameBudget * 0.66;     // ~11.0 ms at 60 Hz: target headroom
     this.gpuFast = this.frameBudget * 0.56;    // ~9.33 ms at 60 Hz: upgrade threshold
@@ -182,12 +182,13 @@ export class Governor {
     const gpuMed = this._gpuSamples.length >= 2 ? median(this._gpuSamples) : null;
     this._resetWindow();
 
-    if (dtAvg > this.slow) this._slowDtStreak += 1;
-    else this._slowDtStreak = Math.max(0, this._slowDtStreak - winMs / 2500);
-
     // Isolated 150-1000 ms hitch affects a single window; sustained overload or repeated burst pauses persist >= 1.5 streak.
-    // Once settled (>= 4.9s post-warm, ~5.5s after cover lift), widen GPU hysteresis and require 2 consecutive slow windows.
+    // Once settled (>= 4.9s post-warm, ~5.5s after cover lift), widen GPU hysteresis, decay dt streaks faster, and require 2 consecutive slow windows.
     const settled = this.settledMs >= 4900;
+    const dtDecayMs = settled ? 2500 : 5000;
+    if (dtAvg > this.slow) this._slowDtStreak += 1;
+    else this._slowDtStreak = Math.max(0, this._slowDtStreak - winMs / dtDecayMs);
+
     const sustainedDtOver = (hadHitch || settled) ? this._slowDtStreak >= 1.5 : dtAvg > this.slow;
     const gpuLimit = settled ? this.gpuHoldSlow : this.gpuSlow;
     if (gpuMed !== null && gpuMed > gpuLimit) this._slowGpuStreak++;
@@ -209,8 +210,14 @@ export class Governor {
       if (this.tier === 0 && !this.tierPinned && (nextScale < 0.85 || this.scalePinned)) {
         this.tier = 1;
         if (!this.scalePinned) {
-          this.scale = this.max;
-          droppedTierOnly = true;
+          if (gpuOver) {
+            this.scale = this.max;
+            droppedTierOnly = true;
+          } else {
+            // In dt-fallback mode, GPU queue stalls only surface every ~1-2s when overrun is small;
+            // apply nextScale alongside tier 1 instead of resetting to 1.0 and waiting for tier 1 to stall again.
+            this.scale = Math.min(this.scale, nextScale);
+          }
         }
         changed = true;
       } else if (!this.scalePinned && nextScale < this.scale - 1e-4) {
