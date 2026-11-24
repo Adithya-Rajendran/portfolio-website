@@ -1,11 +1,11 @@
 # Program Status
 
-Updated: 2026-11-24 (Wave 0 bootstrap)
+Updated: 2026-11-24 (Gate G0 passed; ready for Wave A)
 
 ## Current Wave & Gate
 
-- **Active Wave:** Wave 0 (`P0` in progress)
-- **Active Gate:** `G0` (pending verification on `prog/int`)
+- **Active Wave:** Wave A (starting; Wave 0 `P0` done)
+- **Active Gate:** `G0` **PASS** (next gate: `G1`)
 - **Base Commit:** `explore/rolling-earth` at `6390b52ded91146778685eebd4c3224f82c9a914`
 - **Integration Branch:** `prog/int`
 - **Workstream Branches:** `prog/ws-infra`, `prog/ws-opt`, `prog/ws-found`, `prog/ws-ui`
@@ -14,7 +14,7 @@ Updated: 2026-11-24 (Wave 0 bootstrap)
 
 | Gate | When | Status | Date | Evidence / Notes |
 |---|---|---|---|---|
-| G0 | after P0 | pending | — | `static`, `smoke`, `suite`, and `preview prog/int 8080` pending on `prog/int` |
+| G0 | after P0 | **PASS** | 2026-11-24 | Verified on `prog/int` (`c37f311eff8d5bdf9708fa174b6e7eef0a76092c`): `static` PASS 13s (`/srv/arcadia/jobs/20261124-084437-c37f311e-static-61372`), `smoke` PASS 28s (`/srv/arcadia/jobs/20261124-084457-c37f311e-smoke-61605`), `suite` PASS 3029s (`/srv/arcadia/jobs/20261124-084547-c37f311e-suite-63755`), local Python `content.py` + 141/141 unit tests OK, `arcadia-preview@8080` active (`HTTP/1.0 200 OK`) |
 | G1 | end of wave A | pending | — | Requires `ws-infra`, `ws-opt`, and `U6a` in `prog/int`, `suite` green twice, pictures 0, no room >3% slower |
 | G2 | F1 merged | pending | — | Layout freeze; built `dist/` passes suite, pictures 0, requests & bytes reported |
 | G3 | F3 merged, U0 written | pending | — | Engine boundary frozen; page-layer spec (`U0`) & styling (`D6`) signed |
@@ -74,4 +74,11 @@ All 44 task cards from `docs/program-plan.md` §7.1:
 
 ## Notes
 
-- Initialized during Wave 0 (`P0`) on `prog/int`. Gate G0 verification results will be recorded here once `static`, `smoke`, `suite`, and `preview` complete.
+- **P0 / Gate G0 (2026-11-24):**
+  - `prog/int` bootstrapped from `explore/rolling-earth` (`6390b52ded91146778685eebd4c3224f82c9a914`) at `c37f311eff8d5bdf9708fa174b6e7eef0a76092c`, with workstream branches `prog/ws-infra`, `prog/ws-opt`, `prog/ws-found`, and `prog/ws-ui` pushed to both `origin` and `ci`.
+  - Local Python checks on `c37f311e`: `python3 tools/content.py` (4 posts, 10 projects, profile valid) and all 5 `tools/test_*.py` suites (25 + 48 + 21 + 23 + 24 = 141 tests OK).
+  - CI host checks on `prog/int` (`c37f311eff8d5bdf9708fa174b6e7eef0a76092c`):
+    - `ci static c37f311e PASS 13s /srv/arcadia/jobs/20261124-084437-c37f311e-static-61372`
+    - `ci smoke c37f311e PASS 28s /srv/arcadia/jobs/20261124-084457-c37f311e-smoke-61605`
+    - `ci suite c37f311e PASS 3029s /srv/arcadia/jobs/20261124-084547-c37f311e-suite-63755` (all 50 steps passed)
+  - Preview on port 8080 (`arcadia-preview@8080`): active and serving `HTTP/1.0 200 OK` (`prog/int` updated again after recording this gate).
