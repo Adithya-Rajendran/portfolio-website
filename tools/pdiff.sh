@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SNAP="${SNAP:-/tmp/detsnap}"
 A="${1:?usage: tools/pdiff.sh <nameA> <nameB>}"
 B="${2:?usage: tools/pdiff.sh <nameA> <nameB>}"
+[ -d "$SNAP/$A" ] || { echo "pdiff.sh: directory not found: $SNAP/$A" >&2; exit 2; }
+[ -d "$SNAP/$B" ] || { echo "pdiff.sh: directory not found: $SNAP/$B" >&2; exit 2; }
+SNAP="$(cd "$SNAP" && pwd)"
 mkdir -p "$SNAP/$B/heat"
 
 docker run --rm --ipc=host \

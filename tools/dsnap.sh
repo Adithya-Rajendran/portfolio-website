@@ -4,11 +4,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 P="${1:?usage: tools/dsnap.sh <prefix> name=url [...]}"; shift
 OUT="${OUT:-/tmp/snap}"
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 printf '%s\n' "$@" > "$OUT/$P.jobs"
 
 resolve_assets() {
   if [ -n "${ASSETS:-}" ]; then
     [ -d "$ASSETS" ] || { echo "dsnap.sh: ASSETS directory does not exist: $ASSETS" >&2; exit 1; }
+    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "dsnap.sh: ASSETS directory is empty: $ASSETS" >&2; exit 1; }
+    ASSETS="$(cd "$ASSETS" && pwd)"
     return 0
   fi
   if [ -d "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ] && [ -n "$(ls -A "$ROOT/public/assets" 2>/dev/null)" ]; then

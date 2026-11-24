@@ -5,10 +5,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${1:?usage: tools/dshot.sh <name> [engine] [w] [h] [mouseX] [mouseY] [hud] [query]}"
 OUT="${OUT:-/tmp/dshot}"
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 
 resolve_assets() {
   if [ -n "${ASSETS:-}" ]; then
     [ -d "$ASSETS" ] || { echo "dshot.sh: ASSETS directory does not exist: $ASSETS" >&2; exit 1; }
+    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "dshot.sh: ASSETS directory is empty: $ASSETS" >&2; exit 1; }
+    ASSETS="$(cd "$ASSETS" && pwd)"
     return 0
   fi
   if [ -d "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ] && [ -n "$(ls -A "$ROOT/public/assets" 2>/dev/null)" ]; then

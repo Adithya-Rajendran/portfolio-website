@@ -5,8 +5,17 @@
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+[ -n "${CI_HOME:-}" ] && CI_HOME="${CI_HOME%/}"
 OUT="${OUT:-${CI_JOB:+$CI_JOB/out}}"
 OUT="${OUT:-/tmp/arcadia-ci-out}"
+if [[ "$OUT" != /* ]]; then
+  mkdir -p "$OUT" && OUT="$(cd "$OUT" && pwd)"
+elif [ -d "$OUT" ]; then
+  OUT="$(cd "$OUT" && pwd)"
+fi
+if [ -n "${ASSETS:-}" ] && [ -d "$ASSETS" ]; then
+  ASSETS="$(cd "$ASSETS" && pwd)"
+fi
 IMG="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
 
 asset_key() {
@@ -16,6 +25,7 @@ asset_key() {
 assets() {
   if [ -n "${ASSETS:-}" ]; then
     [ -d "$ASSETS" ] || { echo "ci: ASSETS directory does not exist: $ASSETS" >&2; exit 3; }
+    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "ci: ASSETS directory is empty: $ASSETS" >&2; exit 3; }
     if [ -L "$ROOT/public/assets" ]; then rm -f "$ROOT/public/assets"; fi
     mkdir -p "$ROOT/public/assets"
     export ASSETS

@@ -6,10 +6,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${1:?usage: tools/detsnap.sh <name> [frames]}"
 O="${OUT:-/tmp/detsnap/$NAME}"
 mkdir -p "$O"
+O="$(cd "$O" && pwd)"
 
 resolve_assets() {
   if [ -n "${ASSETS:-}" ]; then
     [ -d "$ASSETS" ] || { echo "detsnap.sh: ASSETS directory does not exist: $ASSETS" >&2; exit 1; }
+    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "detsnap.sh: ASSETS directory is empty: $ASSETS" >&2; exit 1; }
+    ASSETS="$(cd "$ASSETS" && pwd)"
     return 0
   fi
   if [ -d "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ] && [ -n "$(ls -A "$ROOT/public/assets" 2>/dev/null)" ]; then

@@ -7,6 +7,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 resolve_assets() {
   if [ -n "${ASSETS:-}" ]; then
     [ -d "$ASSETS" ] || { echo "dbench.sh: ASSETS directory does not exist: $ASSETS" >&2; exit 1; }
+    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "dbench.sh: ASSETS directory is empty: $ASSETS" >&2; exit 1; }
+    ASSETS="$(cd "$ASSETS" && pwd)"
     return 0
   fi
   if [ -d "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ] && [ -n "$(ls -A "$ROOT/public/assets" 2>/dev/null)" ]; then

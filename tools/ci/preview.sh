@@ -8,6 +8,7 @@ cd "$ROOT"
 
 in_ci_preview=0
 if [ -n "${CI_HOME:-}" ]; then
+  CI_HOME="${CI_HOME%/}"
   case "$ROOT" in
     "$CI_HOME"/preview/*) in_ci_preview=1 ;;
   esac
