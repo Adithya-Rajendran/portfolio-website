@@ -148,36 +148,4 @@ export class Post {
   dispose() { this.scene.dispose(); this.bloom.forEach((t) => t.dispose()); }
 }
 
-/**
- * Dynamic resolution: keeps the frame rate up by shrinking the internal render size when frames run long, and
- * creeping back up when there is headroom. Increases back off exponentially after each failure so it settles.
- */
-export class Governor {
-  constructor({ min = 0.5, max = 1, target = 60, pinned = null } = {}) {
-    this.min = min; this.max = max; this.scale = pinned ?? max; this.pinned = pinned != null;
-    this.slow = 1000 / (target * 0.86); this.fast = 1000 / (target * 0.95);
-    this.cool = 2; this.backoff = 8; this.good = 0; this.rest(4000);
-  }
-  /** Ignore the next `ms` of frames: start-up and room changes stall on shader compiles and texture uploads. */
-  rest(ms) { this.warm = ms; this.acc = 0; this.n = 0; }
-  /** @returns true when the scale changed */
-  update(dtMs) {
-    if (this.pinned || dtMs > 250) return false;                       // ignore tab switches / hitches
-    if (this.warm > 0) { this.warm -= dtMs; return false; }
-    this.acc += dtMs; this.n++;
-    if (this.acc < 500) return false;
-    const avg = this.acc / this.n; this.acc = 0; this.n = 0;
-    this.cool = Math.max(0, this.cool - 0.5);
-    if (avg > this.slow && this.scale > this.min) {
-      this.scale = Math.max(this.min, this.scale * (avg > this.slow * 1.4 ? 0.8 : 0.9));
-      this.cool = this.backoff; this.backoff = Math.min(120, this.backoff * 2); this.good = 0;
-      return true;
-    }
-    if (avg < this.fast) {
-      this.good += 0.5;
-      if (this.good > 30) this.backoff = 8;                             // stable for a long time: forget old failures
-      if (this.cool === 0 && this.scale < this.max) { this.scale = Math.min(this.max, this.scale * 1.07); this.cool = 2; return true; }
-    }
-    return false;
-  }
-}
+export { Governor } from './governor.js';
