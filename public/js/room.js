@@ -35,11 +35,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
   // pixels are HDR-encoded and decoded in the shaders. Returns the uniform now; the texture drops into it when it arrives,
   // and once it is on the GPU the copy in RAM is let go.
-  ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').detectSupport(renderer);
+  ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
   const pending = []; let textureError;
   function bakeTex(name, aniso = 4, panorama = false) {
     const u = { value: null }, got = () => onProgress(++arrived / pending.length);
-    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { if (panorama) t.wrapS = THREE.RepeatWrapping; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; done(); }, undefined, (e) => { textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, {cause:e}); done(); })).then(got));
+    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { if (panorama) t.wrapS = THREE.RepeatWrapping; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; renderer.initTexture(t); done(); }, undefined, (e) => { textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, {cause:e}); done(); })).then(got));
     return u;
   }
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
@@ -562,6 +562,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
 
   let frames = 0;
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
+  { const was = renderer.getRenderTarget(); renderer.setRenderTarget(mirror.rt); renderer.compile(scene, camera); renderer.setRenderTarget(was); }      // the shaders start compiling while the textures are on their way
   await Promise.all(pending);
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
