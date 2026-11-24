@@ -10,6 +10,7 @@
 //   4. The internal resolution follows the frame rate (Governor).
 import * as THREE from 'three';
 import { Post, Governor } from './js/post.js';
+import { loadRoomMode, saveRoomMode } from './js/governor.js';
 import { Q, SKIP, V, num, uTime, uPx, uMirror, setDistanceScale } from './js/kit.js';
 import { loadRoom } from './js/room.js';
 import { reflectEye } from './js/reflections.js';
@@ -48,6 +49,37 @@ try {
 renderer.toneMapping = THREE.NoToneMapping;          // tone mapping happens once, in the final post pass
 renderer.info.autoReset = false;
 const gl = renderer.getContext(), FLOAT = !!gl.getExtension('EXT_color_buffer_float'), HDR_OK = FLOAT || !!gl.getExtension('EXT_color_buffer_half_float');
+const timerExt = gl.getExtension?.('EXT_disjoint_timer_query_webgl2') || null;
+const gpuPending = [];
+let gpuEpoch = 0, gpuStallFrames = 0, savedRoom = null;
+function safeStorage() { try { return globalThis.localStorage; } catch { return null; } }
+function resetGpuTimer() {
+  gpuEpoch++;
+  gpuStallFrames = 0;
+  while (gpuPending.length) {
+    const { q } = gpuPending.shift();
+    try { if (!gl.isContextLost()) gl.deleteQuery(q); } catch {}
+  }
+}
+function drainGpuTimes() {
+  if (!timerExt || !gpuPending.length || gl.isContextLost()) return null;
+  const samples = [];
+  let disjoint = null;
+  while (gpuPending.length) {
+    const head = gpuPending[0];
+    if (!gl.getQueryParameter(head.q, gl.QUERY_RESULT_AVAILABLE)) break;
+    gpuPending.shift();
+    if (disjoint === null) disjoint = !!gl.getParameter(timerExt.GPU_DISJOINT_EXT);
+    const ns = (!disjoint && head.epoch === gpuEpoch) ? gl.getQueryParameter(head.q, gl.QUERY_RESULT) : 0;
+    gl.deleteQuery(head.q);
+    if (!disjoint && head.epoch === gpuEpoch && typeof ns === 'number' && Number.isFinite(ns) && ns > 0) {
+      samples.push(ns / 1e6);
+    }
+  }
+  if (samples.length) gpuStallFrames = 0;
+  else if (gpuPending.length && ++gpuStallFrames > 90) resetGpuTimer();
+  return samples;
+}
 setDistanceScale(HDR_OK ? 1 : 0.01);
 const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3000), maxAniso = renderer.capabilities.getMaxAnisotropy();
 // the floor's mirror image: rendered here every frame, read by the floor material of whichever room is open
@@ -56,13 +88,15 @@ const mirror = { cam: new THREE.PerspectiveCamera(), vp: new THREE.Matrix4(), si
     minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, samples: 4, resolveDepthBuffer: false }) };     // MSAA: thin light strips must not alias in it
 const post = new Post(renderer, { hdr: HDR_OK, packed: FLOAT, msaa: 4, look: { contrast: num('contrast', 1.3), saturation: num('sat', 1.08),
   bloom: num('bloom', 0.05), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
-const gov = new Governor({ min: 0.5, max: 1, pinned: Q.has('scale') ? num('scale', 1) : null });
 let room = null, busy = false;
 
 // Quality tiers. 0: 4x MSAA on the scene and on the mirror image (cheap on discrete GPUs, ~45% of the frame on an
 // Intel HD 630). 1: no MSAA; edges are smoothed in the final pass (FXAA) and the mirror image is rendered a little
 // larger and read one mip level down instead. The governor drops to tier 1 before it cuts resolution hard.
 const REFL_SCALE = num('refl', 0.66), TIER_PINNED = Q.has('tier') || Q.has('msaa');
+const PINNED_TIER = Q.has('tier') ? (num('tier', 0) ? 1 : 0) : (num('msaa', 4) ? 0 : 1);
+const PINNED_SCALE = Q.has('scale') ? num('scale', 1) : null;
+const gov = new Governor({ min: 0.5, max: 1, pinned: PINNED_SCALE, tierPinned: TIER_PINNED, tier: PINNED_TIER, hasGpuTimer: !!timerExt });
 let tier = -1, reflScale = REFL_SCALE;
 function setTier(t) {
   if (t === tier) return; tier = t;
@@ -70,7 +104,7 @@ function setTier(t) {
   mirror.rt.samples = t ? 0 : 4; mirror.rt.dispose();
   reflScale = t ? Math.min(1, REFL_SCALE * 1.3) : REFL_SCALE; mirror.minLod.value = t ? 0.8 : 0;
 }
-setTier(Q.has('tier') ? num('tier', 0) : num('msaa', 4) ? 0 : 1);
+setTier(PINNED_TIER);
 function applyScale() {
   const W = canvas.width, H = canvas.height, s = gov.scale, tanHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const rw = Math.max(8, Math.round(W * s * reflScale)), rh = Math.max(8, Math.round(H * s * reflScale));
@@ -280,7 +314,13 @@ async function enter(id, push = true) {
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   if (room.turn) unturn = turning(room.turn);                                // a route map: the visitor's drags and sideways wheel turn it
   display.room(room.picks, content.rooms[id].hint);                           // the display learns what this room has: a pick with a cue, a hint of its own
-  fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
+  savedRoom = null;
+  const remembered = loadRoomMode(safeStorage(), id, { min: gov.min, max: gov.max });
+  const startTier = TIER_PINNED ? PINNED_TIER : (remembered ? remembered.tier : 0);
+  const startScale = PINNED_SCALE != null ? PINNED_SCALE : (remembered ? remembered.scale : gov.max);
+  gov.reset({ tier: startTier, scale: startScale, warm: 250 });
+  setTier(gov.tier);
+  fillHud(id); post.setExposure(room.exposure); resize(); resetGpuTimer();
   document.body.classList.toggle('bright', !!content.rooms[id].bright);      // a pale room says so (content.json "bright"): the page's words get more behind them (style.css)
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
   loader.classList.add('done'); hud.classList.remove('hidden'); busy = false;
@@ -357,6 +397,10 @@ addEventListener('popstate', () => {
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; pointer = null; display.pointing(e.pointerType); });     // a press: the lock goes
 addEventListener('pointerout', (e) => { if (!e.relatedTarget) pointer = null; });       // out of the window
 addEventListener('blur', () => { pointer = null; });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { resetGpuTimer(); gov.rest(500); }
+});
+canvas.addEventListener('webglcontextlost', () => { gpuPending.length = 0; gpuEpoch++; });
 addEventListener('pointermove', (e) => {
   if (!hand?.on) mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);      // turning the map: the parallax holds where it was
   display.pointing(e.pointerType); pointer = e.pointerType !== 'touch' && e.target === canvas ? { clientX: e.clientX, clientY: e.clientY } : null; aim = true;
@@ -410,17 +454,26 @@ $('#hud nav').addEventListener('click', (e) => {
 const clock = new THREE.Clock(), CALM = num('calm', 0.15), LIFT = 0.8; let drawn = 0, wasCalm = false, seen = null;     // seen: the focus as the route map last knew it
 function frame() {
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), 0.05), t = (uTime.value += dt), since = t - t0;
+  const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = (uTime.value += dt), since = t - t0;
   if (!room || plain()) return display.frame(null);     // nothing is drawn behind an article read as a page
   // While an article is read the room is a still backdrop, nearly dark behind the hologram's veil. It is redrawn only a
   // few times a second: the GPU is then free for the page, and the text scrolls smoothly even on a slow one.
   const calm = focus.f >= 1 && !!focus.pick?.calm?.();
   if (calm && t - drawn < CALM) return;
-  if (calm !== wasCalm) { wasCalm = calm; gov.rest(1500); }
+  if (calm !== wasCalm) { wasCalm = calm; resetGpuTimer(); gov.rest(600); }
   drawn = t;
-  if (!calm && gov.update(dt * 1000)) {
-    if (tier === 0 && !TIER_PINNED && gov.scale < 0.72) { setTier(1); gov.scale = 1; gov.cool = 6; }     // cheaper AA before lower resolution
+  const gpuSamples = !calm ? drainGpuTimes() : null;
+  if (!calm && gov.update(rawDt * 1000, gpuSamples)) {
+    setTier(gov.tier);
     applyScale();
+    resetGpuTimer();
+    if (!gov.scalePinned && !TIER_PINNED && room) {
+      saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale }, { min: gov.min, max: gov.max });
+      savedRoom = room.id;
+    }
+  } else if (!calm && room && savedRoom !== room.id && !gov.scalePinned && !TIER_PINNED && gov.warm <= 0 && gov.settledMs >= 2000) {
+    saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale }, { min: gov.min, max: gov.max });
+    savedRoom = room.id;
   }
   // The route map. A station that comes into focus some other way (a click, the tour, a link), or is read, has the map turn
   // it to the front; while the visitor turns the map with a station in focus they move along the line: the station that
@@ -452,7 +505,21 @@ function frame() {
   focus.cur.pos.copy(camera.position); focus.cur.tgt.copy(_look);
   camera.lookAt(_look); camera.updateMatrixWorld();      // now, not at the draw: what the room places by the camera in this frame (the reading's page of words) goes by this frame's view
 
-  room.update(t); draw(t);
+  room.update(t);
+  const measureGpu = !calm && !gov.allPinned && timerExt && gpuPending.length < 24 && !gl.isContextLost() && !gl.getQuery(timerExt.TIME_ELAPSED_EXT, gl.CURRENT_QUERY);
+  let gpuQuery = null;
+  if (measureGpu) {
+    gpuQuery = gl.createQuery();
+    if (gpuQuery) gl.beginQuery(timerExt.TIME_ELAPSED_EXT, gpuQuery);
+  }
+  try {
+    draw(t);
+  } finally {
+    if (gpuQuery && !gl.isContextLost()) {
+      gl.endQuery(timerExt.TIME_ELAPSED_EXT);
+      gpuPending.push({ q: gpuQuery, epoch: gpuEpoch });
+    }
+  }
   // the lock: on the pick the pointer rests on, looked for again as the view moves under a still pointer
   if (!pointer) over = null; else if (aim || t - aimed > 0.15) { over = pickHit(pointer)?.pick ?? null; aim = false; aimed = t; }
   // the cue: only in the wide view at rest, once the cover has lifted; not during the opening move, a glide, or with anything in focus
@@ -489,7 +556,7 @@ if (plain()) {
 }
 // Safety net: if nothing reached the canvas (seen with multisampled float targets on some drivers), drop MSAA.
 camera.position.copy(room.CAM); camera.lookAt(room.TGT); camera.updateMatrixWorld(); room.update(0); draw(0);
-if (tier === 0 && brightness(8) < 2) { setTier(1); applyScale(); }
+if (tier === 0 && !TIER_PINNED && brightness(8) < 2) { setTier(1); gov.tier = 1; applyScale(); }
 if (Q.has('focus')) setTimeout(() => setFocus(room.picks[num('focus', 0)]), 300);
 frame();
 window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, ready: () => intro, display: { state: display.state },
