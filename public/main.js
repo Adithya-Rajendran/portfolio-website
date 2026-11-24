@@ -318,7 +318,7 @@ async function enter(id, push = true) {
   const remembered = loadRoomMode(safeStorage(), id, { min: gov.min, max: gov.max });
   const startTier = TIER_PINNED ? PINNED_TIER : (remembered ? remembered.tier : 0);
   const startScale = PINNED_SCALE != null ? PINNED_SCALE : (remembered ? remembered.scale : gov.max);
-  gov.reset({ tier: startTier, scale: startScale, warm: 250 });
+  gov.reset({ tier: startTier, scale: startScale, warm: 600 });
   setTier(gov.tier);
   fillHud(id); post.setExposure(room.exposure); resize(); resetGpuTimer();
   document.body.classList.toggle('bright', !!content.rooms[id].bright);      // a pale room says so (content.json "bright"): the page's words get more behind them (style.css)

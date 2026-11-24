@@ -183,12 +183,12 @@ export class Governor {
     this._resetWindow();
 
     if (dtAvg > this.slow) this._slowDtStreak += 1;
-    else this._slowDtStreak = Math.max(0, this._slowDtStreak - 0.5);
+    else this._slowDtStreak = Math.max(0, this._slowDtStreak - winMs / 2500);
 
-    // Isolated 150-1000 ms hitch affects a single window; sustained overload or repeated burst pauses persist >= 2 windows.
-    // Once settled (>= 3s), widen GPU hysteresis and require 2 consecutive slow windows to avoid knife-edge jitter flips.
-    const settled = this.settledMs >= 3000;
-    const sustainedDtOver = (hadHitch || settled) ? this._slowDtStreak >= 2 : dtAvg > this.slow;
+    // Isolated 150-1000 ms hitch affects a single window; sustained overload or repeated burst pauses persist >= 1.5 streak.
+    // Once settled (>= 4.9s post-warm, ~5.5s after cover lift), widen GPU hysteresis and require 2 consecutive slow windows.
+    const settled = this.settledMs >= 4900;
+    const sustainedDtOver = (hadHitch || settled) ? this._slowDtStreak >= 1.5 : dtAvg > this.slow;
     const gpuLimit = settled ? this.gpuHoldSlow : this.gpuSlow;
     if (gpuMed !== null && gpuMed > gpuLimit) this._slowGpuStreak++;
     else this._slowGpuStreak = 0;
@@ -198,15 +198,20 @@ export class Governor {
     if (overloaded) {
       const effectiveMs = gpuOver ? gpuMed : dtAvg;
       const aimMs = gpuOver ? this.gpuAim : this.dtAim;
-      const factor = clamp(Math.sqrt(aimMs / effectiveMs), 0.45, 0.92);
+      const fixedMs = this.frameBudget * 0.25;
+      const factor = clamp(Math.sqrt(Math.max(0.1, (aimMs - fixedMs) / Math.max(1, effectiveMs - fixedMs))), 0.45, 0.88);
       let nextScale = Math.max(this.min, this.scale * factor);
-      if (nextScale - this.min < 0.04) nextScale = this.min;
+      if (nextScale - this.min < 0.05) nextScale = this.min;
       nextScale = Math.round(nextScale * 1000) / 1000;
 
       let changed = false;
+      let droppedTierOnly = false;
       if (this.tier === 0 && !this.tierPinned && (nextScale < 0.85 || this.scalePinned)) {
         this.tier = 1;
-        if (!this.scalePinned) this.scale = this.max;
+        if (!this.scalePinned) {
+          this.scale = this.max;
+          droppedTierOnly = true;
+        }
         changed = true;
       } else if (!this.scalePinned && nextScale < this.scale - 1e-4) {
         this.scale = nextScale;
@@ -215,12 +220,11 @@ export class Governor {
 
       if (changed) {
         if (this._sinceUpgrade < 60000) this.backoffMs = Math.min(this.maxBackoffMs, this.backoffMs * 2);
-        this.downgradeCool = 100;
+        this.downgradeCool = 50;
         this.upgradeCool = this.backoffMs;
         this._goodMs = 0;
-        this._slowDtStreak = 0;
+        this._slowDtStreak = droppedTierOnly && !gpuOver ? 1 : 0;
         this._slowGpuStreak = 0;
-        this.settledMs = 0;
         return true;
       }
       return false;
@@ -241,7 +245,6 @@ export class Governor {
           this.scale = nextScale;
           this.upgradeCool = 2000;
           this._sinceUpgrade = 0;
-          this.settledMs = 0;
           return true;
         }
       }

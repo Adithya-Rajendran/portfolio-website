@@ -275,3 +275,92 @@ test('D10 invariant: Governor only tracks and mutates tier and scale (never refl
     assert.equal(gov[forbidden], undefined);
   }
 });
+
+test('delayed-load about-like pullback trace (3s cheap close -> heavy hero) settles <= 6s with 0 changes in [6s, 26s]', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  let t = 0;
+  let lastChangeT = 0;
+  const changes = [];
+
+  while (t < 27000) {
+    // 1.2s hold on close, 5.5s smootherstep pullback to hero (ending at t = 6700 ms).
+    const u = Math.max(0, Math.min(1, (t - 1200) / 5500));
+    const view = 1 - u;
+    const e = view * view * view * (view * (view * 6 - 15) + 10);
+    const closeGpu = gov.tier === 0 ? 11.2 : 10.6;
+    const heroGpu = gov.tier === 0 ? 30.8 : 25.4;
+    const heroScaled = 8.4 + (heroGpu - 8.4) * (gov.scale * gov.scale);
+    const gpu = closeGpu * e + heroScaled * (1 - e);
+    const dtMs = Math.max(16.67, Math.ceil(gpu / 16.67) * 16.67);
+    t += dtMs;
+    if (gov.update(dtMs, gpu)) {
+      lastChangeT = t;
+      changes.push({ t, tier: gov.tier, scale: gov.scale, gpu });
+    }
+  }
+
+  assert.ok(changes.length > 0, 'expected adaptation during delayed pullback');
+  assert.ok(lastChangeT <= 6000, `delayed-load settled at ${lastChangeT} ms (> 6000 ms)`);
+  const changesInHold = changes.filter((c) => c.t > 6000 && c.t <= 26000);
+  assert.equal(changesInHold.length, 0, `changed in [6s, 26s]: ${JSON.stringify(changesInHold)}`);
+});
+
+test('comms-like dt-fallback periodic queue-stall trace converges <= 6s with 0 changes in [6s, 26s]', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: false });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  let t = 0;
+  let lastChangeT = 0;
+  const changes = [];
+  let sinceStall = 0;
+
+  while (t < 27000) {
+    // Before 2.5s (or once scale < 0.8), 60Hz vsync holds steady at 16.67ms.
+    // While unadapted after 2.5s, GPU queue absorbs overrun and stalls ~220ms every ~850ms.
+    let dtMs = 16.67;
+    const overloaded = t >= 2500 && (gov.tier === 0 || gov.scale >= 0.8);
+    if (overloaded) {
+      sinceStall += dtMs;
+      if (sinceStall >= 850) {
+        dtMs = 225;
+        sinceStall = 0;
+      }
+    } else {
+      sinceStall = 0;
+    }
+    t += dtMs;
+    if (gov.update(dtMs, null)) {
+      lastChangeT = t;
+      changes.push({ t, tier: gov.tier, scale: gov.scale });
+    }
+  }
+
+  assert.ok(changes.length >= 2, `expected tier and scale adaptation, got ${JSON.stringify(changes)}`);
+  assert.ok(lastChangeT <= 6000, `comms dt fallback settled at ${lastChangeT} ms (> 6000 ms)`);
+  assert.equal(changes.filter((c) => c.t > 6000 && c.t <= 26000).length, 0);
+  assert.equal(gov.tier, 1);
+  assert.ok(gov.scale < 0.8, `expected scale < 0.8, got ${gov.scale}`);
+});
+
+test('settled mode does not reset settledMs or cascade on 14.8ms post-downgrade load', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 1, scale: 0.85, warm: 0 });
+  // Advance past settledMs >= 4900 with steady 12ms frames.
+  for (let i = 0; i < 360; i++) assert.equal(gov.update(16.67, 12), false);
+  assert.ok(gov.settledMs >= 4900);
+
+  // Two consecutive windows > gpuHoldSlow (15.67ms) trigger one downgrade.
+  let changes = 0;
+  for (let i = 0; i < 45; i++) {
+    if (gov.update(16.67, 15.8)) changes++;
+  }
+  assert.equal(changes, 1);
+  assert.ok(gov.settledMs >= 4900, 'settledMs must remain monotonic across mode adjustments');
+
+  // Subsequent 14.8ms load (> gpuSlow=13.83, < gpuHoldSlow=15.67) must NOT cascade down to floor.
+  let postChanges = 0;
+  for (let i = 0; i < 1200; i++) {
+    if (gov.update(16.67, 14.8)) postChanges++;
+  }
+  assert.equal(postChanges, 0, 'settled hysteresis must remain active after a downgrade');
+});
