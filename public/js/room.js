@@ -107,9 +107,68 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     uLiveR: { value: num('liver', 2.6) }, uLiveLod: { value: 0 } };
   // The lamps' own highlights (their light is in the bake; a lamp itself is invisible to the probes).
   const LAMPS = LIVE && !SKIP.has('lamps') ? (info.lights || []).slice(0, 16) : [];
-  const lampU = LAMPS.length ? { uLP: { value: LAMPS.map((l) => B(l.pos)) }, uLI: { value: LAMPS.map((l) => V(...l.intensity)) },
-    uLD: { value: LAMPS.map((l) => (l.dir ? B(l.dir) : V())) }, uLS: { value: LAMPS.map((l) => V(l.radius, l.dir ? l.cos : -2, l.dir ? l.smooth : 0)) } } : {};
-  const livePars = LIVE && probe ? liveSpecPars({ probes: probe.probes?.length || 1, sky: !!skyU, live: !!liveU, lights: LAMPS.length }) : '';
+  const LAMP_DATA = LAMPS.map((l) => ({ raw: l, pos: B(l.pos), dir: l.dir ? B(l.dir).normalize() : null, cos: l.dir ? l.cos : -2 }));
+  const makeLampU = (lamps) => (lamps.length ? {
+    uLP: { value: lamps.map((l) => B(l.pos)) }, uLI: { value: lamps.map((l) => V(...l.intensity)) },
+    uLD: { value: lamps.map((l) => (l.dir ? B(l.dir) : V())) },
+    uLS: { value: lamps.map((l) => V(l.radius, l.dir ? l.cos : -2, l.dir ? l.smooth : 0)) },
+  } : {});
+  const liveParsCache = new Map();
+  const makeLivePars = (lamps) => {
+    if (!LIVE || !probe) return '';
+    const n = lamps.length;
+    if (!liveParsCache.has(n)) liveParsCache.set(n, liveSpecPars({ probes: probe.probes?.length || 1, sky: !!skyU, live: !!liveU, lights: n }));
+    return liveParsCache.get(n);
+  };
+  const _box = new THREE.Box3();
+  function exactMaxCosAABB(lp, ld, lo, hi) {
+    const sx0 = lo.x - lp.x, sx1 = hi.x - lp.x;
+    const sy0 = lo.y - lp.y, sy1 = hi.y - lp.y;
+    const sz0 = lo.z - lp.z, sz1 = hi.z - lp.z;
+    if (sx0 <= 0 && 0 <= sx1 && sy0 <= 0 && 0 <= sy1 && sz0 <= 0 && 0 <= sz1) return 1;
+    const maxDot = (ld.x > 0 ? ld.x * sx1 : ld.x * sx0) + (ld.y > 0 ? ld.y * sy1 : ld.y * sy0) + (ld.z > 0 ? ld.z * sz1 : ld.z * sz0);
+    if (maxDot <= 0) return -1;
+    let t0 = 0, t1 = Infinity;
+    const slab = (s0, s1, d) => {
+      if (Math.abs(d) < 1e-12) return s0 <= 0 && 0 <= s1;
+      const a = s0 / d, b = s1 / d;
+      t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+      return t0 <= t1;
+    };
+    if (slab(sx0, sx1, ld.x) && slab(sy0, sy1, ld.y) && slab(sz0, sz1, ld.z) && t1 > 0) return 1;
+    let best = -1;
+    const test = (x, y, z) => { const n = Math.hypot(x, y, z); best = Math.max(best, n > 0 ? (x * ld.x + y * ld.y + z * ld.z) / n : 1); };
+    for (const x of [sx0, sx1]) for (const y of [sy0, sy1]) for (const z of [sz0, sz1]) test(x, y, z);
+    const edge = (c1, d1, c2, d2, k0, k1, dk, fn) => {
+      const A = d1 * c1 + d2 * c2;
+      if (A > 1e-12) { const t = dk * (c1 * c1 + c2 * c2) / A; if (t > k0 && t < k1) fn(t); }
+    };
+    for (const y of [sy0, sy1]) for (const z of [sz0, sz1]) edge(y, ld.y, z, ld.z, sx0, sx1, ld.x, (x) => test(x, y, z));
+    for (const x of [sx0, sx1]) for (const z of [sz0, sz1]) edge(x, ld.x, z, ld.z, sy0, sy1, ld.y, (y) => test(x, y, z));
+    for (const x of [sx0, sx1]) for (const y of [sy0, sy1]) edge(x, ld.x, y, ld.y, sz0, sz1, ld.z, (z) => test(x, y, z));
+    const face0 = (a0, a1, da, b0, b1, db) => {
+      const l2 = Math.hypot(da, db);
+      if (l2 < 1e-12) return;
+      let u0 = 0, u1 = Infinity;
+      const s = (v0, v1, d) => { if (Math.abs(d) < 1e-12) return v0 <= 0 && 0 <= v1; const p = v0 / d, q = v1 / d; u0 = Math.max(u0, Math.min(p, q)); u1 = Math.min(u1, Math.max(p, q)); return u0 <= u1; };
+      if (s(a0, a1, da) && s(b0, b1, db) && u1 > 0) best = Math.max(best, l2);
+    };
+    if (sx0 === 0 || sx1 === 0) face0(sy0, sy1, ld.y, sz0, sz1, ld.z);
+    if (sy0 === 0 || sy1 === 0) face0(sx0, sx1, ld.x, sz0, sz1, ld.z);
+    if (sz0 === 0 || sz1 === 0) face0(sx0, sx1, ld.x, sy0, sy1, ld.y);
+    return best;
+  }
+  function lampsForMesh(mesh, isFloor) {
+    if (!LAMP_DATA.length) return [];
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+    _box.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+    const lo = _box.min, hi = _box.max, out = [];
+    for (const l of LAMP_DATA) {
+      if (isFloor && lo.y === hi.y && l.pos.y <= lo.y) continue;
+      if (!l.dir || l.cos <= 0 || exactMaxCosAABB(l.pos, l.dir, lo, hi) >= l.cos - 1e-4) out.push(l.raw);
+    }
+    return out;
+  }
   const visibility = windowShadow(shadowTexel,SH);
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
       ${into} += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};
@@ -124,7 +183,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       ${polished.has(grp) ? 'vFinish = color;' : ''} vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }` : VERT);
   const PARS = `uniform sampler2D map, tAlb, tShadow; uniform highp sampler2DArray lc, sk; uniform vec3 uChand, uSunDir, uSunE, uSky; uniform mat4 uSunVP; uniform float uMirror;
     varying vec2 vUv; varying vec3 vW, vN; ${DEC} ${visibility}`;
-  const bakedMat = (map, grp, gain = 1) => (finished.has(grp) ? liveMat(map, grp, gain) : new THREE.ShaderMaterial({
+  const bakedMat = (map, grp, gain = 1, lamps = LAMPS) => (finished.has(grp) ? liveMat(map, grp, gain, lamps) : new THREE.ShaderMaterial({
     uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...(polished.has(grp) ? {...probeU,...chart?.uniforms} : {}) },
     side: THREE.DoubleSide, vertexColors: polished.has(grp), vertexShader: vert(grp),
     fragmentShader: `${PARS} uniform float uGain; ${polished.has(grp) ? probePars + (chart ? chartPars : '') : ''}
@@ -138,14 +197,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // by the ratio of their reflectances, before their reflections are added for this eye.
   const LUM = 'vec3(.2126,.7152,.0722)';
   const FINISH_VIEW = num('finishview', 0);         // QA: 1 roughness, 2 occlusion, 3 lamp visibility, 4 reflectance scale, 5 coat, 6 diffuse kept, 7 window sun, 8 normal
-  const liveMat = (map, grp, gain) => new THREE.ShaderMaterial({
-    uniforms: { map, tFin: bakeTex(`${grp}_f`, 2), uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...probeU, ...skyU, ...liveU, ...lampU, ...chart?.uniforms },
+  const liveMat = (map, grp, gain, lamps = LAMPS) => new THREE.ShaderMaterial({
+    uniforms: { map, tFin: bakeTex(`${grp}_f`, 2), uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...probeU, ...skyU, ...liveU, ...makeLampU(lamps), ...chart?.uniforms },
     side: THREE.DoubleSide, vertexColors: true,
     vertexShader: `attribute vec2 uv1; varying vec2 vUv, vCoat; varying vec3 vW, vN; varying vec4 vSpec;
       void main(){ vUv = uv; vCoat = uv1; vSpec = color; vN = (vec4(normalMatrix*normal,0.)*viewMatrix).xyz;
         vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
     fragmentShader: `${PARS} uniform float uGain; uniform sampler2D tFin; varying vec2 vCoat; varying vec4 vSpec;
-      ${livePars} ${chart ? chartParsLive : ''}
+      ${makeLivePars(lamps)} ${chart ? chartParsLive : ''}
       void main(){
         vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')}
         ${LIT.has(grp) ? `c += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};` : ''}
@@ -163,14 +222,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         const float ENV = ${num('env', 1).toFixed(3)};    // QA: ?env=0 drops the room/sky/live environment
         Env env = envSetup(vW, R);
         vec3 spec = envLobe(env, vW, R, rough)*E*specOcc(fin.g, nv, rough)*ENV;
-        ${LAMPS.length ? 'spec += lampLobe(vW, N, V, F0, rough)*fin.b;' : ''}
+        ${lamps.length ? 'spec += lampLobe(vW, N, V, F0, rough)*fin.b;' : ''}
         ${chart ? 'spec += chartLive(vW, N, V, E, rough);' : ''}
         ${LIT.has(grp) ? `float ndl = dot(N, uSunDir), open = windowVisibility(vW, N, ndl);
         if (open > 0.) { vec4 a = texture2D(tAlb, vUv); c += a.rgb*a.rgb*keep*uSunE*(ndl*open);
           spec += ggx(N, V, uSunDir, F0, max(rough*rough, .002))*uSunE*(3.14159265*open); }` : 'float open = 0.;'}
         if (coatW > .005) {                                 // a clear coat: a sharp second lobe over all of that
           spec = spec*(1. - Ec) + envLobe(env, vW, R, coatR)*Ec*specOcc(fin.g, nv, coatR)*ENV;
-          ${LAMPS.length ? 'spec += lampLobe(vW, N, V, vec3(.04), coatR)*(coatW*fin.b);' : ''}
+          ${lamps.length ? 'spec += lampLobe(vW, N, V, vec3(.04), coatR)*(coatW*fin.b);' : ''}
           ${LIT.has(grp) ? 'if (open > 0.) spec += ggx(N, V, uSunDir, vec3(.04), max(coatR*coatR, .002))*uSunE*(3.14159265*open*coatW);' : ''}
         }
         gl_FragColor = vec4((c + spec*uSpecGain)*uGain, 1.0);
@@ -178,14 +237,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   });
   // ---- polished floor: baked diffuse light + the live planar reflection that main.js renders into mirror.rt
   const F0 = ((info.floor.ior - 1) / (info.floor.ior + 1)) ** 2, ROUGH = (info.floor.rough[0] + info.floor.rough[1]) / 2;
-  const floorMat = (map, grp) => new THREE.ShaderMaterial({
+  const floorMat = (map, grp, lamps = LAMPS) => new THREE.ShaderMaterial({
     uniforms: { map, tRefl: { value: mirror.rt.texture }, uMirrorVP: { value: mirror.vp }, uSize: { value: mirror.size }, uPxR: mirror.pxPerRad,
       uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uFloorRefl: {value:num('floorrefl',1)}, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp),
-      ...(LIVE ? { ...probeU, ...skyU, ...liveU, ...lampU } : {}) },
+      ...(LIVE ? { ...probeU, ...skyU, ...liveU, ...makeLampU(lamps) } : {}) },
     vertexShader: vert(grp),
     fragmentShader: `${PARS}
       uniform sampler2D tRefl; uniform mat4 uMirrorVP; uniform vec2 uSize; uniform float uPxR, uAlpha, uTile, uF0, uMinLod, uFloorRefl;
-      ${LIVE ? livePars : ''}
+      ${LIVE ? makeLivePars(lamps) : ''}
       void main(){
         vec3 diffuse = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'diffuse')} ${litGLSL(grp, 'diffuse')}
         vec3 V = normalize(cameraPosition - vW);
@@ -226,14 +285,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
             float Fs = uF0 + (1. - uF0)*pow(1. - clamp(dot(V, H), 0., 1.), 5.);
             gl_FragColor.rgb += uSunE*(Fs*a2*vis/(d*d)*ndl*(a*a/(aw*aw))*open*uFloorRefl*(1. - 0.9*joint));
           } }` : ''}
-        ${LIVE && LAMPS.length ? 'gl_FragColor.rgb += lampLobe(vW, vec3(0., 1., 0.), V, vec3(uF0), sqrt(uAlpha))*uFloorRefl*(1. - 0.9*joint);   // lamps have no geometry to mirror' : ''}
+        ${LIVE && lamps.length ? 'gl_FragColor.rgb += lampLobe(vW, vec3(0., 1., 0.), V, vec3(uF0), sqrt(uAlpha))*uFloorRefl*(1. - 0.9*joint);   // lamps have no geometry to mirror' : ''}
       }`,
   });
   // Frameless glass balustrade. Additive: what glass adds to the view is reflection, strongest at grazing angles,
   // plus the green-white glint of its polished edges (top edge and the joints between 2 m panels).
   const glassMat = LIVE ? new THREE.ShaderMaterial({
-    ...GLOW, uniforms: { ...probeU, ...skyU, ...liveU, ...lampU, uMirror }, side: THREE.DoubleSide, vertexShader: VERT,
-    fragmentShader: `varying vec3 vW; varying vec2 vUv; uniform float uMirror; ${livePars}
+    ...GLOW, uniforms: { ...probeU, ...skyU, ...liveU, uMirror }, side: THREE.DoubleSide, vertexShader: VERT,
+    fragmentShader: `varying vec3 vW; varying vec2 vUv; uniform float uMirror; ${makeLivePars([])}
       void main(){
         vec3 v = normalize(cameraPosition - vW), n = vec3(v.x < 0. ? -1. : 1., 0., 0.);   // the panes face +-X
         vec2 ab = envAB(.065, clamp(abs(v.x), 1e-3, 1.));
@@ -268,12 +327,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const screens = createScreens(text.screens, renderer, Math.min(8, maxAniso), num('screens', 0.9));
   const screenMeshes = [], movers = [], pivots = {}, SPIN = info.chand?.spin || {};
   scene.add(gltf.scene);
+  gltf.scene.updateMatrixWorld(true);
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
     const u = o.userData = { ...o.parent.userData, ...o.userData }          // tools/pack.py leaves each mesh in a child of its named node;
     if (polished.has(u.grp) && o.geometry.getAttribute('color')?.itemSize !== 4) throw new Error(`${id}/${u.grp}: missing packed specular colour/roughness`);
-    if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp); floors.push(o); }
-    else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp);
+    if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp, lampsForMesh(o, true)); floors.push(o); }
+    else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp, 1, lampsForMesh(o, false));
     else if (u.em === 'static') o.material = stripMat;
     else if (u.em) {                                    // the orrery's lamps, as bright as the strips may be (bake.py EM_RANGE)
       const { color: c, strength } = info.em[u.em], k = Math.min(strength, info.em_range || 8);
