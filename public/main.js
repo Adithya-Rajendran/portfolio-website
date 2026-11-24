@@ -16,6 +16,7 @@ import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
 import { loadSite, furnish } from './js/site.js';
 import { createDisplay } from './js/hud.js';
+import { TURN } from './js/routemap.js';
 
 const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
@@ -148,12 +149,14 @@ let view = 1, viewTarget = 1, navTouched = false, intro = 0, t0 = 0;   // view: 
 // room's own camera. Doors are picks too: walking up to one leads through it into the next room.
 const focus = { pick: null, to: null, f: 1, from: { pos: V(), tgt: V() }, cur: { pos: V(), tgt: V() }, dest: V() };
 let tour = null, leaving = null;
-// The visitor's display (js/hud.js): the lock on what the pointer rests on, the bar's caption, the hint.
-const display = createDisplay({ camera, words: content.display, gliding: () => focus.f < 1 });
+// The visitor's display (js/hud.js): the lock on what the pointer rests on, the cue on what a room wants found, the bar's caption, the hint.
+const display = createDisplay({ camera, words: content.display, gliding: () => focus.f < 1, choose: (pick) => { if (room && !busy && !plain()) setFocus(pick); } });
 let pointer = null, over = null, aim = false, aimed = 0;     // where the mouse or pen is over the room (null: touch, gone, pressed, or over the display's own controls); the pick under it
 function tourOrder() {                                 // a sweep across the room from left to right as seen from the room camera
   const box = new THREE.Box3(), c = V(), azimuth = (p) => { box.setFromObject(p.mesh).getCenter(c); return Math.atan2(c.x - room.CAM.x, room.CAM.z - c.z); };
-  return (tour ??= room.picks.filter((p) => !p.aside).map((p) => [azimuth(p), p]).sort((a, b) => a[0] - b[0]).map((a) => a[1]));     // aside: reached from another pick, not on the tour
+  // ... after the route map's stations, which move as it turns: those in the order of the line, oldest first
+  return (tour ??= [...room.picks.filter((p) => p.station != null).sort((a, b) => a.station - b.station),
+    ...room.picks.filter((p) => !p.aside && p.station == null).map((p) => [azimuth(p), p]).sort((a, b) => a[0] - b[0]).map((a) => a[1])]);     // aside: reached from another pick, not on the tour
 }
 function setFocus(pick = null) {
   if (pick === focus.pick) return;
@@ -196,7 +199,8 @@ function fillHud(id) {
   const r = content.rooms[id];
   document.title = r.title; $('.kicker').textContent = r.kicker; $('.headline').innerHTML = r.headline.join('<br>');
   // Words from content.json and, through js/site.js, from the profile: all of it is text. Only the places for live values become elements.
-  $('.sub').innerHTML = r.sub.map(esc).join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
+  const sub = $('.sub'); sub.hidden = !r.sub.length;                 // no lines: the element is gone, margin and all
+  sub.innerHTML = r.sub.map(esc).join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
   $('.hero .cta')?.remove();
   if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${esc(r.cta)}</button>`);   // the room's call to action: its 'cta' pick
   $('#hud nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
@@ -267,12 +271,15 @@ async function enter(id, push = true) {
   if (busy || !isRoom(id) || id === room?.id) return;
   busy = true; setFocus(null); intro = 0;
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
-  if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
+  if (room) { await new Promise((r) => setTimeout(r, 500)); unturn?.(); unturn = null; room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
   room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, clearance, words: content.reader, display: content.display,
     onShown: () => { if (room && !busy) syncUrl(); }, want: route().read?.split('/')[2] });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
+  if (room.turn) unturn = turning(room.turn);                                // a route map: the visitor's drags and sideways wheel turn it
+  display.room(room.picks, content.rooms[id].hint);                           // the display learns what this room has: a pick with a cue, a hint of its own
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
+  document.body.classList.toggle('bright', !!content.rooms[id].bright);      // a pale room says so (content.json "bright"): the page's words get more behind them (style.css)
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
   loader.classList.add('done'); hud.classList.remove('hidden'); busy = false;
   if (roomInUrl() !== id) enter(roomInUrl(), false);                         // Back / Forward was pressed while this was loading
@@ -281,6 +288,60 @@ async function enter(id, push = true) {
 
 // ---------------------------------------------------------------- input
 let downAt = null, hovered = 0;
+// ---- turning the route map (the Navigation room): a drag sideways on the room, or a sideways wheel (js/routemap.js holds
+// the feel). Only in the room itself: what begins on the reader, the nav, the bar or a button is theirs. Not while something
+// is read, during a room change, or on a page read as a page. Bound for the room that has a map, and let go with it.
+const CLICK = 6;                                        // px: a press that moves less is a click
+let hand = null, swept = false, unturn = null;          // hand: the press in progress on the room ({ on: true } once it turns the map); swept: the last press turned it
+const turnable = () => !!room?.turn && !busy && !leaving && !plain() && !focus.pick?.reads;
+function turning(turn) {
+  const ac = new AbortController(), on = (type, fn, o) => canvas.addEventListener(type, fn, { ...o, signal: ac.signal });
+  let idle = 0, banked = 0;
+  canvas.classList.add('turns');                        // touch: a pan across is the map's, not the browser's (style.css)
+  on('pointerdown', (e) => {
+    if (hand) letGo(e);                                                        // a second finger (a pinch): the first lets go
+    swept = false;
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button) || !turnable()) return;
+    const held = swept = turn.moving() && (turn.grab(), true);               // a hand on a coasting map stops it, and that is all the press does
+    hand = { id: e.pointerId, x: e.clientX, y: e.clientY, on: false, held, a0: turn.angle(), per: turn.grip(camera), trail: [] };
+  });
+  on('pointermove', (e) => {
+    if (!hand || e.pointerId !== hand.id) return;
+    if (!e.buttons || !turnable()) return letGo(e);                             // (no button down: it was let go somewhere this did not hear of)
+    const dx = e.clientX - hand.x, dy = e.clientY - hand.y;
+    if (!hand.on) {
+      if (Math.hypot(dx, dy) <= CLICK) return;
+      if (Math.abs(dx) < Math.abs(dy) * TURN.SLOPE) return letGo(e);           // mostly up or down: not a turn
+      hand.on = swept = true; const a = turn.angle();                        // from the press: what was under the pointer stays under it
+      hand.a0 = a === hand.a0 ? turn.grab() : turn.grab() - dx / hand.per;   // (a map still easing since the press: from where it is now)
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    }
+    turn.drag(hand.a0 + dx / hand.per);
+    const tr = hand.trail; tr.push([e.timeStamp, turn.angle()]); while (tr.length > 2 && e.timeStamp - tr[1][0] > TURN.FLING * 1000) tr.shift();
+  });
+  /** The hand comes off: the map carries on at the speed of the drag's last stretch (none if the pointer had stopped). */
+  function letGo(e) {
+    const h = hand; hand = null; if (!h?.on && !h?.held) return;
+    const tr = h.trail, a = tr[0], b = tr[tr.length - 1], span = b && (b[0] - a[0]) / 1000;
+    turn.release(b && span > 0.008 && e.timeStamp - b[0] < TURN.FLING * 1000 ? (b[1] - a[1]) / span : 0);
+  }
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) on(type, (e) => { if (hand && e.pointerId === hand.id) letGo(e); });
+  on('wheel', (e) => {
+    if (plain()) return;
+    const d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey || TURN.VERTICAL ? e.deltaY : 0) * (e.deltaMode === 1 ? TURN.LINE : e.deltaMode === 2 ? innerWidth : 1);
+    if (!d) return;                                                           // a plain vertical wheel: as before
+    e.preventDefault();                                                       // a sideways swipe over the room is the map's, not "back" in the browser's history
+    if (!turnable() || hand?.on) return;
+    clearTimeout(idle);
+    if (still) {                                                              // reduced motion: station by station
+      banked += d; const n = Math.trunc(banked / TURN.STEP); banked -= n * TURN.STEP; if (n) turn.step(Math.sign(n));
+      idle = setTimeout(() => { banked = 0; }, TURN.IDLE); return;
+    }
+    turn.drag(turn.angle() - d * TURN.WHEEL);                                // scrolling right: the line moves left, the newer stations come
+    idle = setTimeout(() => { if (!hand?.on) turn.release(0, -Math.sign(d) * TURN.LEAN); }, TURN.IDLE);
+  }, { passive: false });
+  return () => { ac.abort(); clearTimeout(idle); canvas.classList.remove('turns'); hand = null; swept = false; seen = null; };
+}
 addEventListener('resize', resize);
 addEventListener('popstate', () => {
   const r = route();
@@ -295,7 +356,7 @@ addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; pointe
 addEventListener('pointerout', (e) => { if (!e.relatedTarget) pointer = null; });       // out of the window
 addEventListener('blur', () => { pointer = null; });
 addEventListener('pointermove', (e) => {
-  mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
+  if (!hand?.on) mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);      // turning the map: the parallax holds where it was
   display.pointing(e.pointerType); pointer = e.pointerType !== 'touch' && e.target === canvas ? { clientX: e.clientX, clientY: e.clientY } : null; aim = true;
   if (room && !plain() && e.timeStamp - hovered > 60) {
     hovered = e.timeStamp; const ph = pickHit(e);
@@ -303,11 +364,11 @@ addEventListener('pointermove', (e) => {
   }
 });
 addEventListener('deviceorientation', (e) => {
-  if (e.gamma != null) mouse.set(THREE.MathUtils.clamp(e.gamma / 30, -1, 1), THREE.MathUtils.clamp((e.beta - 45) / 30, -1, 1));
+  if (e.gamma != null && !hand?.on) mouse.set(THREE.MathUtils.clamp(e.gamma / 30, -1, 1), THREE.MathUtils.clamp((e.beta - 45) / 30, -1, 1));
 });
 addEventListener('click', (e) => {
   if (!room || busy || plain() || e.target.closest('#hud nav, #inspectbar, #reader, a, button')) return;
-  if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;       // that was a drag
+  if (swept || (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > CLICK)) return;       // that was a drag (or it turned the route map)
   const ph = pickHit(e), pick = ph?.pick ?? null;
   if (pick && pick === focus.pick && pick.click) return pick.click(ph.hit.uv);     // an open terminal takes its own clicks
   if (!pick && focus.pick?.steady) return;                                  // reading: a stray click beside the text does not close the book
@@ -344,7 +405,7 @@ $('#hud nav').addEventListener('click', (e) => {
 });
 
 // ---------------------------------------------------------------- frame
-const clock = new THREE.Clock(), CALM = num('calm', 0.15); let drawn = 0, wasCalm = false;
+const clock = new THREE.Clock(), CALM = num('calm', 0.15), LIFT = 0.8; let drawn = 0, wasCalm = false, seen = null;     // seen: the focus as the route map last knew it
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05), t = (uTime.value += dt), since = t - t0;
@@ -358,6 +419,14 @@ function frame() {
   if (!calm && gov.update(dt * 1000)) {
     if (tier === 0 && !TIER_PINNED && gov.scale < 0.72) { setTier(1); gov.scale = 1; gov.cool = 6; }     // cheaper AA before lower resolution
     applyScale();
+  }
+  // The route map. A station that comes into focus some other way (a click, the tour, a link), or is read, has the map turn
+  // it to the front; while the visitor turns the map with a station in focus they move along the line: the station that
+  // comes to the front takes the focus (and the camera glides to it), the map going on as it was.
+  if (room.turn) {
+    const by = focus.pick?.reads ? room.reader?.offeredBy() : focus.pick, at = by?.station ?? null;
+    if (focus.pick !== seen) { seen = focus.pick; if (at !== null) room.turn.to(at); }
+    else if (at !== null && by === focus.pick && room.turn.byHand() && room.turn.front() !== at) { setFocus(room.picks.find((p) => p.station === room.turn.front())); seen = focus.pick; }
   }
   // the room's own camera: somewhere between the hero and the close shot, plus parallax and a slow sway
   const { CAM, TGT, CLOSE, CLOSE_TGT } = room;
@@ -379,12 +448,15 @@ function frame() {
     camera.position.lerpVectors(focus.from.pos, focus.dest, glide); _look.lerpVectors(focus.from.tgt, focus.to.tgt, glide);
   } else if (focus.f < 1) { camera.position.lerpVectors(focus.from.pos, camera.position, glide); _look.lerpVectors(focus.from.tgt, _look, glide); }
   focus.cur.pos.copy(camera.position); focus.cur.tgt.copy(_look);
-  camera.lookAt(_look);
+  camera.lookAt(_look); camera.updateMatrixWorld();      // now, not at the draw: what the room places by the camera in this frame (the reading's page of words) goes by this frame's view
 
   room.update(t); draw(t);
   // the lock: on the pick the pointer rests on, looked for again as the view moves under a still pointer
   if (!pointer) over = null; else if (aim || t - aimed > 0.15) { over = pickHit(pointer)?.pick ?? null; aim = false; aimed = t; }
-  display.frame(over && !busy && over !== focus.pick && !over.reads && !focus.pick?.reads && over.name ? over : null);
+  // the cue: only in the wide view at rest, once the cover has lifted; not during the opening move, a glide, or with anything in focus
+  if (room.turn?.byHand()) display.did('turn');
+  display.frame(over && !busy && over !== focus.pick && !over.reads && !focus.pick?.reads && over.name ? over : null,
+    !busy && !focus.pick && focus.f >= 1 && view === 0 && since > LIFT);
   if (Q.has('debug')) { series.push(Math.round(brightness(7))); if (series.length > 400) series.shift(); }
 }
 
@@ -419,6 +491,8 @@ if (tier === 0 && brightness(8) < 2) { setTier(1); applyScale(); }
 if (Q.has('focus')) setTimeout(() => setFocus(room.picks[num('focus', 0)]), 300);
 frame();
 window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, ready: () => intro, display: { state: display.state },
+  // the route map's turn, in a room that has one (null elsewhere): angle(), front(), to(i, now), settled(), nudge(radians); grip(): drag px per radian now
+  get turn() { const t = room?.turn; return t ? { ...t, grip: () => t.grip(camera) } : null; },
   get scene() { return room?.scene; }, get picks() { return room?.picks ?? []; },
   // Opt-in deterministic QA: use the actual room.update, sun prepass, mirror and post,
   // changing only eye/target/time. Normal visitors retain the usual camera and clock.

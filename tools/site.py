@@ -33,8 +33,8 @@ MONTHS = ('January', 'February', 'March', 'April', 'May', 'June', 'July', 'Augus
 ESCAPABLE = '*_\\`[]'
 # Ids the page's scripts give elements they add at run time, so a heading must not take them either (the shell's own
 # ids are read from public/index.html): the hologram's article host in public/js/reader.js, the offer to step into
-# the Library in public/main.js.
-RUNTIME_IDS = ('reader', 'stepin', 'enter')
+# the Library in public/main.js, the Comms field's own controls in public/js/comms.js, the display's cue in public/js/hud.js.
+RUNTIME_IDS = ('reader', 'stepin', 'enter', 'comms', 'cue')
 KEEP = object()                                            # an output whose file on disk is already current
 
 

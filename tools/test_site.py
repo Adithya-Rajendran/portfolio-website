@@ -200,7 +200,7 @@ class Site(unittest.TestCase):
                                                                 for f in fs if f.endswith('.js') and 'vendor' not in d]:
             with open(js, encoding='utf-8') as f:
                 js_text = f.read()
-                made |= set(re.findall(r"createElement\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))   # ... or write as markup
+                made |= set(re.findall(r"(?:createElement|cloneNode)\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))   # ... or write as markup
         self.assertEqual(made, set(s.RUNTIME_IDS))
 
     def test_nested_lists(self):

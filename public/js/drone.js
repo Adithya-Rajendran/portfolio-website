@@ -5,9 +5,16 @@
 // the room’s Cycles environment. They also cast and receive the same live window sun as the table.
 // The volumes are the posts (js/catalogue.js): a book's boards and its two open pages are drawn from the post it holds.
 import * as THREE from 'three';
-import { GLOW, V, glow, spring } from './kit.js';
+import { GLOW, V, glow } from './kit.js';
 
-const TAU = 6.2832, PI = Math.PI, SPEED = 3.2, ease = (x) => x * x * (3 - 2 * x), turnTo = (a, b) => ((b - a + PI) % TAU + TAU) % TAU - PI;
+// How long an errand takes. A leg of d metres takes LEG + d / SPEED seconds (a short hop is not a twitch, a long one not a
+// crawl); AT_SHELF is the pause in front of a shelf while the book comes onto the tray or goes back; STOW the wait, book
+// shut and tray up, before it moves off with a book that lay open; TRAY and LEAF how quickly the tray comes down and the
+// book opens (per second). From a click on a title to the book lying open: about 3.5 s for a near shelf, 5 s for the far one.
+const SPEED = 7, LEG = 0.45, AT_SHELF = 0.3, STOW = 0.9, TRAY = 7, LEAF = 5.5, OVER = 0.7;      // OVER: m above where it presents the book that a leg across the room rises to: over head height
+// eases to a goal at a rate per second, whatever the frame rate (kit.js's spring steps once a frame)
+const settle = (rate) => ({ x: 0, to: 0, step(dt) { this.x += (this.to - this.x) * (1 - Math.exp(-rate * dt)); return this.x * this.x * (3 - 2 * this.x); } });
+const TAU = 6.2832, PI = Math.PI, ease = (x) => x * x * (3 - 2 * x), turnTo = (a, b) => ((b - a + PI) % TAU + TAU) % TAU - PI;
 const std = (color, metalness, roughness, extra = {}) => new THREE.MeshStandardMaterial({ color, metalness, roughness, ...extra });
 const LEATHER = [[0.3, 0.05, 0.04], [0.04, 0.1, 0.2], [0.07, 0.17, 0.1], [0.33, 0.15, 0.04], [0.16, 0.07, 0.13], [0.1, 0.1, 0.11]];
 
@@ -153,41 +160,49 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   body.scale.setScalar(1.15); root.name='Catalogue drone'; root.add(body); root.position.copy(dock); scene.add(root);
 
   // ---- flight: a queue of legs, each "go to p, then do this". Flying = any leg left, or away from the cradle.
-  const legs = [], present = spring(0.07), opened = spring(0.06); let leg = null, held = -1, shown = -1, last = 0, lift = 0, yaw = 0, spin = 0; const hover = V().copy(dock), vel = V();
-  const cruise = (p) => p.clone().setY(Math.max(p.y, deliver.y) + 0.5);                 // legs cross the room above head height
-  const go = (p, then, wait = 0) => legs.push({ p: p?.clone(), then, wait });           // p = null: stay where it is
+  // A leg is one arc: up from where it is, across the room over head height, down onto the place; it starts and ends at rest.
+  const legs = [], present = settle(TRAY), opened = settle(LEAF); let leg = null, held = -1, shown = -1, last = 0, lift = 0, yaw = 0, spin = 0; const hover = V().copy(dock), vel = V();
+  const go = (p, then, wait = 0, lower = false) => legs.push({ p: p?.clone(), then, wait, lower });      // p = null: stay where it is; lower: the tray starts down on the way in
   const front = (s) => s.clone().setX(s.x - Math.sign(s.x) * 0.85);                     // hovering in front of a shelf slot
   const take = (i) => () => { held = i; books.forEach((b, k) => { b.visible = k === i; }); }, put = () => { held = -1; for (const b of books) b.visible = false; };
   /** Fetch volume i (returning the one it holds first); null sends it home. */
   function fetch(i) {
     if (i === shown && !legs.length) return;
     legs.length = 0; leg = null;
-    if (shown >= 0) { shown = -1; go(null, null, 1.3); }                                // shut the book and stow the tray before moving off
-    if (held >= 0 && held !== i) { go(cruise(front(slots[held]))); go(front(slots[held]), put, 0.5); go(cruise(front(slots[held]))); }
-    if (i != null && held !== i) { go(cruise(front(slots[i]))); go(front(slots[i]), take(i), 0.6); go(cruise(front(slots[i]))); }
-    if (i != null) { go(cruise(deliver)); go(deliver, () => { shown = i; }); } else { go(cruise(dock)); go(dock); }
+    if (shown >= 0) { shown = -1; go(null, null, STOW); }                               // shut the book and stow the tray before moving off
+    if (held >= 0 && held !== i) go(front(slots[held]), put, AT_SHELF);
+    if (i != null && held !== i) go(front(slots[i]), take(i), AT_SHELF);
+    if (i != null) go(deliver, () => { shown = i; }, 0, true); else go(dock);
   }
 
   function update(t) {
     const dt = Math.min(0.05, Math.max(0, t - last)); last = t;
-    if (!leg && legs.length) { const l = legs.shift(), from = hover.clone(), p = l.p || from; leg = { ...l, p, from, T: Math.max(0.4, from.distanceTo(p) / SPEED), k: 0, hold: l.wait }; }
+    if (!leg && legs.length) { const l = legs.shift(), from = hover.clone(), p = l.p || from, d = from.distanceTo(p);
+      // rise: how far over the straight line the middle of the arc goes, so that it crosses the room over head height (a hop along one wall hardly rises)
+      leg = { ...l, p, from, T: d > 0.01 ? LEG + d / SPEED : 0, rise: Math.max(0.2, deliver.y + OVER - (from.y + p.y) / 2) * Math.min(1, Math.hypot(p.x - from.x, p.z - from.z) / 3), k: 0, hold: l.wait }; }
     const before = hover.clone();
-    if (leg) { leg.k = Math.min(1, leg.k + dt / leg.T); hover.lerpVectors(leg.from, leg.p, ease(leg.k)); if (leg.k === 1 && (leg.hold -= dt) <= 0) { leg.then?.(); leg = null; } }
+    if (leg) {
+      // it lifts before it goes across and comes straight down at the end: the crossing takes the middle of the leg's time
+      const k = leg.k = leg.T ? Math.min(1, leg.k + dt / leg.T) : 1, across = ease(Math.min(1, Math.max(0, (k - 0.07) / 0.86)));
+      hover.lerpVectors(leg.from, leg.p, across); hover.y = leg.from.y + (leg.p.y - leg.from.y) * ease(k) + leg.rise * Math.max(0, Math.sin(PI * k)) ** 0.7;
+      if (k === 1 && (leg.hold -= dt) <= 0) { leg.then?.(); leg = null; }
+    }
     const flying = !!leg || legs.length > 0 || hover.distanceTo(dock) > 0.02;
     lift += ((flying ? 1 : 0) - lift) * Math.min(1, dt * 4);                             // rotors spin up before it moves much, and down after it lands
     vel.lerp(hover.clone().sub(before).divideScalar(dt || 1), 0.1);
     root.position.copy(hover); root.position.y += lift * 0.012 * Math.sin(t * 2.3);      // it never hangs quite still
-    if (vel.lengthSq() > 0.04) yaw += turnTo(yaw, Math.atan2(-vel.x, -vel.z)) * Math.min(1, dt * 5);
-    else if (shown >= 0) yaw += turnTo(yaw, PI) * Math.min(1, dt * 3);                   // turns to face the reader while it presents the book
-    body.rotation.set(0, yaw, 0); body.rotateX(-0.05 * Math.hypot(vel.x, vel.z)); gimbal.rotation.x = 0.25 * Math.sin(t * 0.7) - 0.35 * present.x;      // leans into its flight; the eye looks about, then down at the page
+    const pace = Math.hypot(vel.x, vel.z);
+    if (leg?.lower && leg.k > 0.75 || shown >= 0) yaw += turnTo(yaw, PI) * Math.min(1, dt * 5);      // turns to face the reader as it comes in with the book
+    else if (pace > 0.2) yaw += turnTo(yaw, Math.atan2(-vel.x, -vel.z)) * Math.min(1, dt * 7);
+    body.rotation.set(0, yaw, 0); body.rotateX(-Math.min(0.3, 0.05 * pace)); gimbal.rotation.x = 0.25 * Math.sin(t * 0.7) - 0.35 * present.x;      // leans into its flight; the eye looks about, then down at the page
     spin += dt * lift * 95; rotors.forEach((r, i) => { r.rotation.y = spin * (i % 2 ? 1 : -1); }); M.blade.opacity = 1 - 0.85 * lift;
     for (const [i, d] of discs.entries()) d.material.opacity = lift * (0.16 + 0.05 * Math.sin(t * 61 + i * 2.1));
     iris.material.color.setRGB(0.4, 1.5, 2.4).multiplyScalar(0.3 + 0.7 * lift); pupil.material.color.setRGB(0.8, 2.0, 2.6).multiplyScalar(0.3 + 0.7 * lift);
     tip.material.color.setRGB(2.4, 0.5, 0.2).multiplyScalar(lift * (Math.sin(t * 5) > 0.6 ? 1 : 0.15));
     leds.forEach((l, i) => l.material.color.setRGB(2.2, 1.2, 0.4).multiplyScalar(lift < 0.5 ? 0.2 + 0.2 * Math.sin(t * 1.5) : 0.4 + 0.6 * (Math.floor(t * 3) % 3 === i)));
     // presenting: the tray comes down and tilts, then the book opens; leaving, the same in reverse
-    present.to = +(shown >= 0); opened.to = +(shown >= 0 && present.x > 0.9);
-    const p = present.step(), o = opened.step(), drop = 0.24 * p;
+    present.to = +(shown >= 0 || (!!leg?.lower && leg.k > 0.75)); opened.to = +(shown >= 0 && present.x > 0.9);      // the tray is on its way down as the drone comes in over the table
+    const p = present.step(dt), o = opened.step(dt), drop = 0.24 * p;
     if (opened.x > 0.03) present.x = Math.max(present.x, 0.9);                           // the tray waits for the book to shut
     tray.position.set(HINGE.x, HINGE.y - drop, HINGE.z); tray.rotation.x = -0.96 * p; for (const r of rods) r.scale.y = 0.065 + drop;
     if (held >= 0) books[held].userData.open(o);

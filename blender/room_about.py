@@ -274,7 +274,12 @@ scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Me
 light_level(2)                      # brighter fittings throughout: the Lounge, with its new downlights
 scene['lobby'] = dict(room='about', exposure=1.4, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       doors=DOORS, screens=['FX_screen0', 'FX_screen1'],
-                      focus=[dict(c=[-0.31, 1.33, 0.5], r=0.95, dir=[0.15, -0.8, 0.58])],      # the books on the table: the room's one exhibit
+                      # the books on the table: the room's one exhibit. boxes: what stands there, for the visitor's display to scan
+                      # (js/opening/scan.js): centre, size and turn about z of the stack and of the atlas lying open (the one that is
+                      # read), measured from the bake (the stack's books are laid by the seeded random of a_stack)
+                      focus=[dict(c=[-0.31, 1.33, 0.5], r=0.95, dir=[0.15, -0.8, 0.58],
+                                  boxes=[dict(c=[-0.316, 1.333, 0.46], size=[0.224, 0.31, 0.158], turn=0.01),
+                                         dict(c=[0.05, 1.95, 0.395], size=[0.404, 0.284, 0.028], turn=0.4, reads=True)])],
                       portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100,
                       # the ring's spin, as in the Atrium (see build_scene.py); half: half-size of the window the sun shines through
                       spin=dict(axis=[0.0, 1.0, 0.0], period=120.0, sun_e=[sun.energy * c for c in sun.color], half=WIN_W + 1.5), earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),

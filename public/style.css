@@ -3,6 +3,7 @@
 html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--fg);
   font-family: "Eurostile", "Michroma", "Orbitron", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#scene.turns { touch-action: pan-y pinch-zoom; }          /* a room whose map turns (main.js): a finger drawn across it turns the map; up and down, and pinching, stay the browser's */
 
 /* cover shown while a room loads: comes down quickly, lifts slowly */
 #loader { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px;
@@ -56,6 +57,26 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
   #hud > footer .hint small, #hud > footer .hint.gone { display: none; }
 }
 
+/* A pale room (content.json "bright": true; main.js sets body.bright): the same words want more behind them. The top and
+   the foot of the view go darker, the hero's block carries a shade of its own wherever it stands, and the faintest of the
+   small words come up a step. Measured against the brightest thing that turns up behind each: 4.5:1 at least. */
+body.bright #hud { background: linear-gradient(90deg, rgba(2,5,9,.82) 0%, rgba(2,5,9,.5) 26%, rgba(2,5,9,0) 50%),
+    linear-gradient(180deg, rgba(2,5,9,.76) 0, rgba(2,5,9,.7) 72px, rgba(2,5,9,0) 150px), linear-gradient(0deg, rgba(2,5,9,.78) 0, rgba(2,5,9,.72) 92px, rgba(2,5,9,0) 180px); }
+body.bright #hud.inspecting { background: linear-gradient(180deg, rgba(2,5,9,.76) 0, rgba(2,5,9,.7) 72px, rgba(2,5,9,0) 150px); }      /* the way around stays up while something is looked at */
+body.bright .hero { position: relative; isolation: isolate; }
+body.bright .hero::before { content: ""; position: absolute; inset: -30px -44px -30px -70px; z-index: -1; background: rgba(2,5,9,.58); filter: blur(26px); }
+@media (max-width: 720px) {                          /* upright, the hero stands in the middle of the room, over its lights: a deeper shade, a lighter amber */
+  body.bright .hero::before { inset: -56px -40px -36px; filter: blur(22px);      /* all the way across behind the kicker; behind the headline only where it is, so the room's subject beside it is seen */
+    background: linear-gradient(rgba(2,5,9,.8), rgba(2,5,9,.8)) 0 0 / 100% 104px no-repeat, linear-gradient(90deg, rgba(2,5,9,.8) 0%, rgba(2,5,9,.8) 42%, rgba(2,5,9,.26) 74%) 0 0 / 100% 100% no-repeat; }
+  body.bright .kicker, body.bright .cta { color: #ffb884; }
+  body.bright .cta { background: rgba(2,5,9,.7); }
+}
+body.bright .sub { color: #d3e3ed; }
+body.bright #hud > footer b { color: #b4c8d4; }
+body.bright #hud > footer .hint small { opacity: .95; }
+body.bright #named { padding: 6px 10px; background: rgba(2,5,9,.66); backdrop-filter: blur(6px); }
+body.bright #count { align-self: stretch; display: grid; place-items: center; padding: 0 4px; color: var(--fg); background: rgba(2,5,9,.6); backdrop-filter: blur(6px); }
+
 /* controls shown while something is being inspected */
 #inspectbar { position: fixed; left: var(--edge); bottom: var(--edge); z-index: 3; display: flex; align-items: center; gap: 8px; }
 #inspectbar[hidden] { display: none; }
@@ -89,26 +110,38 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #named:empty { display: none; }
 #inspectbar:has(#named:not(:empty)) #ways.list { bottom: calc(100% + 40px); }
 
-/* the lock: corner marks around what the pointer rests on, and a tag under it. It settles once as it appears (the marks
-   close in, the tag comes up) and goes quickly; it never moves by itself. Reduced motion: it is simply there. */
-#lock, #lock * { pointer-events: none; }
-#lock { position: fixed; inset: 0; z-index: 2; }
-#lock[hidden] { display: none; }
-#lock .lock-box, #lock .lock-tag { position: absolute; left: 0; top: 0; }
-#lock .c { position: absolute; width: min(14px, 34%); height: min(14px, 34%); border: 0 solid var(--cy); opacity: 0; transition: opacity .12s, transform .12s;
+/* the lock: corner marks around what the pointer rests on, and a tag under it (the cue, below, is made of the same
+   parts). It settles once as it appears (the marks close in, the tag comes up) and goes quickly; it never moves by itself. Reduced motion: it is simply there. */
+:is(#lock, #cue), :is(#lock, #cue) * { pointer-events: none; }
+:is(#lock, #cue) { position: fixed; inset: 0; z-index: 2; }
+:is(#lock, #cue)[hidden] { display: none; }
+:is(#lock, #cue) .lock-box, :is(#lock, #cue) .lock-tag { position: absolute; left: 0; top: 0; }
+:is(#lock, #cue) .c { position: absolute; width: min(14px, 34%); height: min(14px, 34%); border: 0 solid var(--cy); opacity: 0; transition: opacity .12s, transform .12s;
   filter: drop-shadow(0 0 1px rgba(0,0,0,.9)) drop-shadow(0 0 4px rgba(127,227,255,.45)); }
-#lock .tl { left: 0; top: 0; border-width: 1px 0 0 1px; transform: translate(-6px, -6px); }
-#lock .tr { right: 0; top: 0; border-width: 1px 1px 0 0; transform: translate(6px, -6px); }
-#lock .bl { left: 0; bottom: 0; border-width: 0 0 1px 1px; transform: translate(-6px, 6px); }
-#lock .br { right: 0; bottom: 0; border-width: 0 1px 1px 0; transform: translate(6px, 6px); }
-#lock.on .c { opacity: 1; transform: none; transition: opacity .1s, transform .18s cubic-bezier(.2, .8, .3, 1); }
-#lock .lock-tag { display: flex; gap: 12px; max-width: calc(100vw - 16px); font-size: 11px; letter-spacing: .3em; line-height: 1.4; white-space: nowrap;
+:is(#lock, #cue) .tl { left: 0; top: 0; border-width: 1px 0 0 1px; transform: translate(-6px, -6px); }
+:is(#lock, #cue) .tr { right: 0; top: 0; border-width: 1px 1px 0 0; transform: translate(6px, -6px); }
+:is(#lock, #cue) .bl { left: 0; bottom: 0; border-width: 0 0 1px 1px; transform: translate(-6px, 6px); }
+:is(#lock, #cue) .br { right: 0; bottom: 0; border-width: 0 1px 1px 0; transform: translate(6px, 6px); }
+:is(#lock, #cue).on .c { opacity: 1; transform: none; transition: opacity .1s, transform .18s cubic-bezier(.2, .8, .3, 1); }
+:is(#lock, #cue) .lock-tag { display: flex; gap: 12px; max-width: calc(100vw - 16px); font-size: 11px; letter-spacing: .3em; line-height: 1.4; white-space: nowrap;
   padding: 6px 7px 6px 10px; background: rgba(2,5,9,.62); border-left: 1px solid var(--cy); backdrop-filter: blur(6px);
   opacity: 0; transition: opacity .12s; text-shadow: 0 1px 8px #000, 0 0 2px #000; }
-#lock.on .lock-tag { opacity: 1; transition: opacity .18s; }
-#lock .lock-name { color: var(--fg); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-#lock .lock-verb { color: var(--am); flex: none; padding-left: 12px; border-left: 1px solid rgba(233,244,250,.25); }
-#lock.cut, #lock.cut * { transition: none !important; }
-@media (prefers-reduced-motion: reduce) { #lock, #lock * { transition: none !important; } }
+:is(#lock, #cue).on .lock-tag { opacity: 1; transition: opacity .18s; }
+:is(#lock, #cue) .lock-name { color: var(--fg); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+:is(#lock, #cue) .lock-verb { color: var(--am); flex: none; padding-left: 12px; border-left: 1px solid rgba(233,244,250,.25); }
+:is(#lock, #cue).cut, :is(#lock, #cue).cut * { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { :is(#lock, #cue), :is(#lock, #cue) * { transition: none !important; } }
+/* the cue: the same marks, standing already on the one thing in the room a visitor has to know about (js/hud.js), with what
+   a click on it does. Quieter than the lock, which takes its place when the pointer comes to rest on something. The first
+   time in a room it arrives once, slowly enough to be noticed (the marks close in from further out, then the words come);
+   after that it is still. */
+#cue.on .c { opacity: .85; }
+#cue.on .lock-tag { transition: opacity .25s; pointer-events: auto; cursor: pointer; }      /* its words can be pressed: they do what they say */
+#cue .lock-tag { border-left-color: rgba(127,227,255,.7); }
+#cue.first .tl { transform: translate(-18px, -18px); } #cue.first .tr { transform: translate(18px, -18px); }
+#cue.first .bl { transform: translate(-18px, 18px); } #cue.first .br { transform: translate(18px, 18px); }
+#cue.first.on .c { transform: none; transition: opacity .4s ease .2s, transform .7s cubic-bezier(.2, .8, .3, 1) .2s; }
+#cue.first.on .lock-tag { transition: opacity .45s ease .7s; }
+@media (max-width: 480px) { #cue .lock-tag { font-size: 10px; letter-spacing: .24em; gap: 9px; } #cue .lock-verb { padding-left: 9px; } }
 
 #count { font-size: 11px; letter-spacing: .3em; color: var(--soft); min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }

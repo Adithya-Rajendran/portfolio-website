@@ -447,10 +447,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     return Object.assign(pick, { source, returnLabel: backLabel, enter: () => (reader.available() ? reading : null), enterLabel: words.read,
       onFocus: (on, next) => { own?.(on, next); if (on) reader.offer(source, pick); else if (!next?.reads) reader.offer(null); } });
   }
-  /** Something read with nothing of its own in the room: a frame in the air a few steps in front of the room's camera. */
+  /** Something read with nothing of its own in the room: a frame in the air a few steps in front of the room's camera.
+   *  There is nothing to scan, so the display receives it (js/opening/receive.js), and no READ is offered under it. */
   function afloat(url) {
     const f = CAM.clone().sub(TGT).setY(0).normalize(), foot = CAM.clone().addScaledVector(f, -2.4).setY(1.0);
-    return { url, foot: () => foot, facing: f, span: 0.5, sheet: { parent: null, position: foot.clone().setY(1.2), quaternion: upright(f), size: [0.5, 0.32] } };
+    return { url, how: 'receive', foot: () => foot, facing: f, span: 0.5, sheet: { parent: null, position: foot.clone().setY(1.2), quaternion: upright(f), size: [0.5, 0.32] } };
   }
   const bookSources = [];                                            // the Library: the volume lying open
   const bookSource = () => { const i = drone.open(); if (i < 0) return null;
@@ -480,7 +481,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
     // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
-    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = offers({ mesh: o, list: true, name: D.catalogue, verb: D.choose, pose: () => {
+    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = offers({ mesh: o, list: true, name: D.catalogue, verb: D.choose, cue: text.cue, pose: () => {
         // on an upright screen the view is wide and the book small: stand nearer to where the drone presents it
         const at = B(info.drone.deliver), k = THREE.MathUtils.clamp(camera.aspect / 1.1, 0.5, 1);
         return { pos: at.clone().lerp(B(info.terminal.pos), k), tgt: B(info.terminal.tgt).lerp(at.clone().setY(at.y - 0.3), 1 - k) };
@@ -498,31 +499,51 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
   // and unfolds its detail layer.
-  function addHolo(parent, local, r, dist, lift, target, url, name) {
-    const mesh = pickMesh(new THREE.SphereGeometry(r, 12, 8), parent, local), at = mesh.getWorldPosition(V()), f = toCam(at);
-    const src = url && { url, foot: () => at.clone().addScaledVector(f, 0.6).setY(at.y - 0.25), facing: f, span: 0.6, sheet: { parent: null, position: at.clone().addScaledVector(f, 0.2), quaternion: upright(f), size: [1.2, 1.0] } };
-    const pick = { mesh, onFocus: target.setExpanded, name, verb: url ? D.read : D.open, bounds: ball(mesh, r), pose: () => {
-      const c = mesh.getWorldPosition(V()); c.y += lift;
+  // station: { i, at } for a stop on the route map, which turns: it is looked at and read where it stands at the front (at:
+  // where its group is then), wherever the map happens to be; its outline for the display follows it round.
+  function addHolo(parent, local, r, dist, lift, target, url, name, station) {
+    const mesh = pickMesh(new THREE.SphereGeometry(r, 12, 8), parent, local), at = station ? station.at.clone().add(local) : mesh.getWorldPosition(V()), f = toCam(at);
+    // (a stop is not scanned: its own sheet opens up into the reading, js/opening/unfold.js)
+    const src = url && { url, ...(station && target.page && { how: 'unfold', station: target }), foot: () => at.clone().addScaledVector(f, 0.6).setY(at.y - 0.25), facing: f, span: 0.6, sheet: { parent: null, position: at.clone().addScaledVector(f, 0.2), quaternion: upright(f), size: [1.2, 1.0] } };
+    const pick = { mesh, station: station?.i, onFocus: target.setExpanded, name, verb: url ? D.read : D.open, bounds: ball(mesh, r), pose: () => {
+      const c = station ? at.clone() : mesh.getWorldPosition(V()); c.y += lift;
       const d = CAM.clone().sub(c); d.y *= 0.35;
       const far = CAM.distanceTo(c) * 0.95;                // on an upright screen it stands further back, but never behind the room's own camera (that is outside the wall)
       return { pos: c.clone().addScaledVector(d.normalize(), Math.min(far, dist / Math.min(1, camera.aspect / 1.5))), tgt: c };
     } };
     picks.push(src ? offers(pick, () => src) : pick);
   }
-  (routeMap?.stations || []).forEach((s, i) => { const st = text.stations[i]; addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s, st?.url, [st?.title, st?.sub].filter(Boolean).join(' · ').toUpperCase()); });        // a stop on the line: what was done there
+  routeMap?.face(CAM);                                                // the map's front: toward the room's camera
+  (routeMap?.stations || []).forEach((s, i) => { const st = text.stations[i]; addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s, st?.url, [st?.title, st?.sub].filter(Boolean).join(' · ').toUpperCase(), { i, at: routeMap.home(i) }); });        // a stop on the line: what was done there
   if (hologram) addHolo(scene, hologram.root.position, 1.0, 5.6, 0.55, hologram, null, text.hologram.panel.title.toUpperCase());
   // exhibits and other round-ish things: frame a sphere of radius r from the direction scene.json gives
   (info.focus || []).forEach((f, i) => {
-    const mesh = pickMesh(new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c)), d = B(f.dir).normalize(), dh = d.clone().setY(0).normalize(), c = mesh.position;
+    // Where the bake says what stands there (scene.json "boxes": the books on the Lounge's table), the display works on
+    // those things themselves: its lock goes round them, its scan crosses them (js/opening/scan.js), and the reading stands
+    // over them. Their footprint, seen from where the reader stands, is the flat sheet the glyph hangs under.
+    const bodies = (f.boxes || []).map((b) => ({ position: B(b.c), quaternion: new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), b.turn || 0), size: [b.size[0], b.size[2], b.size[1]], reads: !!b.reads }));
+    const corners = bodies.flatMap((b) => [-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => V(x * b.size[0], y * b.size[1], z * b.size[2]).multiplyScalar(0.5).applyQuaternion(b.quaternion).add(b.position)))));
+    // what is pressed: the box that holds those things (so a click lands where the lock is), or a ball round the exhibit
+    const hull = corners.length ? new THREE.Box3().setFromPoints(corners).expandByScalar(0.03) : null;
+    const mesh = pickMesh(hull ? new THREE.BoxGeometry(...hull.getSize(V()).toArray()).translate(...hull.getCenter(V()).sub(B(f.c)).toArray()) : new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c));
+    const d = B(f.dir).normalize(), dh = d.clone().setY(0).normalize(), c = mesh.position;
     const what = text.exhibits?.[i], lift = THREE.MathUtils.clamp(c.y - f.r * 0.45, 0.75, 1.25);                  // content.json "exhibits": what each stands for
-    const src = what?.url && { url: what.url, foot: () => c.clone().addScaledVector(dh, f.r * 0.75).setY(lift), facing: dh, span: 0.6,
-      sheet: { parent: null, position: c.clone().addScaledVector(dh, f.r * 0.5), quaternion: upright(dh), size: [f.r * 1.3, f.r * 1.3] } };
-    const pick = { mesh, cta: !!what?.cta, bounds: ball(mesh, f.r * 0.8, what?.flat), pose: () => ({ pos: c.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: c }) };
+    const among = () => {
+      const side = V().crossVectors(V(0, 1, 0), dh).normalize(), ext = (fn) => corners.reduce(([lo, hi], p) => [Math.min(lo, fn(p)), Math.max(hi, fn(p))], [Infinity, -Infinity]);
+      const [a0, a1] = ext((p) => p.dot(side)), [b0, b1] = ext((p) => p.dot(dh)), [y0, y1] = ext((p) => p.y), mid = side.clone().multiplyScalar((a0 + a1) / 2).addScaledVector(dh, (b0 + b1) / 2).setY((y0 + y1) / 2);
+      return { url: what.url, bodies, foot: () => mid, facing: dh, span: THREE.MathUtils.clamp((a1 - a0) * 1.25, 0.6, 1.2),      // (span: the things, side by side, fit the strip under the frame)
+        sheet: { parent: null, position: mid.clone().setY(y0), quaternion: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(side, dh.clone().negate(), V(0, 1, 0))), size: [a1 - a0, b1 - b0] } };
+    };
+    const src = what?.url && (bodies.length ? among() : { url: what.url, foot: () => c.clone().addScaledVector(dh, f.r * 0.75).setY(lift), facing: dh, span: 0.6,
+      sheet: { parent: null, position: c.clone().addScaledVector(dh, f.r * 0.5), quaternion: upright(dh), size: [f.r * 1.3, f.r * 1.3] } });
+    const pick = { mesh, cta: !!what?.cta, bounds: bodies.length ? () => corners : ball(mesh, f.r * 0.8, what?.flat), pose: () => ({ pos: c.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: c }) };
     named(pick, what?.name || D.exhibit, looks(src));                                                     // its name: the project's (js/site.js), or content.json's
     picks.push(src ? offers(pick, () => src) : pick);
   });
-  // the comms field: stand square in front of it; once open, clicks and the pointer go to the field itself (main.js)
-  if (comms) picks.push({ cta: true, mesh: comms.hit, name: text.comms.title.toUpperCase(), verb: D.write, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
+  // the contact field: stand square in front of it and hold still, it is read (steady). What can be pressed on it takes its own
+  // clicks; a click on its surface goes to the field (main.js). It is written on only if the site has somewhere to send that.
+  if (comms) picks.push({ cta: true, steady: true, mesh: comms.hit, name: text.comms.title.toUpperCase(), verb: comms.mode === 'links' ? D.open : D.write, onFocus: (on) => comms.setExpanded(on, camera),
+    click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
     const c = comms.hit.getWorldPosition(V()), n = V(0, 0, 1).transformDirection(comms.hit.matrixWorld), { size: [w, h], beside } = comms.frame();
     const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
@@ -530,7 +551,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // reading: its pick is the READ glyph, there only while something is offered. Aside from the tour; BACK leads to what offered it.
   if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, name: '', verb: '', steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
     back: reader.offeredBy, get backLabel() { return reader.offeredBy()?.returnLabel; }, url: reader.url, title: reader.title,
-    onFocus: (on, next) => { if (on) return reader.read(); const by = reader.offeredBy(); reader.close(); if (next !== by) { reader.offer(null); by?.left?.(); } } });
+    onFocus: (on, next) => { if (on) return reader.read(); const by = reader.offeredBy(); reader.close(); if (!by || next !== by) { reader.offer(null); by?.left?.(); } } });      // (offered by nothing in the room: there is nothing to go back to, and no READ is left behind)
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {
     const c = B(door.c), n = B(door.n).normalize(), mesh = pickMesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), scene, c);
@@ -548,6 +569,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let last = 0;
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT, chart, reader, terminal, volumes,
+    /** The route map's turn (js/routemap.js), in the room that has one; null elsewhere. */
+    turn: routeMap?.turn ?? null,
     /** Can the article at this URL be read here? (In the Library only a volume on the shelves.) */
     reads: (url) => !!reader && !!url && (!drone || volumes.some((v) => v.url === url.split('#')[0])),
     heldVolume: () => drone?.open() ?? -1,
@@ -565,6 +588,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       }
       const by = picks.find((p) => p.source?.()?.url.split('#')[0] === path && (p.source().url === url || !url.includes('#'))) ?? picks.find((p) => p.source?.()?.url.split('#')[0] === path) ?? null;
       const src = by && by.source().url === url ? by.source() : { ...(by?.source() ?? afloat(url)), url };
+      const stop = by?.station ?? picks.find((p) => p.station != null && p.source?.()?.url === url)?.station;
+      if (stop != null) routeMap.turn.to(stop, !fly);                   // a stop on the route map is read at the front: the map turns to it (a page opened on it: it is there)
       reader.offer(() => src, by); return Promise.resolve(reading);
     },
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle

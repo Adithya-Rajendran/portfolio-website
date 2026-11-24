@@ -59,19 +59,31 @@ export function label([title, sub], color = '#bfefff', width = 0.78) {
   });
   s.scale.set(width, width / 4, 1); return s;
 }
-/** Data sheet: a title over key / value rows. Anchored at its right edge and drawn over everything (it only shows when opened). */
-export function sheet({ title, rows, accent = -1 }, color = '#bfefff', width = 1.15) {
-  const h = 74 + rows.length * 45;
-  const s = sprite(512, h, 1, (c) => {
+/** Data sheet: a title over key / value rows. Anchored at the right edge of its words and drawn over everything (it only
+ *  shows when opened). pane: 0, light only; else it stands on a pane of dark glass that puts out this much of what is behind
+ *  it, to be read against anything (a lit rib, a screen with words of its own). `width` is the words' width either way. */
+export function sheet({ title, rows, accent = -1 }, color = '#bfefff', width = 1.15, pane = 0) {
+  const h = 74 + rows.length * 45, m = pane ? 24 : 0, W = 512 + 2 * m, H = h + 2 * m;
+  const s = sprite(W, H, (W - m) / W, (c) => {
+    if (pane) {                                                     // the glass, its edge soft over 10 px, and a hairline round it
+      const n = 5, a = 1 - (1 - pane) ** (1 / n); c.fillStyle = `rgba(3, 10, 18, ${a})`;
+      for (let k = 0; k < n; k++) c.fillRect(k * 2, k * 2, W - k * 4, H - k * 4);
+      c.strokeStyle = color; c.globalAlpha = 0.22; c.lineWidth = 1; c.strokeRect(9.5, 9.5, W - 19, H - 19); c.globalAlpha = 1;
+      c.translate(m, m);
+    }
     c.fillStyle = color; c.font = `600 30px ${FONT}`; c.fillText(title, 16, 30); c.fillRect(16, 54, 480, 2);
     rows.forEach(([k, v], i) => {
       const y = 96 + i * 45;
       c.fillStyle = color; c.globalAlpha = 0.6; c.textAlign = 'left'; c.font = `500 20px ${FONT}`; c.fillText(k, 16, y);
+      const room = 480 - c.measureText(k).width - 18; let px = 24;                 // a long value keeps clear of its key: set smaller, as far as it stays readable
+      c.font = `500 ${px}px ${FONT}`; while (px > 15 && c.measureText(v).width > room) c.font = `500 ${--px}px ${FONT}`;
       c.globalAlpha = 0.25; c.fillRect(16, y + 22, 480, 1);
-      c.globalAlpha = 1; c.textAlign = 'right'; c.font = `500 24px ${FONT}`; c.fillStyle = i === accent ? '#ffd9a8' : color; c.fillText(v, 496, y);
+      c.globalAlpha = 1; c.textAlign = 'right'; c.fillStyle = i === accent ? '#ffd9a8' : color; c.fillText(v, 496, y);
     });
   });
-  s.material.depthTest = false; s.renderOrder = 10; s.userData.size = [width, width * h / 512]; s.scale.set(...s.userData.size, 1); return s;
+  if (pane) Object.assign(s.material, { blendDst: THREE.OneMinusSrcAlphaFactor });      // its light, over what the glass leaves of what is behind
+  s.material.depthTest = false; s.renderOrder = 10; s.userData.pane = pane;
+  s.userData.size = [width * W / 512, width * H / 512]; s.scale.set(...s.userData.size, 1); return s;
 }
 
 /** Eased open/close state: set `.to` to 0 or 1, call step() every frame for the smoothed 0..1 value. */

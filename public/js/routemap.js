@@ -6,6 +6,28 @@
 import * as THREE from 'three';
 import { GLOW, VERT_XZ, CY, GOLD, V, uTime, uPx, lineMat, glow, glsl, cloud, label, sheet, spring } from './kit.js';
 
+// ---- how the map turns under the visitor's hand: the whole feel of it. main.js reads the input's part from here too.
+// The map turns about the table's axis; the station nearest the front (the side toward the room's camera) is the one the
+// visitor is at. A drag follows the pointer, then coasts, slows and settles with a station exactly at the front.
+export const TURN = {
+  REACH: 2.0,       // m: a drag moves a point this far from the axis, at the front, with the pointer (so px per radian = this x the view's px per metre there)
+  SLOPE: 1,         // a press that has passed the click threshold turns the map only if it went at least this many times further across than up or down
+  WHEEL: 0.005,     // radians per pixel of sideways wheel (a tilt-wheel notch is about 100 px)
+  LINE: 33,         // px in a wheel "line" (deltaMode 1; a page, deltaMode 2, is the window's width)
+  VERTICAL: false,  // a plain vertical wheel turns the map too (Shift + a vertical wheel always does)
+  IDLE: 160,        // ms after the last wheel event before the map settles
+  LEAN: 0.5,        // rad: a wheel settles on the station nearest to where it stopped plus this much further the way it was turning
+  STEP: 100,        // reduced motion: wheel px to a station (the map steps, it does not ease)
+  FLING: 0.1,       // s: a released drag carries on with the speed it had over this last stretch of it
+  FAST: 9,          // rad/s: a released drag carries on no faster than this (it coasts FAST / FRICTION further at most: two stations)
+  FRICTION: 2.5,    // 1/s: how quickly a released map slows (its speed falls by e every 1/FRICTION s)
+  SLOW: 0.6,        // rad/s: below this speed it stops coasting and settles on the station nearest to where it would have stopped
+  SETTLE: 7,        // 1/s: how firmly it is drawn onto that station (a critically damped spring of this rate)
+  GLIDE: 1.4,       // s: a turn to a station (a click, the tour, a link): as long as the camera's glide in main.js, so they arrive together
+  FRONT: 0,         // rad: where the front is, turned from the direction of the room's camera (positive: to the visitor's right)
+};
+const ROUND = 2 * Math.PI, UP = new THREE.Vector3(0, 1, 0), STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // ---- wire-model vocabulary
 const CYAN = new THREE.Color(0.35, 1.3, 1.9), DIM = new THREE.Color(0.16, 0.55, 0.85), AMBER = new THREE.Color(2.0, 1.25, 0.5), TAU = 6.2832;
 const wire = (geo, col = CYAN, op = 0.75) => new THREE.LineSegments(new THREE.EdgesGeometry(geo, 1), lineMat(col, op));
@@ -183,7 +205,7 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   // ---- stations
   const stations = stops.map((s, i) => {
     const grp = new THREE.Group(), holder = new THREE.Group(), model = MODELS[s.model](), now = i === N - 1, col = now ? AMBER : CYAN, ink = now ? '#ffd9a8' : '#bfefff';
-    const tag = label([s.title, s.sub], ink, 0.8), page = sheet({ title: s.sub, rows: s.specs }, ink, 1.5), floor = 0.02 - P[i].y, pale = new THREE.Color(0.3, 0.9, 1.2);
+    const tag = label([s.title, s.sub], ink, 0.8), page = sheet({ title: s.sub, rows: s.specs }, ink, 1.5, 0.9), floor = 0.02 - P[i].y, pale = new THREE.Color(0.3, 0.9, 1.2);
     const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, -0.1, 0), V(0, floor, 0)]), new THREE.LineDashedMaterial({ color: pale, dashSize: 0.05, gapSize: 0.05, opacity: 0.4, ...GLOW }));
     drop.computeLineDistances(); tag.position.set(0.27, 0.1, 0); page.position.set(-0.75, 0.75, 0); page.visible = false;
     holder.add(model); holder.position.y = 0.5; grp.position.copy(P[i]); root.add(grp);
@@ -218,12 +240,89 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
     void main(){ float a = pow(clamp(1.0 - vUv.y, 0.0, 1.0), 2.2)*0.07*(0.8 + 0.2*sin(vUv.x*120.0)); gl_FragColor = vec4(${CY}*a*uGain, 1.0); }`, U, { side: THREE.DoubleSide }));
   cone.position.y = 2.2;
   const train = solid(new THREE.SphereGeometry(0.05, 12, 8), new THREE.Color(3.0, 2.4, 1.6));
-  root.add(track, dial, stars, cone, train);
+  // what turns with the route (the track and the train; the stations' places are turned in update()), and what belongs to the table and stays
+  const spin = new THREE.Group(); spin.add(track, train);
+  root.add(spin, dial, stars, cone);
   // Layer 2: emitted models, light stems and reader reflected in the chart glass.
   // The etched dial lies on the glass; tag sprites/cards annotate the view rather than the room.
   root.traverse(o => { if(o!==dial && !o.isSprite && (o.isMesh || o.isLine || o.isPoints)) o.layers.enable(2); });
 
+  // ---- turning. One angle for the route about the table's axis (0: as it was laid out). A station keeps its own facing
+  // (its tag to its right, its sheet to its left) while its place goes round. Each station has the angle that brings it to
+  // the front; it is looked at and read there, so where it is looked at from never moves (home()).
+  // Modes: rest; held (a hand or a wheel has it); coast (let go, slowing); settle (drawn onto a station); ease (sent to one).
+  let ahead = TURN.FRONT, homes = [], last = null;
+  const midY = P.reduce((s, q) => s + q.y, 0) / N, T = { a: 0, v: 0, mode: 'rest', goal: 0, to: 0, from: 0, v0: 0, f: 0, lean: 0, hand: false };
+  const near = (a, i) => homes[i] + ROUND * Math.round((a - homes[i]) / ROUND);                   // station i's angle, the turn of it nearest a
+  const closest = (a) => { let k = 0; for (let i = 1; i < N; i++) if (Math.abs(near(a, i) - a) < Math.abs(near(a, k) - a)) k = i; return k; };
+  /** The front is the direction from the table's axis toward this point (the room's camera), horizontally. */
+  function face(point) { ahead = Math.atan2(point.x - center.x, point.z - center.z) + TURN.FRONT; homes = P.map((q) => ahead - Math.atan2(q.x, q.z)); }
+  face(center.clone().add(V(0, 0, 1)));
+  const land = (i) => { T.a = near(T.a, i); T.v = 0; T.goal = i; T.mode = 'rest'; };
+  const turn = {
+    /** radians turned from the map as laid out */
+    angle: () => T.a,
+    /** the station nearest the front */
+    front: () => closest(T.a),
+    /** at rest exactly on a station (or never turned) */
+    settled: () => T.mode === 'rest',
+    /** coasting or settling after the visitor let go */
+    moving: () => T.mode === 'coast' || T.mode === 'settle',
+    /** the visitor turned it last (not a focus sending it to a station) */
+    byHand: () => T.hand,
+    /** the station it is on or on its way to; null while held or coasting, or never turned onto one */
+    heading: () => (T.mode === 'settle' || T.mode === 'ease' ? T.goal : T.mode === 'rest' && Math.abs(near(T.a, closest(T.a)) - T.a) < 1e-6 ? closest(T.a) : null),
+    /** take hold of it where it is; returns the angle */
+    grab() { T.mode = 'held'; T.v = 0; T.hand = true; return T.a; },
+    /** while held: put it at this angle */
+    drag(a) { if (T.mode !== 'held') turn.grab(); T.a = a; },
+    /** let go at v rad/s; it coasts, then settles on the station nearest to where it would stop (plus lean, rad, the way it was
+     *  going). Only a map that is held can be let go: one sent to a station since (to()) goes there, whatever let go late. */
+    release(v = 0, lean = 0) {
+      if (T.mode !== 'held') return;
+      T.hand = true; if (STILL) return land(closest(T.a + lean));
+      T.v = THREE.MathUtils.clamp(v, -TURN.FAST, TURN.FAST); T.lean = lean; T.mode = 'coast';
+    },
+    /** turn to station i: in about the camera's glide, or now (reduced motion: always now) */
+    to(i, now = false) {
+      if (!(i >= 0 && i < N)) return;
+      T.hand = false;
+      if (now || STILL) return land(i);
+      if (turn.heading() === i) return;                                   // already there, or on its way
+      Object.assign(T, { mode: 'ease', goal: i, from: T.a, v0: T.v, to: near(T.a, i), f: 0 });
+    },
+    /** reduced motion's wheel: d stations along the line, at once */
+    step(d) { T.hand = true; land(((closest(T.a) + d) % N + N) % N); },
+    /** as if dragged by r radians and released */
+    nudge(r) { turn.drag(turn.grab() + r); turn.release(0); },
+    /** pixels of sideways drag to a radian: a point TURN.REACH from the axis, at the front, keeps up with the pointer */
+    grip(camera) {
+      const d = camera.position.distanceTo(V(Math.sin(ahead) * TURN.REACH, midY, Math.cos(ahead) * TURN.REACH).add(center));
+      return TURN.REACH * innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.max(d, 0.5));
+    },
+  };
+  /** Where station i's group stands, in the room, when it is at the front. */
+  const home = (i) => P[i].clone().applyAxisAngle(UP, homes[i]).add(center);
+  function turning(dt) {
+    if (T.mode === 'coast') {
+      T.v *= Math.exp(-TURN.FRICTION * dt); T.a += T.v * dt;
+      if (Math.abs(T.v) < TURN.SLOW) { const rest = T.a + T.v / TURN.FRICTION + T.lean; T.goal = closest(rest); T.to = near(rest, T.goal); T.mode = 'settle'; }
+    } else if (T.mode === 'settle') {                                     // exact step of a critically damped spring: no overshoot, whatever the frame time
+      const k = TURN.SETTLE, x = T.a - T.to, c = T.v + k * x, e = Math.exp(-k * dt);
+      T.a = T.to + (x + c * dt) * e; T.v = (c - k * (x + c * dt)) * e;
+      if (Math.abs(T.a - T.to) < 1e-4 && Math.abs(T.v) < 1e-3) land(T.goal);
+    } else if (T.mode === 'ease') {                                       // from where it is, at the speed it had, to the station in GLIDE seconds
+      const D = TURN.GLIDE, f = T.f = Math.min(1, T.f + dt / D), f2 = f * f, f3 = f2 * f;
+      T.a = (2 * f3 - 3 * f2 + 1) * T.from + (f3 - 2 * f2 + f) * D * T.v0 + (3 * f2 - 2 * f3) * T.to;
+      T.v = ((6 * f2 - 6 * f) * T.from + (3 * f2 - 4 * f + 1) * D * T.v0 + (6 * f - 6 * f2) * T.to) / D;
+      if (f >= 1) land(T.goal);
+    }
+    spin.rotation.y = T.a;
+    stations.forEach((s, i) => s.grp.position.copy(P[i]).applyAxisAngle(UP, T.a));
+  }
+
   function update(t) {
+    turning(last === null ? 0 : Math.min(0.05, Math.max(0, t - last))); last = t;
     // the reader runs the written strand from the first station to "now", pauses, and starts again
     const u = Math.min((t * 0.06) % 1.25, 1), where = T0 + (T1 - T0) * u * u * (3 - 2 * u), anyOpen = stations.some((s) => s.open.to);
     U.uTrain.value = where; curve.getPoint(where, train.position);
@@ -234,5 +333,5 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
       s.holder.position.y = 0.5 + 0.35 * k; s.holder.scale.setScalar(s.size * (1 + 0.3 * calling) * (1 + 0.9 * k));               // the model grows; it also swells as the train calls
     }
   }
-  return { root, update, stations };
+  return { root, update, stations, turn, face, home };
 }
