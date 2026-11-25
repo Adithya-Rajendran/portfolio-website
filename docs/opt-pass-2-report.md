@@ -49,6 +49,18 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 | Library (`writing`) | **29.2 / 16.0** | `[29.2, 29.8, 29.2]` / `[15.89, 16.02, 15.97]` | **29.8 / 16.3** | `[30.7, 29.6, 29.8]` / `[16.27, 15.58, 16.27]` | **1207 ms** (`1.2 s`; `[1836, 1149, 1207]`) | **1320 ms** (`1.3 s`; `[2044, 1320, 1166]`) |
 | Comms (`comms`) | **20.4 / 13.1** | `[19.1, 20.4, 21.2]` / `[11.6, 13.07, 14.52]` | **20.7 / 13.7** | `[20.7, 22.1, 19.4]` / `[13.74, 15.68, 12.22]` | **1009 ms** (`1.0 s`; `[1568, 1009, 992]`) | **1075 ms** (`1.1 s`; `[1737, 1075, 1025]`) |
 
+### Reproduction on CI host 1 (`arcadia-ci`), Atrium tier 1, 5 runs x 8 s each
+
+Measured with `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' 5 8` on CI host 1 only (exclusive `quiet.lock`), frame ms median per run:
+
+| Commit | Per-run frame ms | Median frame ms | Per-run GPU ms | Median GPU ms | Calls |
+|---|---|---|---|---|---|
+| `baseline.md` (3 runs, `6390b52d`) | 28.1, 28.9, 27.5 | 28.1 | 16.85, 17.36, 15.4 | 16.85 | 240 |
+| `6390b52d` again | 26.3, 27.5, 27.2, 22.6, 26.4 | 26.4 (-6.0%) | 15.17, 15.56, 14.95, 10.77, 14.38 | 14.95 | 240 |
+| `prog/O0-measuring-tools` head `6414cb5d` | 25.9, 24.7, 21.8, 26.3, 25.9 | 25.9 (-1.9% against the same-day `6390b52d`) | 14.39, 14.27, 10.7, 14.39, 14.99 | 14.39 | 240 |
+
+Frame ms reproduces the recorded baseline to about 6% (two of five runs within 5%, the other three 6-7% below, one outlier at 22.6); GPU ms varies by about 12% from run to run on this host, as recorded. The branch, which adds only tools and docs, matches `6390b52d` measured the same day within 2%. CI host 2 (`arcadia-ci2`, i9-12900H) is a different machine and is not used for this comparison.
+
 ### Time to first frame (`load.mjs`, §2.2)
 
 - **Unthrottled (`0 Mbit/s`):** 2.9–6.1 s on the laptop HD 630 (`experience` median 2.9 s to `lobby` median 5.3 s in `bench.mjs`, `load.mjs` `lobby` 6.1–6.7 s); 0.9–1.4 s on the CI host (`experience` 871 ms to `about` 1385 ms).
