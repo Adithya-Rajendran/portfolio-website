@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { params } from './dev.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -172,7 +173,7 @@ canvas.addEventListener('click', (e) => { if (down && Math.hypot(e.clientX - dow
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.setViewOffset(innerWidth + SIDE, innerHeight, 0, 0, innerWidth, innerHeight); camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 camera.position.set(...DECK_VIEW[0]); controls.target.set(...DECK_VIEW[1]); setMode('deck');
-const q = new URLSearchParams(location.search);
+const q = params();
 if (q.get('view') === 'station') { camera.position.set(...STATION_VIEW[0]); controls.target.set(...STATION_VIEW[1]); setMode('station'); }
 if (q.has('roof')) document.getElementById('roof').click();
 

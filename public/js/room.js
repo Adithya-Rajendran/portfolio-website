@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { DEV } from './dev.js';
 import { Q, SKIP, num, B, V, VERT, DIST, DSCALE, ADD, GLOW, uTime, uPx, uMirror, cloud, dispose } from './kit.js';
 import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
@@ -23,7 +24,6 @@ const CH_GAIN = num('chandgain', 1), EARTH = num('earth', 1), CH_SPEED = (2 * Ma
 // ?rollat=<degrees> holds one angle.
 const ROLL = num('roll', 0), ROLL_AT = num('rollat', NaN), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math.PI / 180;      // ?chand=<degrees> stops the orrery there
-const DEV = (typeof location !== 'undefined' && (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.hostname.endsWith('.local'))) || Q.has('dev') || !!import.meta.env?.DEV;
 
 function predictTextures(info, live) {
   const list = [];
