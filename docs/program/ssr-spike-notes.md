@@ -61,7 +61,8 @@ What breaks or surprises:
    `<!--!$-->`), also under `<NoHydration>` and also with `ssr: false`: 14 to 40 per page here. They split a line
    such as `headline · location` into three text nodes, and Chromium then shapes the text differently: with
    JavaScript off, About and the longest post differed from site.py's by up to 62 levels in 89 to 225 pixels at
-   1280x720 (job 20261125-182055-b5897d9f, the boxes are the header's first line). Stripping the three markers
+   1280x720 (job 20261125-182055-b5897d9f; on the post the difference box is the header's first line, on About it is a
+   strip from the header down most of the page, x 673 to 761, y 91 to 2164). Stripping the three markers
    from pages that are never hydrated is safe and makes them pixel-identical (section 4). A hydrated page needs
    them, so **a hydrated page is not pixel-identical to site.py's**.
 3. **`hydrate()` needs Solid's hydration script.** Without `generateHydrationScript()` (an inline `<script>`
@@ -80,7 +81,8 @@ What breaks or surprises:
 Listbox, Menu, Toolbar, Segmented Control, Drawer, Scroll Area, Progress, Toast (region), Tabs, Collapsible,
 Tooltip, Popover, Navigation Menu (the ui-spec list plus five). Evidence: `build.sh` ("UI SDK parts on the server:
 button ok, ... navmenu ok"; the HTML is in `.gen/kit-ssr.json`), and `ci prog/U0d-ssr-spike script ssr-spike.mjs
-kit` on the second CI host: hydrated in 42 to 57 ms, all 67 server nodes adopted, and 12 interactions passed after
+kit` on both CI hosts: hydrated in 42.1 ms on the CI host (job dfe67144) and 36.6 to 60.1 ms over six runs on
+the second (56.5, 60.1, 52.3, 45.9, 49.3, 36.6; a reviewer's re-run gave 39.4), all 67 server nodes adopted, and 12 interactions passed after
 hydration (counter, Button `onClick`, Toggle, Dialog open and Escape, Listbox select, Menu open, Segmented Control,
 Toolbar arrows, Drawer open, Toast shown, Tabs, Collapsible).
 
@@ -108,18 +110,21 @@ canonical, the headings (tag, id, text), the links (href, target, rel, text) and
 elements and text (whitespace collapsed, whitespace-only text between tags dropped); and checks the rest of the
 document (the shell) byte for byte.
 
-**Differences in the static flavour: none** in any of those, on all six pages ("compare static: same" in every
-`build.sh` run; `.gen/compare-static.json`). The JSON-LD text is byte-identical too. Every difference left is in
+**Differences in the static flavour: none** in title, head tags, JSON-LD, canonical, headings, links and element
+structure, on all six pages ("compare static: same" in every `build.sh` run; `.gen/compare-static.json`). The one
+check that reports a difference, `text_same` (the whole text joined and collapsed), is false on every page (About
+2,351 against 2,330 characters, Contact 385 against 378): that is whitespace only, Solid writing no space between
+block elements (1.5); with whitespace-only text dropped the element and text sequence is equal. The JSON-LD text is byte-identical too. Every difference left is in
 the raw bytes:
 
 | | site.py | Solid, static flavour | Solid, full (hydrated) flavour |
 |---|---|---|---|
 | whitespace between block elements | newlines and indents | none, except the `\n` inside `<main>` | none |
-| insertion markers in `main` | 0 | 0 (stripped) | 14 (posts, Contact) to 38 (About) |
+| insertion markers in `main` | 0 | 0 (stripped) | 14 (posts, Contact) to 40 (About) |
 | `_hk` attributes in `main` | 0 | 0 | 13 to 45 |
 | scripts | the shell's three and JSON-LD | the same | plus Solid's inline hydration script, the module entry, and `<script type="application/json" id="ssr-props">` |
-| page size, bytes / gzip (Contact) | 5,859 / 2,296 | 5,797 / 2,298 | 18,809 / 7,489 |
-| page size, bytes / gzip (largest post) | 33,509 / 12,787 | 33,439 / 12,785 | 64,178 / 15,577 |
+| page size, bytes / `gzip -9` bytes (Contact) | 5,859 / 2,307 | 5,797 / 2,309 | 18,809 / 7,500 |
+| page size, bytes / `gzip -9` bytes (largest post) | 33,509 / 12,700 | 33,439 / 12,796 | 64,178 / 15,588 |
 
 In the browser, with JavaScript off (`ci ... script ssr-spike.mjs nojs`, job 20261125-183913-72184efe): every
 Solid page passed the repository's own plain-page checks (`plaincheck.mjs`: scroll, uncovered, one h1, heading
@@ -149,11 +154,18 @@ Without WebGL (the page is a page, as for a visitor whose browser cannot run the
   visible changed);
 - no console error or warning that site.py's page does not also show (the station's three WebGL messages).
 
-With WebGL (the station runs): no new console errors, no layout shift (0 after the release; 0.0044 for the whole
-visit, the same as without Solid), hydrated in 7.8 to 16.6 ms. But on the posts, which open in reading mode, **the
-station's reader had already moved `article.post` out of `main#page`** into its frame (`public/js/reader.js`,
-`article()` takes the page's own article) before the held hydration ran, so there was nothing left for it to adopt.
-Hydrating a page the reader takes over is a race with the station; whichever wins, two owners touch the same nodes.
+With WebGL (the station runs): no new console errors, and no layout shift after the release (0; 0.0044 for the
+whole visit, which was measured on the Solid page only, not on site.py's). About and Contact hydrated (54/54 and
+22/22 nodes adopted, 16.6 and 12.6 ms), though hidden behind the station, so no picture. **The four posts were NOT
+hydrated**: they open in reading mode, and the station's reader had already moved `article.post` out of `main#page`
+into its frame (`public/js/reader.js`, `article()` takes the page's own article) before the held hydration ran.
+`hydrate()` ran (7.8 to 15.9 ms) on an empty `main#page`: 0/0 nodes adopted and no picture, which the script's
+checks let through. Hydrating a page the reader takes over is a race with the station; whichever wins, two owners
+touch the same nodes.
+
+The "adopted" check alone does not prove hydration: it only shows that the server's nodes were not replaced. It also
+passed in job b5897d9f, where `hydrate()` had thrown and nothing hydrated. Hydration is shown by the page's
+`data-hydrated` mark together with nodes adopted (more than zero) and, for the kit, by the parts working afterwards.
 
 The UI SDK island: section 2 (no layout shift recorded, but the Toast region moved what follows it by 20 px).
 
@@ -243,7 +255,8 @@ every page), `tools/test_site_extras.py` (370, 21: feed, sitemap, llms.txt, rés
 
 **D2.** The choice stands (plain mode, our own `index.html`, `render()` for the station), but its reason changes:
 the pages are built from the built shell by a TypeScript prerender step with `renderToString` instead of by
-`tools/site.py`. Section 12's "not in this program: ... server rendering" needs the owner's word, since D17 reverses it.
+`tools/site.py`. Section 1's "Not in this program: ... replacing `tools/site.py`; server rendering" (`docs/program-plan.md`
+line 27), and section 12's line on start mode with prerendered routes, need the owner's word, since D17 reverses them.
 
 **D3.** Still true in substance (pages that read without JavaScript, from the built shell); the writer changes.
 
@@ -263,13 +276,13 @@ and F1's `--shell` move with it. The article components live in `src/app/compone
 |---|---|---|
 | `ci prog/U0d-ssr-spike static` (c86ab82e) | second CI host | PASS 14 s |
 | `script ssr-spike.mjs` (c86ab82e) | CI host | FAIL 96 s: the held entry blocked `domcontentloaded` (fixed: `async`) |
-| `script ssr-spike.mjs` (b5897d9f) | CI host | FAIL 819 s: no hydration script (1.3); markers' pixel difference (1.2) |
+| `script ssr-spike.mjs` (b5897d9f) | CI host | FAIL 819 s: no hydration script (1.3); markers' pixel difference (1.2); also an unexplained picture difference of `main#page` before and after (failed) hydration on `/blog/my-homelab/` without WebGL (max 251, 339,920 px changed, box y 1266 to 3999), probably lazy images still loading between the two pictures (the script did not yet wait for them); it did not recur in later jobs or in the reviewer's re-run |
 | `script ssr-spike.mjs hydrate,kit` (dfe67144) | CI host | FAIL 104 s: hydration all ok; the kit's picture changed (section 2) |
 | `script ssr-spike.mjs nojs,kit` (72184efe) | CI host | FAIL 968 s: nojs all ok except the full flavour's two desktop pictures (1.2, expected); kit step crashed (script bug) |
 | `script ssr-spike.mjs kit` (09560454, f78878a1, 75cd2d5d) | second CI host | FAIL 77, 53, 57 s: kit as in section 2 (the Toast move; the station's own errors) |
 | `ci prog/U0d-ssr-spike static` (d9c7a5e4, after merging prog/int) | second CI host | PASS 71 s |
 | `script ssr-spike.mjs`, all sections (d9c7a5e4) | second CI host | FAIL 547 s, 164 ok: the two full-flavour desktop pictures (1.2), the kit findings, and six lines from a bug of the script (a page error compared with its stack attached against site.py's without it; the error is the station's "e is not a function" at `main.js:44`, on site.py's page too) |
-| `script ssr-spike.mjs hydrate,kit` (baff765e, that bug fixed) | second CI host | FAIL 195 s, 76 ok: every hydration line ok in both modes; the two FAIL lines are the kit's findings (Toast region move, the station's own errors on the kit page) |
+| `script ssr-spike.mjs hydrate,kit` (baff765e, that bug fixed) | second CI host | FAIL 195 s, 76 ok: every hydration line passed in both modes, but with WebGL the four posts passed with 0/0 nodes, i.e. not hydrated (section 4); the two FAIL lines are the kit's findings (Toast region move, the station's own errors on the kit page) |
 
 The remaining FAIL lines are findings, not breakage: the full flavour's pictures (1.2), the Toast region (2), and
 the station's WebGL errors on the kit page, which the script does not filter there.
