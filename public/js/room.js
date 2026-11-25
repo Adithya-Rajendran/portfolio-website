@@ -165,7 +165,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let lampGrid = null;                                // set by buildLampGrid() before the materials are made
   const makeLampU = (lamps) => (lamps.length ? {
     uLP: { value: lamps.map((l) => B(l.pos)) }, uLI: { value: lamps.map((l) => V(...l.intensity)) },
-    uLD: { value: lamps.map((l) => (l.dir ? B(l.dir) : V())) },
+    uLD: { value: lamps.map((l) => (l.dir ? B(l.dir).normalize() : V())) },   // unit, as the grid and lampsForMesh assume
     uLS: { value: lamps.map((l) => V(l.radius, l.dir ? l.cos : -2, l.dir ? l.smooth : 0)) },
     ...(lampGrid ? lampGrid.uniforms : {}),
   } : {});
@@ -231,7 +231,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // left out adds exactly nothing there (its cone is 0 and the loop skips it), so the sums are the plain loop's, in the
   // same order. A room where some cell lists every lamp (the Library and the Lounge: point lamps only) keeps the plain loop.
   // With a grid, a surface with any lamp gets all of them and the grid does the culling (it is finer than a mesh's box);
-  // lampsForMesh still leaves lampLobe out of a surface no lamp can reach. Its numbers: scene.userData.lampGrid.
+  // lampsForMesh still leaves lampLobe out of a surface no lamp can reach. Its numbers: scene.userData.lampGrid (with ?debug, the lists).
   function buildLampGrid(bounds) {
     if (!LIVE || !probe || !LAMP_DATA.length || SKIP.has('lampgrid')) return null;
     const CELL = num('lampcell', 1), lo = bounds.min.clone().subScalar(CELL / 2), size = bounds.max.clone().addScalar(CELL / 2).sub(lo);
@@ -248,7 +248,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       });
       lists.push(list); K = Math.max(K, list.length); total += list.length;
     }
-    const stats = { n, cell: cell.toArray(), lo: lo.toArray(), lamps: LAMP_DATA.length, K, mean: total / lists.length, lists, grid: K < LAMP_DATA.length && K <= 8 };
+    const stats = { n, cells: lists.length, lamps: LAMP_DATA.length, K, mean: total / lists.length, grid: K < LAMP_DATA.length && K <= 8 };
+    if (Q.has('debug')) Object.assign(stats, { cell: cell.toArray(), lo: lo.toArray(), lists });   // ?debug: the lists themselves, for measuring
     scene.userData.lampGrid = stats;
     if (!stats.grid) return null;
     const NONE = 255, uniforms = { uGridLo: { value: lo }, uGridInv: { value: V(1 / size.x, 1 / size.y, 1 / size.z) } };
