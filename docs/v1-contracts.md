@@ -212,7 +212,7 @@ An entry of `focus` (a round-ish thing the camera can come to: `c`, `r`, `dir`) 
 
 ## 5. Tests
 
-`tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`). `hud.mjs [desktop|phone|reduced|all]` tests the visitor's display (§4): the lock, the names, the bar's caption, the hint, and that the READ glyph and the scan are still unless READ is asked.
+`tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`). `hud.mjs [desktop|phone|reduced|all]` tests the visitor's display (§4): the lock, the names, the bar's caption, the hint, and that the READ glyph and the scan are still unless READ is asked. For pixel-identical engine regression checks across all six rooms (`max diff == 0`), `tools/ci/run.sh pictures [--against <base>]` runs `docker/detsnap.mjs` (hiding DOM overlays without collapsing layout under a paused fake clock) over the 34 fixed states in `tools/ci/pictures.txt` and enforces `pdiff.mjs --strict --fail-max=0` (with golden caching on the CI host by commit and list hash).
 
 The other browser scripts print `ok` or `FAIL [profile item] what` and exit 1 on a failure (`tools/check.sh` runs them all):
 

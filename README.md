@@ -22,7 +22,7 @@ Deploy: `python3 tools/pack.py && python3 tools/site.py && npx wrangler deploy`.
 - `tools/` — `site.py` writes `public/blog/` (the post pages, `index.json`, their images and files; generated, not committed) from
   `data/posts/*.md`, read by `content.py` (format: [`docs/v1-contracts.md`](docs/v1-contracts.md)); test it with
   `python3 -m unittest tools/test_site.py`. Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`),
-  before/after snapshots (`dsnap.sh`), the room-switching test (`docker/rooms.mjs`), the visitor's display (`docker/hud.mjs`), and `dtest.sh page.mjs /blog/<slug>/`,
+  before/after snapshots (`dsnap.sh`), deterministic golden verification (`ci/run.sh pictures [--against <base>]` over `ci/pictures.txt`; see [`tools/ci/README.md`](tools/ci/README.md)), the room-switching test (`docker/rooms.mjs`), the visitor's display (`docker/hud.mjs`), and `dtest.sh page.mjs /blog/<slug>/`,
   a generated page read with JavaScript off. The rooms' behaviour is tested by `docker/rooms.text.mjs` (the page's words, wall screens that do nothing), `opening.mjs` (scan, receive, unfold), `turn.mjs` (Navigation's turn), `cue.mjs` (the Library's cue and drone), `contact.mjs` (Contact in its three modes, and its legibility) and the `rooms.*` scripts; `tools/check.sh` runs all of them (about an hour), each on its own with `tools/dtest.sh <script> [desktop|phone|reduced]`.
 - [`/lighting-review/`](public/lighting-review/index.html) — matched browser views of all five rooms, actual book/satellite inspection poses and two short films. [Lighting method and measured checks](docs/finish-lighting.md).
 - `docs/blueprint.md` — the station design.
