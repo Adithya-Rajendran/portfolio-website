@@ -33,6 +33,9 @@ resolve_assets() {
 
 DEV=()
 [ -d /dev/dri ] && DEV=(--device /dev/dri)
+# tools/check.sh sets CHECK_RUN: its containers carry it as a label, so an interrupted suite can remove them (docker rm -f by label).
+LABEL=()
+[ -n "${CHECK_RUN:-}" ] && LABEL=(--label "arcadia.check=$CHECK_RUN")
 
 SITE_MOUNTS=()
 SERVE=0
@@ -51,7 +54,7 @@ else
   fi
 fi
 
-docker run --rm --ipc=host "${DEV[@]}" \
+docker run --rm --ipc=host "${LABEL[@]}" "${DEV[@]}" \
   -e ORIGIN="$TARGET_ORIGIN" -e SETUP -e UNTIL \
   -v "$ROOT/tools/docker":/work:ro \
   "${SITE_MOUNTS[@]}" \

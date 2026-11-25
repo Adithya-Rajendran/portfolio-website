@@ -1,6 +1,7 @@
 #!/bin/bash
 # Everything for the content and its reading in the rooms, in one command; exit 1 if any step failed (every step is run, then listed).
 #   tools/check.sh          env: OUT (host folder for screenshots, default /tmp/dtest), ASSETS (baked rooms; see tools/dtest.sh), CHECK_JOBS (parallel browser workers, default 8)
+#   Each browser step keeps its log and what it wrote in $OUT/steps/NN-<name>/ (log.txt, screenshots); see tools/ci/README.md.
 # The browser steps need Docker (tools/dtest.sh serves public/ inside a container). The posts' pages are regenerated first.
 cd "$(dirname "$0")/.." || exit 1
 
@@ -20,33 +21,59 @@ Q_NAME=()
 Q_CMD=()
 STEP_IDX=0
 STEP_OUT=""
+STEP_LOG=""
 declare -A PID_NAME=() PID_LOG=() PID_T0=()
-LOG_DIR=""
 
-cleanup() {
-  local pid
-  for pid in "${!PID_NAME[@]}"; do
-    kill "$pid" 2>/dev/null || true
+# Job control: every background step is a process group of its own (its pid is the group id), so an interrupt can stop the
+# step together with the dtest.sh, the docker client and the grep under it. Each container carries the label below, so
+# one that outlives its client (a killed client does not stop it) is found and removed by the label.
+set -m
+CHECK_RUN="check-$$-$SUITE_T0"
+export CHECK_RUN
+
+stop_steps() {
+  local pid i alive ids
+  [ "${#PID_NAME[@]}" -gt 0 ] || return 0
+  for pid in "${!PID_NAME[@]}"; do kill -TERM -- "-$pid" 2>/dev/null || true; done
+  for i in $(seq 1 50); do
+    alive=0
+    for pid in "${!PID_NAME[@]}"; do kill -0 -- "-$pid" 2>/dev/null && alive=1; done
+    [ "$alive" -eq 0 ] && break
+    sleep 0.1
   done
-  for pid in "${!PID_NAME[@]}"; do
-    wait "$pid" 2>/dev/null || true
-  done
-  if [ -n "$LOG_DIR" ] && [ -d "$LOG_DIR" ]; then
-    rm -rf "$LOG_DIR"
+  for pid in "${!PID_NAME[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+  for pid in "${!PID_NAME[@]}"; do wait "$pid" 2>/dev/null || true; done
+  PID_NAME=()
+  if command -v docker >/dev/null 2>&1; then
+    ids=$(docker ps -aq --filter "label=arcadia.check=$CHECK_RUN" 2>/dev/null)
+    [ -z "$ids" ] || docker rm -f $ids >/dev/null 2>&1 || true
   fi
 }
+
+cleanup() { stop_steps; }
 trap cleanup EXIT
 trap 'cleanup; exit 130' INT
 trap 'cleanup; exit 143' TERM
 
+# step <name> <command...>: runs it in its own process group, in the background, and waits for it (a signal reaches the
+# trap at once, which a foreground command would delay until it ended). With STEP_LOG set, its output is also kept there.
 step() {
   local name="$1"; shift
-  local t0 dur rc
+  local t0 dur rc pid log="$STEP_LOG"
+  STEP_LOG=""
   t0=$(date +%s)
   echo
   echo "=== $name"
-  "$@"
+  if [ -n "$log" ]; then
+    ( set -o pipefail; "$@" 2>&1 | tee "$log" ) < /dev/null &
+  else
+    "$@" < /dev/null &
+  fi
+  pid=$!
+  PID_NAME[$pid]="$name"
+  wait "$pid"
   rc=$?
+  unset "PID_NAME[$pid]"
   dur=$(( $(date +%s) - t0 ))
   if [ "$rc" -eq 0 ]; then
     echo "--- ok: $name (${dur}s)"
@@ -57,6 +84,8 @@ step() {
 }
 
 # Sets STEP_OUT (and bumps STEP_IDX) in the calling shell: never call it in $(...), or every step gets the same number.
+# Each browser step has its own folder, $OUT/steps/NN-<name>/ (NN in the order the steps start): its log.txt and whatever
+# the script writes to /out.
 next_step_out() {
   local name="$1" safe_name
   STEP_IDX=$((STEP_IDX + 1))
@@ -73,6 +102,7 @@ dt() { tools/dtest.sh "$@"; }
 dt_serial() {
   local name="$1"; shift
   next_step_out "$name"
+  STEP_LOG="$STEP_OUT/log.txt"
   step "$name" env OUT="$STEP_OUT" tools/dtest.sh "$@"
 }
 
@@ -86,11 +116,9 @@ queue() {
 
 run_parallel() {
   local total=${#Q_NAME[@]} next=0 active=0
-  local step_out log_file pid done_pid rc dur name now
+  local step_out log_file pid done_pid rc dur name now i
   local -a args
   local IFS=$'\x1f'
-
-  LOG_DIR="$(mktemp -d "$OUT/.check-logs.XXXXXX")"
 
   while [ "$next" -lt "$total" ] || [ "$active" -gt 0 ]; do
     while [ "$active" -lt "$JOBS" ] && [ "$next" -lt "$total" ]; do
@@ -98,13 +126,13 @@ run_parallel() {
       read -r -a args <<< "${Q_CMD[$next]}"
       next_step_out "$name"
       step_out="$STEP_OUT"
-      log_file="$LOG_DIR/$(printf '%02d' "$STEP_IDX").log"
+      log_file="$step_out/log.txt"
       now=$(date +%s)
       echo "[+$((now - SUITE_T0))s] start: $name"
       (
         export OUT="$step_out"
         dt "${args[@]}"
-      ) > "$log_file" 2>&1 &
+      ) > "$log_file" 2>&1 < /dev/null &
       pid=$!
       PID_NAME[$pid]="$name"
       PID_LOG[$pid]="$log_file"
@@ -117,7 +145,21 @@ run_parallel() {
       done_pid=""
       wait -n -p done_pid
       rc=$?
-      [ -n "$done_pid" ] || break
+      if [ -z "$done_pid" ]; then
+        # wait gave no finished step: do not guess. Stop what runs, and fail every step that has not reported: the running and the queued.
+        echo
+        echo "check.sh: wait returned no finished step (exit $rc); stopping the steps still running and failing every step that has not reported"
+        for pid in "${!PID_NAME[@]}"; do
+          echo "--- FAILED: ${PID_NAME[$pid]} (did not report; stopped)"
+          FAILED+=("${PID_NAME[$pid]} (did not report; stopped)")
+        done
+        stop_steps
+        for (( i = next; i < total; i++ )); do
+          echo "--- FAILED: ${Q_NAME[$i]} (not run)"
+          FAILED+=("${Q_NAME[$i]} (not run)")
+        done
+        break
+      fi
       name="${PID_NAME[$done_pid]}"
       log_file="${PID_LOG[$done_pid]}"
       dur=$(( $(date +%s) - PID_T0[$done_pid] ))
@@ -127,7 +169,6 @@ run_parallel() {
       echo
       echo "=== $name"
       cat "$log_file"
-      rm -f "$log_file"
       if [ "$rc" -eq 0 ]; then
         echo "--- ok: $name (${dur}s)"
       else
@@ -137,6 +178,9 @@ run_parallel() {
     fi
   done
 }
+
+# CHECK_SOURCE_ONLY=1 source tools/check.sh defines the functions and stops (tools/check-selftest.sh drives them with stub steps).
+[ -z "${CHECK_SOURCE_ONLY:-}" ] || return 0 2>/dev/null || exit 0
 
 # Phase 1: static preflight (serial)
 step "content.py" python3 tools/content.py

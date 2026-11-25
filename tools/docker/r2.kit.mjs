@@ -7,15 +7,17 @@ export { sleep };
 /** Install with context.addInitScript(WAYS): a poller (25 ms) that records, over any stretch (window.__w.mark() ends one and starts the next),
  *  the reader's states in order, the most of each way-of-opening mesh that was visible at once (and the most in each state), the most the READ
  *  glyph's uWord rose to, whether the READ pick was ever live, how many station sheets (sprites with userData.pane) were fully dark at once, and the
- *  most pixels by which the reading's page of words (#reader, while shown) lay outside the viewport (astray). */
+ *  most pixels by which the reading's page of words (#reader, while shown) lay outside the viewport (astray). It also counts its samples (n) and keeps the
+ *  largest gap between two samples, from the start of the stretch to its end (gap, ms): a timer that a loaded machine delays can miss what it looks for, so a
+ *  check of 'never' trusts the stretch only when sampled() says so. */
 export const WAYS = () => {
   const NAMES = ['ReadGlyph', 'ReadFrame', 'ReadBeam', 'ReadAnchor', 'ScanSheet', 'ScanFan', 'ScanBody', 'ReadFlow', 'ReadPrint'];
-  const fresh = () => ({ n: 0, states: [], max: {}, byState: {}, word: 0, live: false, dark: 0, astray: 0 });
-  const W = window.__w = { rec: fresh(), mark() { const r = W.rec; W.rec = fresh(); return r; } };
+  const fresh = () => { const t = performance.now(); return { n: 0, last: t, gap: 0, states: [], max: {}, byState: {}, word: 0, live: false, dark: 0, astray: 0 }; };
+  const W = window.__w = { rec: fresh(), mark() { const r = W.rec; r.gap = Math.max(r.gap, performance.now() - r.last); W.rec = fresh(); return r; } };
   const shown = (o) => { for (let e = o; e; e = e.parent) if (!e.visible) return false; return true; };
   setInterval(() => {
     const l = window.__lobby; if (!l?.scene) return;
-    const r = W.rec, st = l.reader.state(), c = {}; let glyph = null, dark = 0; r.n++;
+    const r = W.rec, st = l.reader.state(), c = {}, now = performance.now(); let glyph = null, dark = 0; r.n++; r.gap = Math.max(r.gap, now - r.last); r.last = now;
     if (r.states[r.states.length - 1] !== st) r.states.push(st);
     l.scene.traverse((o) => {
       if (NAMES.includes(o.name)) { if (o.name === 'ReadGlyph') glyph = o; if (shown(o)) c[o.name] = (c[o.name] || 0) + 1; }
@@ -29,6 +31,19 @@ export const WAYS = () => {
     const host = document.querySelector('#reader');
     if (host && !host.hidden) { const q = host.getBoundingClientRect(); r.astray = Math.max(r.astray, -q.left, -q.top, q.right - innerWidth, q.bottom - innerHeight); }
   }, 25);
+};
+/** The largest gap (ms) between the recorder's samples that a check of 'never' (a mesh never shown, the pick never live, the words never astray) can bear.
+ *  The recorder asks every 25 ms. What such a check looks for is something wrong that stays on the screen: the shortest of the ways' own acts (a scan's
+ *  sweep, the receiving's arrival) is about 1.1 s, and a mistaken one lasts as long as that act. With a gap of at most 250 ms (ten times the
+ *  period) a mistake lasting a second is seen at least four times, so a stretch whose gap is larger was sampled too thinly to say 'never' of
+ *  (the machine was too loaded: 8 browser steps at once), which is a failure of the set-up, not of the page. */
+export const MAX_GAP = 250;
+/** The set-up check of a recorded stretch: its samples were close enough together to trust a 'never' about it. Fails, worded as a set-up failure, if not. */
+export const sampled = (S, item, rec, what) => {
+  const ok = rec.n >= 1 && rec.gap <= MAX_GAP;
+  S.chk(item, ok, 'SET-UP, not the page: the recorder sampled ' + what + ' too thinly to trust its "never" checks (' + rec.n + ' samples, largest gap ' + Math.round(rec.gap) + ' ms, at most ' + MAX_GAP + ' ms is trusted): the machine was too loaded; run it again alone', { n: rec.n, gap: Math.round(rec.gap) });
+  if (ok) S.note('recorder: ' + what + ': ' + rec.n + ' samples, largest gap ' + Math.round(rec.gap) + ' ms');
+  return ok;
 };
 /** What is visible of the ways' meshes right now, and the READ pick's state. */
 export const look = (p) => p.evaluate(() => {
