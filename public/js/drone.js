@@ -5,6 +5,7 @@
 // the room’s Cycles environment. They also cast and receive the same live window sun as the table.
 // The volumes are the posts (js/catalogue.js): a book's boards and its two open pages are drawn from the post it holds.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLOW, V, glow } from './kit.js';
 
 // How long an errand takes. A leg of d metres takes LEG + d / SPEED seconds (a short hop is not a twitch, a long one not a
@@ -65,6 +66,53 @@ const gilt = (v) => canvasTex(512, 720, (c, w, h) => {             // tooling on
   c.beginPath(); c.arc(w / 2, 580, 30, 0, TAU); c.stroke(); c.beginPath(); c.ellipse(w / 2, 580, 48, 14, -0.4, 0, TAU); c.stroke();
 });
 
+// ---- static geometry merging: bake local transforms relative to `target` and merge per material to cut draw calls
+const _inv = new THREE.Matrix4(), _m = new THREE.Matrix4();
+function mergeStatic(target, skip, casters) {
+  target.updateMatrixWorld(true);
+  _inv.copy(target.matrixWorld).invert();
+  const buckets = new Map(), parents = new Set(), replaced = new Set();
+  const walk = (node) => {
+    for (const c of [...node.children]) {
+      if (skip?.has(c)) continue;
+      if (c.isMesh) {
+        let b = buckets.get(c.material);
+        if (!b) buckets.set(c.material, b = []);
+        b.push(c);
+      } else {
+        parents.add(c);
+        walk(c);
+      }
+    }
+  };
+  walk(target);
+  for (const [mat, meshes] of buckets) {
+    if (meshes.length === 1 && meshes[0].parent === target) continue;
+    const geos = [];
+    for (const mesh of meshes) {
+      _m.multiplyMatrices(_inv, mesh.matrixWorld);
+      mesh.geometry.applyMatrix4(_m);
+      geos.push(mesh.geometry);
+      mesh.parent.remove(mesh);
+      replaced.add(mesh);
+    }
+    const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
+    if (!merged) throw new Error('drone: mergeGeometries failed');
+    if (geos.length > 1) for (const g of geos) g.dispose();
+    const out = new THREE.Mesh(merged, mat);
+    target.add(out);
+    if (casters && mat.isMeshStandardMaterial && !mat.transparent) casters.push(out);
+  }
+  for (const p of [...parents].reverse()) {
+    if (p.children.length === 0) p.parent?.remove(p);
+  }
+  if (casters && replaced.size) {
+    let w = 0;
+    for (let i = 0; i < casters.length; i++) if (!replaced.has(casters[i])) casters[w++] = casters[i];
+    casters.length = w;
+  }
+}
+
 // ---- the book: two halves on a spine, so it opens in the middle and lies flat. x: across the pages, -z: top of the page.
 const BW = 0.25, BH = 0.35, BT = 0.046;
 function makeBook(v, i, mats) {
@@ -95,6 +143,7 @@ function makeBook(v, i, mats) {
   book.add(spine); box(spine, 0.006, BT, BH, -0.003, half, 0, leather);
   for (const z of [-0.12, -0.06, 0.06, 0.12]) box(spine, 0.009, BT + 0.002, 0.007, -0.0035, half, z, leather);
   box(spine, 0.0065, BT * 0.7, 0.04, -0.0034, half, -0.005, brass);
+  mergeStatic(spine);
   box(book, 0.012, 0.0008, 0.07, BW * 0.55, half + 0.001, BH / 2 + 0.02, std(0x7a1410, 0, 0.7));       // a ribbon marker
   book.userData.open = (k) => { left.rotation.z = k * PI; spine.rotation.z = k * PI / 2; pl.morphTargetInfluences[0] = pr.morphTargetInfluences[0] = k; };
   return book;
@@ -129,6 +178,7 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   add(body, new THREE.CylinderGeometry(0.009, 0.009, 0.02, 12), M.glass, (m) => { m.rotation.x = PI / 2; m.position.set(0.05, -0.002, -0.15); });
   const leds = [-1, 0, 1].map((i) => add(body, new THREE.SphereGeometry(0.0035, 8, 6), glow(new THREE.Color(2.2, 1.2, 0.4)), (m) => m.position.set(i * 0.014, 0.012, 0.166)));
   // ---- four ducted rotors on arms: motor pod, three stator struts, the duct with a brass lip, a three-bladed rotor, a foot
+  const portGlow = glow(new THREE.Color(2.2, 0.4, 0.2)), stbdGlow = glow(new THREE.Color(0.3, 2.0, 0.6));
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     const c = V(sx * 0.215, 0.014, sz * 0.195), root_ = V(sx * 0.1, 0.004, sz * 0.105), pod = new THREE.Group(); pod.position.copy(c); body.add(pod);
     between(root_, c, 0.017, 0.011, M.graphite); add(body, new THREE.SphereGeometry(0.02, 12, 8), M.ceramic, (m) => { m.position.copy(root_); m.scale.y = 0.7; });
@@ -141,8 +191,9 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     const rotor = new THREE.Group(); rotor.position.y = 0.012; pod.add(rotor); rotors.push(rotor);
     for (let k = 0; k < 3; k++) { const g = new THREE.Group(); g.rotation.y = k * TAU / 3; rotor.add(g); add(g, new THREE.BoxGeometry(0.07, 0.0025, 0.02), M.blade, (m) => { m.position.set(0.05, 0, 0); m.rotation.x = 0.3; }); }
     add(rotor, new THREE.CylinderGeometry(0.012, 0.012, 0.01, 12), M.brass);
+    mergeStatic(rotor, undefined, casters);
     discs.push(add(pod, new THREE.CircleGeometry(0.09, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.45, 0.55, 0.7), opacity: 0, side: THREE.DoubleSide, ...GLOW }), (m) => { m.position.y = 0.012; m.rotation.x = -PI / 2; }));
-    add(pod, new THREE.SphereGeometry(0.004, 8, 6), glow(sx < 0 ? new THREE.Color(2.2, 0.4, 0.2) : new THREE.Color(0.3, 2.0, 0.6)), (m) => m.position.set(sx * 0.108, 0, 0));   // running lights
+    add(pod, new THREE.SphereGeometry(0.004, 8, 6), sx < 0 ? portGlow : stbdGlow, (m) => m.position.set(sx * 0.108, 0, 0));   // running lights
   }
   // ---- the tray: carried flat under the belly with the book on it; to present, it drops on two rods and tilts like a lectern
   const tray = new THREE.Group(), TW = 0.56, TD = 0.4, HINGE = V(0, -0.105, 0.15); tray.position.copy(HINGE); body.add(tray);
@@ -151,8 +202,12 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     add(tray, new THREE.CylinderGeometry(0.006, 0.006, 0.03, 10), M.brass, (m) => { m.rotation.z = PI / 2; m.position.set(sx * 0.07, -0.002, 0); }); }
   add(tray, new THREE.BoxGeometry(TW, 0.022, 0.006), M.brass, (m) => m.position.set(0, 0.008, -TD)); add(tray, new THREE.BoxGeometry(TW, 0.012, 0.006), M.brass, (m) => m.position.set(0, 0.003, 0));
   for (const x of [-0.14, 0.14]) add(tray, new THREE.BoxGeometry(0.03, 0.004, TD * 0.8), M.rubber, (m) => m.position.set(x, 0.001, -TD / 2));            // pads the book rests on
-  const rods = [-1, 1].map((sx) => add(body, new THREE.CylinderGeometry(0.005, 0.005, 1, 8).translate(0, -0.5, 0), M.brass, (m) => m.position.set(sx * 0.07, -0.04, 0.15)));
+  mergeStatic(tray, undefined, casters);
+  const rodGeos = [-1, 1].map((sx) => new THREE.CylinderGeometry(0.005, 0.005, 1, 8).translate(sx * 0.07, -0.5, 0));
+  const rods = add(body, mergeGeometries(rodGeos, false), M.brass, (m) => m.position.set(0, -0.04, 0.15));
+  for (const g of rodGeos) g.dispose();
   for (const sx of [-1, 1]) add(body, new THREE.BoxGeometry(0.02, 0.05, 0.03), M.graphite, (m) => m.position.set(sx * 0.07, -0.03, 0.13));
+  mergeStatic(body, new Set([gimbal, tray, rods, tip, ...leds, ...rotors, ...discs]), casters);
   // the books: one per volume, made once; the one in hand sits on the tray, turned to face whoever the drone faces
   const books = volumes.map((v, i) => { const b = makeBook(v, i, M); b.rotation.y = PI; b.position.set(0, 0.004, -TD / 2); b.visible = false; tray.add(b); return b; });
   for (const b of books) b.traverse((o) => { if (o.isMesh) casters.push(o); });
@@ -204,7 +259,7 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     present.to = +(shown >= 0 || (!!leg?.lower && leg.k > 0.75)); opened.to = +(shown >= 0 && present.x > 0.9);      // the tray is on its way down as the drone comes in over the table
     const p = present.step(dt), o = opened.step(dt), drop = 0.24 * p;
     if (opened.x > 0.03) present.x = Math.max(present.x, 0.9);                           // the tray waits for the book to shut
-    tray.position.set(HINGE.x, HINGE.y - drop, HINGE.z); tray.rotation.x = -0.96 * p; for (const r of rods) r.scale.y = 0.065 + drop;
+    tray.position.set(HINGE.x, HINGE.y - drop, HINGE.z); tray.rotation.x = -0.96 * p; rods.scale.y = 0.065 + drop;
     if (held >= 0) books[held].userData.open(o);
   }
   /** Everything PBR here is lit by this environment map (room.js renders it from the room). */
