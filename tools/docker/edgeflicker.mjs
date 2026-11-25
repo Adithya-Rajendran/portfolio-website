@@ -125,7 +125,7 @@ const ANALYSE = {
 
 // "|hdr" (with a crop): each frame, the HDR values in the crop of the scene target (after the MSAA resolve) and of the
 // first bloom level: the largest, where, how many pass 16, 64 and 1000, how many are not finite, and (scene) the six pixels whose
-// value changed most since the frame before: [x, y (GL rows, from the bottom), before, after].
+// value changed most since the frame before: [x, y (GL rows, from the bottom), before, after]; and the camera (position, back axis).
 const HDR = ([x, y, w, h]) => {
   const { renderer: r, post } = window.__lobby, gl = r.getContext();
   const read = (rt, X, Y, W, H) => {
@@ -142,7 +142,9 @@ const HDR = ([x, y, w, h]) => {
     return { max: +max.toPrecision(4), at: at < 0 ? null : [X + at % W, Y + ((at / W) | 0)], n16, n64, n1k, bad, ...(top.length ? { top } : {}) };
   };
   const H0 = post.scene.height, sy = H0 - y - h;                  // GL rows count from the bottom
-  return { scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
+  const c = window.__lobby.camera, e = c.matrixWorld.elements, f6 = (v) => +v.toFixed(6);
+  return { cam: [f6(c.position.x), f6(c.position.y), f6(c.position.z), f6(e[8]), f6(e[9]), f6(e[10])], frame: r.info.render.frame,
+    scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
 };
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const an = await (await b.newContext()).newPage();
