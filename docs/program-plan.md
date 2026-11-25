@@ -485,7 +485,7 @@ section 3; push to both remotes; run
 |---|---|---|
 | I1, O1, O3, O6b, U0 | I2, O0, O2, O4a, O6a, U0b, U6a | I3, I4, O5, O6c, O6d, U0c, T1 |
 
-- I1 -> I2, I3, O0, T1. I2 -> O6c, O6d. O0 -> O5. O1 -> O2. O6b -> O6a (both edit `draw()`) and U6a. U0b -> U0c. O6d -> O7.
+- I1 -> I2, I3, O0, T1. I2 -> O6c, O6d. O0 -> O5. O1 -> O2. O6b -> O6a (both edit `draw()`) and U6a. U0b -> U0c. O2 -> O7 (before F1, D18).
 - O3, O6a, O6b all edit `public/main.js` in different functions: merge the workstream branch into yours before the pull request.
 - Until I2 has landed, "pictures 0" is shown with the host's `snap` and `pdiff` tiers on the states of `tools/detsnap.sh`
   (the Atrium, the Lounge, Fabrication, Navigation), base commit against yours.
@@ -535,7 +535,7 @@ its own (5.1).
 | O6b | World matrices are updated once a frame | opt | A | P0 | S |
 | O6c | The Library's drone is a few meshes | opt | A | I2 | M |
 | O6d | One primitive for each baked group | opt | A | I2 | S |
-| O7 | Small textures first | opt | B | O2, O6d, F1 | L |
+| O7 | Stream textures: small levels first, one file per layer | opt | A2 | O2 (before F1) | L |
 | O8 | The report and the budgets | opt | D | every other O task | S |
 | F1 | A build step, and nothing else changes | found | freeze | gate G1, during the layout freeze | L |
 | F2 | Type check, lint and unit tests, as a ratchet | found | B | F1 | M |
@@ -794,19 +794,28 @@ Branch `prog/O6d-one-primitive` · after I2 · size S · owns the `gltfpack` lin
 - **Done when.** Pictures 0; draw calls: Atrium 200 or fewer (240), Fabrication 90 or fewer (111); the files are no
   larger; node names and extras survive (the page reads `grp`, `em`, `fx`, `name`).
 
-#### O7 · Small textures first
-Branch `prog/O7-small-first` · after O2, O6d, F1 · size L · owns `tools/pack.py` and the texture loading of the room loader
+#### O7 · Stream textures: small levels first, one file per layer
+Branch `prog/O7a-layer-files` then `prog/O7b-small-levels` · after O2 · before F1 (D16, D18) · size L · owns `tools/pack.py`, the texture loading of the room loader, the test server's range support and `public/_headers`
 
-- **Context.** The cover lifts only when every texture is in (`room.js:565`): 12 to 39 MB. Mip levels of 1024 px and
-  below are 28 to 48% of those bytes (512 px and below: 11 to 28%).
-- **Goal.** The cover lifts on small versions; full ones replace them as they arrive.
-- **Notes.** `pack.py` also writes `<name>.lo.ktx2` (1024 px at most, same encoding) for anything larger. The loader
-  takes those first, lifts the cover, then fetches the full textures in the background, nearest to the camera first,
-  swaps each uniform and frees the small one. Limit transcodes running at once. A visitor who asked to save data stays
-  on the small ones. Add the cache rules to `public/_headers`.
-- **Done when.** At 10 Mbit/s the first frame of the Atrium and of the Lounge is 35% sooner than after O2; once
-  everything has arrived, pictures 0; the worst frame during the swaps is at most twice the room's median; WebGL memory
-  peaks at most 10% above today; total bytes at most 8% above today.
+- **Context.** The cover lifts only when every texture is in: 10 to 38 MB per room. Measured (`tools/docker/visbytes.mjs`,
+  branch `prog/R-visbytes`): every texture group is partly in the opening view, so ordering whole files gains almost
+  nothing; each KTX2 file stores its smallest levels first, so one range request from byte 0 gives the header and the small
+  levels (quarter-size and below: 2.7 to 7.9 MB per room); `_s` holds six sky angles and `_c` three orrery phases in
+  one array file each while the first frame samples one layer. A visit opens on the close shot and pulls back to the hero
+  after 1.2 s, so "the opening view" is both.
+- **Goal.** O7a: `pack.py` writes the layered groups as one file per layer; the loader fetches the layer in use first and
+  the others after the cover lifts (the orrery holds its current phase until the next phase's file is in, D18). O7b: the
+  loader fetches each texture's small levels by a range request, lifts the cover on them, then fetches the rest of each file
+  (`Range: bytes=N-`) close-shot textures first, then the hero view, then the rest, and raises each texture's detail in
+  place (for example allocate full storage and lower the base level as levels arrive) or swaps and frees the small one.
+  Limit transcodes running at once. A visitor who asked to save data stays on the small levels. Servers without range
+  support fall back to whole files. No `.lo.ktx2` files (they would add 17 to 25% to total bytes).
+- **Done when.** At 10 Mbit/s the first frame of the Atrium and of the Lounge is 35% sooner than on `prog/int` before
+  O7; bytes before the cover lifts are reported per room; once everything has arrived, pictures 0; the worst frame during
+  streaming is at most twice the room's median; WebGL memory peaks at most 10% above today; total bytes at most 8% above
+  today; range requests verified against `wrangler dev` as well as the test server.
+- **Later (D18).** Repacking atlases by what can be seen (4.8 to 19.3 MB per room is never seen) comes at the end of the
+  program, after a checkpoint, with the owner's side-by-side sign-off; a rebake on the remote renderer is allowed if needed.
 
 #### O8 · The report and the budgets
 Branch `prog/O8-report` · after every other O task · size S
