@@ -44,8 +44,8 @@ const room = (p, id) => p.waitForFunction((id) => window.__lobby?.mode().room ==
   const shown = await p.evaluate(() => !document.querySelector('#enter').hidden); if (!shown) fail('3 no READ button in the bar while the book lies open'); else ok('3 READ is also a button in the bar');
   await p.click('#enter'); await open(p, slugs[1]); ok('3 and it opens the article'); await p.close();
 }
-{ // 5. a room that is not a room
-  const p = await page(); await p.goto(`${ORIGIN}/?room=constructor&shot=hero`); await room(p, 'lobby'); ok('5 ?room=constructor is the Atrium'); await p.close();
+{ // 5. the room query names nothing any more: the Atrium opens and the address stays
+  const p = await page(), gone = new URLSearchParams([['room', 'about'], ['shot', 'hero']]); await p.goto(`${ORIGIN}/?${gone}`); await room(p, 'lobby'); ok('5 a room-query address is the Atrium'); if (new URL(p.url()).search !== `?${gone}`) fail('5 the address changed: ' + p.url()); await p.close();
 }
 { // 6. an address with a #fragment opens the post at that place, and Back still leaves (it re-opened the post for ever)
   const p = await page(), sec = A.sections.filter((x) => x.level === 2).at(-1).id;

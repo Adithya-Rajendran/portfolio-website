@@ -16,7 +16,7 @@ The posts move from Sanity into `data/`, and each becomes a real page at `/blog/
 
 - Canonical URLs end in `/`. Canonical origin: `content.SITE` (`https://adithya-rajendran.com`).
 - Old URLs redirect (`public/_redirects`, written by `tools/site_extras.py` because the résumé's file name comes from the data): `/blog/tags/*` → `/blog/`; `/resume`, `/resume/view`, `/resume/download` → the PDF. `/about/`, `/portfolio/` and `/contact/` are pages (§8). `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog` are gone.
-- `?room=<id>` keeps working (`?room=writing` means `/blog/`).
+- A room is named by its path only. The old `?room=<id>` query is gone on every host: an address that has it opens the Atrium and stays as it is.
 
 ## 2. A post: `data/posts/<slug>.md`
 
@@ -381,7 +381,7 @@ Every room has a path, and the page at that path holds the room's text, so it re
 | `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, skills, credentials, talks, the résumé |
 | `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, the links, the availability |
 
-- `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects` (Cloudflare adds the trailing slash to `/about` and `/portfolio/<slug>` itself).
+- `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects` (Cloudflare adds the trailing slash to `/about` and `/portfolio/<slug>` itself).
 - An article page (`/blog/<slug>/`, `/portfolio/<slug>/`) starts as a readable page (`html.reading`); a room's page starts as the station.
 - All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`, and a mistake anywhere writes nothing at all.
 - On these pages a link to a project is its page, `/portfolio/<slug>/` (a §6 link's `project`, a curiosity's or a paper's `project`, and `/portfolio/<slug>/` in a project's body or inline lists). A post's links to a project are the same.

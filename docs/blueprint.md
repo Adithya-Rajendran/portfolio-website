@@ -1,6 +1,6 @@
 # Arcadia Station — blueprint (draft 2)
 
-Interactive 3D model: `public/blueprint.html` (served at `/blueprint.html`), built by `public/js/blueprint.js` from the real room models.
+Interactive 3D model: `public/blueprint.html` (served at `/blueprint.html`), built by `public/js/blueprint.js` from the real room models. A room is picked with a hash, `/blueprint.html#about` (the room's id), never a query. Like the asset bench it is a developer page: `public/.assetsignore` keeps it out of the deployed site.
 
 ## The station
 - **Arcadia Station**: four spinning rings (01–04) on a central spine, 717 km above Earth. Ring radius 224 m at 2 rpm gives 1 g at the rim.

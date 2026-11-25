@@ -1,6 +1,6 @@
 import { attachErrorCollector, expect, test } from '../fixtures/site.ts';
 
-const ROUTES = ['/', '/?room=about', '/?room=projects', '/?room=experience', '/?room=comms', '/blog/'];
+const ROUTES = ['/', '/about/', '/portfolio/', '/experience/', '/contact/', '/blog/'];
 
 test.use({ viewport: { width: 960, height: 540 } });
 
@@ -12,7 +12,6 @@ test.describe('errs: all routes load without errors', () => {
       const first = `/${url.pathname.split('/')[1]}/`.replace('//', '/');
       const expectedRoom =
         (first !== '/' && Object.keys(rooms).find((id) => rooms[id]?.path === first)) ||
-        url.searchParams.get('room') ||
         'lobby';
 
       const errors = attachErrorCollector(page);

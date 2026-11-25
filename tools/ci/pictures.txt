@@ -2,45 +2,45 @@
 # Format: <state_name>=<url_or_query>[|frames=<N>][|action=<act>]
 
 # Hero views at tier 0 (4x MSAA) and tier 1 (FXAA), all 6 rooms (12 states)
-lobby-hero-t0=/?room=lobby&shot=hero&scale=1&tier=0|frames=90
-lobby-hero-t1=/?room=lobby&shot=hero&scale=1&tier=1|frames=90
-about-hero-t0=/?room=about&shot=hero&scale=1&tier=0|frames=90
-about-hero-t1=/?room=about&shot=hero&scale=1&tier=1|frames=90
-projects-hero-t0=/?room=projects&shot=hero&scale=1&tier=0|frames=90
-projects-hero-t1=/?room=projects&shot=hero&scale=1&tier=1|frames=90
-experience-hero-t0=/?room=experience&shot=hero&scale=1&tier=0|frames=90
-experience-hero-t1=/?room=experience&shot=hero&scale=1&tier=1|frames=90
-writing-hero-t0=/?room=writing&shot=hero&scale=1&tier=0|frames=90
-writing-hero-t1=/?room=writing&shot=hero&scale=1&tier=1|frames=90
-comms-hero-t0=/?room=comms&shot=hero&scale=1&tier=0|frames=90
-comms-hero-t1=/?room=comms&shot=hero&scale=1&tier=1|frames=90
+lobby-hero-t0=/?shot=hero&scale=1&tier=0|frames=90
+lobby-hero-t1=/?shot=hero&scale=1&tier=1|frames=90
+about-hero-t0=/about/?shot=hero&scale=1&tier=0|frames=90
+about-hero-t1=/about/?shot=hero&scale=1&tier=1|frames=90
+projects-hero-t0=/portfolio/?shot=hero&scale=1&tier=0|frames=90
+projects-hero-t1=/portfolio/?shot=hero&scale=1&tier=1|frames=90
+experience-hero-t0=/experience/?shot=hero&scale=1&tier=0|frames=90
+experience-hero-t1=/experience/?shot=hero&scale=1&tier=1|frames=90
+writing-hero-t0=/blog/?shot=hero&scale=1&tier=0|frames=90
+writing-hero-t1=/blog/?shot=hero&scale=1&tier=1|frames=90
+comms-hero-t0=/contact/?shot=hero&scale=1&tier=0|frames=90
+comms-hero-t1=/contact/?shot=hero&scale=1&tier=1|frames=90
 
 # Close shots, all 6 rooms (6 states)
-lobby-close=/?room=lobby&shot=close&scale=1&tier=0|frames=90
-about-close=/?room=about&shot=close&scale=1&tier=0|frames=90
-projects-close=/?room=projects&shot=close&scale=1&tier=0|frames=90
-experience-close=/?room=experience&shot=close&scale=1&tier=0|frames=90
-writing-close=/?room=writing&shot=close&scale=1&tier=0|frames=90
-comms-close=/?room=comms&shot=close&scale=1&tier=0|frames=90
+lobby-close=/?shot=close&scale=1&tier=0|frames=90
+about-close=/about/?shot=close&scale=1&tier=0|frames=90
+projects-close=/portfolio/?shot=close&scale=1&tier=0|frames=90
+experience-close=/experience/?shot=close&scale=1&tier=0|frames=90
+writing-close=/blog/?shot=close&scale=1&tier=0|frames=90
+comms-close=/contact/?shot=close&scale=1&tier=0|frames=90
 
 # Inspect poses, all 6 rooms including Contact field open (6 states)
-lobby-inspect=/?room=lobby&shot=hero&scale=1&tier=0&focus=0|frames=150
-about-inspect=/?room=about&shot=hero&scale=1&tier=0&focus=0|frames=150
-projects-inspect=/?room=projects&shot=hero&scale=1&tier=0&focus=4|frames=150
-experience-inspect=/?room=experience&shot=hero&scale=1&tier=0&focus=0|frames=150
-writing-inspect=/?room=writing&shot=hero&scale=1&tier=0&focus=0|frames=150
-comms-contact=/?room=comms&shot=hero&scale=1&tier=0&focus=0|frames=150
+lobby-inspect=/?shot=hero&scale=1&tier=0&focus=0|frames=150
+about-inspect=/about/?shot=hero&scale=1&tier=0&focus=0|frames=150
+projects-inspect=/portfolio/?shot=hero&scale=1&tier=0&focus=4|frames=150
+experience-inspect=/experience/?shot=hero&scale=1&tier=0&focus=0|frames=150
+writing-inspect=/blog/?shot=hero&scale=1&tier=0&focus=0|frames=150
+comms-contact=/contact/?shot=hero&scale=1&tier=0&focus=0|frames=150
 
 # Reading open and Library with a book open (2 states)
 projects-read=/portfolio/robot-scene-memory/?shot=hero&scale=1&tier=0|frames=240|action=waitReader
-writing-book=/?room=writing&shot=hero&scale=1&tier=0&focus=0|frames=120|action=chooseBook:0:300
+writing-book=/blog/?shot=hero&scale=1&tier=0&focus=0|frames=120|action=chooseBook:0:300
 
 # Sky at two angles in the 4 rooms with a window (8 states)
-lobby-sky-45=/?room=lobby&shot=hero&scale=1&tier=0&rollat=45|frames=90
-lobby-sky-180=/?room=lobby&shot=hero&scale=1&tier=0&rollat=180|frames=90
-about-sky-45=/?room=about&shot=hero&scale=1&tier=0&rollat=45|frames=90
-about-sky-180=/?room=about&shot=hero&scale=1&tier=0&rollat=180|frames=90
-writing-sky-45=/?room=writing&shot=hero&scale=1&tier=0&rollat=45|frames=90
-writing-sky-180=/?room=writing&shot=hero&scale=1&tier=0&rollat=180|frames=90
-comms-sky-45=/?room=comms&shot=hero&scale=1&tier=0&rollat=45|frames=90
-comms-sky-180=/?room=comms&shot=hero&scale=1&tier=0&rollat=180|frames=90
+lobby-sky-45=/?shot=hero&scale=1&tier=0&rollat=45|frames=90
+lobby-sky-180=/?shot=hero&scale=1&tier=0&rollat=180|frames=90
+about-sky-45=/about/?shot=hero&scale=1&tier=0&rollat=45|frames=90
+about-sky-180=/about/?shot=hero&scale=1&tier=0&rollat=180|frames=90
+writing-sky-45=/blog/?shot=hero&scale=1&tier=0&rollat=45|frames=90
+writing-sky-180=/blog/?shot=hero&scale=1&tier=0&rollat=180|frames=90
+comms-sky-45=/contact/?shot=hero&scale=1&tier=0&rollat=45|frames=90
+comms-sky-180=/contact/?shot=hero&scale=1&tier=0&rollat=180|frames=90

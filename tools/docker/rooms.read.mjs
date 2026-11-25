@@ -1,5 +1,5 @@
 // rooms.read.mjs [desktop|phone|reduced|all]: the rooms open at their paths, and Fabrication's projects are read the way a visitor reads them.
-//   1  every room at its path and at its ?room= alias: no error; the nav carries the paths; Back and Forward between rooms agree with the address
+//   1  every room at its path: no error; the nav carries the paths; Back and Forward between rooms agree with the address
 //   2  Fabrication: no wall card is a source (they are not picks); focusing an exhibit offers READ (glyph in the viewport, #enter in the bar);
 //      READ opens that project (reader.url(), address, tab title, h1), the frame fits; Escape returns to the pick that offered it; a click on it focuses it
 //   3  the hero's button reads the list of every project; its links open any project, exhibited or not; Back agrees with itself
@@ -22,7 +22,7 @@ async function run(name) {
 
   // ---------------------------------------------------------------- 1. every room at its path and its alias; the nav; Back and Forward
   if (!P.reducedMotion) {
-    for (const r of ROOMS) for (const [how, path] of [['path', r.path], ['alias', r.id === 'lobby' ? '/' : `/?room=${r.id}`]]) {
+    for (const r of ROOMS) for (const [how, path] of [['path', r.path]]) {
       const e0 = errs.length, p = await open(ctx, path, r.id, errs, { pin: false });
       await p.waitForTimeout(1500);
       const s = await snap_(p), nav = await p.evaluate(() => [...document.querySelectorAll('#hud nav a[data-room]')].map((a) => [a.dataset.room, new URL(a.href).pathname, a.classList.contains('here')]));
@@ -53,10 +53,10 @@ async function run(name) {
       }
       chk(1, errs.length === e0, 'no error while moving between the rooms', errs.slice(e0, e0 + 4));
       await p.close();
-      // an alias is also a place in the history
-      const q = await open(ctx, '/?room=projects', 'projects', errs, { pin: false });
+      // a room's path is a place in the history
+      const q = await open(ctx, '/portfolio/', 'projects', errs, { pin: false });
       if (phone) await q.evaluate(() => window.__lobby.enter('experience')); else await q.click('#hud nav a[data-room="experience"]'); await inRoom(q, 'experience'); await q.goBack(); const back = await inRoom(q, 'projects');
-      chk(1, back, 'Back from another room leads to the room a ?room= address named', back ? '' : (await snap_(q)).room);
+      chk(1, back, 'Back from another room leads to the room whose path was opened', back ? '' : (await snap_(q)).room);
       await q.close();
     }
   }

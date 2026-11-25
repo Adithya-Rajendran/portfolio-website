@@ -49,7 +49,7 @@ Every step in `tools/check.sh` (plus `view.mjs` and helper scripts listed on car
 | `rooms.deeplink.mjs` | Project & timeline entry deeplinks | `tests/e2e/specs/` (`reader`, `offer`) | `U5`, `U7` | Legacy in `tools/docker/` |
 | `contact.mjs all` | Contact links (`U6a`) & page-layer targets (`U6`) | `tests/e2e/specs/` (`contact`) | `U6` (`U6a` first) | Legacy in `tools/docker/` |
 | `deeplink.mjs` (`desktop`, `phone`) | Article reading mode -> `#stepin` offer | `tests/e2e/specs/` (`offer`) | `U7` | Legacy in `tools/docker/` |
-| `writing-alias.mjs` | `/?room=writing`, `/blog/`, Back/Forward | `tests/e2e/specs/` (router) | `U8` | Legacy in `tools/docker/` |
+| `writing-alias.mjs` | `/blog/`, a room query that names nothing, Back/Forward | `tests/e2e/specs/` (router) | `U8` | Legacy in `tools/docker/` |
 | `history.mjs` | History entries, Back/Forward, `#fragment`, cancel | `tests/e2e/specs/` (router) | `U8` | Legacy in `tools/docker/` |
 
 Legacy shared modules (`rooms.kit.mjs`, `r2.kit.mjs`, `serve.mjs`) are replaced for ported specs by `tests/e2e/fixtures/site.ts`, `tests/e2e/pages/station.ts`, and `tests/e2e/serve.mjs`, and remain in `tools/docker/` until `U8` removes `tools/check.sh`.

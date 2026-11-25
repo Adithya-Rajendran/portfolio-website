@@ -516,7 +516,7 @@ class Pages(unittest.TestCase):
                             continue
                         self.assertTrue(u.startswith('/') and not u.startswith('//'), (rel, u))
                         path, _, frag = u.partition('#')
-                        self.assertNotIn('?', path, (rel, u))   # §8 pages link the projects' pages, not ?room=
+                        self.assertNotIn('?', path, (rel, u))   # §8 pages link the projects' pages, not a query
                         target = os.path.join(out, path.lstrip('/'), 'index.html' if path.endswith('/') else '')
                         self.assertTrue(os.path.isfile(target.rstrip('/')), (rel, u))
                         if frag:
