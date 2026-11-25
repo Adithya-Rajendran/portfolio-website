@@ -189,7 +189,7 @@ pw_for() {
       s="$1"; shift
       set +e
       node "$s" "$@"
-    ' _ "$s" "$@" 2>&1 | grep -v "GL Driver"
+    ' _ "$s" "$@" 2>&1 | grep --line-buffered -v "GL Driver"
   return ${PIPESTATUS[0]}
 }
 
@@ -223,7 +223,7 @@ run_e2e() {
       cd /repo
       set +e
       xvfb-run -a -s "-screen 0 1280x720x24" node tests/e2e/run.mjs "$@"
-    ' _ "$@" 2>&1 | grep -v "GL Driver"
+    ' _ "$@" 2>&1 | grep --line-buffered -v "GL Driver"
   return ${PIPESTATUS[0]}
 }
 
@@ -315,7 +315,7 @@ case "$tier" in
           cd "$X"
           set +e
           node pdiff.mjs "/jobs/$1" "/jobs/$2"
-        ' _ "$a_rel" "$b_rel" 2>&1 | grep -v "GL Driver"
+        ' _ "$a_rel" "$b_rel" 2>&1 | grep --line-buffered -v "GL Driver"
       exit ${PIPESTATUS[0]}
     else
       a_abs="$(cd "$a" 2>/dev/null && pwd)" || { echo "ci: pdiff dir not found: $a" >&2; exit 2; }
@@ -338,7 +338,7 @@ case "$tier" in
           cd "$X"
           set +e
           node pdiff.mjs /dirA /dirB
-        ' 2>&1 | grep -v "GL Driver"
+        ' 2>&1 | grep --line-buffered -v "GL Driver"
       exit ${PIPESTATUS[0]}
     fi
     ;;
@@ -494,7 +494,7 @@ case "$tier" in
         cd "$X"
         set +e
         node pdiff.mjs --strict --fail-max=0 /dirA /dirB /heat
-      ' 2>&1 | grep -v "GL Driver"
+      ' 2>&1 | grep --line-buffered -v "GL Driver"
     exit ${PIPESTATUS[0]}
     ;;
   perf)
@@ -548,7 +548,7 @@ case "$tier" in
             cd "$X"
             set +e
             node blurdiff.mjs "$@"
-          ' _ "${margs[@]}" 2>&1 | grep -v "GL Driver"
+          ' _ "${margs[@]}" 2>&1 | grep --line-buffered -v "GL Driver"
         exit ${PIPESTATUS[0]}
         ;;
       *)
