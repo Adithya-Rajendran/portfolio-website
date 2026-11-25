@@ -1,11 +1,11 @@
 #!/bin/bash
 # Everything for the content and its reading in the rooms, in one command; exit 1 if any step failed (every step is run, then listed).
-#   tools/check.sh          env: OUT (host folder for screenshots, default /tmp/dtest), ASSETS (baked rooms; see tools/dtest.sh), CHECK_JOBS (parallel browser workers, default 4)
+#   tools/check.sh          env: OUT (host folder for screenshots, default /tmp/dtest), ASSETS (baked rooms; see tools/dtest.sh), CHECK_JOBS (parallel browser workers, default 8)
 # The browser steps need Docker (tools/dtest.sh serves public/ inside a container). The posts' pages are regenerated first.
 cd "$(dirname "$0")/.." || exit 1
 
 SUITE_T0=$(date +%s)
-JOBS="${CHECK_JOBS:-4}"
+JOBS="${CHECK_JOBS:-8}"
 if ! [[ "$JOBS" =~ ^[1-9][0-9]*$ ]]; then
   echo "check.sh: CHECK_JOBS must be a positive integer (got '$JOBS')" >&2
   exit 2
@@ -197,17 +197,11 @@ else
   # Phase 3: motion/stillness-sensitive steps (serial, alone on GPU)
   echo
   echo "=== phase 3: serial motion and stillness checks"
-  # They time or sample frames (stillness, the map's turn, the cue's and the drone's motion), so they run one at a
-  # time with nothing else on the GPU; split by profile only so each part's time is printed.
-  for prof in desktop phone reduced; do
-    dt_serial "hud.mjs ($prof; the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs "$prof"
-  done
-  for prof in desktop phone reduced; do
-    dt_serial "turn.mjs ($prof; Navigation's map turns; its hint)" turn.mjs "$prof"
-  done
-  for prof in desktop phone reduced; do
-    dt_serial "cue.mjs ($prof; the Library's cue; the drone's errand)" cue.mjs "$prof"
-  done
+  # They time or sample frames (stillness, the lock's transition, the map's turn, the cue's place and the drone's
+  # errand), so each runs alone with nothing else on the GPU.
+  dt_serial "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs all
+  dt_serial "turn.mjs (Navigation's map turns; its hint)" turn.mjs all
+  dt_serial "cue.mjs (the Library's cue; the drone's errand)" cue.mjs all
 fi
 
 TOTAL_DUR=$(( $(date +%s) - SUITE_T0 ))
