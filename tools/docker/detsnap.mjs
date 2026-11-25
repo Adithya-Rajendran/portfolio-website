@@ -159,11 +159,22 @@ for (const raw of jobs) {
     now: performance.now(),
   }))));
   console.log(name, 'probe', JSON.stringify(await p.evaluate(() => {
-    const seen = new Set(), out = [];
-    const h = (cv) => { const d = new Uint32Array(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.buffer); let x = 2166136261; for (let i = 0; i < d.length; i++) x = Math.imul(x ^ d[i], 16777619); return (x >>> 0).toString(16); };
-    const look = (v) => { const im = v && v.isTexture && v.image; if (im instanceof HTMLCanvasElement && !seen.has(im)) { seen.add(im); out.push(im.width + 'x' + im.height + ':' + h(im)); } };
+    // For every texture drawn from a 2D canvas: a hash of the canvas, then of the texture's levels 0 and 1 as uploaded
+    // (read back from the GPU), so a picture that differs can be traced to the drawing or to the upload.
+    const seen = new Set(), out = [], R = window.__lobby.renderer, gl = R.getContext(), fb = gl.createFramebuffer();
+    const fnv = (d) => { let x = 2166136261; for (let i = 0; i < d.length; i++) x = Math.imul(x ^ d[i], 16777619); return (x >>> 0).toString(16); };
+    const h = (cv) => fnv(new Uint32Array(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.buffer));
+    const level = (t, l, w, hh) => {
+      const g = R.properties.get(t).__webglTexture; if (!g) return '-';
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, g, l);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return '?';
+      const W = Math.max(1, w >> l), H = Math.max(1, hh >> l), d = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, d);
+      return fnv(new Uint32Array(d.buffer));
+    };
+    const look = (v) => { const im = v && v.isTexture && v.image; if (im instanceof HTMLCanvasElement && !seen.has(im)) { seen.add(im); out.push(im.width + 'x' + im.height + ':' + h(im) + '/' + level(v, 0, im.width, im.height) + '/' + level(v, 1, im.width, im.height)); } };
     window.__lobby.scene.traverse((o) => { for (const m of [].concat(o.material || [])) { for (const k in m) look(m[k]); for (const k in m.uniforms || {}) look(m.uniforms[k].value); } });
-    const r = window.__lobby.renderer.info;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(fb);
+    const r = R.info;
     return { frame: r.render.frame, tex: r.memory.textures, geo: r.memory.geometries, prog: r.programs.length, canvases: out };
   })), 'late', JSON.stringify(late));
   await ctx.close();
