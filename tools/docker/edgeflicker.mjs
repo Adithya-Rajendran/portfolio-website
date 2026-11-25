@@ -7,6 +7,7 @@
 //   d2 = |L(t) - 2 L(t-1) + L(t-2)|    temporal second difference: near 0 for smooth motion, large where a pixel flips
 // "edge" pixels: within 2 px of both a bright pixel (mean luma >= 200) and a darker one (<= 140): the bright window edges.
 // Prints one JSON line per state and writes /out/<name>/{heat.png,f000.png,last.png,stats.json}. heat.png: mean d2, x8.
+// "|crop=x,y,w,h" also writes strip.png: that region of 8 consecutive frames side by side, enlarged 4x.
 // <origin> "-" means $ORIGIN (the branch's own site); any other origin (a preview) is measured with this branch's script.
 import { chromium } from 'playwright';
 import fs from 'fs';
@@ -45,6 +46,16 @@ const ANALYSE = {
     if (s.p2) { s.k2++; for (let i = 0; i < n; i++) { const a = Math.abs(L[i] - 2 * s.p1[i] + s.p2[i]); s.d2[i] += a; f2 += a; if (a > 24) s.ev[i]++; } }
     s.per.push([+(f1 / n).toFixed(3), +(f2 / n).toFixed(3)]);
     s.p2 = s.p1; s.p1 = L;
+  },
+  async strip([b64, f, [x, y, w, h]]) {
+    const bmp = await createImageBitmap(await (await fetch('data:image/png;base64,' + b64)).blob());
+    const c = (window.__strip ??= new OffscreenCanvas(w * 4 * 8 + 7 * 4, h * 4)), g = c.getContext('2d');
+    g.imageSmoothingEnabled = false; g.drawImage(bmp, x, y, w, h, f * (w * 4 + 4), 0, w * 4, h * 4);
+  },
+  async stripPng() {
+    const buf = new Uint8Array(await (await window.__strip.convertToBlob({ type: 'image/png' })).arrayBuffer()); window.__strip = null;
+    let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    return btoa(bin);
   },
   async finish() {
     const s = window.__s, { W, H } = s, n = W * H, M = new Float32Array(n);
@@ -90,6 +101,7 @@ const step = async (p, k = 1) => { for (let i = 0; i < k; i++) { await p.clock.r
 
 for (const raw of jobs) {
   const eq = raw.indexOf('='), name = raw.slice(0, eq), [q, ...opts] = raw.slice(eq + 1).split('|'), still = opts.includes('still');
+  const crop = opts.find((o) => o.startsWith('crop='))?.slice(5).split(',').map(Number) ?? null;
   const dir = '/out/' + name; fs.mkdirSync(dir, { recursive: true });
   const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
@@ -119,6 +131,8 @@ for (const raw of jobs) {
     if (f === 0) fs.writeFileSync(dir + '/f000.png', png);
     if (f === FRAMES - 1) fs.writeFileSync(dir + '/last.png', png);
     await an.evaluate(ANALYSE.add, png.toString('base64'));
+    if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
+    if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
   }
   const { st, heat } = await an.evaluate(ANALYSE.finish);
