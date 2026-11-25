@@ -32,10 +32,11 @@ CHECK_RUN="check-$$-$SUITE_T0"
 export CHECK_RUN
 
 stop_steps() {
-  local pid i alive ids
+  local pid i alive ids killed=0 quiet=0
   # PID_NAME stays full until the containers are gone: a second signal that arrives while the docker calls run starts this over
   # (its trap runs when the docker call returns), and must still find the steps and do the label cleanup itself.
   if [ "${#PID_NAME[@]}" -gt 0 ]; then
+    killed=1
     for pid in "${!PID_NAME[@]}"; do kill -TERM -- "-$pid" 2>/dev/null || true; done
     for i in $(seq 1 50); do
       alive=0
@@ -47,8 +48,15 @@ stop_steps() {
     for pid in "${!PID_NAME[@]}"; do wait "$pid" 2>/dev/null || true; done
   fi
   if [ "$STEP_IDX" -gt 0 ] && command -v docker >/dev/null 2>&1; then
-    ids=$(docker ps -aq --filter "label=arcadia.check=$CHECK_RUN" 2>/dev/null)
-    [ -z "$ids" ] || docker rm -f $ids >/dev/null 2>&1 || true
+    # A docker run killed while it is still creating its container leaves the daemon to finish creating it afterwards (state Created, which --rm never
+    # removes): after steps were killed, ask again until nothing has turned up for a second (at most 15 rounds); otherwise once is enough.
+    for i in $(seq 1 15); do
+      ids=$(docker ps -aq --filter "label=arcadia.check=$CHECK_RUN" 2>/dev/null)
+      if [ -n "$ids" ]; then quiet=0; docker rm -f $ids >/dev/null 2>&1 || true; else quiet=$((quiet + 1)); fi
+      [ "$killed" -eq 0 ] && break
+      [ "$quiet" -ge 2 ] && break
+      sleep 1
+    done
   fi
   PID_NAME=()
 }

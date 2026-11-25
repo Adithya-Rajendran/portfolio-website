@@ -87,7 +87,6 @@ dir="$BASE/waitfail"; mkdir -p "$dir"
 bash "$0" --child "$dir" waitfail > "$dir/stdout.txt" 2>&1
 grep -E '^(---|check.sh|FAILED)' "$dir/stdout.txt"
 n=$(grep -c '^FAILED: ' "$dir/stdout.txt")
-sleep 1
 [ "$n" -eq 4 ] && [ "$(containers "$dir")" -eq 0 ] && [ "$(stand_ins)" -eq 0 ]
 verdict $? "when wait returns no finished step, the 2 running and 2 queued steps are all FAILED and none is left running"
 
