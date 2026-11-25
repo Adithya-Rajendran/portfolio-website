@@ -93,7 +93,7 @@ export class Post {
         c = AgXToneMapping(c);
         gl_FragColor = linearToOutputTexel(vec4(c, 1.0));
         gl_FragColor.rgb += n/255.0;                                   // dither: no banding in the dark gradients
-      }`, { tScene: { value: null }, tBloom: { value: null }, uBloom: { value: look.bloom ?? 0.05 }, uContrast: { value: look.contrast ?? 1.3 },
+      }`, { tScene: { value: null }, tBloom: { value: null }, uBloom: { value: look.bloom ?? 0.0375 }, uContrast: { value: look.contrast ?? 1.3 },
         uSat: { value: look.saturation ?? 1.08 }, uPx: { value: new THREE.Vector2() }, uVig: { value: look.vignette ?? 0.42 }, uGrain: { value: look.grain ?? 0.045 }, uTime: { value: 0 },
         toneMappingExposure: { value: look.exposure ?? 0.9 } });
   }

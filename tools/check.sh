@@ -238,7 +238,8 @@ else
   queue "library.mjs (reduced)" library.mjs reduced                            # 15
   queue "writing-alias.mjs" writing-alias.mjs                                  # 10
   queue "layers.mjs (the streamed sky and orrery layers)" layers.mjs             # 60
-  for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do
+  queue "devgate.mjs (the URL switches off a public host)" devgate.mjs         # 10
+  for u in "/" "/about/" "/portfolio/" "/experience/" "/contact/" "/blog/"; do
     queue "errs.mjs $u" errs.mjs "http://127.0.0.1:8080$u"
   done
   for s in $SLUGS; do queue "page.mjs /blog/$s/" page.mjs "/blog/$s/"; done

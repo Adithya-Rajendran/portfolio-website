@@ -264,12 +264,9 @@ class Extras(unittest.TestCase):
     def test_redirect_targets_exist(self):
         rooms = json.loads(read(PUBLIC, 'content.json'))['rooms']
         for src, target, _ in self.rules():
-            if target.startswith('/?room='):
-                self.assertIn(target[len('/?room='):], rooms, target)
-            else:
-                path = unquote(target)
-                self.assertTrue(os.path.isfile(os.path.join(self.one, path.lstrip('/'), 'index.html') if path.endswith('/')
-                                               else os.path.join(self.one, path.lstrip('/'))), target)
+            path = unquote(target)
+            self.assertTrue(os.path.isfile(os.path.join(self.one, path.lstrip('/'), 'index.html') if path.endswith('/')
+                                           else os.path.join(self.one, path.lstrip('/'))), target)
         self.assertEqual(dict((a, b) for a, b, _ in self.rules())['/resume/view'], '/resume/' + os.listdir(os.path.join(self.one, 'resume'))[0])
 
     # ------------------------------------------------------------ every URL

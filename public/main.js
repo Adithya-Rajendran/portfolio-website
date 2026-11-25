@@ -86,8 +86,11 @@ const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3000), maxAniso = re
 const mirror = { cam: new THREE.PerspectiveCamera(), vp: new THREE.Matrix4(), size: new THREE.Vector2(4, 4), pxPerRad: { value: 500 }, minLod: { value: 0 },
   rt: new THREE.WebGLRenderTarget(4, 4, { type: HDR_OK ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true,
     minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, samples: 4, resolveDepthBuffer: false }) };     // MSAA: thin light strips must not alias in it
+// Live tuning: ?bloom=<multiplier> scales the bloom strength of every room (1 = as authored, 0 = none); ?bloomth=<luma> sets the
+// brightness above which light blooms (authored 1.3, scene-linear before exposure). Both are harmless when absent, and
+// like every other switch they are read only on a DEV host (js/dev.js).
 const post = new Post(renderer, { hdr: HDR_OK, packed: FLOAT, msaa: 4, look: { contrast: num('contrast', 1.3), saturation: num('sat', 1.08),
-  bloom: num('bloom', 0.05), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
+  bloom: 0.0375 * num('bloom', 1), threshold: num('bloomth', 1.3), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
 let room = null, busy = false;
 
 // Quality tiers. 0: 4x MSAA on the scene and on the mirror image (cheap on discrete GPUs, ~45% of the frame on an
@@ -247,16 +250,16 @@ function fillHud(id) {
 }
 const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);       // not 'constructor' and the like
 // Where a URL leads. Every room has a path (content.json "path": / the Atrium, /blog/ the Library ...); anything deeper,
-// or a #fragment on a room's path, is something read in that room (/blog/<slug>/, /experience/#<id>). ?room=<id> is the
-// older way to name a room and still works.
+// or a #fragment on a room's path, is something read in that room (/blog/<slug>/, /experience/#<id>). A path is the only way
+// to name a room: the room query names nothing, and an address without a room's path opens the Atrium, address unchanged.
 const ROOMS = Object.entries(content.rooms).map(([id, r]) => [r.path, id]);
 const roomAt = (pathname) => { const first = `/${pathname.split('/')[1]}/`.replace('//', '/'); return [first === '/' ? null : ROOMS.find(([p]) => p === first)?.[1] ?? null, first]; };
 function route(u = location) {
-  const path = u.pathname.replace(/\/?$/, '/'), [at, base] = roomAt(path), q = new URLSearchParams(u.search).get('room');
-  return { id: at ?? (isRoom(q) ? q : 'lobby'), read: at && (path !== base || u.hash.length > 1) ? path + u.hash : null };
+  const path = u.pathname.replace(/\/?$/, '/'), [at, base] = roomAt(path);
+  return { id: at ?? 'lobby', read: at && (path !== base || u.hash.length > 1) ? path + u.hash : null };
 }
 const roomInUrl = () => route().id;
-const query = () => { const p = new URLSearchParams(location.search); p.delete('room'); return `${p}` ? `?${p}` : ''; };       // other switches (?tier=, ?shot= ...) are kept
+const query = () => { const p = new URLSearchParams(Q); p.delete('room'); return `${p}` ? `?${p}` : ''; };       // other switches (?tier=, ?shot= ...) are kept; a stale room query is not
 const urlFor = (id) => content.rooms[id].path + query();
 /** The address and the tab's title follow what is open: a room, or what is being read in it. */
 let silent = 0;                                         // > 0: a step on the way somewhere, not to be recorded

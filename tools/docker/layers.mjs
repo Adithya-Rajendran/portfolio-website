@@ -24,8 +24,8 @@ const skyIn = (s) => { const [i, j, f] = s.sky; return all(s, (n) => n.endsWith(
 const all = (s, want = () => true) => Object.entries(s.layers).filter(([n]) => want(n));
 
 // 1. every layer arrives; the orrery turns again
-for (const room of ['lobby', 'about']) {
-  const { ctx, p, errors } = await open(`?room=${room}`);
+for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
+  const { ctx, p, errors } = await open(path);
   const done = await settled(p), s = await state(p);
   ok(done, `${room}: every layer fetched (${Object.keys(s.layers).length} layered textures)`);
   ok(all(s).every(([n, l]) => l.failed.length === 0 && l.have.length === (n.endsWith('_s') ? 6 : 3)), `${room}: every layer in, none given up`);
@@ -39,7 +39,7 @@ for (const room of ['lobby', 'about']) {
 // 2. layers that cannot be fetched (an orrery phase and a sky angle, every try refused): given up, nothing frozen
 {
   let tries = 0;
-  const { ctx, p, errors } = await open('?room=lobby', (pg) => pg.route(/\/assets\/lobby\/tex\/(foliage_c1|archC_s4)\.ktx2/, (r) => { tries++; r.abort(); }));
+  const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/(foliage_c1|archC_s4)\.ktx2/, (r) => { tries++; r.abort(); }));
   const done = await settled(p), s = await state(p);
   ok(done, 'refused layers: streaming ends');
   ok(s.layers.foliage_c.failed.includes(1) && s.layers.archC_s.failed.includes(4), `refused layers: given up (${tries} requests refused)`);
@@ -53,7 +53,7 @@ for (const room of ['lobby', 'about']) {
 // 3. leaving a room while its layers stream in (10 Mbit/s, left at once) aborts the downloads under way
 {
   let cdp;
-  const { ctx, p, errors } = await open('?room=lobby', async (pg, c) => {
+  const { ctx, p, errors } = await open('', async (pg, c) => {
     cdp = await c.newCDPSession(pg);
     await cdp.send('Network.enable');
     await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });

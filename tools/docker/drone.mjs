@@ -1,8 +1,8 @@
 // Library end to end: the two actual requested volumes open, then Escape sends the empty drone home.
-// node drone.mjs ['http://HOST/?room=writing' [/out]]   (tools/dtest.sh drone.mjs: the defaults are this checkout's Library and /out)
+// node drone.mjs ['http://HOST/blog/' [/out]]   (tools/dtest.sh drone.mjs: the defaults are this checkout's Library and /out)
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-const [url_, out_] = process.argv.slice(2), url = url_ || `${process.env.ORIGIN || 'http://127.0.0.1:8080'}/?room=writing`, out = out_ || '/out';      // (dtest.sh passes an empty argument when there is none)
+const [url_, out_] = process.argv.slice(2), url = url_ || `${process.env.ORIGIN || 'http://127.0.0.1:8080'}/blog/`, out = out_ || '/out';      // (dtest.sh passes an empty argument when there is none)
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
 const p = await b.newPage({ viewport: { width: 1600, height: 900 } }), errors=[];

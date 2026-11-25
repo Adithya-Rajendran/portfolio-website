@@ -18,8 +18,8 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 
 | Tier | Arguments | What It Runs | Locks |
 |---|---|---|---|
-| `static` | none | `tools/content.py`, `tools/test_*.py`, `tools/site.py` | `quiet.lock` (shared) |
-| `smoke` | none | `errs.mjs` across `/`, `/?room=about`, `/?room=projects`, `/?room=experience`, `/?room=comms`, `/blog/` | `quiet.lock` (shared), `gpu.lock` |
+| `static` | none | `tools/content.py`, `tools/test_*.py`, `node --test tools/test_*.mjs` (the governor, the DEV switch and the no-`room`-query scan), `tools/site.py` | `quiet.lock` (shared) |
+| `smoke` | none | `errs.mjs` across `/`, `/about/`, `/portfolio/`, `/experience/`, `/contact/`, `/blog/` | `quiet.lock` (shared), `gpu.lock` |
 | `script` | `<name.mjs> [args...]` | Single `tools/docker/<name.mjs>` script via `tools/dtest.sh` | `quiet.lock` (shared), `gpu.lock` |
 | `suite` | none | Full `tools/check.sh` static preflight, parallel browser batch (`CHECK_JOBS`, default 8), and serial motion/stillness checks | `quiet.lock` (shared), `gpu.lock` |
 | `bench` | `"<query>" [runs] [seconds]` | `tools/docker/bench.mjs` at `1920x1080` (`runs` default 3, `seconds` default 8) | `quiet.lock` (exclusive), `gpu.lock` |
@@ -74,7 +74,7 @@ Every tier and Docker helper runs locally without `CI_HOME` or external server d
 tools/ci/run.sh static
 tools/ci/run.sh smoke
 tools/ci/run.sh script rooms.mjs
-tools/ci/run.sh snap s1 "lobby-hero=?room=lobby&shot=hero&scale=1&tier=0&chand=30&rollat=45"
+tools/ci/run.sh snap s1 "lobby-hero=/?shot=hero&scale=1&tier=0&chand=30&rollat=45"
 tools/ci/run.sh pdiff /path/to/s1 /path/to/s2
 tools/ci/run.sh pictures
 tools/ci/run.sh pictures --against origin/prog/ws-infra

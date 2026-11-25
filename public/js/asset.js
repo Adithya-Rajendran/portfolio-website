@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { setDistanceScale, uTime, V } from './kit.js';
 import { createDrone } from './drone.js';
 import { loadSite } from './site.js';
+import { params } from './dev.js';
 
-const Q = new URLSearchParams(location.search), num = (k, d) => (Q.has(k) ? parseFloat(Q.get(k)) : d);
+const Q = params(), num = (k, d) => (Q.has(k) ? parseFloat(Q.get(k)) : d);
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('scene'), antialias: true });
 renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight); renderer.toneMapping = THREE.AgXToneMapping; renderer.toneMappingExposure = num('exp', 1.1);
 setDistanceScale(1);
