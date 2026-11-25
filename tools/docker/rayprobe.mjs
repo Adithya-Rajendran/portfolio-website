@@ -13,8 +13,8 @@ const out = await p.evaluate(async (pts) => {
   const THREE = await import('three'), { camera, scene } = window.__lobby, rc = new THREE.Raycaster(), res = [];
   for (const s of pts) { const [x, y] = s.split(',').map(Number);
     rc.setFromCamera(new THREE.Vector2((x + 0.5) / innerWidth * 2 - 1, -((y + 0.5) / innerHeight * 2 - 1)), camera);
-    const hits = rc.intersectObjects(scene.children, true).filter((h) => h.object.visible !== false).slice(0, 6);
-    res.push({ px: s, hits: hits.map((h) => ({ d: +h.distance.toFixed(5), name: h.object.name, grp: h.object.userData?.grp ?? h.object.material?.name ?? '', mat: h.object.material?.type,
+    const hits = rc.intersectObjects(scene.children, true).filter((h) => h.object.isMesh && h.object.visible !== false).slice(0, 6);
+    res.push({ px: s, hits: hits.map((h) => ({ d: +h.distance.toFixed(5), name: h.object.name, ud: JSON.stringify(h.object.userData).slice(0, 80), id: h.object.id, mat: h.object.material?.type,
       n: h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld).toArray().map((v) => +v.toFixed(3)) : null, fi: h.faceIndex })) });
   }
   return res;
