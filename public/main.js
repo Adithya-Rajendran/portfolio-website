@@ -259,7 +259,7 @@ function route(u = location) {
   return { id: at ?? 'lobby', read: at && (path !== base || u.hash.length > 1) ? path + u.hash : null };
 }
 const roomInUrl = () => route().id;
-const query = () => { const p = new URLSearchParams(Q); return `${p}` ? `?${p}` : ''; };       // other switches (?tier=, ?shot= ...) are kept
+const query = () => { const p = new URLSearchParams(Q); p.delete('room'); return `${p}` ? `?${p}` : ''; };       // other switches (?tier=, ?shot= ...) are kept; a stale room query is not
 const urlFor = (id) => content.rooms[id].path + query();
 /** The address and the tab's title follow what is open: a room, or what is being read in it. */
 let silent = 0;                                         // > 0: a step on the way somewhere, not to be recorded

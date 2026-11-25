@@ -372,7 +372,7 @@ Per owner decision `D4`, `U6a` (`f4bc684d`), and `R1`:
 
 - **`@solidjs/router` (`2.0.1`)** owns browser history and URL synchronization (`src/app/routes/`). Zero `history.pushState` / `history.replaceState` calls may exist outside the router adapter.
 - **Canonical routes:**
-  - `/` (`lobby`), `/about/` (`about`), `/portfolio/` (`projects`), `/portfolio/<slug>/` (`projects` + read), `/experience/` (`experience`), `/experience/#<id>` (`experience` + read), `/blog/` (`writing`), `/blog/<slug>/` (`writing` + read), `/contact/` (`comms`), `/contact/#availability` (`comms`), plus guarding `Object.hasOwn(content.rooms, id)` against `'constructor'`).
+  - `/` (`lobby`), `/about/` (`about`), `/portfolio/` (`projects`), `/portfolio/<slug>/` (`projects` + read), `/experience/` (`experience`), `/experience/#<id>` (`experience` + read), `/blog/` (`writing`), `/blog/<slug>/` (`writing` + read), `/contact/` (`comms`), `/contact/#availability` (`comms`), plus guarding `Object.hasOwn(content.rooms, id)` against `'constructor'`.
 - **Query parameter preservation:** `?shot=`, `?tier=`, `?msaa=`, `?scale=`, `?rollat=`, `?debug=`, `?lightcheck=`, etc. are preserved across room and article navigations on DEV hosts only (localhost, private and LAN addresses, tailnet and CI preview hosts: see `public/js/dev.js`). On every other host these switches are not read and not kept; there is no `?room=` on any host.
 - **History & `popstate` semantics (`history.mjs`):**
   - Entering a room pushes a URL only when path+search changes.

@@ -86,6 +86,7 @@ Run only one HD 630 measurement at a time, serialized with `flock` and bounded b
 
 ```sh
 for r in lobby about projects experience writing comms; do
+  rp=$(case $r in lobby) ;; about) echo about/;; projects) echo portfolio/;; experience) echo experience/;; writing) echo blog/;; comms) echo contact/;; esac)   # the room's path without its leading slash
   for t in 1 0; do
     flock -w 600 /tmp/arcadia-local-hd630.lock timeout 300s \
       tools/dbench.sh "$rp?shot=hero&scale=1&tier=$t" 3 8
