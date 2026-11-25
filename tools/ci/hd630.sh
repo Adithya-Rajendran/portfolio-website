@@ -282,15 +282,23 @@ LOAD_BEFORE="$(cat /proc/loadavg)"
 T0=$(date +%s)
 
 if [ -n "$RUNNER" ]; then
-  timeout -k 10s "${RUN_TIMEOUT}s" \
-    env OUT="$OUT_DIR" ASSETS="$ASSETS" CI_CONTAINER_NAME="$CID" \
-    "$RUNNER" "${RUNNER_ARGS[@]}" 2>&1 | grep -v "GL Driver" | tee "$JOB/log.txt"
-  RC=${PIPESTATUS[0]}
+  MCMD=(env OUT="$OUT_DIR" ASSETS="$ASSETS" CI_CONTAINER_NAME="$CID" "$RUNNER" "${RUNNER_ARGS[@]}")
 else
-  timeout -k 10s "${RUN_TIMEOUT}s" \
-    "${DIRECT_CMD[@]}" 2>&1 | grep -v "GL Driver" | tee "$JOB/log.txt"
-  RC=${PIPESTATUS[0]}
+  MCMD=("${DIRECT_CMD[@]}")
 fi
+
+# The measurement runs under timeout in the background (its own process group), so a Ctrl-C aimed at this
+# script would never reach it: forward INT/TERM/HUP to timeout, which relays them to the whole group.
+timeout -k 10s "${RUN_TIMEOUT}s" "${MCMD[@]}" > >(grep -v "GL Driver" | tee "$JOB/log.txt") 2>&1 &
+TPID=$!
+trap 'kill -TERM "$TPID" 2>/dev/null' INT TERM HUP
+RC=0
+while :; do
+  wait "$TPID"; RC=$?
+  kill -0 "$TPID" 2>/dev/null || break
+done
+trap - INT TERM HUP
+sleep 0.3   # let the log pipeline flush
 
 docker rm -f "$CID" >/dev/null 2>&1 || true
 
