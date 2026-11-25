@@ -211,8 +211,8 @@ Exact pinned versions installed via `npx --yes pnpm@12.23.0 install` (zero `^` o
 
 6. **Selection, second-`Enter` reading, dynamic `canRead`, announcements, and `agent` key (`inspect`, `read`):**
    - `press` (click or `Enter`/`Space`) checks `state.value === key && canReadForPress(item)`: the **first `Enter`** calls `api.inspect(key, event)` -> `createChange("value", key, { reason: "item-press", event })` -> `station.focus(key)` and `announce("${name}: ${verb}")` (`details.source === "keyboard"`); a **second `Enter`** while focus remains on the already-inspected readable proxy invokes `api.read(key)` -> `station.read(key)` and `announce("Reading ${name}")`.
-   - Keep `onInspect` strictly idempotent (`props.station.focus(id)`): never escalate a second `onInspect` on an already-focused readable pick into `station.read(id)`, so `@ui-sdk/solid/agent`'s `createAgent({ allow })` gating on `'read'` cannot be bypassed by calling `inspect` twice (`press` already routes second-`Enter` reading directly through `api.read(key)`).
-   - `onRead` accepts `boolean | void` alongside a dynamic `canRead?: (pickId) => boolean | undefined` option: when `focused?.pick === id`, return `focused.canRead`; when `id` is unfocused and `Station.picks` omits `canRead` per §4.2, return `undefined` (`picks.find(...)?.canRead`) rather than `false` so `api.read(id)` delegates dynamically to `station.read(id)` (`onRead(): boolean`) instead of blocking unfocused `read(id)`. If `canRead(id)` returns `false` or `onRead(id)` returns `false`, `api.read()` throws `Error(\`"\${item.name}" has nothing to read.\`)` instead of silently announcing `"Reading ..."`.
+   - Keep `onInspect` strictly idempotent (`if (props.station.focused.get()?.pick !== id) props.station.focus(id)`): never escalate a second `onInspect` on an already-focused readable pick into `station.read(id)`, so `@ui-sdk/solid/agent`'s `createAgent({ allow })` gating on `'read'` cannot be bypassed by calling `inspect` twice (`press` already routes second-`Enter` reading directly through `api.read(key)`).
+   - `onRead` accepts `boolean | void` alongside a dynamic `canRead?: (pickId) => boolean | undefined` option: when `focused?.pick === id`, return `focused.canRead`; when `id` is unfocused and `Station.picks` omits `canRead` per §4.2, return `undefined` (`picks.find(...)?.canRead`) rather than `false` so `api.read(id)` delegates dynamically to `station.read(id)` (`onRead(): boolean`) instead of blocking unfocused `read(id)`. Crucially, `api.read()` invokes `onRead(item.id)` **before** `change('value', item.id, { reason: 'api' })` or `onInspect(item.id)` so a failed read (`canRead(id) === false` or `onRead(id) === false`) throws `Error(\`"\${item.name}" has nothing to read.\`)` immediately with **zero** `store.value`, `aria-pressed`, `station.focus()`, or single-stop door `travel()` side effects (and only updates `value` / calls `onInspect` if `result !== false` and not already inspected).
    - Spatial arrow movement announces `"${name}, ${verb}"` via `announce(..., { priority: "polite" })`.
    - `agent: { actions: ['inspect', 'read'], closed: true, items: (api) => api.items(), shown: (state) => state.items.length > 0 }`:
      - **Important `@ui-sdk/core/agent` alignment finding:** `agent.snapshot()` builds `items[].label` from the rendered button's accessible name (`renderedItems(parts)` -> `"${name}: ${verb}"`), while `agent.act()` resolves string `args[0]` against `agent.items()`; `api.items()` must return `{ value: item.id, label: item.verb ? `${item.name}: ${item.verb}` : item.name }` so `snapshot()` labels and `act()` label resolution stay identical, and works seamlessly with `createAgent({ allow })` gating (`details.source === "agent"`).
@@ -289,35 +289,36 @@ In addition to the §4.2 sketch (`start`, `dispose`, `enter`, `room`, `focus`, `
 
 ## 4. Verification Commands & Verbatim Output
 
-Run in `spikes/solid-uisdk/` with `TMPDIR` on a non-`/tmp` filesystem (`3/3` consecutive Chromium runs passed):
+Run in `spikes/solid-uisdk/` with `TMPDIR` on a non-`/tmp` filesystem (`2/2` consecutive Chromium runs passed):
 
 ```sh
 ./node_modules/.bin/tsc --noEmit && CI=1 ./node_modules/.bin/vitest run --reporter=verbose
 ```
 
-Observed output (Run 3 of 3 consecutive passing runs):
+Observed output (Run 2 of 2 consecutive passing runs; Run 1 passed `12/12` in `9.75s`):
 
 ```text
 TSC_EXIT=0
 
  RUN  v5.1.1 /home/ubuntu/.gemini/antigravity-cli/scratch/wt-U0c-picks-spike/spikes/solid-uisdk
 
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > tracks moving Three.js rAF projections via onFrame refs, preserves pointer-events: none hit-test, and implements D5 keyboard model 929ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > calls station.read() on second Enter inside scene-picks and suppresses Arrow/Enter while reader is open 521ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > reconciles focus and #lock in onFrame when the active proxy moves behind the camera mid-session 350ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > skips offscreen items[0] at 414x896 portrait viewport so initial Tab lands on THE ORRERY 202ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > exposes scene-picks to @ui-sdk/solid/agent (snapshot, act inspect/read, and allow refusal) 515ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > delegates unfocused read(id) to station.read(id) when Station.picks omits canRead 116ms
- ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > passes @solidjs/diagnostics expectNoDiagnostics({ allow: [] }) and expectNoSilentHolds isolated from SwiftShader WebGLRenderer 268ms
- ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > supports Tab roving focus, spatialMove with moving rects across frames, null skipping, edge preventDefault, selection, announcements, and agent actions 438ms
- ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > skips an initially-offscreen items[0] (rectOf === null) at mount so Tab lands on items[1] 31ms
- ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > recovers rovingFocus, Arrow*, End, and Tab re-entry when the active focused pick becomes null mid-session 165ms
- ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > rejects api.read() when onRead returns false or dynamic canRead returns false (even if item.canRead is omitted) 6ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > tracks moving Three.js rAF projections via onFrame refs, preserves pointer-events: none hit-test, and implements D5 keyboard model 951ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > calls station.read() on second Enter inside scene-picks and suppresses Arrow/Enter while reader is open 604ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > reconciles focus and #lock in onFrame when the active proxy moves behind the camera mid-session 385ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > skips offscreen items[0] at 414x896 portrait viewport so initial Tab lands on THE ORRERY 178ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > exposes scene-picks to @ui-sdk/solid/agent (snapshot, act inspect/read, and allow refusal) 453ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > delegates unfocused read(id) to station.read(id) when Station.picks omits canRead 132ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > aborts failed agent read on omitted-canRead single-stop door without focusing or scheduling travel() 1834ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > passes @solidjs/diagnostics expectNoDiagnostics({ allow: [] }) and expectNoSilentHolds isolated from SwiftShader WebGLRenderer 335ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > supports Tab roving focus, spatialMove with moving rects across frames, null skipping, edge preventDefault, selection, announcements, and agent actions 427ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > skips an initially-offscreen items[0] (rectOf === null) at mount so Tab lands on items[1] 28ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > recovers rovingFocus, Arrow*, End, and Tab re-entry when the active focused pick becomes null mid-session 167ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > rejects api.read() when onRead returns false or dynamic canRead returns false (even if item.canRead is omitted) 5ms
 
  Test Files  2 passed (2)
-      Tests  11 passed (11)
-   Start at  16:25:47
-   Duration  8.47s (tests 47%, worker 33%, import 21%)
+      Tests  12 passed (12)
+   Start at  16:34:30
+   Duration  9.87s (tests 62%, worker 23%, import 15%)
 ```
 
 Verified `spikes/solid-uisdk/node_modules/.vite/.../deps/_metadata.json` contains zero `@ui-sdk/core*` entries (`META_GREP_EXIT=1`).
