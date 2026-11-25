@@ -7,11 +7,12 @@ import { chromium } from 'playwright';
 const [origin, out, frames, ...jobs] = process.argv.slice(2);
 const DEFAULT_FRAMES = +frames || 90;
 
-const BUSY = () => {                                               // fetches and image decodes still running in the page
+const BUSY = () => {                                               // fetches (to the end of their bodies) and image decodes still running
   window.__busy = 0;
   const track = (f) => function (...a) { window.__busy++; return f.apply(this, a).finally(() => window.__busy--); };
   window.fetch = track(window.fetch);
   window.createImageBitmap = track(window.createImageBitmap);
+  for (const k of ['arrayBuffer', 'blob', 'json', 'text']) Response.prototype[k] = track(Response.prototype[k]);
 };
 
 const SEED = () => {
@@ -43,14 +44,24 @@ function parseJob(job) {
   return { name, q, frames: n, action };
 }
 
+// One frame of fake time at a time; before the next, wait (in real time) until no request is open and nothing the page
+// fetched or decodes is still pending, so a file asked for mid-way lands in the same frame on every run.
+let net = { inflight: 0 };
 async function stepFrames(p, count) {
   for (let i = 0; i < count; i++) {
     await p.clock.runFor(16);
-    while (await p.evaluate(() => window.__busy)) await new Promise((r) => setTimeout(r, 20));
+    for (const t0 = Date.now(); net.inflight > 0 || await p.evaluate(() => window.__busy);) {
+      if (Date.now() - t0 > 20000) { console.log('detsnap: still waiting after 20 s (requests', net.inflight, '); going on'); break; }
+      await new Promise((r) => setTimeout(r, 20));
+    }
   }
 }
 
-const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
+// 2D canvases are drawn in software. With GPU canvases Chrome decides per canvas, at run time, whether a canvas is
+// accelerated, and texImage2D takes a different path for each (a GPU copy that unpremultiplies in a shader, or a
+// readback that unpremultiplies on the CPU). The two round the soft edges of text differently, so a text texture could
+// come out one way or the other on the same code. In software there is one path.
+const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-accelerated-2d-canvas'] });
 let failed = false;
 
 for (const raw of jobs) {
@@ -66,15 +77,18 @@ for (const raw of jobs) {
   p.on('pageerror', (e) => { console.log(`[${name}] pageerror`, e.message); failed = true; });
   p.on('console', (m) => { if (m.type() === 'error') console.log(`[${name}] error`, m.text().slice(0, 300)); });
 
-  let inflight = 0, last = Date.now();
-  p.on('request', () => { inflight++; last = Date.now(); });
-  p.on('requestfinished', () => { inflight--; last = Date.now(); });
-  p.on('requestfailed', () => { inflight--; });
+  net = { inflight: 0 };
+  let last = Date.now(), settled = false;
+  const late = [];                                                  // requests made after the first wait: logged with the probe
+  p.on('request', (r) => { net.inflight++; last = Date.now(); if (settled) late.push(r.url().replace(/^https?:\/\/[^/]+/, '')); });
+  p.on('requestfinished', () => { net.inflight--; last = Date.now(); });
+  p.on('requestfailed', () => { net.inflight--; });
 
   await p.goto(`${origin.replace(/\/$/, '')}/${q.replace(/^\/+/, '')}`);
   for (let i = 0; i < 600 && !(await p.evaluate(() => !!window.__lobby)); i++) await new Promise((r) => setTimeout(r, 100));
-  while (inflight > 0 || Date.now() - last < 1500) await new Promise((r) => setTimeout(r, 100));
+  while (net.inflight > 0 || Date.now() - last < 1500) await new Promise((r) => setTimeout(r, 100));
   await new Promise((r) => setTimeout(r, 1500));                    // image decodes
+  settled = true;
 
   // Ensure ?focus= poses settle completely even when called with a smaller default frame count (e.g. run.sh snap 60).
   const hasFocusParam = new URLSearchParams(q.split('?')[1] || '').has('focus');
@@ -151,7 +165,7 @@ for (const raw of jobs) {
     window.__lobby.scene.traverse((o) => { for (const m of [].concat(o.material || [])) { for (const k in m) look(m[k]); for (const k in m.uniforms || {}) look(m.uniforms[k].value); } });
     const r = window.__lobby.renderer.info;
     return { frame: r.render.frame, tex: r.memory.textures, geo: r.memory.geometries, prog: r.programs.length, canvases: out };
-  })));
+  })), 'late', JSON.stringify(late));
   await ctx.close();
 }
 

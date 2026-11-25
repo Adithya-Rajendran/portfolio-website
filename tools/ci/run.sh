@@ -364,7 +364,9 @@ case "$tier" in
     [ -f "$LIST_FILE" ] || { echo "ci: missing state list: $LIST_FILE" >&2; exit 2; }
     mapfile -t PIC_STATES < <(grep -vE '^\s*(#|$)' "$LIST_FILE")
     [ ${#PIC_STATES[@]} -gt 0 ] || { echo "ci: empty state list: $LIST_FILE" >&2; exit 2; }
-    list_hash="$(sha256sum "$LIST_FILE" | cut -c1-12)"
+    # The key of a golden: the list, the script that renders it and the browser image (a golden made by another renderer
+    # is never compared with this one).
+    list_hash="$( { cat "$LIST_FILE" "$ROOT/tools/docker/detsnap.mjs"; echo "$IMG"; } | sha256sum | cut -c1-12)"
 
     cur_sha=""
     repo_git=""
