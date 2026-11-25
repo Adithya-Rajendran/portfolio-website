@@ -25,4 +25,5 @@ This log starts with the owner's decisions of `2026-11-24` (`D4`, `D5`, `D9`, `D
 
 | # | Question | Decision / Answer | Date | Decided by | Why | Needed by |
 |---|---|---|---|---|---|---|
+| D14 | The static light strips (O6d) | Not now. Each room's static strips are one multi-primitive mesh drawn with its glTF materials (room.js reads `em` only from the direct parent, so `stripMat` never applies). Merging them would cut draw calls (Atrium 240 to 164, Fabrication 111 to 55) but changes the strips' and rings' glow (max 215, 3 to 4% of pixels). Revisit after the refactor (after F5), with before and after pictures for the owner. | 2026-11-25 | **the owner** | Keep the picture unchanged through the migration. | after F5 |
 | — | (Reserved for `F3` boundary freeze, `U0`/`D6` sign-off, post-`F3` `Station`/`types.ts` changes, and `G4`/`D11` decisions) | — | — | — | — | — |
