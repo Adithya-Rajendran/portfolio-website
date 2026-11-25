@@ -19,6 +19,7 @@ FAILED=()
 Q_NAME=()
 Q_CMD=()
 STEP_IDX=0
+STEP_OUT=""
 declare -A PID_NAME=() PID_LOG=() PID_T0=()
 LOG_DIR=""
 
@@ -55,25 +56,24 @@ step() {
   fi
 }
 
+# Sets STEP_OUT (and bumps STEP_IDX) in the calling shell: never call it in $(...), or every step gets the same number.
 next_step_out() {
-  local name="$1" safe_name step_out
+  local name="$1" safe_name
   STEP_IDX=$((STEP_IDX + 1))
   safe_name="$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')"
   safe_name="${safe_name#_}"
   safe_name="${safe_name%_}"
   safe_name="${safe_name:0:80}"
-  step_out="$OUT/steps/$(printf '%02d' "$STEP_IDX")-$safe_name"
-  mkdir -p "$step_out"
-  printf '%s' "$step_out"
+  STEP_OUT="$OUT/steps/$(printf '%02d' "$STEP_IDX")-$safe_name"
+  mkdir -p "$STEP_OUT"
 }
 
 dt() { tools/dtest.sh "$@"; }
 
 dt_serial() {
   local name="$1"; shift
-  local step_out
-  step_out="$(next_step_out "$name")"
-  step "$name" env OUT="$step_out" tools/dtest.sh "$@"
+  next_step_out "$name"
+  step "$name" env OUT="$STEP_OUT" tools/dtest.sh "$@"
 }
 
 queue() {
@@ -96,7 +96,8 @@ run_parallel() {
     while [ "$active" -lt "$JOBS" ] && [ "$next" -lt "$total" ]; do
       name="${Q_NAME[$next]}"
       read -r -a args <<< "${Q_CMD[$next]}"
-      step_out="$(next_step_out "$name")"
+      next_step_out "$name"
+      step_out="$STEP_OUT"
       log_file="$LOG_DIR/$(printf '%02d' "$STEP_IDX").log"
       now=$(date +%s)
       echo "[+$((now - SUITE_T0))s] start: $name"
@@ -196,9 +197,17 @@ else
   # Phase 3: motion/stillness-sensitive steps (serial, alone on GPU)
   echo
   echo "=== phase 3: serial motion and stillness checks"
-  dt_serial "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs all
-  dt_serial "turn.mjs (Navigation's map turns; its hint)" turn.mjs all
-  dt_serial "cue.mjs (the Library's cue; the drone's errand)" cue.mjs all
+  # They time or sample frames (stillness, the map's turn, the cue's and the drone's motion), so they run one at a
+  # time with nothing else on the GPU; split by profile only so each part's time is printed.
+  for prof in desktop phone reduced; do
+    dt_serial "hud.mjs ($prof; the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs "$prof"
+  done
+  for prof in desktop phone reduced; do
+    dt_serial "turn.mjs ($prof; Navigation's map turns; its hint)" turn.mjs "$prof"
+  done
+  for prof in desktop phone reduced; do
+    dt_serial "cue.mjs ($prof; the Library's cue; the drone's errand)" cue.mjs "$prof"
+  done
 fi
 
 TOTAL_DUR=$(( $(date +%s) - SUITE_T0 ))
