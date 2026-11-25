@@ -19,7 +19,7 @@ All browser tools live in `tools/docker/` and run behind the `perf` and `bench` 
 - **Load bottleneck profile (`loadprof.mjs`, `perf loadprof`):** attaches V8 CDP `Profiler` at 500 us on `/robots.txt` before navigating to the room, recording `LongTask` durations, KTX2 worker `transcode` tasks, and wrapped `WebGL2RenderingContext` call counts and timings until `ready() > 0`.
 - **Visual identity (`pictures`, `blurdiff.mjs`):** `tools/ci/run.sh pictures [--against <base>]` checks 34 deterministic states (`tools/ci/pictures.txt`) with `pdiff.mjs --strict --fail-max=0`. "Pixel-identical" means `max == 0` on all 34 states. `blurdiff.mjs` (`perf blurdiff`) computes 8x8 block-averaged RGB diffs where intentional tolerance checks are needed.
 - **Evidence rules (§5.5):** every reported number is the median of at least 3 runs with all individual runs listed; before and after are measured in the same session on the same machine; GPU ms from the timer query is primary for GPU work, with frame ms reported beside it.
-- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** takes the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` first, so a second run waits before it extracts `<ref>` via `git archive` (never serving a dirty worktree), packs or reuses assets and runs `tools/site.py`; waits (up to 120 s) for the load that preparation caused to settle; then runs the measurement under `timeout -k 10s 300s` (the group is signalled, and the named container is removed), and logs `/proc/loadavg` before and after. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`.
+- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** takes the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` first, so a second run waits before it extracts `<ref>` via `git archive` (never serving a dirty worktree), packs or reuses assets and runs `tools/site.py`; waits (up to 120 s) for the load that preparation caused to settle; then runs the measurement under `timeout -k 10s 300s` (the group is signalled, and the named container is removed), and logs `/proc/loadavg` before and after. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`. `INT`, `TERM` and `HUP` sent to the script are forwarded to the measurement's process group. For a commit whose `run.sh` has no `perf` case, the scripts are taken from the invoking checkout, not from that commit.
 
 ## 1. Baseline (`6390b52d`)
 
@@ -49,17 +49,30 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 | Library (`writing`) | **29.2 / 16.0** | `[29.2, 29.8, 29.2]` / `[15.89, 16.02, 15.97]` | **29.8 / 16.3** | `[30.7, 29.6, 29.8]` / `[16.27, 15.58, 16.27]` | **1207 ms** (`1.2 s`; `[1836, 1149, 1207]`) | **1320 ms** (`1.3 s`; `[2044, 1320, 1166]`) |
 | Comms (`comms`) | **20.4 / 13.1** | `[19.1, 20.4, 21.2]` / `[11.6, 13.07, 14.52]` | **20.7 / 13.7** | `[20.7, 22.1, 19.4]` / `[13.74, 15.68, 12.22]` | **1009 ms** (`1.0 s`; `[1568, 1009, 992]`) | **1075 ms** (`1.1 s`; `[1737, 1075, 1025]`) |
 
-### Reproduction on CI host 1 (`arcadia-ci`), Atrium tier 1, 5 runs x 8 s each
+### Reproduction on CI host 1 (`arcadia-ci`), Atrium tier 1
 
-Measured with `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' 5 8` on CI host 1 only (exclusive `quiet.lock`), frame ms median per run:
+All runs below are `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' <runs> 8` on CI host 1 only (exclusive `quiet.lock`), frame ms and GPU ms as the bench reports them. Every run taken is listed; none was dropped.
 
-| Commit | Per-run frame ms | Median frame ms | Per-run GPU ms | Median GPU ms | Calls |
+**The recorded baseline, re-measured on the base commit `6390b52d`:**
+
+| Measurement | Per-run frame ms | Median frame ms | Per-run GPU ms | Median GPU ms |
+|---|---|---|---|---|
+| `baseline.md` (3 runs) | 28.1, 28.9, 27.5 | 28.1 | 16.85, 17.36, 15.4 | 16.85 |
+| `6390b52d`, 3 runs (`.../20261125-083731-6390b52d-bench-1116256`) | 28.9, 28.1, 27.5 | 28.1 (0.0%) | 16.92, 15.96, 15.52 | 15.96 (-5.3%) |
+| `6390b52d`, an earlier 5-run job (`.../20261125-073439-6390b52d-bench-982325`) | 26.3, 27.5, 27.2, 22.6, 26.4 | 26.4 (-6.0%) | 15.17, 15.56, 14.95, 10.77, 14.38 | 14.95 |
+
+**The clean "the tools change nothing" check: `prog/ws-opt` (`e036e938`) against the O0 head (`04755104` = `prog/ws-opt` plus the tools and docs), interleaved, 3 runs per job:**
+
+| Job | Ref | Per-run frame ms | Median | Per-run GPU ms | Median |
 |---|---|---|---|---|---|
-| `baseline.md` (3 runs, `6390b52d`) | 28.1, 28.9, 27.5 | 28.1 | 16.85, 17.36, 15.4 | 16.85 | 240 |
-| `6390b52d` again | 26.3, 27.5, 27.2, 22.6, 26.4 | 26.4 (-6.0%) | 15.17, 15.56, 14.95, 10.77, 14.38 | 14.95 | 240 |
-| `prog/O0-measuring-tools` head `6414cb5d` | 25.9, 24.7, 21.8, 26.3, 25.9 | 25.9 (-1.9% against the same-day `6390b52d`) | 14.39, 14.27, 10.7, 14.39, 14.99 | 14.39 | 240 |
+| 1 | `prog/ws-opt` | 25.2, 26.9, 27.3 | 26.9 | 14.27, 15.5, 16.73 | 15.5 |
+| 1 | head | 25.6, 25.7, 25.4 | 25.6 | 14.4, 14.41, 15.52 | 14.41 |
+| 2 | `prog/ws-opt` | 23.8, 25.7, 25.4 | 25.4 | 12.49, 14.36, 14.35 | 14.35 |
+| 2 | head | 22.9, 11.1, 11.2 | 11.2 | 13.23, 7.75, 7.99 | 7.99 |
+| 3 | `prog/ws-opt` | 11.6, 10.5, 10.9 | 10.9 | 8.01, 7.47, 7.76 | 7.76 |
+| 3 | head | 21.9, 26.8, 24.6 | 24.6 | 10.51, 15.53, 14.29 | 14.29 |
 
-Frame ms reproduces the recorded baseline to about 6% (two of five runs within 5%, the other three 6-7% below, one outlier at 22.6); GPU ms varies by about 12% from run to run on this host, as recorded. The branch, which adds only tools and docs, matches `6390b52d` measured the same day within 2%. CI host 2 (`arcadia-ci2`, i9-12900H) is a different machine and is not used for this comparison.
+Draw calls are 240 in every run. The host changed state during the series: runs near 11 ms frame / 8 ms GPU appear in both refs (head job 2, `prog/ws-opt` job 3) while the neighbouring jobs sit near 25 ms / 14.5 ms, so run-to-run and job-to-job variation on this host (up to a factor of two) is larger than any difference between the two refs; the pairs show no systematic difference. The first pair, taken before the change of state, differs by 4.8% in median frame ms (26.9 against 25.6). Because the host's state moves during a series, a single run or job is not a safe basis for a regression gate; compare interleaved jobs on the same ref. CI host 2 (`arcadia-ci2`, i9-12900H) is a different machine and is not used for this comparison.
 
 ### Time to first frame (`load.mjs`, §2.2)
 
