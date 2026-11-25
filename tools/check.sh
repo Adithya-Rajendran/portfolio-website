@@ -153,34 +153,34 @@ else
   SLUGS=$(basename -a data/posts/*.md | sed 's/\.md$//'); FIRST=$(echo "$SLUGS" | head -1)
   PROJECTS=$(basename -a data/projects/*.md | sed 's/\.md$//')
 
-  # Phase 2: independent browser steps (parallel, longest-first LPT order;
-  # reduced-motion latency checks follow the heaviest WebGL pairs)
-  queue "rooms.cross.mjs (desktop)" rooms.cross.mjs desktop
-  queue "rooms.cross.mjs (phone)" rooms.cross.mjs phone
-  queue "rooms.read.mjs (desktop)" rooms.read.mjs desktop
-  queue "rooms.read.mjs (phone)" rooms.read.mjs phone
-  queue "history.mjs (the address, Back and the reader)" history.mjs
-  queue "plainpage.mjs (no JavaScript, no WebGL, 404)" plainpage.mjs
-  queue "library.mjs (desktop)" library.mjs desktop
-  queue "library.mjs (phone)" library.mjs phone
-  queue "contact.mjs (desktop; legibility)" contact.mjs desktop
-  queue "rooms.deeplink.mjs (phone)" rooms.deeplink.mjs phone
-  queue "rooms.deeplink.mjs (desktop)" rooms.deeplink.mjs desktop
-  queue "rooms.others.mjs (desktop)" rooms.others.mjs desktop
-  queue "rooms.others.mjs (phone)" rooms.others.mjs phone
-  queue "contact.mjs (phone)" contact.mjs phone
-  queue "opening.mjs (desktop)" opening.mjs desktop
-  queue "opening.mjs (phone)" opening.mjs phone
-  queue "rooms.read.mjs (reduced)" rooms.read.mjs reduced
-  queue "rooms.text.mjs (desktop)" rooms.text.mjs desktop
-  queue "rooms.text.mjs (phone)" rooms.text.mjs phone
-  queue "opening.mjs (reduced)" opening.mjs reduced
-  queue "contact.mjs (reduced)" contact.mjs reduced
-  queue "hostile.mjs (the rooms against hostile and thin data)" hostile.mjs
-  queue "library.mjs (reduced)" library.mjs reduced
-  queue "writing-alias.mjs" writing-alias.mjs
-  queue "deeplink.mjs $FIRST (desktop)" deeplink.mjs "$FIRST"
-  queue "deeplink.mjs $FIRST (phone)" deeplink.mjs "$FIRST" 390 844
+  # Phase 2: independent browser steps, longest first (seconds each took on the CI host with 8 workers, 2026-11-25),
+  # so the long ones start at once and the short ones fill the gaps at the end.
+  queue "rooms.cross.mjs (desktop)" rooms.cross.mjs desktop                    # 300
+  queue "rooms.read.mjs (desktop)" rooms.read.mjs desktop                      # 290
+  queue "rooms.cross.mjs (phone)" rooms.cross.mjs phone                        # 290
+  queue "rooms.read.mjs (phone)" rooms.read.mjs phone                          # 290
+  queue "rooms.read.mjs (reduced)" rooms.read.mjs reduced                      # 135
+  queue "plainpage.mjs (no JavaScript, no WebGL, 404)" plainpage.mjs           # 105
+  queue "library.mjs (desktop)" library.mjs desktop                            # 105
+  queue "library.mjs (phone)" library.mjs phone                                # 90
+  queue "history.mjs (the address, Back and the reader)" history.mjs           # 85
+  queue "opening.mjs (desktop)" opening.mjs desktop                            # 85
+  queue "contact.mjs (desktop; legibility)" contact.mjs desktop                # 85
+  queue "rooms.text.mjs (desktop)" rooms.text.mjs desktop                      # 80
+  queue "rooms.deeplink.mjs (phone)" rooms.deeplink.mjs phone                  # 80 (once 230)
+  queue "rooms.deeplink.mjs (desktop)" rooms.deeplink.mjs desktop              # 80
+  queue "opening.mjs (phone)" opening.mjs phone                                # 65
+  queue "rooms.others.mjs (desktop)" rooms.others.mjs desktop                  # 65
+  queue "hostile.mjs (the rooms against hostile and thin data)" hostile.mjs    # 60
+  queue "rooms.others.mjs (phone)" rooms.others.mjs phone                      # 60
+  queue "contact.mjs (phone)" contact.mjs phone                                # 60
+  queue "opening.mjs (reduced)" opening.mjs reduced                            # 60
+  queue "rooms.text.mjs (phone)" rooms.text.mjs phone                          # 30
+  queue "contact.mjs (reduced)" contact.mjs reduced                            # 20
+  queue "deeplink.mjs $FIRST (desktop)" deeplink.mjs "$FIRST"                  # 20
+  queue "deeplink.mjs $FIRST (phone)" deeplink.mjs "$FIRST" 390 844            # 15
+  queue "library.mjs (reduced)" library.mjs reduced                            # 15
+  queue "writing-alias.mjs" writing-alias.mjs                                  # 10
   for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do
     queue "errs.mjs $u" errs.mjs "http://127.0.0.1:8080$u"
   done
@@ -191,12 +191,12 @@ else
   queue "plaincheck-selftest.mjs" plaincheck-selftest.mjs
 
   echo
-  echo "=== phase 2: running ${#Q_NAME[@]} browser steps ($JOBS workers)"
+  echo "=== phase 2: running ${#Q_NAME[@]} browser steps ($JOBS workers) [+$(( $(date +%s) - SUITE_T0 ))s]"
   run_parallel
 
   # Phase 3: motion/stillness-sensitive steps (serial, alone on GPU)
   echo
-  echo "=== phase 3: serial motion and stillness checks"
+  echo "=== phase 3: serial motion and stillness checks [+$(( $(date +%s) - SUITE_T0 ))s]"
   # They time or sample frames (stillness, the lock's transition, the map's turn, the cue's place and the drone's
   # errand), so each runs alone with nothing else on the GPU.
   dt_serial "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs all
