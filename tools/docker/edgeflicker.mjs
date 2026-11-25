@@ -124,16 +124,22 @@ const ANALYSE = {
 };
 
 // "|hdr" (with a crop): each frame, the HDR values in the crop of the scene target (after the MSAA resolve) and of the
-// first bloom level: the largest, where, how many pass 16, 64 and 1000, and how many are not finite.
+// first bloom level: the largest, where, how many pass 16, 64 and 1000, how many are not finite, and (scene) the six pixels whose
+// value changed most since the frame before: [x, y (GL rows, from the bottom), before, after].
 const HDR = ([x, y, w, h]) => {
   const { renderer: r, post } = window.__lobby, gl = r.getContext();
   const read = (rt, X, Y, W, H) => {
     const fb = r.properties.get(rt).__webglFramebuffer; gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fb);
     const a = new Float32Array(W * H * 4); gl.readPixels(X, Y, W, H, gl.RGBA, gl.FLOAT, a); gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    let max = 0, at = -1, n16 = 0, n64 = 0, n1k = 0, bad = 0;
+    let max = 0, at = -1, n16 = 0, n64 = 0, n1k = 0, bad = 0, top = [];
+    if (rt === post.scene) {                                  // the pixels that changed most since the last frame read
+      const prev = window.__hdrPrev; window.__hdrPrev = a;
+      if (prev && prev.length === a.length) { const d = [];
+        for (let i = 0; i < W * H; i++) { const v = Math.max(a[4 * i], a[4 * i + 1], a[4 * i + 2]), u = Math.max(prev[4 * i], prev[4 * i + 1], prev[4 * i + 2]); d.push([Math.abs(v - u), i, u, v]); }
+        d.sort((p, q) => q[0] - p[0]); top = d.slice(0, 6).map(([, i, u, v]) => [X + i % W, Y + ((i / W) | 0), +u.toPrecision(3), +v.toPrecision(3)]); } }
     for (let i = 0; i < W * H; i++) { const v = Math.max(a[4 * i], a[4 * i + 1], a[4 * i + 2]);
       if (!Number.isFinite(v)) { bad++; continue; } if (v > max) { max = v; at = i; } if (v > 16) n16++; if (v > 64) n64++; if (v > 1000) n1k++; }
-    return { max: +max.toPrecision(4), at: at < 0 ? null : [X + at % W, Y + ((at / W) | 0)], n16, n64, n1k, bad };
+    return { max: +max.toPrecision(4), at: at < 0 ? null : [X + at % W, Y + ((at / W) | 0)], n16, n64, n1k, bad, ...(top.length ? { top } : {}) };
   };
   const H0 = post.scene.height, sy = H0 - y - h;                  // GL rows count from the bottom
   return { scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
