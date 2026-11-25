@@ -79,7 +79,7 @@ Legacy shared modules (`rooms.kit.mjs`, `r2.kit.mjs`, `serve.mjs`) are replaced 
 - **`TMPDIR` on tight `/tmp` filesystems:** Chromium profiles and Playwright artifacts write to `TMPDIR` (default `/tmp`). If `/tmp` is a small `tmpfs`, export a `TMPDIR` on a filesystem with ample free space (not under `/tmp`) before running Playwright locally.
 - **Worktrees (`ASSETS`):** `tests/e2e/serve.mjs` automatically falls back to the main checkout's `public/assets` via `git rev-parse --git-common-dir`, or you can explicitly set `ASSETS=/path/to/public/assets`.
 - **Existing server:** Set `ORIGIN=http://127.0.0.1:8080` to skip launching `webServer` and test against an already-running server.
-- **Firefox / WebKit locally:** `smoke-firefox` and `smoke-webkit` require Playwright's Firefox and WebKit browsers (`pnpm exec playwright install firefox webkit`) or running via the CI Docker image (`mcr.microsoft.com/playwright:v1.65.1-noble`).
+- **Firefox / WebKit locally:** `smoke-firefox` and `smoke-webkit` require Playwright's Firefox and WebKit browsers (`pnpm exec playwright install firefox webkit`) or running via the CI Docker image (`mcr.microsoft.com/playwright:v1.65.1-noble`). `smoke-firefox` runs non-headless when `DISPLAY` is set (`xvfb-run` in CI Docker) so Linux Firefox can initialize WebGL2.
 - **Read-only `/repo` mounts (CI Docker):** Override output paths via `PLAYWRIGHT_OUTPUT_DIR` and `PLAYWRIGHT_HTML_REPORT`.
 
 ## Running on the CI Host

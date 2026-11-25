@@ -69,6 +69,7 @@ export default defineConfig({
       use: {
         browserName: 'firefox',
         viewport: { width: 960, height: 540 },
+        headless: !process.env.DISPLAY,
       },
     },
     {

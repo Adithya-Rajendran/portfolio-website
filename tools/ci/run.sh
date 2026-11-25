@@ -206,7 +206,7 @@ run_e2e() {
   if [ "$ASSETS" != "$ROOT/public/assets" ]; then
     assets_mount=(-v "$ASSETS":/repo/public/assets:ro)
   fi
-  docker run --rm --ipc=host "${dev[@]}" \
+  docker run --rm --init --ipc=host "${dev[@]}" \
     -e CI=1 \
     -e PLAYWRIGHT_OUTPUT_DIR=/out/test-results \
     -e PLAYWRIGHT_HTML_REPORT=/out/playwright-report \
@@ -222,7 +222,7 @@ run_e2e() {
       export TMPDIR="$TMP_E2E"
       cd /repo
       set +e
-      node tests/e2e/run.mjs "$@"
+      xvfb-run -a -s "-screen 0 1280x720x24" node tests/e2e/run.mjs "$@"
     ' _ "$@" 2>&1 | grep -v "GL Driver"
   return ${PIPESTATUS[0]}
 }
