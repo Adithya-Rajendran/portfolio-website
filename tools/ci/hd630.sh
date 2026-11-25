@@ -57,6 +57,15 @@ CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/arcadia/hd630-assets"
 LOCK_FILE="${HD630_LOCK:-/tmp/arcadia-local-hd630.lock}"
 RUN_TIMEOUT="${HD630_TIMEOUT:-300}"
 IMG="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
+LOCK_WAIT="${HD630_LOCK_WAIT:-3600}"
+
+# Exclusive HD 630 lock, taken before any preparation (archive, packing, site.py) so that a second run's
+# preparation never overlaps the first run's measurement. The measurement timeout starts after this point.
+exec 9>"$LOCK_FILE"
+flock -w "$LOCK_WAIT" 9 || {
+  echo "hd630: timed out waiting ${LOCK_WAIT}s for lock $LOCK_FILE" >&2
+  exit 75
+}
 
 JOB="$JOBS_ROOT/$(date +%Y%m%d-%H%M%S)-${SHA8}-${SUBCMD}-$$"
 W="$JOB/src"
@@ -139,9 +148,8 @@ if [ "$SUBCMD" != "blurdiff" ]; then
 fi
 
 # Choose runner:
-# 1. Extracted commit's tools/ci/run.sh if it supports the requested tier/subcommand (and SITE_SRC when needed).
-# 2. Current repo's tools/ci/run.sh with SITE_SRC="$W" if it supports SITE_SRC and the requested tier/subcommand.
-# 3. Direct container execution fallback (for pre-O0 commits or before run.sh is updated).
+# 1. The extracted commit's tools/ci/run.sh when it supports the requested tier/subcommand.
+# 2. Direct container execution fallback (for commits older than the perf tier).
 RUNNER=""
 RUNNER_ARGS=()
 if [ -x "$W/tools/ci/run.sh" ]; then
@@ -150,16 +158,6 @@ if [ -x "$W/tools/ci/run.sh" ]; then
     RUNNER_ARGS=(bench "$@")
   elif grep -qE '^[[:space:]]*perf\)' "$W/tools/ci/run.sh"; then
     RUNNER="$W/tools/ci/run.sh"
-    RUNNER_ARGS=(perf "$SUBCMD" "$@")
-  fi
-fi
-
-if [ -z "$RUNNER" ] && [ -x "$ROOT/tools/ci/run.sh" ] && grep -q 'SITE_SRC' "$ROOT/tools/ci/run.sh"; then
-  if [ "$SUBCMD" = "bench" ]; then
-    RUNNER="$ROOT/tools/ci/run.sh"
-    RUNNER_ARGS=(bench "$@")
-  elif grep -qE '^[[:space:]]*perf\)' "$ROOT/tools/ci/run.sh"; then
-    RUNNER="$ROOT/tools/ci/run.sh"
     RUNNER_ARGS=(perf "$SUBCMD" "$@")
   fi
 fi
@@ -270,28 +268,26 @@ if [ -z "$RUNNER" ]; then
   build_direct_cmd "$@"
 fi
 
-# Exclusive HD 630 lock: timeout starts ONLY after the lock is acquired.
-exec 9>"$LOCK_FILE"
-flock -w 600 9 || {
-  echo "hd630: timed out waiting 600s for lock $LOCK_FILE" >&2
-  exit 75
-}
-
 NPROC="$(nproc)"
 DEFAULT_MAX_LOAD=$(( NPROC / 2 ))
 [ "$DEFAULT_MAX_LOAD" -lt 1 ] && DEFAULT_MAX_LOAD=1
 LOAD_LIMIT="${HD630_MAX_LOAD:-$DEFAULT_MAX_LOAD}"
 
+# Preparation just ran inside the lock; let its load fade before sampling "before" (bounded wait).
+SETTLE="${HD630_SETTLE:-120}"
+while [ "$SETTLE" -gt 0 ] && awk -v l="$(cut -d' ' -f1 /proc/loadavg)" -v m="$LOAD_LIMIT" 'BEGIN{exit !(l>m)}'; do
+  sleep 5; SETTLE=$((SETTLE - 5))
+done
 LOAD_BEFORE="$(cat /proc/loadavg)"
 T0=$(date +%s)
 
 if [ -n "$RUNNER" ]; then
-  timeout --foreground -k 10s "${RUN_TIMEOUT}s" \
-    env SITE_SRC="$W" OUT="$OUT_DIR" ASSETS="$ASSETS" CI_CONTAINER_NAME="$CID" \
+  timeout -k 10s "${RUN_TIMEOUT}s" \
+    env OUT="$OUT_DIR" ASSETS="$ASSETS" CI_CONTAINER_NAME="$CID" \
     "$RUNNER" "${RUNNER_ARGS[@]}" 2>&1 | grep -v "GL Driver" | tee "$JOB/log.txt"
   RC=${PIPESTATUS[0]}
 else
-  timeout --foreground -k 10s "${RUN_TIMEOUT}s" \
+  timeout -k 10s "${RUN_TIMEOUT}s" \
     "${DIRECT_CMD[@]}" 2>&1 | grep -v "GL Driver" | tee "$JOB/log.txt"
   RC=${PIPESTATUS[0]}
 fi

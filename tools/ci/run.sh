@@ -157,7 +157,7 @@ pw_for() {
   if [ "$assets_dir" != "$site_src/public/assets" ]; then
     assets_mount=(-v "$assets_dir":/site/assets:ro)
   fi
-  docker run --rm --ipc=host "${dev[@]}" \
+  docker run --rm ${CI_CONTAINER_NAME:+--name "$CI_CONTAINER_NAME"} --ipc=host "${dev[@]}" \
     -e ORIGIN=http://127.0.0.1:8080 -e SETUP -e UNTIL \
     -v "$ROOT/tools/docker":/work:ro \
     -v "$site_src/public":/site:ro \
@@ -501,7 +501,7 @@ case "$tier" in
           abs="$(cd "$(dirname "$p")" && pwd)/$(basename "$p")"
           mounts+=(-v "$abs":/in/$i:ro); margs+=("/in/$i"); i=$((i + 1))
         done
-        docker run --rm --ipc=host \
+        docker run --rm ${CI_CONTAINER_NAME:+--name "$CI_CONTAINER_NAME"} --ipc=host \
           -v "$ROOT/tools/docker":/work:ro \
           "${mounts[@]}" \
           -v lobby_pw_modules:/w:ro \
