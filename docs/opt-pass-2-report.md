@@ -19,7 +19,7 @@ All browser tools live in `tools/docker/` and run behind the `perf` and `bench` 
 - **Load bottleneck profile (`loadprof.mjs`, `perf loadprof`):** attaches V8 CDP `Profiler` at 500 us on `/robots.txt` before navigating to the room, recording `LongTask` durations, KTX2 worker `transcode` tasks, and wrapped `WebGL2RenderingContext` call counts and timings until `ready() > 0`.
 - **Visual identity (`pictures`, `blurdiff.mjs`):** `tools/ci/run.sh pictures [--against <base>]` checks 34 deterministic states (`tools/ci/pictures.txt`) with `pdiff.mjs --strict --fail-max=0`. "Pixel-identical" means `max == 0` on all 34 states. `blurdiff.mjs` (`perf blurdiff`) computes 8x8 block-averaged RGB diffs where intentional tolerance checks are needed.
 - **Evidence rules (§5.5):** every reported number is the median of at least 3 runs with all individual runs listed; before and after are measured in the same session on the same machine; GPU ms from the timer query is primary for GPU work, with frame ms reported beside it.
-- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** takes the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` first, so a second run waits before it extracts `<ref>` via `git archive` (never serving a dirty worktree), packs or reuses assets and runs `tools/site.py`; waits (up to 120 s) for the load that preparation caused to settle; then runs the measurement under `timeout -k 10s 300s` (the group is signalled, and the named container is removed), and logs `/proc/loadavg` before and after. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`. `INT`, `TERM` and `HUP` sent to the script are forwarded to the measurement's process group. For a commit whose `run.sh` has no `perf` case, the scripts are taken from the invoking checkout, not from that commit.
+- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** takes the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` first, so a second run waits before it extracts `<ref>` via `git archive` (never serving a dirty worktree), packs or reuses assets and runs `tools/site.py`; waits (up to 120 s) for the load that preparation caused to settle; then runs the measurement under `timeout -k 10s 300s` (the group is signalled, and the named container is removed), and logs `/proc/loadavg` before and after. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`. `INT`, `TERM` and `HUP` stop the run at once: the whole process tree below the script is killed (every slow step runs as a waited-for child, including the lock wait and the preparation), the run is recorded as interrupted and unusable in `result.json` and the script exits 128+signal; a timed-out run is unusable too. The measurement writes its log straight to a file, so a signal loses no output. After a `SIGKILL` of the script the children keep the lock until they end (at the latest at the timeout), and the next run removes the stale `src` folders and containers under its own lock. For a commit whose `run.sh` has no `perf` case, the scripts are taken from the invoking checkout, not from that commit.
 
 ## 1. Baseline (`6390b52d`)
 
@@ -51,15 +51,20 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 
 ### Reproduction on CI host 1 (`arcadia-ci`), Atrium tier 1
 
-All runs below are `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' <runs> 8` on CI host 1 only (exclusive `quiet.lock`), frame ms and GPU ms as the bench reports them. Every run taken is listed; none was dropped.
+All runs below are `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' <runs> 8` on CI host 1 only (exclusive `quiet.lock`), frame ms and GPU ms as the bench reports them. Every run taken is listed below; none was dropped.
 
-**The recorded baseline, re-measured on the base commit `6390b52d`:**
+**The recorded baseline, re-measured on the base commit `6390b52d`** (every Atrium tier 1 job on `6390b52d` taken on CI host 1 today; the job folders are under `/srv/arcadia/jobs/`):
 
 | Measurement | Per-run frame ms | Median frame ms | Per-run GPU ms | Median GPU ms |
 |---|---|---|---|---|
 | `baseline.md` (3 runs) | 28.1, 28.9, 27.5 | 28.1 | 16.85, 17.36, 15.4 | 16.85 |
-| `6390b52d`, 3 runs (`.../20261125-083731-6390b52d-bench-1116256`) | 28.9, 28.1, 27.5 | 28.1 (0.0%) | 16.92, 15.96, 15.52 | 15.96 (-5.3%) |
-| `6390b52d`, an earlier 5-run job (`.../20261125-073439-6390b52d-bench-982325`) | 26.3, 27.5, 27.2, 22.6, 26.4 | 26.4 (-6.0%) | 15.17, 15.56, 14.95, 10.77, 14.38 | 14.95 |
+| `20261125-061303-6390b52d-bench-826752` | 27.9, 26.0, 25.8 | 26.0 | 15.57, 15.01, 14.29 | 15.01 |
+| `20261125-062457-6390b52d-bench-849481` | 27.2, 28.2, 27.8 | 27.8 | 14.71, 16.18, 15.58 | 15.58 |
+| `20261125-073439-6390b52d-bench-982325` (5 runs) | 26.3, 27.5, 27.2, 22.6, 26.4 | 26.4 | 15.17, 15.56, 14.95, 10.77, 14.38 | 14.95 |
+| `20261125-083731-6390b52d-bench-1116256` | 28.9, 28.1, 27.5 | 28.1 | 16.92, 15.96, 15.52 | 15.96 |
+| **All 14 runs pooled** | | **27.35 (-2.7%)** | | **15.34 (-9.0%)** |
+
+The pooled frame ms median of all 14 runs is within 5% of the recorded 28.1, so the "within 5%" line is met on frame ms on CI host 1. GPU ms is 9% under the recorded 16.85, inside the roughly 12% run-to-run spread seen on this host. (The first two jobs were taken by other tasks on the same host and are included so that nothing is selected; a tier 0 job `20261125-062622-6390b52d-bench-851031` is a different configuration and is not pooled.)
 
 **The clean "the tools change nothing" check: `prog/ws-opt` (`e036e938`) against the O0 head (`04755104` = `prog/ws-opt` plus the tools and docs), interleaved, 3 runs per job:**
 
