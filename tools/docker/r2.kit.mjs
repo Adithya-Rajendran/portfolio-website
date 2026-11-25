@@ -33,10 +33,11 @@ export const WAYS = () => {
   }, 25);
 };
 /** The largest gap (ms) between the recorder's samples that a check of 'never' (a mesh never shown, the pick never live, the words never astray) can bear.
- *  The recorder asks every 25 ms. What such a check looks for is something wrong that stays on the screen: the shortest of the ways' own acts (a scan's
- *  sweep, the receiving's arrival) is about 1.1 s, and a mistaken one lasts as long as that act. With a gap of at most 250 ms (ten times the
- *  period) a mistake lasting a second is seen at least four times, so a stretch whose gap is larger was sampled too thinly to say 'never' of
- *  (the machine was too loaded: 8 browser steps at once), which is a failure of the set-up, not of the page. */
+ *  The recorder asks every 25 ms, and a state can be shorter than that: the page's words are cut in place with reduced motion, and the READ pick can be live for a single
+ *  frame, so no sampling at any rate guarantees to see every wrong state, and this bound does not claim to. What it guarantees is that the recorder was running: a
+ *  stretch whose samples were never more than 250 ms (ten periods) apart had a sampler that was not starved, so a wrong state that stays for a second or more (the
+ *  ways' own acts, the scan's sweep or the receiving's arrival, last about 1.1 s) was seen at least four times; nothing is promised for a state shorter than that. A stretch with a larger gap was sampled too thinly even for that (the machine was too loaded: 8 browser steps at once), which is a
+ *  failure of the set-up, not of the page. */
 export const MAX_GAP = 250;
 /** The set-up check of a recorded stretch: its samples were close enough together to trust a 'never' about it. Fails, worded as a set-up failure, if not. */
 export const sampled = (S, item, rec, what) => {

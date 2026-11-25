@@ -33,27 +33,31 @@ export CHECK_RUN
 
 stop_steps() {
   local pid i alive ids
-  [ "${#PID_NAME[@]}" -gt 0 ] || return 0
-  for pid in "${!PID_NAME[@]}"; do kill -TERM -- "-$pid" 2>/dev/null || true; done
-  for i in $(seq 1 50); do
-    alive=0
-    for pid in "${!PID_NAME[@]}"; do kill -0 -- "-$pid" 2>/dev/null && alive=1; done
-    [ "$alive" -eq 0 ] && break
-    sleep 0.1
-  done
-  for pid in "${!PID_NAME[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
-  for pid in "${!PID_NAME[@]}"; do wait "$pid" 2>/dev/null || true; done
-  PID_NAME=()
-  if command -v docker >/dev/null 2>&1; then
+  # PID_NAME stays full until the containers are gone: a second signal that arrives while the docker calls run starts this over
+  # (its trap runs when the docker call returns), and must still find the steps and do the label cleanup itself.
+  if [ "${#PID_NAME[@]}" -gt 0 ]; then
+    for pid in "${!PID_NAME[@]}"; do kill -TERM -- "-$pid" 2>/dev/null || true; done
+    for i in $(seq 1 50); do
+      alive=0
+      for pid in "${!PID_NAME[@]}"; do kill -0 -- "-$pid" 2>/dev/null && alive=1; done
+      [ "$alive" -eq 0 ] && break
+      sleep 0.1
+    done
+    for pid in "${!PID_NAME[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+    for pid in "${!PID_NAME[@]}"; do wait "$pid" 2>/dev/null || true; done
+  fi
+  if [ "$STEP_IDX" -gt 0 ] && command -v docker >/dev/null 2>&1; then
     ids=$(docker ps -aq --filter "label=arcadia.check=$CHECK_RUN" 2>/dev/null)
     [ -z "$ids" ] || docker rm -f $ids >/dev/null 2>&1 || true
   fi
+  PID_NAME=()
 }
 
 cleanup() { stop_steps; }
 trap cleanup EXIT
 trap 'cleanup; exit 130' INT
 trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 129' HUP
 
 # step <name> <command...>: runs it in its own process group, in the background, and waits for it (a signal reaches the
 # trap at once, which a foreground command would delay until it ended). With STEP_LOG set, its output is also kept there.
