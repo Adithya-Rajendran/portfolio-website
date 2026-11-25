@@ -11,7 +11,7 @@ Reference machines (`D13`):
 
 All browser tools live in `tools/docker/` and run behind the `perf` and `bench` tiers of `tools/ci/run.sh` (on the CI host) and `tools/ci/hd630.sh` (on the laptop HD 630):
 
-- **Frame and GPU time (`bench.mjs`, `bench`):** rAF intervals synced per frame with a 1-px `readPixels`, plus a frame-level `EXT_disjoint_timer_query_webgl2` timer query around `draw()`, renderer draw calls/triangles, hooked WebGL memory, and first-frame/complete-frame requests and bytes. Hero baseline runs use `?room=<r>&shot=hero&scale=1&tier=0|1` at 1920x1080, 3 runs x 8 s in fresh browser contexts.
+- **Frame and GPU time (`bench.mjs`, `bench`):** rAF intervals synced per frame with a 1-px `readPixels`, plus a frame-level `EXT_disjoint_timer_query_webgl2` timer query around `draw()`, renderer draw calls/triangles, hooked WebGL memory, and first-frame/complete-frame requests and bytes. Hero baseline runs use each room's path with `?shot=hero&scale=1&tier=0|1` (these runs were made when `?room=<r>` still named a room) at 1920x1080, 3 runs x 8 s in fresh browser contexts.
 - **Per-pass GPU and JS (`passes.mjs`, `perf passes`):** hooks `WebGLRenderer.render` with `EXT_disjoint_timer_query_webgl2` (when no outer frame query is active) and `readPixels` sync to attribute GPU ms, render JS ms, render count, draw calls, and triangles to `shadow`, `livecube`, `mirror`, `scene`, `bloom`, `final`, `screens`, and `chart`.
 - **Per-frame JavaScript CPU profile (`cpuprof.mjs`, `perf cpuprof`):** V8 CDP `Profiler` at 100 us sampling interval over `secs` after a 4 s settle, reporting wall ms/frame, rAF JS ms/frame, sampled self ms/frame, and top files/functions.
 - **Unpinned adaptation (`unpinned.mjs`, `perf unpinned`):** vsync enabled, `?scale` and `?tier` unpinned, polls `window.__lobby.mode()` every 2 s for `secs` (default 30 s, 24 s in baseline traces) and measures 8 s of rAF intervals afterward (`fps`, `med`, `p95`).
@@ -51,7 +51,7 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 
 ### Reproduction on CI host 1 (`arcadia-ci`), Atrium tier 1
 
-All runs below are `ci <ref> bench '?room=lobby&shot=hero&scale=1&tier=1' <runs> 8` on CI host 1 only (exclusive `quiet.lock`), frame ms and GPU ms as the bench reports them. Every run taken is listed below; none was dropped.
+All runs below are `ci <ref> bench '?shot=hero&scale=1&tier=1' <runs> 8` on CI host 1 only (exclusive `quiet.lock`), frame ms and GPU ms as the bench reports them. Every run taken is listed below; none was dropped.
 
 **The recorded baseline, re-measured on the base commit `6390b52d`** (every Atrium tier 1 job on `6390b52d` taken on CI host 1 today; the job folders are under `/srv/arcadia/jobs/`):
 
@@ -140,22 +140,22 @@ Draw calls are 240 in every run. The host changed state during the series: runs 
 On the CI host 1 (`arcadia-ci`):
 
 ```sh
-ssh arcadia-ci '/srv/arcadia/bin/ci 6390b52d bench "?room=lobby&shot=hero&scale=1&tier=1" 3 8'
-ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf passes "?room=lobby&shot=hero&scale=1&tier=1" 6'
-ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf cpuprof "?room=lobby&shot=hero&scale=1&tier=1" 6'
-ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf unpinned "?room=lobby" 30'
-ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf load "?room=lobby&shot=hero" 50 20'
-ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf loadprof "?room=lobby&shot=hero"'
+ssh arcadia-ci '/srv/arcadia/bin/ci 6390b52d bench "?shot=hero&scale=1&tier=1" 3 8'
+ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf passes "?shot=hero&scale=1&tier=1" 6'
+ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf cpuprof "?shot=hero&scale=1&tier=1" 6'
+ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf unpinned "?" 30'
+ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf load "?shot=hero" 50 20'
+ssh arcadia-ci '/srv/arcadia/bin/ci <ref> perf loadprof "?shot=hero"'
 ssh arcadia-ci '/srv/arcadia/bin/ci <ref> pictures --against 6390b52d'
 ```
 
 On the laptop HD 630 (clean archive, exclusive lock, load check):
 
 ```sh
-tools/ci/hd630.sh 6390b52d bench "?room=lobby&shot=hero&scale=1&tier=1" 3 8
-tools/ci/hd630.sh <ref> passes "?room=lobby&shot=hero&scale=1&tier=1" 6
-tools/ci/hd630.sh <ref> cpuprof "?room=lobby&shot=hero&scale=1&tier=1" 6
-tools/ci/hd630.sh <ref> unpinned "?room=lobby" 30
-tools/ci/hd630.sh <ref> load "?room=lobby&shot=hero" 50 20
-tools/ci/hd630.sh <ref> loadprof "?room=lobby&shot=hero"
+tools/ci/hd630.sh 6390b52d bench "?shot=hero&scale=1&tier=1" 3 8
+tools/ci/hd630.sh <ref> passes "?shot=hero&scale=1&tier=1" 6
+tools/ci/hd630.sh <ref> cpuprof "?shot=hero&scale=1&tier=1" 6
+tools/ci/hd630.sh <ref> unpinned "?" 30
+tools/ci/hd630.sh <ref> load "?shot=hero" 50 20
+tools/ci/hd630.sh <ref> loadprof "?shot=hero"
 ```

@@ -24,7 +24,7 @@ of section 8 to subagents.
 3. **The page layer on Solid 2.0 and UI SDK**, with the browser tests rewritten for it: nav, hero, facts, the inspect
    bar, the room's selectable things, the reader's frame, Contact's links, the cover and the offers.
 
-Not in this program: a framework inside the frame loop; replacing `tools/site.py`; server rendering; a three.js upgrade;
+Not in this program: a framework inside the frame loop; server rendering at request time (build-time rendering replaces `tools/site.py`, D20); a three.js upgrade;
 re-baking rooms, unless a decision in section 3 says so; a production deploy (the owner's).
 
 ## 2. Ground truth
@@ -485,7 +485,7 @@ section 3; push to both remotes; run
 |---|---|---|
 | I1, O1, O3, O6b, U0 | I2, O0, O2, O4a, O6a, U0b, U6a | I3, I4, O5, O6c, O6d, U0c, T1 |
 
-- I1 -> I2, I3, O0, T1. I2 -> O6c, O6d. O0 -> O5. O1 -> O2. O6b -> O6a (both edit `draw()`) and U6a. U0b -> U0c. O6d -> O7.
+- I1 -> I2, I3, O0, T1. I2 -> O6c, O6d. O0 -> O5. O1 -> O2. O6b -> O6a (both edit `draw()`) and U6a. U0b -> U0c. O2 -> O7 (before F1, D18).
 - O3, O6a, O6b all edit `public/main.js` in different functions: merge the workstream branch into yours before the pull request.
 - Until I2 has landed, "pictures 0" is shown with the host's `snap` and `pdiff` tiers on the states of `tools/detsnap.sh`
   (the Atrium, the Lounge, Fabrication, Navigation), base commit against yours.
@@ -524,6 +524,7 @@ its own (5.1).
 | I2 | Golden pictures and the recorded baseline | infra | A | I1 | M |
 | I3 | The browser suite runs in parallel | infra | A | I1 | M |
 | I4 | The team's working files | infra | A | P0 | S |
+| I2b | Pictures that never flake | infra | B | I2 | S |
 | I5 | Checks for the built site | infra | B | F2 | S |
 | O0 | The measuring tools are in the repository | opt | A | I1 | S |
 | O1 | The load path wastes no time | opt | A | P0 | S |
@@ -535,7 +536,7 @@ its own (5.1).
 | O6b | World matrices are updated once a frame | opt | A | P0 | S |
 | O6c | The Library's drone is a few meshes | opt | A | I2 | M |
 | O6d | One primitive for each baked group | opt | A | I2 | S |
-| O7 | Small textures first | opt | B | O2, O6d, F1 | L |
+| O7 | Stream textures: small levels first, one file per layer | opt | A2 | O2 (before F1) | L |
 | O8 | The report and the budgets | opt | D | every other O task | S |
 | F1 | A build step, and nothing else changes | found | freeze | gate G1, during the layout freeze | L |
 | F2 | Type check, lint and unit tests, as a ratchet | found | B | F1 | M |
@@ -543,6 +544,7 @@ its own (5.1).
 | F4a to F4d | Engine modules to TypeScript | found | C | F3 | M each |
 | F5 | loadRoom in parts | found | D | F6 and O1 to O7 | L |
 | F6 | One home for the repeated helpers | found | D | F4a to F4d | M |
+| F7 | Without WebGL the page still reads | found | B | F1 | S |
 | D1 | The contract and the README describe the new page | found | D | U8 | M |
 | D2 | Deploy | found | D | F1 | S |
 | D3 | Dependencies and how they are raised | found | D | U1 | S |
@@ -561,6 +563,7 @@ its own (5.1).
 | U8 | Addresses on the router, and the old shell goes | ui | D | U2 to U7 | L |
 | U9 | An agent can use the rooms (behind a switch) | ui | D | U4 | M |
 | U10 | Styles and leftovers | ui | D | U8 | S |
+| U11 | The plain pages come from Solid at build time | ui | D | F1, U5 | L |
 
 ## 8. Task cards
 
@@ -628,6 +631,16 @@ Branch `prog/I4-working-files` · after P0 · size S
   `docs/program/pr-template.md` (section 10; GitHub reads its own template only from the default branch, so agents
   pass this file to `gh pr create --body-file`); `docs/program/status.md` and `decisions.md` with their headings.
 - **Done when.** An agent given only `AGENTS.md` and a card can push a branch, run a tier and open a correct pull request.
+
+#### I2b · Pictures that never flake
+Branch `prog/I2b-steady-pictures` · after I2 · size S
+
+- **Context.** Three times on 2026-11-25 one of the 34 states differed by a few pixels once and matched on every rerun
+  (`comms-contact`/`comms-hero-t1` earlier, `lobby-inspect` max 66 on 2 px, `lobby-sky-180` max 4). A flaky gate
+  teaches people to rerun instead of read.
+- **Goal.** Find what is not settled when a state is captured (texture transcodes or layer uploads still in flight, a timer
+  read, a frame counted from an animation) and wait for it or pin it.
+- **Done when.** `pictures` on one commit, 20 runs across both CI hosts, every state max 0 every time; the cause named.
 
 #### I5 · Checks for the built site
 Branch `prog/I5-built-tiers` · after F2 · size S
@@ -794,19 +807,28 @@ Branch `prog/O6d-one-primitive` · after I2 · size S · owns the `gltfpack` lin
 - **Done when.** Pictures 0; draw calls: Atrium 200 or fewer (240), Fabrication 90 or fewer (111); the files are no
   larger; node names and extras survive (the page reads `grp`, `em`, `fx`, `name`).
 
-#### O7 · Small textures first
-Branch `prog/O7-small-first` · after O2, O6d, F1 · size L · owns `tools/pack.py` and the texture loading of the room loader
+#### O7 · Stream textures: small levels first, one file per layer
+Branch `prog/O7a-layer-files` then `prog/O7b-small-levels` · after O2 · before F1 (D16, D18) · size L · owns `tools/pack.py`, the texture loading of the room loader, the test server's range support and `public/_headers`
 
-- **Context.** The cover lifts only when every texture is in (`room.js:565`): 12 to 39 MB. Mip levels of 1024 px and
-  below are 28 to 48% of those bytes (512 px and below: 11 to 28%).
-- **Goal.** The cover lifts on small versions; full ones replace them as they arrive.
-- **Notes.** `pack.py` also writes `<name>.lo.ktx2` (1024 px at most, same encoding) for anything larger. The loader
-  takes those first, lifts the cover, then fetches the full textures in the background, nearest to the camera first,
-  swaps each uniform and frees the small one. Limit transcodes running at once. A visitor who asked to save data stays
-  on the small ones. Add the cache rules to `public/_headers`.
-- **Done when.** At 10 Mbit/s the first frame of the Atrium and of the Lounge is 35% sooner than after O2; once
-  everything has arrived, pictures 0; the worst frame during the swaps is at most twice the room's median; WebGL memory
-  peaks at most 10% above today; total bytes at most 8% above today.
+- **Context.** The cover lifts only when every texture is in: 10 to 38 MB per room. Measured (`tools/docker/visbytes.mjs`,
+  branch `prog/R-visbytes`): every texture group is partly in the opening view, so ordering whole files gains almost
+  nothing; each KTX2 file stores its smallest levels first, so one range request from byte 0 gives the header and the small
+  levels (quarter-size and below: 2.7 to 7.9 MB per room); `_s` holds six sky angles and `_c` three orrery phases in
+  one array file each while the first frame samples one layer. A visit opens on the close shot and pulls back to the hero
+  after 1.2 s, so "the opening view" is both.
+- **Goal.** O7a: `pack.py` writes the layered groups as one file per layer; the loader fetches the layer in use first and
+  the others after the cover lifts (the orrery holds its current phase until the next phase's file is in, D18). O7b: the
+  loader fetches each texture's small levels by a range request, lifts the cover on them, then fetches the rest of each file
+  (`Range: bytes=N-`) close-shot textures first, then the hero view, then the rest, and raises each texture's detail in
+  place (for example allocate full storage and lower the base level as levels arrive) or swaps and frees the small one.
+  Limit transcodes running at once. A visitor who asked to save data stays on the small levels. Servers without range
+  support fall back to whole files. No `.lo.ktx2` files (they would add 17 to 25% to total bytes).
+- **Done when.** At 10 Mbit/s the first frame of the Atrium and of the Lounge is 35% sooner than on `prog/int` before
+  O7; bytes before the cover lifts are reported per room; once everything has arrived, pictures 0; the worst frame during
+  streaming is at most twice the room's median; WebGL memory peaks at most 10% above today; total bytes at most 8% above
+  today; range requests verified against `wrangler dev` as well as the test server.
+- **Later (D18).** Repacking atlases by what can be seen (4.8 to 19.3 MB per room is never seen) comes at the end of the
+  program, after a checkpoint, with the owner's side-by-side sign-off; a rebake on the remote renderer is allowed if needed.
 
 #### O8 · The report and the budgets
 Branch `prog/O8-report` · after every other O task · size S
@@ -947,6 +969,16 @@ Branch `prog/D3-dependencies` · after U1 · size S
   `e2e`, `pictures` and `perf`; Solid 2.0.x and UI SDK are looked at once a week during the program and raised at most
   once per gate.
 
+#### F7 · Without WebGL the page still reads
+Branch `prog/F7-no-webgl` · after F1 · size S
+
+- **Context.** With WebGL unavailable, `main.js` throws "e is not a function" on every page, today's included. three.js
+  r181's WebGLState catches GL errors with `catch (error)`, which hides its own `error()` helper, so any GL failure shows
+  as that message.
+- **Goal.** Detect WebGL 2 before the renderer is made; without it the page stays the plain page (it already reads without
+  JavaScript), says the station needs WebGL, and throws nothing. A clear message where three.js hides its own.
+- **Done when.** A Playwright check with WebGL disabled: no page error, the plain page and a short notice; pictures 0 elsewhere.
+
 ### Workstream ws-ui
 
 Before writing page-layer code, read the Solid primer and the UI SDK docs named in 2.5, and
@@ -1081,6 +1113,7 @@ Branch `prog/U5-reader` · after U1, F4c · size L · region `reader`
   the scrolling text, the progress, and copy buttons on code that say "copied". The article stays the page's own
   element, adopted and not re-rendered. Placement through `station.frameOf('reader')` in `onFrame`. Links go to the
   router's adapter. `reader.js` keeps only what is drawn in the scene (it becomes `reader3d`).
+- **Changed by D20.** The reader renders the article component itself instead of adopting the page's own article, so the plain page and the frame share one source.
 - **Done when.** Its specs are green on all three projects; selecting, finding in the page and copying work; focus
   goes into the text on opening and back on closing; with the DOM hidden, pictures of a reading are 0 against the base.
 
@@ -1142,7 +1175,7 @@ Branch `prog/U8-router` · after U2 to U7 · size L
 
 - **Context.** `route()`, `syncUrl()`, `readPost()`, `onLink()` and the `popstate` handler in `main.js`. Every case
   in `history.mjs` was a bug once: one history entry per reading, Back and Forward reopen without the flight, a
-  fragment is a place in a page, `?room=` still works.
+  fragment is a place in a page, and `?room=` names nothing (a path is the only way to name a room).
 - **Goal.** `@solidjs/router` owns the address. A room is an async value under a `Loading` boundary, and the engine is
   told to enter and to read. `src/legacy-shell/` is deleted.
 - **Done when.** The history specs are green; no `pushState` or `replaceState` outside the router's adapter;
@@ -1170,6 +1203,21 @@ Branch `prog/U10-styles` · after U8 · size S
 - **Goal.** The styles belong to the new components and nothing of the old page is left behind.
 - **Done when.** `src/styles/tokens.css` and one stylesheet per component; unused rules of the old stylesheets
   removed; `RUNTIME_IDS` in `tools/site.py` lists the ids the new page adds at run time, with its tests updated.
+
+#### U11 · The plain pages come from Solid at build time
+Branch `prog/U11-pages` · after F1 and U5 · size L · owns the page generator (`tools/site.py`, `tools/site_extras.py` and their
+tests, until they are retired) and `src/pages/`
+
+- **Context.** `tools/site.py` (1,414 lines) writes every plain page, the feeds, the sitemap, `llms.txt` and `profile.json`.
+  The spike U0d (`docs/program/ssr-spike-notes.md`, D17, D20) rendered a post, About and Contact with Solid 2 at build
+  time under Vite 8 in plain mode: identical words, head tags and JSON-LD, pixel-identical without JavaScript.
+- **Goal.** A prerender step in the build renders every page from the same Solid components the station's panels use;
+  feeds, sitemap, `llms.txt` and `profile.json` in plain TypeScript; `tools/site.py` retired. The plain pages are not
+  hydrated (they ship no extra JavaScript). The Markdown renderer (about 440 lines) and `site_extras.py` are ported first,
+  behind a golden test against `site.py`'s output for every page.
+- **Done when.** The golden test shows every generated file the same as `site.py`'s (whitespace aside) before `site.py`
+  goes; the Python tests are carried over one for one (three change on purpose, as the notes say); `suite`, `e2e` and
+  `pictures` pass; the build stays under 10 s on the CI host.
 
 ## 9. Gates
 

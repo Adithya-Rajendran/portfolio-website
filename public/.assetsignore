@@ -1,2 +1,15 @@
 # kept out of the upload: the generator's own record of what it wrote (tools/site.py)
 .generated-files
+
+# developer and review pages: the previews and the test server serve them, the deployed site never does
+# (docs/blueprint.md, docs/scene-assets.md). The built dist/ after F1 must leave them out the same way.
+/blueprint.html
+/blueprint/
+/asset.html
+/asset-catalogue/
+/lighting-review/
+/exhibit-review.png
+/material-chair-review.png
+/room-realism-review.png
+/js/blueprint.js
+/js/asset.js

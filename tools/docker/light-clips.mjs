@@ -1,6 +1,7 @@
 // Short, reproducible films of the packed renderer, not offline renders. No autoplay on the review page.
 // node light-clips.mjs URL outdir /ms-playwright/ffmpeg-.../ffmpeg-linux [experience|about]
 import {chromium} from 'playwright';import {spawn} from 'node:child_process';import {once} from 'node:events';
+import { ROOM_PATH } from './roompath.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
 const [base,out,ffmpeg,only]=process.argv.slice(2);await mkdir(out,{recursive:true});
 const browser=await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
@@ -8,7 +9,7 @@ try {
   const p=await browser.newPage({viewport:{width:960,height:540},reducedMotion:'no-preference'});const errors=[];
   p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});p.on('requestfailed',r=>errors.push(r.url()));
   for(const [room,name] of [['experience','moving-eye'],['about','moving-sun']]){
-    if(only && only!==room)continue;const u=new URL(base);u.search=new URLSearchParams({room,shot:'hero',lightcheck:1,tier:0,scale:1,chand:0,roll:120,grain:0});await p.goto(u.href);
+    if(only && only!==room)continue;const u=new URL(base);u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({shot:'hero',lightcheck:1,tier:0,scale:1,chand:0,roll:120,grain:0});await p.goto(u.href);
     await p.waitForFunction(r=>window.__lobby?.mode().room===r&&document.querySelector('#loader.done'),room,{timeout:150000});
     const frames=await p.evaluate(r=>{const l=window.__lobby,frames=[];for(let i=0;i<96;i++){
       const f=i/95,s=f*f*(3.-2.*f);if(r==='experience')l.lightFrame([-1.75+3.35*s,1.67-.16*s,4.93-.19*s],[0,1.10,1.03],6);

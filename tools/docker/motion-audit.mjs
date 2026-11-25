@@ -1,6 +1,7 @@
 // Sample the running site without instrumenting its frame loop. Usage: node motion-audit.mjs URL
 // Count local, not world, transform changes: 3 blades following one rotor are not 3 mechanisms.
 import { chromium } from 'playwright';
+import { ROOM_PATH } from './roompath.mjs';
 const base = process.argv[2];
 const browser = await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
@@ -32,7 +33,7 @@ try {
     return {frames,elapsedMs:Math.round(elapsed),nodesSeen:seen.size,localTransforms:moved.size,morphing:bent.size};
   },delivery);
   for(const room of ['lobby','about','projects','experience','writing']){
-    const u=new URL(base); u.search=new URLSearchParams({room,shot:'hero',tier:1,scale:.7});
+    const u=new URL(base); u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({shot:'hero',tier:1,scale:.7});
     await page.goto(u.href);
     await page.waitForFunction(id=>window.__lobby?.mode().room===id && document.querySelector('#loader.done'),room,{timeout:120000});
     await page.waitForTimeout(600);
