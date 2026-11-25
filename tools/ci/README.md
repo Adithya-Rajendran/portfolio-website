@@ -3,6 +3,7 @@
 The repository owns its check tiers and preview setup under `tools/ci/`:
 
 - `tools/ci/run.sh`: executes check tiers when invoked by the CI host (`/srv/arcadia/bin/ci`) or locally.
+- `tools/ci/hd630.sh`: runs `perf` / `bench` measurements on the local Intel HD 630 from a clean `git archive` copy under an exclusive lock and load-average guard.
 - `tools/ci/preview.sh`: prepares a checkout for previewing (`/srv/arcadia/bin/preview`).
 - `tools/ci/serve.sh`: serves the prepared site (`/srv/arcadia/bin/preview-serve`).
 
@@ -25,6 +26,7 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 | `snap` | `<name> <state=query>...` | Deterministic `1920x1080` screenshots (`detsnap.mjs`, 60 frames) into `$OUT/<name>/` | `quiet.lock` (shared), `gpu.lock` |
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | Pixel difference (`pdiff.mjs`) in Docker without GPU device or `gpu.lock` | `quiet.lock` (shared) |
 | `pictures` | `[--against <base>]` | Render fixed 34-state suite (`tools/ci/pictures.txt`), cache goldens by `<sha>_<list_hash>`, compare with `pdiff.mjs --strict --fail-max=0` | `quiet.lock` (shared), `gpu.lock`, `pictures.lock` |
+| `perf` | `<subcommand> [args...]` | Performance subcommands: `passes`, `cpuprof`, `unpinned`, `load`, `loadprof`, `bench` (with `gpu.lock`), and `blurdiff` (`<dirA> <dirB>` or image pairs, no GPU) | `quiet.lock` (shared on CI host), `gpu.lock` (except `blurdiff`) |
 
 ## Locks
 
@@ -66,3 +68,15 @@ Environment variables:
 - `SNAP`: base directory for `tools/pdiff.sh` (defaults to `/tmp/detsnap`).
 
 All Docker helpers mount `lobby_pw_modules:/w:ro` read-only and copy `/work/*.mjs` into an ephemeral per-container `mktemp -d` directory, so concurrent runs never overwrite each other's scripts.
+
+## Local HD 630 Runner (`tools/ci/hd630.sh`)
+
+Run local GPU and loading benchmarks on the Intel HD 630 from a clean commit archive (never serving a dirty worktree):
+
+```bash
+tools/ci/hd630.sh <ref> [perf] <passes|cpuprof|unpinned|load|loadprof|blurdiff|bench> [args...]
+```
+
+- **Clean archive & asset cache:** Extracts `<ref>` via `git archive` into a temporary source directory (deleted on exit), reuses matching `public/assets` or packs into `${XDG_CACHE_HOME:-$HOME/.cache}/arcadia/hd630-assets/<key>` under `pack.lock`, and runs `tools/site.py` **before** acquiring the HD 630 lock.
+- **Serialization & timeout:** Acquires exclusive `flock -w 600 /tmp/arcadia-local-hd630.lock` (overrideable via `HD630_LOCK`), then runs the measurement under `timeout --foreground -k 10s 300s` (`HD630_TIMEOUT`) and removes any timed-out container on exit.
+- **Load average check & artifacts:** Reads `/proc/loadavg` before and after the measurement inside the lock and writes `$JOB/log.txt` and `$JOB/result.json` under `${HD630_JOBS:-${XDG_STATE_HOME:-$HOME/.local/state}/arcadia/hd630-jobs}`. If `load1_before` or `load1_after` exceeds `HD630_MAX_LOAD` (default `$(nproc) / 2`, i.e., `4` on the 8-thread i7-7700HQ), the run is marked `"usable": false, "unusable": true` (`UNUSABLE` in the summary line) while preserving logs and returning the measurement exit code.
