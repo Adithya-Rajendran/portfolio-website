@@ -128,7 +128,8 @@ export function liveSpecPars({ probes, sky, live, lights, grid = 0 }) {
     ${grid ? `// the lamps of this point's cell of the grid (room.js), slot by slot; 255 is an empty slot. Outside the grid
     // (something that turns out of it) every lamp, as without one.
     vec3 gq = (W - uGridLo)*uGridInv; bool inGrid = all(greaterThanEqual(gq, vec3(0.))) && all(lessThan(gq, vec3(1.)));
-    ivec4 q0 = ivec4(texture(tLampGrid0, gq)*255. + .5)${grid > 4 ? ', q1 = ivec4(texture(tLampGrid1, gq)*255. + .5)' : ''};
+    ivec3 gs = textureSize(tLampGrid0, 0), gc = clamp(ivec3(gq*vec3(gs)), ivec3(0), gs - 1);   // texelFetch: no derivatives, reached from non-uniform control flow
+    ivec4 q0 = ivec4(texelFetch(tLampGrid0, gc, 0)*255. + .5)${grid > 4 ? ', q1 = ivec4(texelFetch(tLampGrid1, gc, 0)*255. + .5)' : ''};
     for (int k = 0; k < ${NL}; k++) {
       int i = !inGrid ? k : k < 4 ? q0[k] : ${grid > 4 ? 'k < 8 ? q1[k - 4] : ' : ''}255;
       if (i >= ${NL}) break;` : `for (int i = 0; i < ${NL}; i++) {`}
