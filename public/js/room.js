@@ -128,6 +128,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       t = new THREE.CompressedArrayTexture(lt.mipmaps.map(({ width, height }) => ({ width, height, data: null })), lt.image.width, lt.image.height, entry.n, lt.format, lt.type);
       Object.assign(t, { minFilter: lt.minFilter, magFilter: lt.magFilter, colorSpace: lt.colorSpace, premultiplyAlpha: lt.premultiplyAlpha, generateMipmaps: false, anisotropy: Math.min(entry.aniso, maxAniso) });
       if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
+      t.clearLayerUpdates = () => {};                             // three.js r181 clears them after the first level, so the others would go up whole; cleared below
       entry.u.value = t;
     }
     if (STREAM) {
@@ -135,9 +136,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       // layer alone (a stand-in whose subarray() is the layer) rather than a whole array's worth of memory.
       const data = lt.mipmaps.map((m) => m.data);
       t.mipmaps.forEach((m, i) => { m.data = { BYTES_PER_ELEMENT: 1, subarray: () => data[i] }; });
-      t.layerUpdates.clear(); t.addLayerUpdate(k); t.source.dataReady = true; t.needsUpdate = true;
+      t.addLayerUpdate(k); t.source.dataReady = true; t.needsUpdate = true;
       renderer.initTexture(t);
-      t.source.dataReady = false; for (const m of t.mipmaps) m.data = null;
+      t.source.dataReady = false; t.layerUpdates.clear(); for (const m of t.mipmaps) m.data = null;
       entry.have.add(k);
     } else {
       (entry.parts ??= [])[k] = lt.mipmaps.map((m) => m.data);
