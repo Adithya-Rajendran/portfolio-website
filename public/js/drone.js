@@ -83,17 +83,17 @@ void main() {
 #define modelMatrix partM
 #define normalMatrix partNM
 `;
-function drawTogether(owner, meshes) {
+function drawTogether(owner, meshes, users) {
   const byMat = new Map();
   for (const m of meshes) {
     const mat = m.material, g = m.geometry;
-    if (!mat?.isMeshStandardMaterial || mat.transparent || g.morphAttributes.position || g.groups.length || !g.index) continue;
+    if (!mat?.isMeshStandardMaterial || mat.transparent || g.morphAttributes.position || !g.index) continue;
     if (!byMat.has(mat)) byMat.set(mat, []);
     byMat.get(mat).push(m);
   }
   for (const [mat, parts] of byMat) {
-    if (parts.length < 2) continue;
-    const geos = parts.map((p, i) => { const g = p.geometry.clone(); g.setAttribute('aPart', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(i), 1)); return g; });
+    if (parts.length < 2 || users.get(mat) !== parts.length) continue;           // a material that something else also uses is left alone
+    const geos = parts.map((p, i) => { const g = p.geometry.clone(); g.clearGroups(); g.setAttribute('aPart', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(i), 1)); return g; });
     const geometry = mergeGeometries(geos); for (const g of geos) g.dispose();
     if (!geometry) continue;                                                     // parts whose attributes differ are left as they are
     const data = new Float32Array(PART * 4 * parts.length), tex = new THREE.DataTexture(data, PART, parts.length, THREE.RGBAFormat, THREE.FloatType);
@@ -124,7 +124,7 @@ function drawTogether(owner, meshes) {
 const BW = 0.25, BH = 0.35, BT = 0.046;
 function makeBook(v, i, mats) {
   const book = new THREE.Group(), left = new THREE.Group(), spine = new THREE.Group(), half = BT / 2, board = 0.004, [r, g, b] = LEATHER[i % LEATHER.length];
-  const leather = std(new THREE.Color(r, g, b), 0, 0.55), pagesMat = std(0xffffff, 0, 0.9, { map: edges }), brass = mats.brass;
+  const leather = std(new THREE.Color(r, g, b), 0, 0.55), pagesMat = std(0xffffff, 0, 0.9, { map: edges }), brass = mats.label;
   // Leaves rise slightly beside the sewn gutter when open, then settle toward the fore edge.
   // Morph from flat so the two printed faces still meet when the boards are closed.
   const page = (tex, gutter) => {
@@ -160,6 +160,7 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   const root = new THREE.Group(), body = new THREE.Group(), casters = [], rotors = [], discs = [];
   const M = { graphite: std(0x23252a, 0.7, 0.4), ceramic: std(0xd9d4c8, 0, 0.32), brass: std(new THREE.Color(0.86, 0.6, 0.3), 1, 0.26), rubber: std(0x0a0a0b, 0, 0.9),
     glass: std(0x04060a, 0.2, 0.04), blade: std(0x15161a, 0.4, 0.5, { transparent: true }) };
+  M.label = M.brass.clone();                                       // the books' gilt labels: the same brass, a material of their own (see drawTogether)
   const add = (parent, geo, mat, set) => { const m = new THREE.Mesh(geo, mat); set?.(m); parent.add(m); if (mat.isMeshStandardMaterial && !mat.transparent) casters.push(m); return m; };
   const lathe = (pts, seg = 48) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
   const between = (a, b, r0, r1, mat, parent = body) => add(parent, new THREE.CylinderGeometry(r1, r0, a.distanceTo(b), 10), mat, (m) => { m.position.copy(a).lerp(b, 0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), b.clone().sub(a).normalize()); });
@@ -213,9 +214,10 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   for (const b of books) b.traverse((o) => { if (o.isMesh) casters.push(o); });
   for (const m of casters) m.layers.enable(1);                    // they cast shadows in the sunlight (see room.js)
   // each book's meshes are drawn by meshes of its own (a hidden book costs nothing), the rest of the drone's by meshes on the root
-  const inBooks = new Set(), ofDrone = [];
-  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine); }
-  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone);
+  const inBooks = new Set(), ofDrone = [], users = new Map();
+  body.traverse((o) => { if (o.isMesh) users.set(o.material, (users.get(o.material) || 0) + 1); });
+  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine, users); }
+  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone, users);
   body.scale.setScalar(1.15); root.name='Catalogue drone'; root.add(body); root.position.copy(dock); scene.add(root);
 
   // ---- flight: a queue of legs, each "go to p, then do this". Flying = any leg left, or away from the cradle.
