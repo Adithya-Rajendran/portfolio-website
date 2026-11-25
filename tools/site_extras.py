@@ -183,7 +183,7 @@ def llms_txt(posts, profile, resume_name, projects=()):
     lines += ['', '## Site', f'- [Home]({SITE}/): the 3D atrium', f'- [About]({SITE}/about/): who I am, what I work on, and where',
               f'- [Projects]({SITE}/portfolio/): the list of projects',
               f'- [Experience]({SITE}/experience/): the timeline, skills, credentials, talks and papers',
-              f'- [Writing]({SITE}/blog/): the list of posts', f'- [Contact]({SITE}/contact/): what to write about, and where']
+              f'- [Writing]({SITE}/blog/): the list of posts', f'- [Contact]({SITE}/contact/): where to reach me, and availability']
     if resume_name:
         lines.append(f'- [Résumé (PDF)]({SITE}/resume/{quote(resume_name)})')
     lines += [f'- [RSS feed]({SITE}/feed.xml): every post in full', f'- [Sitemap]({SITE}/sitemap.xml)', f'- [robots.txt]({SITE}/robots.txt)', '']
