@@ -140,7 +140,7 @@ function partsMesh(owner, parts, mat, fits) {
   owner.add(out);
   return out;
 }
-// One mesh for each opaque PBR material that only these meshes use (a copy of the material for each further PARTS).
+// One mesh for each opaque PBR material that only these meshes use (one of its spares, or a copy, for each further PARTS).
 function drawTogether(owner, meshes, users, fits) {
   const byMat = new Map(), chunks = (list, k) => Array.from({ length: Math.ceil(list.length / k) }, (_, j) => list.slice(j * k, j * k + k));
   for (const m of meshes) {
@@ -153,7 +153,7 @@ function drawTogether(owner, meshes, users, fits) {
     if (parts.length < 2 || users.get(mat) !== parts.length) continue;           // a material that something else also uses is left alone
     for (const [j, some] of chunks(parts, PARTS).entries()) {
       if (some.length < 2) continue;
-      if (partsMesh(owner, some, j ? mat.clone() : mat, fits)) for (const p of some) p.layers.disable(0);
+      if (partsMesh(owner, some, j ? mat.spares?.[j - 1] ?? mat.clone() : mat, fits)) for (const p of some) p.layers.disable(0);
     }
   }
 }
@@ -196,8 +196,11 @@ function makeBook(v, i, mats) {
 /** @param dock, deliver, slots  three.js positions: the cradle, where it presents the book, each volume's place on the shelves */
 export function createDrone({ scene, dock, deliver, slots, volumes }) {
   const root = new THREE.Group(), body = new THREE.Group(), casters = [], rotors = [], discs = [];
-  const M = { graphite: std(0x23252a, 0.7, 0.4), ceramic: std(0xd9d4c8, 0, 0.32), brass: std(new THREE.Color(0.86, 0.6, 0.3), 1, 0.26), rubber: std(0x0a0a0b, 0, 0.9),
-    glass: std(0x04060a, 0.2, 0.04), blade: std(0x15161a, 0.4, 0.5, { transparent: true }) };
+  // spares: copies made right after each material, for the merged meshes past the first PARTS (drawTogether); three.js draws
+  // opaque meshes in the order of their materials' ids, so the copies keep the parts in the place in that order they had
+  const spare = (m) => Object.assign(m, { spares: [m.clone(), m.clone()] });
+  const M = { graphite: spare(std(0x23252a, 0.7, 0.4)), ceramic: spare(std(0xd9d4c8, 0, 0.32)), brass: spare(std(new THREE.Color(0.86, 0.6, 0.3), 1, 0.26)), rubber: spare(std(0x0a0a0b, 0, 0.9)),
+    glass: spare(std(0x04060a, 0.2, 0.04)), blade: std(0x15161a, 0.4, 0.5, { transparent: true }) };
   M.label = M.brass.clone();                                       // the books' gilt labels: the same brass, a material of their own (see drawTogether)
   const add = (parent, geo, mat, set) => { const m = new THREE.Mesh(geo, mat); set?.(m); parent.add(m); if (mat.isMeshStandardMaterial && !mat.transparent) casters.push(m); return m; };
   const lathe = (pts, seg = 48) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
