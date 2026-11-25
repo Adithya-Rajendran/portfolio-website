@@ -11,11 +11,11 @@ await new Promise((r) => setTimeout(r, 4000));
 for (let i = 0; i < 150; i++) await p.clock.runFor(16);
 const out = await p.evaluate(async (pts) => {
   const THREE = await import('three'), { camera, scene } = window.__lobby, rc = new THREE.Raycaster(), res = [];
-  for (const s of pts) { const [x, y] = s.split(',').map(Number);
-    rc.setFromCamera(new THREE.Vector2((x + 0.5) / innerWidth * 2 - 1, -((y + 0.5) / innerHeight * 2 - 1)), camera);
-    const hits = rc.intersectObjects(scene.children, true).filter((h) => h.object.isMesh && h.object.visible !== false).slice(0, 6);
-    res.push({ px: s, hits: hits.map((h) => ({ d: +h.distance.toFixed(5), name: h.object.name, ud: JSON.stringify(h.object.userData).slice(0, 80), id: h.object.id, mat: h.object.material?.type,
-      n: h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld).toArray().map((v) => +v.toFixed(3)) : null, fi: h.faceIndex })) });
+  const list = []; for (const s of pts) { const [a, b2, y, step] = s.split(',').map(Number); for (let x = a; x <= b2 + 1e-9; x += step) list.push([x, y]); }
+  for (const [x, y] of list) { const s = x.toFixed(2) + ',' + y;
+    rc.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight * 2 - 1)), camera);
+    const hits = rc.intersectObjects(scene.children, true).filter((h) => h.object.isMesh && h.object.visible !== false && h.object.material?.colorWrite !== false).slice(0, 2);
+    res.push({ px: s, hits: hits.map((h) => h.object.name + '#' + h.faceIndex + '@' + h.distance.toFixed(4)) });
   }
   return res;
 }, px);
