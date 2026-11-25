@@ -7,7 +7,8 @@
 //   d2 = |L(t) - 2 L(t-1) + L(t-2)|    temporal second difference: near 0 for smooth motion, large where a pixel flips
 // "edge" pixels: within 2 px of both a bright pixel (mean luma >= 200) and a darker one (<= 140): the bright window edges.
 // Prints one JSON line per state and writes /out/<name>/{heat.png,f000.png,last.png,stats.json}. heat.png: mean d2, x8.
-// "|crop=x,y,w,h" also writes strip.png: that region of 8 consecutive frames side by side, enlarged 4x.
+// "|crop=x,y,w,h" also writes strip.png (that region of 8 consecutive frames side by side, enlarged 4x) and reports the
+// region on its own: its mean luma, the mean and largest change of that mean between frames (a glow that pulses), d1, d2.
 // <origin> "-" means $ORIGIN (the branch's own site); any other origin (a preview) is measured with this branch's script.
 import { chromium } from 'playwright';
 import fs from 'fs';
@@ -45,7 +46,13 @@ const ANALYSE = {
     if (s.p1) { s.k1++; for (let i = 0; i < n; i++) { const a = Math.abs(L[i] - s.p1[i]); s.d1[i] += a; f1 += a; } }
     if (s.p2) { s.k2++; for (let i = 0; i < n; i++) { const a = Math.abs(L[i] - 2 * s.p1[i] + s.p2[i]); s.d2[i] += a; f2 += a; if (a > 24) s.ev[i]++; } }
     s.per.push([+(f1 / n).toFixed(3), +(f2 / n).toFixed(3)]);
-    s.p2 = s.p1; s.p1 = L;
+    s.p3 = s.p2; s.p2 = s.p1; s.p1 = L;
+  },
+  region([x, y, w, h]) {                                  // the crop region of the frame just added: its mean luma, and its d1/d2
+    const s = window.__s, W = s.W; let m = 0, a = 0, b = 0;
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) { const k = j * W + i; m += s.p1[k];
+      if (s.p2) a += Math.abs(s.p1[k] - s.p2[k]); if (s.p3) b += Math.abs(s.p1[k] - 2 * s.p2[k] + s.p3[k]); }
+    const n = w * h; (s.reg ??= []).push([+(m / n).toFixed(2), +(a / n).toFixed(3), +(b / n).toFixed(3)]);
   },
   async strip([b64, f, [x, y, w, h]]) {
     const bmp = await createImageBitmap(await (await fetch('data:image/png;base64,' + b64)).blob());
@@ -82,6 +89,9 @@ const ANALYSE = {
       blocks.push([bx, by, +(t / c / Math.max(1, s.k2)).toFixed(2)]);
     }
     blocks.sort((a, b) => b[2] - a[2]); st.top = blocks.slice(0, 6); st.frames = s.n; st.per = s.per;
+    if (s.reg) { const r = s.reg, mean = r.reduce((t, v) => t + v[0], 0) / r.length, d = r.slice(1).map((v, i) => Math.abs(v[0] - r[i][0]));
+      st.region = { mean: +mean.toFixed(2), dMean: +(d.reduce((t, v) => t + v, 0) / d.length).toFixed(3), dMax: +Math.max(...d).toFixed(2),
+        d1: +(r.slice(1).reduce((t, v) => t + v[1], 0) / (r.length - 1)).toFixed(3), d2: +(r.slice(2).reduce((t, v) => t + v[2], 0) / (r.length - 2)).toFixed(3), series: r.map((v) => v[0]) }; }
     const c = new OffscreenCanvas(W, H), g = c.getContext('2d'), img = g.createImageData(W, H);
     for (let i = 0; i < n; i++) { const v = Math.min(255, 8 * s.d2[i] / Math.max(1, s.k2)), m = Math.min(255, M[i]) * 0.25;
       img.data[4 * i] = Math.max(v, m); img.data[4 * i + 1] = m; img.data[4 * i + 2] = m; img.data[4 * i + 3] = 255; }
@@ -131,6 +141,7 @@ for (const raw of jobs) {
     if (f === 0) fs.writeFileSync(dir + '/f000.png', png);
     if (f === FRAMES - 1) fs.writeFileSync(dir + '/last.png', png);
     await an.evaluate(ANALYSE.add, png.toString('base64'));
+    if (crop) await an.evaluate(ANALYSE.region, crop);
     if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
     if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
@@ -139,7 +150,7 @@ for (const raw of jobs) {
   fs.writeFileSync(dir + '/heat.png', Buffer.from(heat, 'base64'));
   st.modes = [...new Set(modes)]; st.query = q; st.still = still; st.origin = originArg === '-' ? 'branch' : 'given';
   fs.writeFileSync(dir + '/stats.json', JSON.stringify(st));
-  console.log('EDGEFLICKER', name, JSON.stringify({ edge: st.edge, all: st.all, modes: st.modes, top: st.top.slice(0, 3) }));
+  console.log('EDGEFLICKER', name, JSON.stringify({ edge: st.edge, all: st.all, region: st.region && { ...st.region, series: undefined }, modes: st.modes, top: st.top.slice(0, 3) }));
   await ctx.close();
 }
 await b.close();
