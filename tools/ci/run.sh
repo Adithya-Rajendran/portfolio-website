@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run one CI check tier on this checkout, either under /srv/arcadia/bin/ci (CI_JOB + CI_HOME) or standalone locally.
 #   tools/ci/run.sh <tier> [args...]
-# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>] | e2e [playwright args...]
+# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>] | e2e [playwright args...] | perf <passes|cpuprof|unpinned|load|loadprof|blurdiff|bench> [args...]
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -158,7 +158,7 @@ pw_for() {
   if [ "$assets_dir" != "$site_src/public/assets" ]; then
     assets_mount=(-v "$assets_dir":/site/assets:ro)
   fi
-  docker run --rm --ipc=host "${dev[@]}" \
+  docker run --rm ${CI_CONTAINER_NAME:+--name "$CI_CONTAINER_NAME"} --ipc=host "${dev[@]}" \
     -e ORIGIN=http://127.0.0.1:8080 -e SETUP -e UNTIL \
     -v "$ROOT/tools/docker":/work:ro \
     -v "$site_src/public":/site:ro \
@@ -189,7 +189,7 @@ pw_for() {
       s="$1"; shift
       set +e
       node "$s" "$@"
-    ' _ "$s" "$@" 2>&1 | grep -v "GL Driver"
+    ' _ "$s" "$@" 2>&1 | grep --line-buffered -v "GL Driver"
   return ${PIPESTATUS[0]}
 }
 
@@ -223,7 +223,7 @@ run_e2e() {
       cd /repo
       set +e
       xvfb-run -a -s "-screen 0 1280x720x24" node tests/e2e/run.mjs "$@"
-    ' _ "$@" 2>&1 | grep -v "GL Driver"
+    ' _ "$@" 2>&1 | grep --line-buffered -v "GL Driver"
   return ${PIPESTATUS[0]}
 }
 
@@ -315,7 +315,7 @@ case "$tier" in
           cd "$X"
           set +e
           node pdiff.mjs "/jobs/$1" "/jobs/$2"
-        ' _ "$a_rel" "$b_rel" 2>&1 | grep -v "GL Driver"
+        ' _ "$a_rel" "$b_rel" 2>&1 | grep --line-buffered -v "GL Driver"
       exit ${PIPESTATUS[0]}
     else
       a_abs="$(cd "$a" 2>/dev/null && pwd)" || { echo "ci: pdiff dir not found: $a" >&2; exit 2; }
@@ -338,7 +338,7 @@ case "$tier" in
           cd "$X"
           set +e
           node pdiff.mjs /dirA /dirB
-        ' 2>&1 | grep -v "GL Driver"
+        ' 2>&1 | grep --line-buffered -v "GL Driver"
       exit ${PIPESTATUS[0]}
     fi
     ;;
@@ -494,8 +494,67 @@ case "$tier" in
         cd "$X"
         set +e
         node pdiff.mjs --strict --fail-max=0 /dirA /dirB /heat
-      ' 2>&1 | grep -v "GL Driver"
+      ' 2>&1 | grep --line-buffered -v "GL Driver"
     exit ${PIPESTATUS[0]}
+    ;;
+  perf)
+    sub="${1:-}"
+    [ -n "$sub" ] || { echo "usage: tools/ci/run.sh perf <passes|cpuprof|unpinned|load|loadprof|blurdiff|bench> [args...]" >&2; exit 2; }
+    shift
+    case "$sub" in
+      passes|cpuprof|unpinned|load|loadprof)
+        q="${1:-}"; q="${q#/}"; [ $# -ge 1 ] && shift
+        case "$sub" in
+          passes|cpuprof) pargs=("${1:-6}" "${2:-1920}" "${3:-1080}") ;;
+          unpinned)       pargs=("${1:-30}" "${2:-1920}" "${3:-1080}" "${4:-1}") ;;
+          load)           pargs=("${1:-50}" "${2:-20}") ;;
+          loadprof)       pargs=() ;;
+        esac
+        assets
+        site || exit 1
+        gpu pw "$sub.mjs" "http://127.0.0.1:8080/$q" "${pargs[@]}"
+        ;;
+      bench)
+        assets
+        site || exit 1
+        q="${1:-}"; q="${q#/}"
+        gpu pw bench.mjs "http://127.0.0.1:8080/$q" 1920 1080 "${3:-8}" "${2:-3}"
+        ;;
+      blurdiff)
+        [ $# -ge 2 ] || { echo "usage: tools/ci/run.sh perf blurdiff <dirA> <dirB> | <a1.png> <b1.png> ..." >&2; exit 2; }
+        mounts=(); margs=(); i=0
+        for p in "$@"; do
+          if [ -n "${CI_HOME:-}" ] && [ -e "$CI_HOME/jobs/${p#"$CI_HOME/jobs/"}" ] && [[ "$p" != /* || "$p" == "$CI_HOME/jobs/"* ]]; then
+            p="$CI_HOME/jobs/${p#"$CI_HOME/jobs/"}"
+          fi
+          [ -e "$p" ] || { echo "ci: blurdiff path not found: $p" >&2; exit 2; }
+          abs="$(cd "$(dirname "$p")" && pwd)/$(basename "$p")"
+          mounts+=(-v "$abs":/in/$i:ro); margs+=("/in/$i"); i=$((i + 1))
+        done
+        docker run --rm ${CI_CONTAINER_NAME:+--name "$CI_CONTAINER_NAME"} --ipc=host \
+          -v "$ROOT/tools/docker":/work:ro \
+          "${mounts[@]}" \
+          -v lobby_pw_modules:/w:ro \
+          "$IMG" bash -c '
+            set -e
+            X=$(mktemp -d)
+            trap "rm -rf \"$X\"" EXIT
+            cp /work/*.mjs "$X"/
+            if [ -d /w/node_modules/playwright ]; then
+              ln -s /w/node_modules "$X/node_modules"
+            else
+              npm --prefix "$X" i --silent --no-save playwright@1.64.1 >/dev/null 2>&1
+            fi
+            cd "$X"
+            set +e
+            node blurdiff.mjs "$@"
+          ' _ "${margs[@]}" 2>&1 | grep --line-buffered -v "GL Driver"
+        exit ${PIPESTATUS[0]}
+        ;;
+      *)
+        echo "ci: unknown perf subcommand '$sub'" >&2; exit 2
+        ;;
+    esac
     ;;
   e2e)
     assets
