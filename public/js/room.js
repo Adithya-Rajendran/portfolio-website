@@ -415,11 +415,26 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (!pivots[turn]) { pivots[turn] = new THREE.Group(); pivots[turn].position.set(info.chand.pivot[0], 0, -info.chand.pivot[1]); scene.add(pivots[turn]); pivots[turn].updateMatrixWorld(); }
     pivots[turn].attach(o); o.updateMatrix();
   }
-  let liveCam = null;
+  let liveCam = null, liveScene = null;
+  const livePivots = {};
   if (liveRT) {                                         // from below the orrery, where nearly every reflector sees it from
     liveCam = new THREE.CubeCamera(0.05, 80, liveRT); liveCam.position.copy(liveU.uLiveEye.value);
     for (const c of liveCam.children) c.layers.set(LIVE_LAYER);
-    for (const o of movers) o.layers.enable(LIVE_LAYER);
+    liveScene = new THREE.Scene(); liveScene.matrixWorldAutoUpdate = false;
+    for (const o of movers) {
+      const turn = SPIN[o.userData.grp] ?? SPIN[o.userData.em];
+      if (!livePivots[turn]) {
+        livePivots[turn] = new THREE.Group();
+        livePivots[turn].position.set(info.chand.pivot[0], 0, -info.chand.pivot[1]);
+        liveScene.add(livePivots[turn]);
+      }
+      const proxy = new THREE.Mesh(o.geometry, o.material);
+      proxy.position.copy(o.position); proxy.quaternion.copy(o.quaternion); proxy.scale.copy(o.scale);
+      proxy.matrix.copy(o.matrix); proxy.matrixAutoUpdate = false;
+      proxy.frustumCulled = false; proxy.layers.enable(LIVE_LAYER);
+      livePivots[turn].add(proxy);
+    }
+    liveScene.updateMatrixWorld(true);
     scene.add(liveCam);
   }
 
@@ -754,10 +769,12 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     },
     /** Per frame, before the mirror and the view: what turns, as the reflections will see it. */
     capture: liveRT && ((renderer) => {
-      const bg = scene.background, clear = renderer.getClearAlpha(), u = liveU.tLive;
-      scene.background = null; renderer.setClearAlpha(0); u.value = liveBlank.texture;      // no sampling of the target being drawn
-      liveCam.update(renderer, scene);
-      scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
+      for (const turn in livePivots) livePivots[turn].rotation.y = pivots[turn].rotation.y;
+      liveScene.updateMatrixWorld();
+      const clear = renderer.getClearAlpha(), u = liveU.tLive;
+      renderer.setClearAlpha(0); u.value = liveBlank.texture;      // no sampling of the target being drawn
+      liveCam.update(renderer, liveScene);
+      renderer.setClearAlpha(clear); u.value = liveRT.texture;
     }),
     dispose: () => { reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
