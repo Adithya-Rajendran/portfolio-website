@@ -21,17 +21,37 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 | `static` | none | `tools/content.py`, `tools/test_*.py`, `tools/site.py` | `quiet.lock` (shared) |
 | `smoke` | none | `errs.mjs` across `/`, `/?room=about`, `/?room=projects`, `/?room=experience`, `/?room=comms`, `/blog/` | `quiet.lock` (shared), `gpu.lock` |
 | `script` | `<name.mjs> [args...]` | Single `tools/docker/<name.mjs>` script via `tools/dtest.sh` | `quiet.lock` (shared), `gpu.lock` |
-| `suite` | none | Full `tools/check.sh` browser and static suite | `quiet.lock` (shared), `gpu.lock` |
+| `suite` | none | Full `tools/check.sh` static preflight, parallel browser batch (`CHECK_JOBS`, default 8), and serial motion/stillness checks | `quiet.lock` (shared), `gpu.lock` |
 | `bench` | `"<query>" [runs] [seconds]` | `tools/docker/bench.mjs` at `1920x1080` (`runs` default 3, `seconds` default 8) | `quiet.lock` (exclusive), `gpu.lock` |
 | `snap` | `<name> <state=query>...` | Deterministic `1920x1080` screenshots (`detsnap.mjs`, 60 frames) into `$OUT/<name>/` | `quiet.lock` (shared), `gpu.lock` |
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | Pixel difference (`pdiff.mjs`) in Docker without GPU device or `gpu.lock` | `quiet.lock` (shared) |
 | `pictures` | `[--against <base>]` | Render fixed 34-state suite (`tools/ci/pictures.txt`), cache goldens by `<sha>_<list_hash>`, compare with `pdiff.mjs --strict --fail-max=0` | `quiet.lock` (shared), `gpu.lock`, `pictures.lock` |
+| `e2e` | `[playwright args...]` | Playwright Test suite (`tests/e2e/run.mjs`) in `mcr.microsoft.com/playwright:v1.65.1-noble` (parallel non-`@timing`, then serial `@timing`) | `quiet.lock` (shared), `gpu.lock` |
 | `perf` | `<subcommand> [args...]` | Performance subcommands: `passes`, `cpuprof`, `unpinned`, `load`, `loadprof`, `bench` (with `gpu.lock`), and `blurdiff` (`<dirA> <dirB>` or image pairs, no GPU) | `quiet.lock` (exclusive on the CI host, like `bench`, except `perf blurdiff`, which is shared), `gpu.lock` (except `blurdiff`) |
+
+## The Suite's Steps and Their Folders
+
+`tools/check.sh` (tier `suite`) runs the static preflight, then the browser steps: the independent ones `CHECK_JOBS` at a time, then the motion and stillness steps (hud, turn, cue) one by one. Every browser step has its own folder under `$OUT/steps/`, and nothing is deleted at the end:
+
+```text
+$OUT/steps/
+  01-rooms.cross.mjs_desktop/     NN: the order the steps start in (the parallel ones in queue order, then the serial ones)
+    log.txt                       everything the step printed (the suite's output shows it again once the step ends)
+    ...                           what the script wrote to /out (screenshots, JSON)
+  02-rooms.read.mjs_desktop/
+  ...
+```
+
+The folder name is the step's title with every character outside `A-Za-z0-9._-` turned into `_`, cut to 80 characters. The suite's own output ends with `=== summary`: `all steps passed`, or one `FAILED:` line per failed step. A step that did not report (the suite's wait failed) or was never started is listed as failed too, with `(did not report; stopped)` or `(not run)` after its name.
+
+Stopping the suite (SIGINT or SIGTERM, also during the serial steps) stops every running step: each one is a process group of its own, which is killed whole, and the containers carry the label `arcadia.check=<run id>` (`CHECK_RUN`, passed to `tools/dtest.sh`), so any that outlive their client are removed with `docker rm -f`. `tools/check-selftest.sh` shows it with stand-in steps (SIGTERM in the parallel and in the serial phase, a failed `wait`, a normal run); it needs Docker and takes under a minute.
+
+The recorder of `tools/docker/r2.kit.mjs` (used by `opening.mjs`) counts its samples and the largest gap between them; its "never" checks are only trusted when the gap is at most 250 ms, and otherwise fail as a set-up failure (`SET-UP, not the page`).
 
 ## Locks
 
 - **`$CI_HOME/quiet.lock`**: acquired by `/srv/arcadia/bin/ci` before `run.sh` (shared `-s` for all tiers except `bench` and `perf` (other than `perf blurdiff`), which take exclusive `-x` so measurements run alone). `tools/ci/run.sh` never re-acquires `quiet.lock`.
-- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`, `pictures`) when `CI_HOME` is set.
+- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`, `pictures`, `e2e`, `perf` other than `blurdiff`) when `CI_HOME` is set.
 - **`$CI_HOME/cache/pack.lock`**: acquired around packing rooms into `$CI_HOME/cache/assets/<key>`.
 - **`$CI_HOME/cache/pictures.lock`**: acquired around atomic golden directory swaps into `$CI_HOME/cache/pictures/<commit_sha>_<list_hash>/`.
 
@@ -65,6 +85,7 @@ Environment variables:
 - `ASSETS`: path to packed `public/assets` directory. If unset, helpers check `$ROOT/public/assets` and then the main git checkout's `public/assets` (for git worktrees).
 - `ORIGIN`: optional external origin (e.g. `ORIGIN=http://host:8080`). When unset, Docker helpers mount `$ROOT/public` and `$ASSETS` and serve the checkout inside the container via `node serve.mjs /site 8080`.
 - `OUT`: host output directory for screenshots and artifacts (defaults to `$CI_JOB/out` in CI, `/tmp/arcadia-ci-out` in `run.sh`, `/tmp/dtest` in `dtest.sh`, `/tmp/dshot` in `dshot.sh`, `/tmp/snap` in `dsnap.sh`, `/tmp/detsnap/<name>` in `detsnap.sh`).
+- `CHECK_JOBS`: number of concurrent browser workers in `tools/check.sh` Phase 2 (default `8`).
 - `SNAP`: base directory for `tools/pdiff.sh` (defaults to `/tmp/detsnap`).
 
 All Docker helpers mount `lobby_pw_modules:/w:ro` read-only and copy `/work/*.mjs` into an ephemeral per-container `mktemp -d` directory, so concurrent runs never overwrite each other's scripts.

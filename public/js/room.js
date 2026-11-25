@@ -162,16 +162,18 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // The lamps' own highlights (their light is in the bake; a lamp itself is invisible to the probes).
   const LAMPS = LIVE && !SKIP.has('lamps') ? (info.lights || []).slice(0, 16) : [];
   const LAMP_DATA = LAMPS.map((l) => ({ raw: l, pos: B(l.pos), dir: l.dir ? B(l.dir).normalize() : null, cos: l.dir ? l.cos : -2 }));
+  let lampGrid = null;                                // set by buildLampGrid() before the materials are made
   const makeLampU = (lamps) => (lamps.length ? {
     uLP: { value: lamps.map((l) => B(l.pos)) }, uLI: { value: lamps.map((l) => V(...l.intensity)) },
     uLD: { value: lamps.map((l) => (l.dir ? B(l.dir) : V())) },
     uLS: { value: lamps.map((l) => V(l.radius, l.dir ? l.cos : -2, l.dir ? l.smooth : 0)) },
+    ...(lampGrid ? lampGrid.uniforms : {}),
   } : {});
   const liveParsCache = new Map();
   const makeLivePars = (lamps) => {
     if (!LIVE || !probe) return '';
     const n = lamps.length;
-    if (!liveParsCache.has(n)) liveParsCache.set(n, liveSpecPars({ probes: probe.probes?.length || 1, sky: !!skyU, live: !!liveU, lights: n }));
+    if (!liveParsCache.has(n)) liveParsCache.set(n, liveSpecPars({ probes: probe.probes?.length || 1, sky: !!skyU, live: !!liveU, lights: n, grid: n && lampGrid ? lampGrid.K : 0 }));
     return liveParsCache.get(n);
   };
   const _box = new THREE.Box3();
@@ -222,6 +224,42 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       if (!l.dir || l.cos <= 0 || exactMaxCosAABB(l.pos, l.dir, lo, hi) >= l.cos - 1e-4) out.push(l.raw);
     }
     return out;
+  }
+  // A grid of lamp lists over the room's geometry, cells of about 1 m (?lampcell=): each cell lists, in the room's order,
+  // the lamps that can reach some point of it (a point lamp reaches every cell; a spot, the cells its cone meets, tested
+  // on the sphere around the cell). lampLobe reads the list of the pixel's cell and stops at its first empty slot. A lamp
+  // left out adds exactly nothing there (its cone is 0 and the loop skips it), so the sums are the plain loop's, in the
+  // same order. A room where some cell lists every lamp (the Library and the Lounge: point lamps only) keeps the plain loop.
+  // With a grid, a surface with any lamp gets all of them and the grid does the culling (it is finer than a mesh's box);
+  // lampsForMesh still leaves lampLobe out of a surface no lamp can reach. Its numbers: scene.userData.lampGrid.
+  function buildLampGrid(bounds) {
+    if (!LIVE || !probe || !LAMP_DATA.length || SKIP.has('lampgrid')) return null;
+    const CELL = num('lampcell', 1), lo = bounds.min.clone().subScalar(CELL / 2), size = bounds.max.clone().addScalar(CELL / 2).sub(lo);
+    const n = [size.x, size.y, size.z].map((s) => Math.max(1, Math.min(64, Math.ceil(s / CELL))));
+    const cell = V(size.x / n[0], size.y / n[1], size.z / n[2]), r = cell.length() / 2 + 0.01, c = V(), v = V(), lists = [];
+    let K = 0, total = 0;
+    for (let z = 0; z < n[2]; z++) for (let y = 0; y < n[1]; y++) for (let x = 0; x < n[0]; x++) {
+      c.set(lo.x + (x + .5) * cell.x, lo.y + (y + .5) * cell.y, lo.z + (z + .5) * cell.z);
+      const list = [];
+      LAMP_DATA.forEach((l, i) => {
+        if (!l.dir) { list.push(i); return; }
+        const d = v.copy(c).sub(l.pos).length();
+        if (d <= r || Math.acos(THREE.MathUtils.clamp(v.dot(l.dir) / d, -1, 1)) <= Math.acos(THREE.MathUtils.clamp(l.cos, -1, 1)) + Math.asin(Math.min(1, r / d)) + 1e-3) list.push(i);
+      });
+      lists.push(list); K = Math.max(K, list.length); total += list.length;
+    }
+    const stats = { n, cell: cell.toArray(), lo: lo.toArray(), lamps: LAMP_DATA.length, K, mean: total / lists.length, lists, grid: K < LAMP_DATA.length && K <= 8 };
+    scene.userData.lampGrid = stats;
+    if (!stats.grid) return null;
+    const NONE = 255, uniforms = { uGridLo: { value: lo }, uGridInv: { value: V(1 / size.x, 1 / size.y, 1 / size.z) } };
+    for (let t = 0; t < Math.ceil(K / 4); t++) {                    // four slots per texel: one texture up to four lamps a cell, two up to eight
+      const data = new Uint8Array(lists.length * 4).fill(NONE);
+      lists.forEach((list, j) => { for (let k = 0; k < 4 && t * 4 + k < list.length; k++) data[j * 4 + k] = list[t * 4 + k]; });
+      const tex = new THREE.Data3DTexture(data, n[0], n[1], n[2]);
+      tex.format = THREE.RGBAFormat; tex.type = THREE.UnsignedByteType; tex.minFilter = tex.magFilter = THREE.NearestFilter; tex.unpackAlignment = 1; tex.needsUpdate = true;
+      uniforms['tLampGrid' + t] = { value: tex };
+    }
+    return { K, uniforms };
   }
   const visibility = windowShadow(shadowTexel,SH);
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
@@ -382,12 +420,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const screenMeshes = [], movers = [], pivots = {}, SPIN = info.chand?.spin || {};
   scene.add(gltf.scene);
   gltf.scene.updateMatrixWorld(true);
+  lampGrid = buildLampGrid(new THREE.Box3().setFromObject(gltf.scene));
+  const meshLamps = (o, floor) => { const l = lampsForMesh(o, floor); o.userData.lamps = l.map((x) => LAMPS.indexOf(x)); return lampGrid && l.length ? LAMPS : l; };
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
     const u = o.userData = { ...o.parent.userData, ...o.userData }          // tools/pack.py leaves each mesh in a child of its named node;
     if (polished.has(u.grp) && o.geometry.getAttribute('color')?.itemSize !== 4) throw new Error(`${id}/${u.grp}: missing packed specular colour/roughness`);
-    if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp, lampsForMesh(o, true)); floors.push(o); }
-    else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp, 1, lampsForMesh(o, false));
+    if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp, meshLamps(o, true)); floors.push(o); }
+    else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp, 1, meshLamps(o, false));
     else if (u.em === 'static') o.material = stripMat;
     else if (u.em) {                                    // the orrery's lamps, as bright as the strips may be (bake.py EM_RANGE)
       const { color: c, strength } = info.em[u.em], k = Math.min(strength, info.em_range || 8);
