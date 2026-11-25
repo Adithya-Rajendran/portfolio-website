@@ -882,12 +882,12 @@ def page_head(profile, title, description, path, ld, og_type='website', og_title
     return '\n'.join(head)
 
 
-def anchor(doc, address, text_html):
+def anchor(doc, address, text_html, *, new_tab=False):
     """A link through the link policy (§3): its text alone when the address is refused."""
     to = doc.link(address, None)
     if to is None:
         return text_html
-    return f'<a href="{escape(to[0])}"' + (' target="_blank" rel="noopener"' if to[1] else '') + f'>{text_html}</a>'
+    return f'<a href="{escape(to[0])}"' + (' target="_blank" rel="noopener"' if to[1] or new_tab else '') + f'>{text_html}</a>'
 
 
 def link_address(link):
@@ -896,10 +896,13 @@ def link_address(link):
             or f'../assets/files/{link["file"]}')
 
 
-def links_list(doc, items, indent='    '):
+def links_list(doc, items, indent='    ', *, new_tab=False, first_note=None):
     """ul.post-links from (address, label, kind or None)."""
-    lis = ''.join(f'<li{f" data-kind=\"{escape(k)}\"" if k else ""}>{anchor(doc, a, escape(t))}</li>' for a, t, k in items)
-    return f'{indent}<ul class="post-links">{lis}</ul>'
+    lis = []
+    for i, (a, t, k) in enumerate(items):
+        note = f' <span class="post-note">{escape(first_note)}</span>' if i == 0 and first_note else ''
+        lis.append(f'<li{f" data-kind=\"{escape(k)}\"" if k else ""}>{anchor(doc, a, escape(t), new_tab=new_tab)}{note}</li>')
+    return f'{indent}<ul class="post-links">{"".join(lis)}</ul>'
 
 
 def h2(doc, title, base):
@@ -1014,9 +1017,16 @@ def portfolio_page(shell, profile, site):
     return page(shell, title, page_head(profile, title, profile['projects_intro'], '/portfolio/', ld), '\n'.join(main)), doc
 
 
-def availability(doc, profile, routes, here=False):
-    """The availability: its status, what is sought, and the call to action, which leads to the contact page (at the
-    hiring route when there is one)."""
+def contact_links(profile):
+    """The social links chosen for Contact (ordered), or all social_links when contact_links is absent."""
+    if not profile['contact_links']:
+        return profile['social_links']
+    by_label = {l['label']: l for l in profile['social_links']}
+    return [by_label[k] for k in profile['contact_links']]
+
+
+def availability(doc, profile, here=False):
+    """The availability: its status, what is sought, and the call to action, which leads to the contact page."""
     a = profile['availability']
     when = f' · updated <time datetime="{a["updated_at"]}">{human_date(a["updated_at"])}</time>' if a['updated_at'] else ''
     out = [h2(doc, 'Availability', 'availability'),
@@ -1024,16 +1034,16 @@ def availability(doc, profile, routes, here=False):
     if a['seeking']:
         out.append('    <ul>' + ''.join(f'<li>{escape(s)}</li>' for s in a['seeking']) + '</ul>')
     if not here:                                          # on the contact page itself the call to action would lead to where the reader is
-        out.append(f'    <p class="post-cta"><a href="/contact/{"#hiring" if "hiring" in routes else ""}">{escape(a["cta"])}</a></p>')
+        out.append(f'    <p class="post-cta"><a href="/contact/">{escape(a["cta"])}</a></p>')
     return out
 
 
-def elsewhere(doc, profile, site):
+def elsewhere(doc, profile, site, *, links=None, new_tab=False, first_note=None):
     """The social links and the résumé."""
-    items = [(l['url'], l['label'], None) for l in profile['social_links']]
+    items = [(l['url'], l['label'], None) for l in (links if links is not None else profile['social_links'])]
     if site['resume']:
         items.append((site['resume'], 'Résumé (PDF)', None))
-    return [h2(doc, 'Elsewhere', 'elsewhere'), links_list(doc.part('`social_links`'), items)]
+    return [h2(doc, 'Elsewhere', 'elsewhere'), links_list(doc.part('`social_links`'), items, new_tab=new_tab, first_note=first_note)]
 
 
 def article_page(shell, slug, title, header, body, head):
@@ -1066,7 +1076,7 @@ def about_page(shell, profile, site):
                                                                   escape(pr['name'] if pr else c['project'])) + '</p>')
             lis.append(li + '</li>')
         body.append('    <ul class="post-curiosities">' + ''.join(lis) + '</ul>')
-    body += availability(doc, profile, profile['contact_routes'])
+    body += availability(doc, profile)
     if profile['featured_post']:
         post = site['posts'].get(profile['featured_post'])
         if post:
@@ -1178,16 +1188,13 @@ def experience_page(shell, profile, site):
 
 
 def contact_page(shell, profile, site):
-    """/contact/: the invitation, what to write about (a section per route, its id the route's), the links, the
-    availability. There is no form, and no address: the profile has none (§7)."""
+    """/contact/: the invitation, Contact's ordered links (first marked as the way to write, plus résumé, each opening
+    in a new tab), and the availability. There is no form, and no address (§7)."""
     doc = page_doc('data/profile.json', site)
-    routes = profile['contact_routes']
-    reserve(doc, list(routes), 'contact route')
     header = ['    <h1>Contact</h1>', f'    <p class="post-lede">{escape(profile["contact_intro"])}</p>']
-    body = [f'    <p>{escape(profile["contact_invitation"])}</p>', h2(doc, 'What to write about', 'what-to-write-about')]
-    body += [f'    <section class="route" id="{rid}"><h3>{escape(r["title"])}</h3> <p>{escape(r["prompt"])}</p></section>'
-             for rid, r in routes.items()]
-    body += elsewhere(doc, profile, site) + availability(doc, profile, routes, here=True)
+    body = [f'    <p>{escape(profile["contact_invitation"])}</p>']
+    body += elsewhere(doc, profile, site, links=contact_links(profile), new_tab=True, first_note='Write to me')
+    body += availability(doc, profile, here=True)
     title = f'Contact — {profile["name"]}'
     ld = {'@type': 'ContactPage', 'name': title, 'description': profile['contact_invitation'],
           'about': person(profile, sameAs=[l['url'] for l in profile['social_links']])}
@@ -1218,7 +1225,8 @@ def profile_json(profile, resume_url):
                       'year': e['start_date'][:4], 'current': bool(e['is_current']), 'location': e['location'],
                       'employment': e['employment'], 'summary': e['summary']} for e in profile['timeline']],
         'links': [{'label': l['label'], 'url': l['url']} for l in profile['social_links']],
-        'contact': {'intro': profile['contact_intro'], 'invitation': profile['contact_invitation'], 'email': None,
+        'contact': {'intro': profile['contact_intro'], 'invitation': profile['contact_invitation'],
+                    'links': [{'label': l['label'], 'url': l['url']} for l in contact_links(profile)],
                     'routes': [{'id': k, 'title': r['title'], 'prompt': r['prompt']} for k, r in profile['contact_routes'].items()]},
         'resume': resume_url}
 

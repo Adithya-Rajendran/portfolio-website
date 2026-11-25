@@ -238,20 +238,7 @@
       "comms": {
         "title": "CONTACT", "name": "", "intro": "", "invitation": "", "openTo": "OPEN TO", "seeking": [],
         "standby": { "kicker": "CONTACT", "invite": "Get in touch." },
-        "links": [], "resume": "Résumé", "opens": "opens in a new tab",
-        "address": "", "endpoint": "", "subject": "A message through your website", "max": 2000,
-        "write": {
-          "cta": "WRITE A MESSAGE  →", "invite": "Write to me.", "message": "Your message",
-          "mail": "Open in your mail app", "copy": "Copy", "copied": "Copied",
-          "email": "Your email", "emailFor": "so I can reply", "emailHint": "you@example.com", "send": "Send"
-        },
-        "status": {
-          "handed": "Opening your mail app…",
-          "sending": "Sending…",
-          "sent": "Sent.",
-          "failed": "That did not send. Try again?",
-          "email": "Your email is needed for a reply."
-        }
+        "links": [], "resume": "Résumé", "opens": "opens in a new tab", "writeNote": "Write to me"
       }
     }
   }

@@ -523,8 +523,10 @@ class Overwrite(unittest.TestCase):
         self.assertEqual(len(written), 4)
         rc, out = self.run_main()                           # twice in a row: nothing changes
         self.assertEqual((rc, out.count('unchanged')), (0, 15))
-        for rel in ('projects/homelab.md', 'profile.json'):  # the copies are what the repository has
-            self.assertEqual(read(os.path.join(self.tmp, 'data', rel), 'rb'), read(os.path.join(DATA, rel), 'rb'), rel)
+        self.assertEqual(read(os.path.join(self.tmp, 'data', 'projects/homelab.md'), 'rb'), read(os.path.join(DATA, 'projects/homelab.md'), 'rb'))
+        repo_profile = json.loads(read(os.path.join(DATA, 'profile.json')))
+        repo_profile.pop('contact_links', None)
+        self.assertEqual(json.loads(read(os.path.join(self.tmp, 'data', 'profile.json'))), repo_profile)
         edited = os.path.join(posts_dir, 'my-homelab.md')
         with open(edited, 'a', encoding='utf-8') as f:
             f.write('\nA hand edit.\n')
@@ -809,7 +811,7 @@ def new_leaves(node, out=None):
     out = collections.Counter() if out is None else out
     if isinstance(node, dict):
         for k, v in node.items():
-            if k != 'id':                                   # the timeline's ids are new
+            if k not in ('id', 'contact_links'):             # the timeline's ids and contact_links selection are new
                 new_leaves(v, out)
     elif isinstance(node, list):
         for v in node:
@@ -867,7 +869,7 @@ def subset(want, got, path='profile'):
 
 def profile_diffs(old, new):
     d = subset(expected_record(old), new)
-    extra = set(new) - {snake_name(k) for k in old if not k.startswith('_')}
+    extra = set(new) - {snake_name(k) for k in old if not k.startswith('_')} - {'contact_links'}
     d += [f'profile: a field the document does not have: {k}' for k in extra]
     a, b = sanity_leaves(old), new_leaves(new)
     d += [f'leaf lost: {k} x{n}' for k, n in (a - b).items()]
