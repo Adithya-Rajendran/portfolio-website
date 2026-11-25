@@ -67,49 +67,54 @@ const gilt = (v) => canvasTex(512, 720, (c, w, h) => {             // tooling on
 });
 
 // ---- one draw for each material. The drone and its books are about a hundred meshes in a few materials. Each mesh stays where
-// it is in the scene graph and moves as it did, but it leaves the layers that are drawn: the camera's passes (layer 0) draw all
-// the meshes of one material with one mesh, and the sun's shadow pass (layer 1) all the casters with one. Its vertex shader takes each part's matrices from a
-// small float texture: the same float32 matrices three.js would give that part, computed the same way, so each pixel is what it
-// was when the parts were drawn one by one. (Baking the parts' transforms into one geometry is not: the rounding differs and
-// moves a few samples on the edges.) A part that is hidden, or under something hidden, gets zero matrices and draws nothing.
-const PART = 12;                                    // texels a part: modelViewMatrix (4), normalMatrix (3 and a spare), modelMatrix (4)
+// it is in the scene graph, moves as it did and still casts the window sun's shadow (layer 1, room.js), but it leaves layer 0:
+// the camera's passes draw the meshes of one material with one mesh (or a few, see PARTS). (Merging the casters of the shadow
+// pass as well cut its JavaScript by half but cost about 0.3 ms of GPU time there and as much again in the scene pass, which
+// reads that map, on the CI host's GPU; so the shadow pass draws the parts one by one, as before.)
+// Its vertex shader takes each part's matrices from uniform arrays: the same float32 matrices three.js would give
+// that part, computed the same way, so each pixel is what it was when the parts were drawn one by one. (Baking the parts'
+// transforms into one geometry is not: the rounding differs and moves a few samples on the edges.) A part that is hidden, or
+// under something hidden, gets zero matrices and draws nothing.
+// Uniform arrays, not a float texture: rewriting a texture the GPU may still be reading every frame (the gimbal always moves)
+// costs GPU time; a uniform upload does not. A part takes 11 uniform vectors (modelView, normal and model matrix), so a mesh
+// holds at most 16 parts and stays inside the 256 vertex uniform vectors that phones give.
+const PARTS = 16;
 const _mv = new THREE.Matrix4(), _nm = new THREE.Matrix3(), _inv = new THREE.Matrix4(), _m = new THREE.Matrix4(), _s = new THREE.Sphere();
-const PART_VERT = `attribute float aPart; uniform highp sampler2D tParts;
-mat4 partMat(int c, int r) { return mat4(texelFetch(tParts, ivec2(c, r), 0), texelFetch(tParts, ivec2(c + 1, r), 0), texelFetch(tParts, ivec2(c + 2, r), 0), texelFetch(tParts, ivec2(c + 3, r), 0)); }
+const partVert = (n) => `attribute float aPart; uniform mat4 partMV[${n}]; uniform mat3 partNM[${n}]; uniform mat4 partM[${n}];
 void main() {
-  int partRow = int(aPart + 0.5); mat4 partMV = partMat(0, partRow), partM = partMat(8, partRow);
-  mat3 partNM = mat3(texelFetch(tParts, ivec2(4, partRow), 0).xyz, texelFetch(tParts, ivec2(5, partRow), 0).xyz, texelFetch(tParts, ivec2(6, partRow), 0).xyz);
-#define modelViewMatrix partMV
-#define modelMatrix partM
-#define normalMatrix partNM
+  int partRow = int(aPart + 0.5); mat4 partMV_ = partMV[partRow]; mat3 partNM_ = partNM[partRow]; mat4 partM_ = partM[partRow];
+#define modelViewMatrix partMV_
+#define normalMatrix partNM_
+#define modelMatrix partM_
 `;
 // One mesh for these parts, drawn with mat (patched here to read the parts' matrices; nothing else may use it).
-function partsMesh(owner, parts, mat, fits, keep = ['position', 'normal', 'uv']) {
+function partsMesh(owner, parts, mat, fits) {
+  const keep = ['position', 'normal', 'uv'];
   const geos = parts.map((p, i) => { const g = p.geometry.clone(); g.clearGroups(); g.morphAttributes = {};
     for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k);
     g.setAttribute('aPart', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(i), 1)); return g; });
   const geometry = mergeGeometries(geos); for (const g of geos) g.dispose();
   if (!geometry) return null;                                                    // parts whose attributes differ are left as they are
-  // one texture of matrices for each camera that draws it (the view, its mirror image, the sun), rewritten only where a part or
-  // the camera moved, and uploaded only then; a resting drone uploads nothing but the gimbal's slow look about
-  const n = parts.length, tParts = { value: null }, views = new Map();
+  // the matrices for each camera that draws it (the view, its mirror image), recomputed only where a part or the camera
+  // moved; the six cameras used last are kept
+  const n = parts.length, uMV = { value: null }, uNM = { value: null }, uM = { value: null }, views = new Map();
   const view = (camera) => {
     let v = views.get(camera);
-    if (!v) {
-      if (views.size >= 6) { const [c0, v0] = views.entries().next().value; v0.tex.dispose(); views.delete(c0); }       // passing cameras do not pile up
-      const data = new Float32Array(PART * 4 * n), tex = new THREE.DataTexture(data, PART, n, THREE.RGBAFormat, THREE.FloatType);
-      tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.needsUpdate = true;
-      views.set(camera, v = { data, tex, cam: new Float64Array(16).fill(NaN), at: new Float64Array(16 * n), shown: new Uint8Array(n) });
+    if (v) views.delete(camera);
+    else {
+      if (views.size >= 6) views.delete(views.keys().next().value);              // the least recently used
+      v = { mv: new Float32Array(16 * n), nm: new Float32Array(9 * n), m: new Float32Array(16 * n), cam: new Float64Array(16).fill(NaN), at: new Float64Array(16 * n), shown: new Uint8Array(n) };
     }
+    views.set(camera, v);
     return v;
   };
   // room.js (receiveWindowSun) sets its own onBeforeCompile on the drone's materials later, so both are kept
   let inner = mat.onBeforeCompile, key = mat.customProgramCacheKey;
-  const patch = (shader, renderer) => { inner.call(mat, shader, renderer); shader.uniforms.tParts = tParts; shader.vertexShader = shader.vertexShader.replace('void main() {', PART_VERT); };
+  const patch = (shader, renderer) => { inner.call(mat, shader, renderer); Object.assign(shader.uniforms, { partMV: uMV, partNM: uNM, partM: uM });
+    shader.vertexShader = shader.vertexShader.replace('void main() {', partVert(n)); };
   Object.defineProperty(mat, 'onBeforeCompile', { get: () => patch, set: (f) => { inner = f; } });
-  Object.defineProperty(mat, 'customProgramCacheKey', { get: () => () => `${key.call(mat)}:parts`, set: (f) => { key = f; } });
+  Object.defineProperty(mat, 'customProgramCacheKey', { get: () => () => `${key.call(mat)}:parts${n}`, set: (f) => { key = f; } });
   mat.needsUpdate = true;
-  mat.addEventListener('dispose', () => { for (const v of views.values()) v.tex.dispose(); views.clear(); });          // kit.js dispose() reaches the material
   const out = new THREE.Mesh(geometry, mat); out.name = 'drawn together'; out.raycast = () => {};
   // culled as a whole, by a sphere about the owner's origin that holds every part in every pose (createDrone tries the poses)
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 0);
@@ -117,31 +122,27 @@ function partsMesh(owner, parts, mat, fits, keep = ['position', 'normal', 'uv'])
   fits.push(() => { owner.updateMatrixWorld(true); _inv.copy(owner.matrixWorld).invert(); const s = geometry.boundingSphere;
     for (const p of parts) { _s.copy(p.geometry.boundingSphere).applyMatrix4(_m.multiplyMatrices(_inv, p.matrixWorld)); s.radius = Math.max(s.radius, _s.center.length() + _s.radius + 0.03); } });
   out.onBeforeRender = (renderer, scene, camera) => {
-    const v = view(camera), { data, at, shown } = v, ce = camera.matrixWorldInverse.elements;
-    let moved = false, dirty = false;
+    const v = view(camera), { at, shown } = v, ce = camera.matrixWorldInverse.elements;
+    let moved = false;
     for (let k = 0; k < 16; k++) if (v.cam[k] !== ce[k]) { moved = true; break; }
     if (moved) v.cam.set(ce);
-    for (let i = 0, o = 0; i < n; i++, o += PART * 4) {
+    for (let i = 0; i < n; i++) {
       let on = true; for (let a = parts[i]; a && a !== owner; a = a.parent) if (!a.visible) { on = false; break; }
-      if (!on) { if (shown[i]) { data.fill(0, o, o + PART * 4); shown[i] = 0; dirty = true; } continue; }
+      if (!on) { if (shown[i]) { v.mv.fill(0, 16 * i, 16 * i + 16); shown[i] = 0; } continue; }
       const e = parts[i].matrixWorld.elements;
       if (!moved && shown[i]) { let same = true; for (let k = 0; k < 16; k++) if (at[16 * i + k] !== e[k]) { same = false; break; } if (same) continue; }
-      at.set(e, 16 * i); shown[i] = 1; dirty = true;
-      _mv.multiplyMatrices(camera.matrixWorldInverse, parts[i].matrixWorld); _nm.getNormalMatrix(_mv);       // as three.js does for a mesh
-      const nm = _nm.elements; data.set(_mv.elements, o); data.set(e, o + 32);
-      for (let c = 0; c < 3; c++) { data[o + 16 + 4 * c] = nm[3 * c]; data[o + 17 + 4 * c] = nm[3 * c + 1]; data[o + 18 + 4 * c] = nm[3 * c + 2]; data[o + 19 + 4 * c] = 0; }
+      at.set(e, 16 * i); shown[i] = 1;
+      _mv.multiplyMatrices(camera.matrixWorldInverse, parts[i].matrixWorld); v.mv.set(_mv.elements, 16 * i);      // as three.js does for a mesh
+      _nm.getNormalMatrix(_mv); v.nm.set(_nm.elements, 9 * i); v.m.set(e, 16 * i);
     }
-    if (dirty) v.tex.needsUpdate = true;
-    tParts.value = v.tex;
+    uMV.value = v.mv; uNM.value = v.nm; uM.value = v.m;
   };
   owner.add(out);
   return out;
 }
-// The camera's passes (layer 0): one mesh for each opaque PBR material that only these meshes use.
-// The sun's shadow pass (layer 1, room.js) draws every caster with one depth material: one mesh for all of them, which keeps
-// its own material (allowOverride false) because that material is the same depth-only one, patched to read the parts.
-function drawTogether(owner, meshes, users, casters, fits) {
-  const byMat = new Map();
+// One mesh for each opaque PBR material that only these meshes use (a copy of the material for each further PARTS).
+function drawTogether(owner, meshes, users, fits) {
+  const byMat = new Map(), chunks = (list, k) => Array.from({ length: Math.ceil(list.length / k) }, (_, j) => list.slice(j * k, j * k + k));
   for (const m of meshes) {
     const mat = m.material, g = m.geometry;
     if (!mat?.isMeshStandardMaterial || mat.transparent || g.morphAttributes.position || !g.index) continue;
@@ -150,13 +151,11 @@ function drawTogether(owner, meshes, users, casters, fits) {
   }
   for (const [mat, parts] of byMat) {
     if (parts.length < 2 || users.get(mat) !== parts.length) continue;           // a material that something else also uses is left alone
-    if (partsMesh(owner, parts, mat, fits)) for (const p of parts) p.layers.disable(0);
+    for (const [j, some] of chunks(parts, PARTS).entries()) {
+      if (some.length < 2) continue;
+      if (partsMesh(owner, some, j ? mat.clone() : mat, fits)) for (const p of some) p.layers.disable(0);
+    }
   }
-  const cast = meshes.filter((m) => casters.has(m) && !m.geometry.morphAttributes.position && m.geometry.index);
-  if (cast.length < 2) return;
-  const depth = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }); depth.allowOverride = false;     // what room.js draws casters with
-  const shadow = partsMesh(owner, cast, depth, fits, ['position']);
-  if (shadow) { shadow.layers.set(1); for (const p of cast) p.layers.disable(1); }
 }
 
 // ---- the book: two halves on a spine, so it opens in the middle and lies flat. x: across the pages, -z: top of the page.
@@ -256,9 +255,8 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   // each book's meshes are drawn by meshes of its own (a hidden book costs nothing), the rest of the drone's by meshes on the root
   const inBooks = new Set(), ofDrone = [], users = new Map(), fits = [];
   body.traverse((o) => { if (o.isMesh) users.set(o.material, (users.get(o.material) || 0) + 1); });
-  const cast = new Set(casters);
-  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine, users, cast, fits); }
-  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone, users, cast, fits);
+  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine, users, fits); }
+  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone, users, fits);
   // the merged meshes' spheres: grown over the poses that move parts away from their owner's origin (the tray down and tilted
   // on its rods, a book open, the gimbal's look); the drone's turning and the rotors' spin leave those distances alone
   const pose = (p, k, g) => { tray.position.set(HINGE.x, HINGE.y - 0.24 * p, HINGE.z); tray.rotation.x = -0.96 * p; rods.forEach((r) => { r.scale.y = 0.065 + 0.24 * p; }); gimbal.rotation.x = g; for (const b of books) b.userData.open(k); };
