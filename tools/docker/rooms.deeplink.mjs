@@ -2,7 +2,7 @@
 //   /portfolio/<slug>/ for a project with an exhibit and one without: a readable page at once (html.reading, its own <title>), then read in the room by itself,
 //     or, for a reader who had scrolled, offered; the place in the text is kept; Escape afterwards; the room it opens is Fabrication
 //   /experience/#<id> for each entry: the room, the reader open on it, that entry's heading at the top; Escape returns to the room's own address
-//   /about/, /portfolio/, /contact/ and /contact/#hiring as rooms (no page first), and an address of a project that does not exist
+//   /about/, /portfolio/, /contact/ and /contact/#availability as rooms (no page first), and an address of a project that does not exist
 // Prints FAIL lines (-v: ok lines too) and a summary; exit 1 on failure.
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, until, snap, frameChecks, leaveAndSnap, inRoom, sleep } from './rooms.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.deeplink'), { chk, note } = S;
@@ -73,12 +73,12 @@ async function run(name) {
     await p.close();
   }
   // ---------------------------------------------------------------- the rooms' own pages, and what does not exist
-  for (const [path, room, reads] of [['/about/', 'about', false], ['/portfolio/', 'projects', false], ['/contact/', 'comms', false], ['/contact/#hiring', 'comms', '/contact/#hiring']]) {
+  for (const [path, room, reads] of [['/about/', 'about', false], ['/portfolio/', 'projects', false], ['/contact/', 'comms', false], ['/contact/#availability', 'comms', '/contact/#availability']]) {
     const p = await page(); await p.goto(`${ORIGIN}${path.replace('#', '?shot=hero&rollat=20#')}${path.includes('#') ? '' : '?shot=hero&rollat=20'}`);
     const ok = await inRoom(p, room, 150000); if (reads) await until(p, () => window.__lobby.reader.state() === 'open', null, 60000); await p.waitForTimeout(1500); const s = await snap(p);
     chk(8, ok && s.cls === 'station' && (reads ? s.state === 'open' && s.url === reads : s.state === 'closed'), `${path} opens ${room}${reads ? ' with the page read' : ' as the room itself'}, with no page first`, { room: s.room, cls: s.cls, state: s.state, url: s.url });
-    if (reads) { const t = await p.evaluate(() => { const e = document.querySelector('#reader [id="hiring"]'), sc = document.querySelector('.reader-scroll'); return e && [Math.round(e.getBoundingClientRect().top - sc.getBoundingClientRect().top), Math.round(sc.scrollTop), Math.round(sc.scrollHeight - sc.clientHeight)]; });
-      chk(8, !!t && (t[0] >= -2 && t[0] <= 120 || t[1] >= t[2] - 2), `${path}: scrolled to #hiring`, t); }
+    if (reads) { const t = await p.evaluate(() => { const e = document.querySelector('#reader [id="availability"]'), sc = document.querySelector('.reader-scroll'); return e && [Math.round(e.getBoundingClientRect().top - sc.getBoundingClientRect().top), Math.round(sc.scrollTop), Math.round(sc.scrollHeight - sc.clientHeight)]; });
+      chk(8, !!t && (t[0] >= -2 && t[0] <= 120 || t[1] >= t[2] - 2), `${path}: scrolled to #availability`, t); }
     await p.close();
   }
   {
