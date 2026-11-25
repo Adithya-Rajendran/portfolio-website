@@ -62,7 +62,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // the orrery at its phase (decision D18). A layer that still cannot be fetched after a few tries is given up: the holds
   // let go and the orrery's light is made of the phases that are in. Leaving the room aborts the fetches under way.
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
-  let disposed = false, streaming = false, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
+  let disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
   const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
   // One layer's file, fetched (abortably; up to four tries, 0.5, 1 and 2 s apart) and transcoded.
   async function loadLayer(file) {
@@ -910,7 +910,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     }),
     /** Per frame, after the camera has been placed. */
     update(t) {
-      if (!streaming) { streaming = true; streamRest(); }             // the first frame: the cover is lifting
+      if (!streaming && ++updates > 1) { streaming = true; streamRest(); }      // the second frame: the cover is lifting and the first frame (which uploads the room's canvases) is drawn
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       if (skyU?.frame) skyU.uSkyM.value.copy(skyU.frame).multiply(_m3.setFromMatrix4(_m4.makeRotationFromQuaternion(_q.copy(sky.quaternion).invert())));
