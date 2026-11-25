@@ -1,5 +1,5 @@
 // rooms.cross.mjs [desktop|phone|all]: links inside a hologram that lead to another room or another thing (item 7).
-//   a project's links to posts; /about/'s links to a project, to the featured post and to /contact/#hiring; a project's link to the next project (same room);
+//   a project's links to posts; /about/'s links to a project, to the featured post and to /contact/; a project's link to the next project (same room);
 //   a link to a file (a new tab, the station stays). After each: the station is where the link leads, the address, tab title and reader agree, and Back returns.
 // The links are read from the generated pages (what the visitor sees), not assumed. Prints FAIL lines (-v: ok lines too) and a summary; exit 1 on failure.
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, open, inRoom, until, poke, snap, sources, readPick, sleep } from './rooms.kit.mjs';
@@ -56,11 +56,24 @@ async function run(name) {
   for (const [from, href] of [['gb10-memory-guard', '/portfolio/juju-agent-mcps/'], ['homelab', '/portfolio/kubernetes-cluster/']]) {
     const p = await openProject(`/portfolio/${from}/`); await follow(p, `${from} -> ${href.split('/')[2]} (same room)`, `/portfolio/${from}/`, href); await p.close();
   }
-  // /about/: a project, the featured post, the CTA to /contact/#hiring
+  // /about/: a project, the featured post, the CTA to /contact/
   const al = await linksOf('/about/'), feat = `/blog/${profile.featured_post ?? 'my-homelab'}/`;
-  chk(7, al.includes(feat) && al.some((h) => h.startsWith('/portfolio/')) && al.includes('/contact/#hiring'), '/about/ links to a project, the featured post and /contact/#hiring', al);
-  for (const href of al.filter((h) => h.startsWith('/portfolio/') || h === feat || h === '/contact/#hiring')) {
+  chk(7, al.includes(feat) && al.some((h) => h.startsWith('/portfolio/')) && al.includes('/contact/'), '/about/ links to a project, the featured post and /contact/', al);
+  for (const href of al.filter((h) => h.startsWith('/portfolio/') || h === feat)) {
     const p = await openAbout(); await follow(p, `about -> ${href}`, '/about/', href, { backTo: '/about/', backOpen: false }); await p.close();
+  }
+  if (al.includes('/contact/')) {
+    const p = await openAbout(), at = (room, path) => (x) => [x.room === room && x.path === path && x.state === 'closed' && !x.readerShown, `room ${x.room}, ${x.state}, address ${x.path}${x.hash}`];
+    const got = await link(p, '/contact/'); chk(7, got === true, 'about -> /contact/: the link /contact/ can be pressed', got === true ? '' : got);
+    if (got === true) {
+      const [s, ms, ok] = await settle(p, at('comms', '/contact/')); await p.waitForTimeout(800);
+      chk(7, ok && s.title === content.rooms.comms.title, `about -> /contact/: following /contact/ enters comms (${ms} ms)`, ok ? '' : at('comms', '/contact/')(s)[1]);
+      await p.goBack(); const [b1, ms2, ok2] = await settle(p, at('about', '/about/')); await p.waitForTimeout(500);
+      chk(7, ok2, `about -> /contact/: Back returns to /about/ (${ms2} ms)`, ok2 ? '' : at('about', '/about/')(b1)[1]);
+      await p.goForward(); const [f1, ms3, ok3] = await settle(p, at('comms', '/contact/')); await p.waitForTimeout(500);
+      chk(7, ok3, `about -> /contact/: Forward leads to /contact/ again (${ms3} ms)`, ok3 ? '' : at('comms', '/contact/')(f1)[1]);
+    }
+    await p.close();
   }
   // the experience page: a project
   const xl = (await linksOf('/experience/')).filter((h) => h.startsWith('/portfolio/'));

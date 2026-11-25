@@ -362,13 +362,13 @@ class Profile(unittest.TestCase):
 
     def test_optional_things_may_be_absent(self):
         def bare(d):
-            for k in ('focus_areas', 'featured_post', 'resume', 'credentials', 'current_curiosities', 'curiosities_updated_at', 'talks_and_papers'):
+            for k in ('focus_areas', 'featured_post', 'resume', 'credentials', 'contact_links', 'current_curiosities', 'curiosities_updated_at', 'talks_and_papers'):
                 del d[k]
             for k in ('seeking', 'updated_at'):
                 del d['availability'][k]
         p = self.load(bare)
-        self.assertEqual((p['resume'], p['featured_post'], p['credentials'], p['talks_and_papers'], p['availability']['seeking']),
-                         (None, None, [], [], []))
+        self.assertEqual((p['resume'], p['featured_post'], p['credentials'], p['contact_links'], p['talks_and_papers'], p['availability']['seeking']),
+                         (None, None, [], [], [], []))
 
     def test_required_fields(self):
         top = ['name', 'headline', 'tagline', 'introduction', 'bio', 'work_summary', 'location', 'seo_description', 'writing_description',
@@ -428,6 +428,11 @@ class Profile(unittest.TestCase):
             (put('social_links', 0, 'url')('mailto:a@b.c'), '`social_links[0].url`'),
             (put('social_links', 0, 'url')('/about'), '`social_links[0].url`'),
             (put('social_links')([]), '`social_links`'),
+            (put('contact_links')([]), '`contact_links`'),
+            (put('contact_links')('LinkedIn'), '`contact_links`'),
+            (put('contact_links')(['']), '`contact_links[0]`'),
+            (put('contact_links')(['NoSuchLink']), '`contact_links[0]`'),
+            (put('contact_links')(['LinkedIn', 'LinkedIn']), '`contact_links[1]`'),
             (put('featured_post')('no-such-post'), '`featured_post`'),
             (put('featured_post')('../posts/my-homelab'), '`featured_post`'),
             (put('resume')('missing.pdf'), '`resume`'),

@@ -547,6 +547,17 @@ def _entry_rule(r):
         raise ValueError('`expected_end_year` is before the year of `start_date`')
 
 
+def _profile_rule(r):
+    labels = {l['label'] for l in r['social_links']}
+    seen = set()
+    for i, label in enumerate(r['contact_links']):
+        if label not in labels:
+            raise _Bad(f'there is no social link {label}', ('contact_links', i))
+        if label in seen:
+            raise _Bad(f'{label} is listed twice', ('contact_links', i))
+        seen.add(label)
+
+
 def _profile_check():
     exists = lambda p: os.path.isfile(os.path.join(DATA, 'projects', p + '.md'))
     link, project, prec = _link(exists), _project(exists), _enum(*PRECISIONS)
@@ -562,6 +573,7 @@ def _profile_check():
                                       _credential_rule))),
         'skill_groups': _req(_lst(_rec({'title': _req(_line), 'skills': _req(_lst(_line, nonempty=True))}), nonempty=True)),
         'social_links': _req(_lst(_rec({'label': _req(_line), 'url': _req(_http)}), nonempty=True)),
+        'contact_links': _opt(_lst(_line, nonempty=True)),
         'current_curiosities': _opt(_lst(_rec({'title': _req(_line), 'note': _opt(_line), 'project': _opt(project)}))),
         'curiosities_updated_at': _opt(_date),
         'talks_and_papers': _opt(_lst(_rec({'title': _req(_line), 'kind': _req(_line), 'date': _req(_date), 'authors': _opt(_line),
@@ -573,7 +585,7 @@ def _profile_check():
                                     'end_precision': _opt(prec), 'expected_end_year': _opt(_year), 'is_current': _opt(_flag),
                                     'highlights': _opt(_lst(_line)), 'logo': _opt(_image), 'logo_alt': _opt(_line)}, _entry_rule),
                            nonempty=True)),
-    })
+    }, _profile_rule)
 
 
 def _routes(v):

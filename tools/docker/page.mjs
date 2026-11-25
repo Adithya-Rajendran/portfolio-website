@@ -38,7 +38,7 @@ try {
     project: ['header .post-meta .post-status', 'header .post-lede'],
     about: ['header .post-meta', 'header .post-lede', 'div.post-body h2[id]', 'div.post-body p', 'ul.post-links a'],
     experience: ['header .post-lede', 'section.entry[id] > h2', 'section.entry[id] > p.post-meta', 'div.post-body h2[id]', 'ul.post-tags li'],
-    contact: ['header .post-lede', 'section.route[id] > h3', 'section.route[id] > p', 'ul.post-links a', 'div.post-body h2[id]'],
+    contact: ['header .post-lede', 'ul.post-links a', 'div.post-body h2[id]'],
   }[kind];
   const optional = {
     list: ['h2[id]', 'li.quiet'],
