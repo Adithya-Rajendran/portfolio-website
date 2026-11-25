@@ -68,14 +68,14 @@ const PROFILE = { v: 'string', name: 'string', headline: 'string', tagline: 'str
   availability: { status: 'string', label: 'string', seeking: ['string'] }, curiosities: [{ kind: 'string?', title: 'string', note: 'string?', url: 'string?' }],
   timeline: [{ id: 'string', url: 'string', kind: 'string', title: 'string', organization: 'string', org_short: 'string', period: 'string', year: 'string',
     current: 'boolean', location: 'string?', employment: 'string?', summary: 'string?' }],
-  links: [{ label: 'string', url: 'string' }], contact: { intro: 'string', invitation: 'string', email: 'null', routes: [{ id: 'string', title: 'string', prompt: 'string' }] },
+  links: [{ label: 'string', url: 'string' }], contact: { intro: 'string', invitation: 'string', links: [{ label: 'string', url: 'string' }], routes: [{ id: 'string', title: 'string', prompt: 'string' }] },
   resume: 'string?' };
 const portfolio = await json('/portfolio/index.json'), profile = await json('/profile.json');
 shape(portfolio, { v: 'string', projects: [PROJECT] }, 'portfolio/index.json');
 shape(profile, PROFILE, 'profile.json');
 for (const doc of [portfolio, profile]) if (doc && !/^[0-9a-f]{8}$/.test(doc.v)) fail('v is not 8 hex:', doc.v);
 const urls = [...(portfolio?.projects ?? []).map(p => p.url), ...(profile?.curiosities ?? []).map(c => c.url).filter(Boolean),
-  ...(profile?.timeline ?? []).map(e => e.url), ...(profile?.links ?? []).map(l => l.url), ...(profile?.resume ? [profile.resume] : [])];
+  ...(profile?.timeline ?? []).map(e => e.url), ...(profile?.links ?? []).map(l => l.url), ...(profile?.contact?.links ?? []).map(l => l.url), ...(profile?.resume ? [profile.resume] : [])];
 const seen = new Map();
 for (const u of urls) {
   if (/^https?:\/\//.test(u)) continue;                  // the social links: not fetched (no network in the test)
