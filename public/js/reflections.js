@@ -49,7 +49,7 @@ export const probePars = `
 //   lamps  analytic GGX highlights of each point/spot lamp (sphere lights), times the baked lamp visibility
 //   sun    shadowed GGX highlight of the window sun (room.js)
 // A clear coat is a second, sharper lobe on top. Specular occlusion comes from the baked ambient occlusion.
-export function liveSpecPars({ probes, sky, live, lights }) {
+export function liveSpecPars({ probes, sky, live, lights, grid = 0 }) {
   const P = Math.max(1, probes), NL = lights;
   return `
   #define PROBES ${P}
@@ -57,6 +57,7 @@ export function liveSpecPars({ probes, sky, live, lights }) {
   ${sky ? 'uniform sampler2D tSky; uniform mat3 uSkyM; uniform float uSkyHalf, uSkyGain, uSkyLod;' : ''}
   ${live ? 'uniform samplerCube tLive; uniform vec3 uLiveEye, uLiveC; uniform float uLiveR, uLiveLod;' : ''}
   ${NL ? `uniform vec3 uLP[${NL}], uLI[${NL}], uLD[${NL}], uLS[${NL}];` : ''}
+  ${NL && grid ? `uniform highp sampler3D tLampGrid0; ${grid > 4 ? 'uniform highp sampler3D tLampGrid1;' : ''} uniform vec3 uGridLo, uGridInv;` : ''}
   // Split-sum GGX environment BRDF (Karis' fit of the DFG integral): reflectance = F0*x + y.
   vec2 envAB(float r, float nv) {
     vec4 p = r*vec4(-1.,-.0275,-.572,.022) + vec4(1.,.0425,1.04,-.04);
@@ -124,7 +125,13 @@ export function liveSpecPars({ probes, sky, live, lights }) {
   // cosine and its soft edge (y < -1.5: a point lamp). Intensity in W/sr, as Cycles uses it.
   vec3 lampLobe(vec3 W, vec3 N, vec3 V, vec3 F0, float rough) {
     vec3 sum = vec3(0.), R = reflect(-V, N); float a = max(rough*rough, .002);
-    for (int i = 0; i < ${NL}; i++) {
+    ${grid ? `// the lamps of this point's cell of the grid (room.js), slot by slot; 255 is an empty slot. Outside the grid
+    // (something that turns out of it) every lamp, as without one.
+    vec3 gq = (W - uGridLo)*uGridInv; bool inGrid = all(greaterThanEqual(gq, vec3(0.))) && all(lessThan(gq, vec3(1.)));
+    ivec4 q0 = ivec4(texture(tLampGrid0, gq)*255. + .5)${grid > 4 ? ', q1 = ivec4(texture(tLampGrid1, gq)*255. + .5)' : ''};
+    for (int k = 0; k < ${NL}; k++) {
+      int i = !inGrid ? k : k < 4 ? q0[k] : ${grid > 4 ? 'k < 8 ? q1[k - 4] : ' : ''}255;
+      if (i >= ${NL}) break;` : `for (int i = 0; i < ${NL}; i++) {`}
       vec3 Lv = uLP[i] - W; float d2 = dot(Lv, Lv), d = sqrt(d2); vec3 L0 = Lv/d;
       float cone = 1.;
       if (uLS[i].y > -1.5) { float c = dot(-L0, uLD[i]) - uLS[i].y; cone = c <= 0. ? 0. : uLS[i].z > 0. ? smoothstep(0., uLS[i].z, c) : 1.; }
