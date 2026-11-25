@@ -24,12 +24,14 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 | `bench` | `"<query>" [runs] [seconds]` | `tools/docker/bench.mjs` at `1920x1080` (`runs` default 3, `seconds` default 8) | `quiet.lock` (exclusive), `gpu.lock` |
 | `snap` | `<name> <state=query>...` | Deterministic `1920x1080` screenshots (`detsnap.mjs`, 60 frames) into `$OUT/<name>/` | `quiet.lock` (shared), `gpu.lock` |
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | Pixel difference (`pdiff.mjs`) in Docker without GPU device or `gpu.lock` | `quiet.lock` (shared) |
+| `pictures` | `[--against <base>]` | Render fixed 34-state suite (`tools/ci/pictures.txt`), cache goldens by `<sha>_<list_hash>`, compare with `pdiff.mjs --strict --fail-max=0` | `quiet.lock` (shared), `gpu.lock`, `pictures.lock` |
 
 ## Locks
 
 - **`$CI_HOME/quiet.lock`**: acquired by `/srv/arcadia/bin/ci` before `run.sh` (shared `-s` for all tiers except `bench`, which takes exclusive `-x` so benchmarks run alone). `tools/ci/run.sh` never re-acquires `quiet.lock`.
-- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`) when `CI_HOME` is set.
+- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`, `pictures`) when `CI_HOME` is set.
 - **`$CI_HOME/cache/pack.lock`**: acquired around packing rooms into `$CI_HOME/cache/assets/<key>`.
+- **`$CI_HOME/cache/pictures.lock`**: acquired around atomic golden directory swaps into `$CI_HOME/cache/pictures/<commit_sha>_<list_hash>/`.
 
 ## Job Artifacts and Asset Cache
 
@@ -37,8 +39,9 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
   - `result.json`: `{ "ref", "sha", "tier", "status", "seconds", "job" }`
   - `log.txt`: combined stdout/stderr from `tools/ci/run.sh`
   - `pack.log`, `site.log`: asset packing and static page generation logs
-  - `out/`: screenshots and script outputs (`$OUT`)
+  - `out/`: screenshots and script outputs (`$OUT`; `pictures` writes `$OUT/current/` and `$OUT/heat/`)
 - Asset caching uses a deterministic 20-character SHA-256 content-hash key computed from all files under `assets-src/` and `tools/pack.py` (works without `.git` in `git archive` extracts).
+- Golden pictures cache on the CI host at `$CI_HOME/cache/pictures/<commit_sha>_<list_hash>/`, where `list_hash` is the first 12 hex characters of `sha256sum tools/ci/pictures.txt`. The current commit is always rendered fresh into `$OUT/current/`; when `--against` is omitted, it compares against its own cached golden (seeding the cache on the first run). When `--against <base>` is passed and `<base>`'s golden is missing, it is extracted via `git archive`, packed/reused via `cache/assets/`, and rendered with the current `tools/docker/detsnap.mjs`.
 - `run.sh` keeps `$ROOT/public/assets` as an **empty directory** (never a symlink) so Docker can bind-mount `$ASSETS` at `/site/assets:ro`. `preview.sh` symlinks `public/assets` to `$ASSETS` for host-side serving via `tools/ci/serve.sh`.
 
 ## Local Usage
@@ -51,6 +54,8 @@ tools/ci/run.sh smoke
 tools/ci/run.sh script rooms.mjs
 tools/ci/run.sh snap s1 "lobby-hero=?room=lobby&shot=hero&scale=1&tier=0&chand=30&rollat=45"
 tools/ci/run.sh pdiff /path/to/s1 /path/to/s2
+tools/ci/run.sh pictures
+tools/ci/run.sh pictures --against origin/prog/ws-infra
 ```
 
 Environment variables:

@@ -56,7 +56,7 @@ const rightPage = (v) => canvasTex(768, 1064, (c, w, h) => {
   });
   c.fillStyle = RULE; c.font = `600 22px ${SANS}`; spaced(c, 4); c.fillText(fit(c, v.tags.join('  ·  ').toUpperCase(), w - 192), 96, h - 104); spaced(c, 0);
 });
-const edges = canvasTex(64, 256, (c, w, h) => { c.fillStyle = '#d9cfb6'; c.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 3) { c.fillStyle = `rgba(90,70,40,${0.12 + 0.25 * Math.random()})`; c.fillRect(0, y, w, 1); } });
+const edges = canvasTex(64, 256, (c, w, h) => { c.fillStyle = '#d9cfb6'; c.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 3) { const h_ = ((Math.sin(y * 12.9898) * 43758.5453) % 1 + 1) % 1; c.fillStyle = `rgba(90,70,40,${0.12 + 0.25 * h_})`; c.fillRect(0, y, w, 1); } });
 const gilt = (v) => canvasTex(512, 720, (c, w, h) => {             // tooling on the front board: a double frame, the title, a small device
   c.strokeStyle = c.fillStyle = '#e2b866'; c.lineWidth = 5; c.strokeRect(34, 34, w - 68, h - 68); c.lineWidth = 2; c.strokeRect(50, 50, w - 100, h - 100);
   c.textAlign = 'center'; c.font = `400 44px ${SERIF}`; const t = lines(c, v.title, w - 150, 5); let y = 300 - t.length * 27;
