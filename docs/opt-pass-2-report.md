@@ -4,7 +4,8 @@ Branch `prog/ws-opt` (integrated via `prog/int`), from `explore/rolling-earth` a
 Reference machines (`D13`):
 
 - **Laptop HD 630** — Intel Core i7-7700HQ @ 2.80 GHz (4 cores / 8 threads), 15 GiB RAM, Intel HD Graphics 630 (Kaby Lake-H GT2, Mesa, ANGLE GL backend), Chromium in `mcr.microsoft.com/playwright:v1.64.1-noble`, 1920x1080, `devicePixelRatio` 1. Used for all GPU rankings and optimization report numbers.
-- **CI host (`arcadia-ci`)** — Intel Core i9-13900H (14 cores / 20 threads), 62 GiB RAM, Intel Iris Xe Graphics (Raptor Lake-P), same Docker image. Used for CPU changes and regression gates (Iris Xe GPU time sits near 16 ms across five of the six rooms regardless of draw load, so it cannot rank GPU work).
+- **CI host 1 (`arcadia-ci`)** — Intel Core i9-13900H (14 cores / 20 threads), 62 GiB RAM, Intel Iris Xe Graphics (Raptor Lake-P), same Docker image. All "CI host" tables below were measured on this machine. Used for CPU changes and regression gates (Iris Xe GPU time sits near 16 ms across five of the six rooms regardless of draw load, so it cannot rank GPU work).
+- **CI host 2 (`arcadia-ci2`)** — Intel Core i9-12900H, Intel Iris Xe Graphics (Alder Lake), same image. A different machine: its numbers are not comparable with the CI host 1 tables and carry their own label wherever they appear.
 
 ## How it was measured
 
@@ -18,7 +19,7 @@ All browser tools live in `tools/docker/` and run behind the `perf` and `bench` 
 - **Load bottleneck profile (`loadprof.mjs`, `perf loadprof`):** attaches V8 CDP `Profiler` at 500 us on `/robots.txt` before navigating to the room, recording `LongTask` durations, KTX2 worker `transcode` tasks, and wrapped `WebGL2RenderingContext` call counts and timings until `ready() > 0`.
 - **Visual identity (`pictures`, `blurdiff.mjs`):** `tools/ci/run.sh pictures [--against <base>]` checks 34 deterministic states (`tools/ci/pictures.txt`) with `pdiff.mjs --strict --fail-max=0`. "Pixel-identical" means `max == 0` on all 34 states. `blurdiff.mjs` (`perf blurdiff`) computes 8x8 block-averaged RGB diffs where intentional tolerance checks are needed.
 - **Evidence rules (§5.5):** every reported number is the median of at least 3 runs with all individual runs listed; before and after are measured in the same session on the same machine; GPU ms from the timer query is primary for GPU work, with frame ms reported beside it.
-- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** extracts `<ref>` cleanly via `git archive` (never serving a dirty worktree), resolves/caches packed assets before locking, serializes runs with `flock -w 600 /tmp/arcadia-local-hd630.lock` under `timeout 300s`, and logs `/proc/loadavg` before and after inside the lock. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`.
+- **Laptop HD 630 isolation (`tools/ci/hd630.sh`):** takes the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` first, so a second run waits before it extracts `<ref>` via `git archive` (never serving a dirty worktree), packs or reuses assets and runs `tools/site.py`; waits (up to 120 s) for the load that preparation caused to settle; then runs the measurement under `timeout -k 10s 300s` (the group is signalled, and the named container is removed), and logs `/proc/loadavg` before and after. Runs with 1-minute load above `HD630_MAX_LOAD` (default `nproc / 2`, i.e., `4` on the 8-thread i7-7700HQ) are marked `"usable": false` / `UNUSABLE`.
 
 ## 1. Baseline (`6390b52d`)
 
@@ -37,7 +38,7 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 | Library (`writing`) | **67.6 / 51.4** | `[67.8, 67.6, 66.9]` / `[51.29, 51.38, 51.38]` | **81.6 / 64.4** | `[81.6, 82.2, 80.2]` / `[64.42, 64.43, 65.43]` | 273 | 1,381,546 | 34.7 MB (`34,669 KB`) |
 | Comms (`comms`) | **27.4 / 20.6** | `[27.4, 27.1, 27.8]` / `[20.68, 20.41, 20.57]` | **28.4 / 22.1** | `[28.1, 28.9, 28.4]` / `[22.05, 22.22, 22.04]` | 92 | 145,032 | 19.6 MB (`19,627 KB`) |
 
-**CI host (Intel Iris Xe):**
+**CI host 1 (`arcadia-ci`, i9-13900H, Raptor Lake Iris Xe):**
 
 | Room | Tier 1 median | Tier 1 raw `[frame]` / `[gpu]` | Tier 0 median | Tier 0 raw `[frame]` / `[gpu]` | Tier 1 first frame (`load.ms`) | Tier 0 first frame (`load.ms`) |
 |---|---|---|---|---|---|---|
@@ -106,7 +107,7 @@ Frame ms / GPU ms. Tier 1 is no MSAA with FXAA (`mirror` 1647x927); tier 0 is 4x
 
 ## Reproduce
 
-On the CI host (`arcadia-ci`):
+On the CI host 1 (`arcadia-ci`):
 
 ```sh
 ssh arcadia-ci '/srv/arcadia/bin/ci 6390b52d bench "?room=lobby&shot=hero&scale=1&tier=1" 3 8'
