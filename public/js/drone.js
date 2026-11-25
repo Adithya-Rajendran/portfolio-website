@@ -84,7 +84,7 @@ void main() {
 #define normalMatrix partNM
 `;
 // One mesh for these parts, drawn with mat (patched here to read the parts' matrices; nothing else may use it).
-function partsMesh(owner, parts, mat, margin, keep = ['position', 'normal', 'uv']) {
+function partsMesh(owner, parts, mat, fits, keep = ['position', 'normal', 'uv']) {
   const geos = parts.map((p, i) => { const g = p.geometry.clone(); g.clearGroups(); g.morphAttributes = {};
     for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k);
     g.setAttribute('aPart', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(i), 1)); return g; });
@@ -111,11 +111,11 @@ function partsMesh(owner, parts, mat, margin, keep = ['position', 'normal', 'uv'
   mat.needsUpdate = true;
   mat.addEventListener('dispose', () => { for (const v of views.values()) v.tex.dispose(); views.clear(); });          // kit.js dispose() reaches the material
   const out = new THREE.Mesh(geometry, mat); out.name = 'drawn together'; out.raycast = () => {};
-  // culled as a whole: a sphere about the owner's origin that holds every part in every pose (the margin: the tray coming
-  // down and tilting, a book opening), in the owner's space like the merged geometry's place in the scene graph
-  owner.updateMatrixWorld(true); _inv.copy(owner.matrixWorld).invert(); let reach = 0;
-  for (const p of parts) { p.geometry.computeBoundingSphere(); _s.copy(p.geometry.boundingSphere).applyMatrix4(_m.multiplyMatrices(_inv, p.matrixWorld)); reach = Math.max(reach, _s.center.length() + _s.radius); }
-  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), reach + margin);
+  // culled as a whole, by a sphere about the owner's origin that holds every part in every pose (createDrone tries the poses)
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 0);
+  for (const p of parts) p.geometry.computeBoundingSphere();
+  fits.push(() => { owner.updateMatrixWorld(true); _inv.copy(owner.matrixWorld).invert(); const s = geometry.boundingSphere;
+    for (const p of parts) { _s.copy(p.geometry.boundingSphere).applyMatrix4(_m.multiplyMatrices(_inv, p.matrixWorld)); s.radius = Math.max(s.radius, _s.center.length() + _s.radius + 0.03); } });
   out.onBeforeRender = (renderer, scene, camera) => {
     const v = view(camera), { data, at, shown } = v, ce = camera.matrixWorldInverse.elements;
     let moved = false, dirty = false;
@@ -140,7 +140,7 @@ function partsMesh(owner, parts, mat, margin, keep = ['position', 'normal', 'uv'
 // The camera's passes (layer 0): one mesh for each opaque PBR material that only these meshes use.
 // The sun's shadow pass (layer 1, room.js) draws every caster with one depth material: one mesh for all of them, which keeps
 // its own material (allowOverride false) because that material is the same depth-only one, patched to read the parts.
-function drawTogether(owner, meshes, users, casters, margin) {
+function drawTogether(owner, meshes, users, casters, fits) {
   const byMat = new Map();
   for (const m of meshes) {
     const mat = m.material, g = m.geometry;
@@ -150,12 +150,12 @@ function drawTogether(owner, meshes, users, casters, margin) {
   }
   for (const [mat, parts] of byMat) {
     if (parts.length < 2 || users.get(mat) !== parts.length) continue;           // a material that something else also uses is left alone
-    if (partsMesh(owner, parts, mat, margin)) for (const p of parts) p.layers.disable(0);
+    if (partsMesh(owner, parts, mat, fits)) for (const p of parts) p.layers.disable(0);
   }
   const cast = meshes.filter((m) => casters.has(m) && !m.geometry.morphAttributes.position && m.geometry.index);
   if (cast.length < 2) return;
   const depth = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }); depth.allowOverride = false;     // what room.js draws casters with
-  const shadow = partsMesh(owner, cast, depth, margin, ['position']);
+  const shadow = partsMesh(owner, cast, depth, fits, ['position']);
   if (shadow) { shadow.layers.set(1); for (const p of cast) p.layers.disable(1); }
 }
 
@@ -254,11 +254,16 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   for (const m of casters) m.layers.enable(1);                    // they cast shadows in the sunlight (see room.js)
   body.scale.setScalar(1.15); root.name='Catalogue drone'; root.add(body); root.position.copy(dock); scene.add(root);
   // each book's meshes are drawn by meshes of its own (a hidden book costs nothing), the rest of the drone's by meshes on the root
-  const inBooks = new Set(), ofDrone = [], users = new Map();
+  const inBooks = new Set(), ofDrone = [], users = new Map(), fits = [];
   body.traverse((o) => { if (o.isMesh) users.set(o.material, (users.get(o.material) || 0) + 1); });
   const cast = new Set(casters);
-  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine, users, cast, BW * 1.2); }
-  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone, users, cast, 0.8);
+  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine, users, cast, fits); }
+  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone, users, cast, fits);
+  // the merged meshes' spheres: grown over the poses that move parts away from their owner's origin (the tray down and tilted
+  // on its rods, a book open, the gimbal's look); the drone's turning and the rotors' spin leave those distances alone
+  const pose = (p, k, g) => { tray.position.set(HINGE.x, HINGE.y - 0.24 * p, HINGE.z); tray.rotation.x = -0.96 * p; rods.forEach((r) => { r.scale.y = 0.065 + 0.24 * p; }); gimbal.rotation.x = g; for (const b of books) b.userData.open(k); };
+  for (let p = 0; p <= 1; p += 0.125) for (const k of [0, 0.25, 0.5, 0.75, 1]) for (const g of [-0.6, -0.3, 0, 0.25]) { pose(p, k, g); for (const f of fits) f(); }
+  pose(0, 0, 0); root.updateMatrixWorld(true);
 
   // ---- flight: a queue of legs, each "go to p, then do this". Flying = any leg left, or away from the cradle.
   // A leg is one arc: up from where it is, across the room over head height, down onto the place; it starts and ends at rest.
@@ -297,9 +302,9 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     else if (pace > 0.2) yaw += turnTo(yaw, Math.atan2(-vel.x, -vel.z)) * Math.min(1, dt * 7);
     body.rotation.set(0, yaw, 0); body.rotateX(-Math.min(0.3, 0.05 * pace)); gimbal.rotation.x = 0.25 * Math.sin(t * 0.7) - 0.35 * present.x;      // leans into its flight; the eye looks about, then down at the page
     spin += dt * lift * 95; rotors.forEach((r, i) => { r.rotation.y = spin * (i % 2 ? 1 : -1); }); M.blade.opacity = 1 - 0.85 * lift;
-    for (const [i, d] of discs.entries()) d.material.opacity = lift * (0.16 + 0.05 * Math.sin(t * 61 + i * 2.1));
+    for (const [i, d] of discs.entries()) { d.material.opacity = lift * (0.16 + 0.05 * Math.sin(t * 61 + i * 2.1)); d.visible = d.material.opacity !== 0; }      // light that adds nothing is not drawn
     iris.material.color.setRGB(0.4, 1.5, 2.4).multiplyScalar(0.3 + 0.7 * lift); pupil.material.color.setRGB(0.8, 2.0, 2.6).multiplyScalar(0.3 + 0.7 * lift);
-    tip.material.color.setRGB(2.4, 0.5, 0.2).multiplyScalar(lift * (Math.sin(t * 5) > 0.6 ? 1 : 0.15));
+    tip.material.color.setRGB(2.4, 0.5, 0.2).multiplyScalar(lift * (Math.sin(t * 5) > 0.6 ? 1 : 0.15)); tip.visible = lift !== 0;
     leds.forEach((l, i) => l.material.color.setRGB(2.2, 1.2, 0.4).multiplyScalar(lift < 0.5 ? 0.2 + 0.2 * Math.sin(t * 1.5) : 0.4 + 0.6 * (Math.floor(t * 3) % 3 === i)));
     // presenting: the tray comes down and tilts, then the book opens; leaving, the same in reverse
     present.to = +(shown >= 0 || (!!leg?.lower && leg.k > 0.75)); opened.to = +(shown >= 0 && present.x > 0.9);      // the tray is on its way down as the drone comes in over the table
