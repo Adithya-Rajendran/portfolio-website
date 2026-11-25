@@ -59,13 +59,129 @@ RUN_TIMEOUT="${HD630_TIMEOUT:-300}"
 IMG="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
 LOCK_WAIT="${HD630_LOCK_WAIT:-3600}"
 
+NPROC="$(nproc)"
+DEFAULT_MAX_LOAD=$(( NPROC / 2 ))
+[ "$DEFAULT_MAX_LOAD" -lt 1 ] && DEFAULT_MAX_LOAD=1
+LOAD_LIMIT="${HD630_MAX_LOAD:-$DEFAULT_MAX_LOAD}"
+LOAD_BEFORE="$(cat /proc/loadavg)"
+T0=$(date +%s)
+SCRIPT_ARGS=("$@")
+JOB=""; CID=""; SHOWPID=""; INTERRUPTED=""
+
+# Signals. Everything slow (lock wait, archive, packing, site.py, the measurement) runs as a background child that
+# this script waits for, so INT/TERM/HUP are handled at once: the whole process tree below this script is killed,
+# the run is recorded as interrupted (unusable) and the script exits 128+signal. Children inherit the lock, so a
+# stray one can never run unseen while the lock looks free.
+killtree() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do killtree "$c"; done
+  [ "$1" = "$$" ] || kill -TERM "$1" 2>/dev/null
+  return 0
+}
+on_signal() { [ -n "$INTERRUPTED" ] || INTERRUPTED="$1"; killtree "$$"; }
+trap 'on_signal INT' INT
+trap 'on_signal TERM' TERM
+trap 'on_signal HUP' HUP
+abort_run() {
+  local code=130
+  trap '' INT TERM HUP
+  killtree "$$"
+  case "$INTERRUPTED" in TERM) code=143 ;; HUP) code=129 ;; esac
+  if [ -n "$JOB" ] && [ -d "$JOB" ]; then finish "$code"; fi
+  exit "$code"
+}
+waitbg() {                      # wait for background pid $1; abort the run if a signal arrived
+  local rc=0
+  wait "$1" || rc=$?
+  [ -z "$INTERRUPTED" ] || abort_run
+  return "$rc"
+}
+bgwait() { "$@" & waitbg $!; }  # run a command as a background child and wait for it
+
+finish() {
+  local RC="$1" T1 SECONDS_ELAPSED LOAD_AFTER SUMMARY
+  trap '' INT TERM HUP
+  sleep 0.3   # let the live follower print the last lines
+  [ -n "$SHOWPID" ] && killtree "$SHOWPID"
+  if [ -f "$JOB/log.raw" ]; then grep -v "GL Driver" "$JOB/log.raw" > "$JOB/log.txt" 2>/dev/null; rm -f "$JOB/log.raw"; fi
+  docker rm -f "$CID" >/dev/null 2>&1 || true
+  T1=$(date +%s)
+  SECONDS_ELAPSED=$(( T1 - T0 ))
+  LOAD_AFTER="$(cat /proc/loadavg)"
+
+  SUMMARY="$(HD_INT="$INTERRUPTED" python3 - "$JOB/result.json" "$REF" "$SHA" "$SUBCMD" "$RC" "$SECONDS_ELAPSED" "$LOAD_BEFORE" "$LOAD_AFTER" "$LOAD_LIMIT" "$NPROC" "$JOB" "${SCRIPT_ARGS[@]}" <<'PY'
+import json, os, sys
+
+res_path, ref, sha, subcmd, rc_s, sec_s, lb_s, la_s, limit_s, nproc_s, job, *args = sys.argv[1:]
+rc = int(rc_s)
+secs = int(sec_s)
+limit = float(limit_s)
+nproc = int(nproc_s)
+lb = [float(x) for x in lb_s.split()[:3]]
+la = [float(x) for x in la_s.split()[:3]]
+sig = os.environ.get("HD_INT", "")
+
+reasons = []
+if sig:
+    reasons.append(f"interrupted by SIG{sig}")
+elif rc in (124, 137):
+    reasons.append("timed out")
+if lb[0] > limit:
+    reasons.append(f"load1_before={lb[0]:.2f} > limit={limit:g}")
+if la[0] > limit:
+    reasons.append(f"load1_after={la[0]:.2f} > limit={limit:g}")
+
+usable = len(reasons) == 0
+unusable = not usable
+status = "interrupted" if sig else ("pass" if rc == 0 else "fail")
+
+data = {
+    "ref": ref,
+    "sha": sha,
+    "tier": "perf",
+    "subcommand": subcmd,
+    "args": args,
+    "status": status,
+    "exit_code": rc,
+    "usable": usable,
+    "unusable": unusable,
+    "unusable_reason": "; ".join(reasons) if reasons else None,
+    "load_before": lb,
+    "load_after": la,
+    "load_limit": limit,
+    "nproc": nproc,
+    "seconds": secs,
+    "job": job,
+}
+with open(res_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+
+u_tag = "USABLE" if usable else "UNUSABLE"
+s_tag = "INTERRUPTED" if sig else ("PASS" if rc == 0 else "FAIL")
+print(f"hd630 {subcmd} {sha[:8]} {s_tag} {u_tag} {secs}s (load {lb[0]:.2f} -> {la[0]:.2f}, limit {limit:g})  {job}")
+if reasons:
+    print("hd630: run marked unusable: " + "; ".join(reasons), file=sys.stderr)
+PY
+)"
+
+  echo "$SUMMARY"
+  exit "$RC"
+}
+
+
 # Exclusive HD 630 lock, taken before any preparation (archive, packing, site.py) so that a second run's
 # preparation never overlaps the first run's measurement. The measurement timeout starts after this point.
 exec 9>"$LOCK_FILE"
-flock -w "$LOCK_WAIT" 9 || {
+flock -w "$LOCK_WAIT" 9 &
+waitbg $! || {
   echo "hd630: timed out waiting ${LOCK_WAIT}s for lock $LOCK_FILE" >&2
   exit 75
 }
+# Holding the lock means no other run is active: whatever an earlier run (ended by SIGKILL) left behind is stale.
+rm -rf "$JOBS_ROOT"/*/src 2>/dev/null
+docker ps -aq --filter name=arcadia-hd630- 2>/dev/null | xargs -r docker rm -f >/dev/null 2>&1 || true
+
 
 JOB="$JOBS_ROOT/$(date +%Y%m%d-%H%M%S)-${SHA8}-${SUBCMD}-$$"
 W="$JOB/src"
@@ -80,7 +196,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git --git-dir="$GDIR" archive "$SHA" | tar -x -C "$W" || {
+bgwait bash -c 'git --git-dir="$1" archive "$2" | tar -x -C "$3"' _ "$GDIR" "$SHA" "$W" || {
   echo "hd630: failed to archive $SHA" >&2
   exit 2
 }
@@ -131,7 +247,8 @@ resolve_hd630_assets() {
         exit 3
       fi
     fi
-  ) 8>"$CACHE_ROOT/pack.lock" || exit 3
+  ) 8>"$CACHE_ROOT/pack.lock" &
+  waitbg $! || exit 3
   ASSETS="$cached"
 }
 
@@ -140,7 +257,7 @@ if [ "$SUBCMD" != "blurdiff" ]; then
   export ASSETS
   if [ -L "$W/public/assets" ]; then rm -f "$W/public/assets"; fi
   mkdir -p "$W/public/assets"
-  if ! ( cd "$W" && python3 tools/site.py ) > "$JOB/site.log" 2>&1; then
+  if ! bgwait bash -c 'cd "$1" && python3 tools/site.py > "$2" 2>&1' _ "$W" "$JOB/site.log"; then
     echo "hd630: site.py failed, see $JOB/site.log" >&2
     tail -20 "$JOB/site.log" >&2 || true
     exit 1
@@ -268,15 +385,10 @@ if [ -z "$RUNNER" ]; then
   build_direct_cmd "$@"
 fi
 
-NPROC="$(nproc)"
-DEFAULT_MAX_LOAD=$(( NPROC / 2 ))
-[ "$DEFAULT_MAX_LOAD" -lt 1 ] && DEFAULT_MAX_LOAD=1
-LOAD_LIMIT="${HD630_MAX_LOAD:-$DEFAULT_MAX_LOAD}"
-
 # Preparation just ran inside the lock; let its load fade before sampling "before" (bounded wait).
 SETTLE="${HD630_SETTLE:-120}"
 while [ "$SETTLE" -gt 0 ] && awk -v l="$(cut -d' ' -f1 /proc/loadavg)" -v m="$LOAD_LIMIT" 'BEGIN{exit !(l>m)}'; do
-  sleep 5; SETTLE=$((SETTLE - 5))
+  bgwait sleep 5; SETTLE=$((SETTLE - 5))
 done
 LOAD_BEFORE="$(cat /proc/loadavg)"
 T0=$(date +%s)
@@ -287,77 +399,20 @@ else
   MCMD=("${DIRECT_CMD[@]}")
 fi
 
-# The measurement runs under timeout in the background (its own process group), so a Ctrl-C aimed at this
-# script would never reach it: forward INT/TERM/HUP to timeout, which relays them to the whole group.
-timeout -k 10s "${RUN_TIMEOUT}s" "${MCMD[@]}" > >(grep -v "GL Driver" | tee "$JOB/log.txt") 2>&1 &
+# The measurement runs under timeout in the background (its own process group). Its output goes straight to a
+# file (a log pipe could die with the group and lose the buffered tail); a follower shows it live, and the
+# "GL Driver" noise is filtered out into log.txt at the end.
+: > "$JOB/log.raw"
+( tail -n +1 -f "$JOB/log.raw" 2>/dev/null | grep --line-buffered -v "GL Driver" ) &
+SHOWPID=$!
+timeout -k 10s "${RUN_TIMEOUT}s" "${MCMD[@]}" > "$JOB/log.raw" 2>&1 &
 TPID=$!
-trap 'kill -TERM "$TPID" 2>/dev/null' INT TERM HUP
 RC=0
 while :; do
-  wait "$TPID"; RC=$?
+  wait "$TPID" && RC=0 || RC=$?
+  [ -z "$INTERRUPTED" ] || abort_run
   kill -0 "$TPID" 2>/dev/null || break
 done
-trap - INT TERM HUP
-sleep 0.3   # let the log pipeline flush
 
-docker rm -f "$CID" >/dev/null 2>&1 || true
+finish "$RC"
 
-T1=$(date +%s)
-SECONDS_ELAPSED=$(( T1 - T0 ))
-LOAD_AFTER="$(cat /proc/loadavg)"
-
-SUMMARY="$(python3 - "$JOB/result.json" "$REF" "$SHA" "$SUBCMD" "$RC" "$SECONDS_ELAPSED" "$LOAD_BEFORE" "$LOAD_AFTER" "$LOAD_LIMIT" "$NPROC" "$JOB" "$@" <<'PY'
-import json, sys
-
-res_path, ref, sha, subcmd, rc_s, sec_s, lb_s, la_s, limit_s, nproc_s, job, *args = sys.argv[1:]
-rc = int(rc_s)
-secs = int(sec_s)
-limit = float(limit_s)
-nproc = int(nproc_s)
-lb = [float(x) for x in lb_s.split()[:3]]
-la = [float(x) for x in la_s.split()[:3]]
-
-reasons = []
-if lb[0] > limit:
-    reasons.append(f"load1_before={lb[0]:.2f} > limit={limit:g}")
-if la[0] > limit:
-    reasons.append(f"load1_after={la[0]:.2f} > limit={limit:g}")
-
-usable = len(reasons) == 0
-unusable = not usable
-status = "pass" if rc == 0 else "fail"
-
-data = {
-    "ref": ref,
-    "sha": sha,
-    "tier": "perf",
-    "subcommand": subcmd,
-    "args": args,
-    "status": status,
-    "exit_code": rc,
-    "usable": usable,
-    "unusable": unusable,
-    "unusable_reason": "; ".join(reasons) if reasons else None,
-    "load_before": lb,
-    "load_after": la,
-    "load_limit": limit,
-    "nproc": nproc,
-    "seconds": secs,
-    "job": job,
-}
-with open(res_path, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-
-u_tag = "USABLE" if usable else "UNUSABLE"
-s_tag = "PASS" if rc == 0 else "FAIL"
-print(f"hd630 {subcmd} {sha[:8]} {s_tag} {u_tag} {secs}s (load {lb[0]:.2f} -> {la[0]:.2f}, limit {limit:g})  {job}")
-PY
-)"
-
-echo "$SUMMARY"
-if [[ "$SUMMARY" == *" UNUSABLE "* ]]; then
-  echo "hd630: WARNING: machine load exceeded HD630_MAX_LOAD ($LOAD_LIMIT); run marked unusable in $JOB/result.json" >&2
-fi
-
-exit "$RC"
