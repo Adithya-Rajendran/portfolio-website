@@ -407,7 +407,7 @@ class Pages(unittest.TestCase):
         av = body.one('p', 'post-availability')
         self.assertEqual((av.attrs['data-status'], av.one('b').text(), av.one('time').attrs['datetime']), ('selective', 'Selective', '2026-09-29'))
         cta = body.one('p', 'post-cta').one('a')
-        self.assertEqual((cta.attrs['href'], cta.text()), ('/contact/#hiring', prof['availability']['cta']))
+        self.assertEqual((cta.attrs['href'], cta.text()), ('/contact/', prof['availability']['cta']))
         feat = body.one('p', 'post-featured').one('a')
         self.assertEqual((feat.attrs['href'], feat.text()), ('/blog/my-homelab/', s.load_posts(POSTS)[0]['title']))
         links = body.kids('ul')[-1]
@@ -476,15 +476,28 @@ class Pages(unittest.TestCase):
         self.assertEqual((art.one('h1').text(), art.one('p', 'post-lede').text()), ('Contact', prof['contact_intro']))
         body = art.one('div', 'post-body')
         self.assertEqual(body.kids('p')[0].text(), prof['contact_invitation'])
-        routes = body.kids('section')
-        self.assertEqual([(r.cls(), r.attrs['id'], r.one('h3').text(), r.one('p').text()) for r in routes],
-                         [(['route'], k, v['title'], v['prompt']) for k, v in prof['contact_routes'].items()])
-        self.assertEqual([h.attrs['id'] for h in body.kids('h2')], ['what-to-write-about', 'elsewhere', 'availability-2'])
-        self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')],
-                         [l['url'] for l in prof['social_links']] + ['/resume/Adithya-Rajendran-Research-CV.pdf'])
+        self.assertEqual(list(body.kids('section')), [])
+        self.assertEqual([h.attrs['id'] for h in body.kids('h2')], ['elsewhere', 'availability'])
+        lis = body.one('ul', 'post-links').kids('li')
+        self.assertIn('Write to me', lis[0].text())
+        links = list(body.one('ul', 'post-links').all('a'))
+        self.assertEqual([(a.attrs['href'], a.text(), a.attrs.get('target'), a.attrs.get('rel')) for a in links],
+                         [(l['url'], l['label'], '_blank', 'noopener') for l in s.contact_links(prof)]
+                         + [('/resume/Adithya-Rajendran-Research-CV.pdf', 'Résumé (PDF)', '_blank', 'noopener')])
+        self.assertNotIn('Credly', read(self.out, 'contact/index.html'))
         self.assertNotIn('mailto:', read(self.out, 'contact/index.html'))
+        # real data: LinkedIn (marked to write), GitHub, Résumé in order; Credly stays on /about/
+        real_contact = self.main('contact/index.html', self.real).one('div', 'post-body')
+        self.assertEqual([h.attrs['id'] for h in real_contact.kids('h2')], ['elsewhere', 'availability'])
+        self.assertEqual([(a.text(), a.attrs.get('target'), a.attrs.get('rel'))
+                          for a in real_contact.one('ul', 'post-links').all('a')],
+                         [('LinkedIn', '_blank', 'noopener'), ('GitHub', '_blank', 'noopener'),
+                          ('Résumé (PDF)', '_blank', 'noopener')])
+        self.assertIn('Credly', [a.text() for a in self.main('about/index.html', self.real).one('ul', 'post-links').all('a')])
+        # minimal profile: contact_links omitted falls back to social_links
         body = self.main('contact/index.html', self.minimal).one('div', 'post-body')
-        self.assertEqual([r.attrs['id'] for r in body.kids('section')], ['hello'])
+        self.assertEqual(list(body.kids('section')), [])
+        self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')], ['https://github.com/example'])
 
     # ------------------------------------------------------------ links
 
@@ -553,7 +566,8 @@ class Pages(unittest.TestCase):
                'timeline': [{'id': str, 'url': str, 'kind': str, 'title': str, 'organization': str, 'org_short': str, 'period': str,
                              'year': str, 'current': bool, 'location': OPT, 'employment': OPT, 'summary': OPT}],
                'links': [{'label': str, 'url': str}],
-               'contact': {'intro': str, 'invitation': str, 'email': type(None), 'routes': [{'id': str, 'title': str, 'prompt': str}]},
+               'contact': {'intro': str, 'invitation': str, 'links': [{'label': str, 'url': str}],
+                           'routes': [{'id': str, 'title': str, 'prompt': str}]},
                'resume': OPT}
 
     def test_portfolio_json(self):
@@ -595,7 +609,8 @@ class Pages(unittest.TestCase):
                                  (f'/experience/#{e["id"]}', e['title'], e['organization'], e['org_short'], e['kind'], e['start_date'][:4],
                                   bool(e['is_current']), e['location'], e['employment'], e['summary']))
             self.assertEqual(doc['links'], [{'label': l['label'], 'url': l['url']} for l in prof['social_links']])
-            self.assertEqual(doc['contact'], {'intro': prof['contact_intro'], 'invitation': prof['contact_invitation'], 'email': None,
+            self.assertEqual(doc['contact'], {'intro': prof['contact_intro'], 'invitation': prof['contact_invitation'],
+                                              'links': [{'label': l['label'], 'url': l['url']} for l in s.contact_links(prof)],
                                               'routes': [{'id': k, **v} for k, v in prof['contact_routes'].items()]})
             if doc['resume']:
                 self.assertTrue(os.path.isfile(os.path.join(out, doc['resume'].lstrip('/'))))
@@ -662,7 +677,7 @@ class Pages(unittest.TestCase):
                     if y:
                         self.assertIn(squash(y), text)
             contact = squash(self.main('contact/index.html', out).text())
-            for x in [prof['contact_intro'], prof['contact_invitation']] + [y for r in prof['contact_routes'].values() for y in r.values()]:
+            for x in [prof['contact_intro'], prof['contact_invitation']] + [l['label'] for l in s.contact_links(prof)]:
                 self.assertIn(squash(x), contact)
             listing = squash(self.main('portfolio/index.html', out).text())
             for p in s.load_projects(projects):
@@ -715,7 +730,7 @@ class Pages(unittest.TestCase):
     def test_an_error_anywhere_writes_nothing(self):
         bad_profile = os.path.join(self.tmp, 'bad-profile.json')
         prof = json.loads(read(FIX, 'profile.json'))
-        prof['contact_routes']['scene'] = {'title': 'Scene', 'prompt': 'Its id is the shell\'s canvas.'}
+        prof['contact_links'] = ['NoSuchLink']
         with open(bad_profile, 'w', encoding='utf-8') as f:
             json.dump(prof, f)
         bad_projects = tempfile.mkdtemp(dir=self.tmp)
@@ -731,7 +746,7 @@ class Pages(unittest.TestCase):
         broken = os.path.join(self.tmp, 'broken.json')
         with open(broken, 'w') as f:
             f.write('{"name": ')
-        for kw, words in [({'profile': bad_profile}, 'contact route id scene is already an id of the page'),
+        for kw, words in [({'profile': bad_profile}, 'there is no social link NoSuchLink'),
                           ({'projects': bad_projects}, 'unranked.md, line 12: headings are ## and ###'),
                           ({'profile': bad_timeline}, 'timeline id loader is already an id of the page'),
                           ({'profile': broken}, 'not valid JSON')]:
