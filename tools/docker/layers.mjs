@@ -1,6 +1,7 @@
-// The room loader's streamed sky and orrery layers (task O7): every layer arrives and the orrery's hold lets go; a layer
-// that cannot be fetched is given up after its retries without freezing the orrery; leaving a room while its layers
-// stream in aborts the downloads under way.     node layers.mjs      (ORIGIN: the site)   exit 1 if a check fails
+// The room loader's streamed textures (task O7): every sky and orrery layer and every texture's tail arrives, the
+// orrery's hold lets go and each texture ends at full detail; a layer that cannot be fetched is given up after its
+// retries without freezing the orrery, a tail that cannot leaves its texture small; a visitor who asked to save data
+// gets no tails; leaving a room while its textures stream in aborts the downloads under way.     node layers.mjs      (ORIGIN: the site)   exit 1 if a check fails
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 
@@ -31,6 +32,9 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   ok(done, `${room}: every layer fetched (${Object.keys(s.layers).length} layered textures)`);
   ok(all(s).every(([n, l]) => l.failed.length === 0 && l.have.length === (n.endsWith('_s') ? 6 : 3)), `${room}: every layer in, none given up`);
   ok(!s.hold, `${room}: no hold left`);
+  await p.waitForFunction(() => window.__lobby.scene.userData.stream.state().swaps === 0, null, { polling: 100, timeout: 30000 }).catch(() => {});
+  const f = await state(p);
+  ok(f.split > 0 && f.small === 0, `${room}: every texture cut in two ends at full detail (${f.split} textures, ${f.small} still small)`);
   ok(skyIn(s), `${room}: the sky samples only layers that are in`);
   if (room === 'lobby') ok(await turns(p), 'lobby: the orrery turns once its phases are in');
   ok(!errors.length, `${room}: no page error ${errors.join(' | ')}`);
@@ -54,6 +58,29 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   ok(!s.hold, 'refused layers: the orrery hold let go');
   ok(await turns(p), 'refused layers: the orrery turns');
   ok(!errors.length, `refused layers: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+
+// 2b. a tail that cannot be fetched leaves its texture small; Save-Data fetches no tails
+{
+  const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/props\.tail\.ktx2/, (r) => r.fulfill({ status: 404, body: 'Not found' })));
+  const done = await settled(p);
+  await p.waitForFunction(() => window.__lobby.scene.userData.stream.state().swaps === 0, null, { polling: 100, timeout: 30000 }).catch(() => {});
+  const s = await state(p);
+  ok(done && s.small === 1 && !s.hold, `refused tail: streaming ends, one texture stays small (${s.small}), nothing held`);
+  ok(!errors.length, `refused tail: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+{
+  let tails = 0;
+  const { ctx, p, errors } = await open('', async (pg) => {
+    await pg.addInitScript(() => Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true }));
+    pg.on('request', (r) => { if (/\.tail\.ktx2/.test(r.url())) tails++; });
+  });
+  const done = await settled(p), s = await state(p);
+  ok(done && tails === 0 && s.small === s.split && s.split > 0, `save data: no tail fetched (${tails}), every texture stays small (${s.small} of ${s.split}); the layers still come`);
+  ok(Object.values(s.layers).every((l) => !l.failed.length) && !s.hold, 'save data: the sky and orrery layers all arrive');
+  ok(!errors.length, `save data: no page error ${errors.join(' | ')}`);
   await ctx.close();
 }
 

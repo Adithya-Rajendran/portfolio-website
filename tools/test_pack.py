@@ -44,5 +44,75 @@ class Plan(unittest.TestCase):
         self.assertEqual(pack.plan('projects', ['props', 'props_f', 'probe_c0'])[1], {})
 
 
+class Split(unittest.TestCase):
+    """small_bytes() and split() on a made-up KTX2 file: 3 levels, the largest (level 0) stored last."""
+    def make(self, d):
+        import struct
+        head = bytearray(80 + 24 * 3); head[:12] = b'\xabKTX 20\xbb\r\n\x1a\n'
+        struct.pack_into('<I', head, 40, 3)
+        offs = [(400, 300), (300, 100), (200, 100)]               # level 0 at 400 (300 bytes), level 1 at 300, level 2 at 200
+        for i, (o, n) in enumerate(offs): struct.pack_into('<QQQ', head, 80 + 24 * i, o, n, n)
+        data = bytes(head) + bytes(200 - len(head)) + bytes(range(256)) * 2
+        data = data[:700]
+        path = os.path.join(d, 'x.ktx2')
+        with open(path, 'wb') as f: f.write(data)
+        return path, data
+
+    def test_the_head_ends_where_the_two_largest_levels_start_and_head_plus_tail_is_the_file(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path, data = self.make(d)
+            self.assertEqual(pack.small_bytes(path, 2), 300)
+            self.assertIsNone(pack.small_bytes(path, 3))
+            pack.split(path, 300)
+            self.assertFalse(os.path.exists(path))
+            with open(os.path.join(d, 'x.head.ktx2'), 'rb') as f: head = f.read()
+            with open(os.path.join(d, 'x.tail.ktx2'), 'rb') as f: tail = f.read()
+            self.assertEqual(len(head), 300)
+            self.assertEqual(head + tail, data)
+
+    def test_not_a_ktx2_file_is_not_cut(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'y.ktx2')
+            with open(path, 'wb') as f: f.write(b'not a texture' * 20)
+            self.assertIsNone(pack.small_bytes(path))
+
+
+class SmallKTX2(unittest.TestCase):
+    """public/js/ktx2small.js (run with node, skipped without it) on made-up files: the small levels become a file of
+    their own, with the base size, level count, offsets and BasisLZ image descriptions rewritten."""
+    JS = r'''
+import { smallKTX2 } from 'FILE';
+const make = (scheme) => {
+  const n = 3, sgdLen = scheme === 1 ? 20 + n * 20 + 8 : 0, levels = [[300, 40], [260, 20], [240, 10]];
+  const buf = new Uint8Array(400), dv = new DataView(buf.buffer);
+  buf.set([0xAB,0x4B,0x54,0x58,0x20,0x32,0x30,0xBB,0x0D,0x0A,0x1A,0x0A]);
+  dv.setUint32(20, 64, true); dv.setUint32(24, 32, true); dv.setUint32(36, 1, true); dv.setUint32(40, n, true); dv.setUint32(44, scheme, true);
+  dv.setUint32(48, 152, true); dv.setUint32(52, 8, true); dv.setUint32(56, 160, true); dv.setUint32(60, 4, true);
+  if (sgdLen) { dv.setBigUint64(64, 168n, true); dv.setBigUint64(72, BigInt(sgdLen), true); for (let i = 0; i < n; i++) buf.fill(10 + i, 168 + 20 + i * 20, 168 + 40 + i * 20); }
+  levels.forEach(([o, l], i) => { dv.setBigUint64(80 + 24 * i, BigInt(o), true); dv.setBigUint64(88 + 24 * i, BigInt(l), true); buf.fill(100 + i, o, o + l); });
+  return buf;
+};
+const out = [];
+for (const scheme of [2, 1]) {
+  const full = make(scheme), small = new Uint8Array(smallKTX2(full.slice(0, 300).buffer, 2)), dv = new DataView(small.buffer);
+  const lo = Number(dv.getBigUint64(80, true)), ln = Number(dv.getBigUint64(88, true)), sg = Number(dv.getBigUint64(64, true)), sl = Number(dv.getBigUint64(72, true));
+  out.push({ scheme, w: dv.getUint32(20, true), h: dv.getUint32(24, true), levels: dv.getUint32(40, true), level: [...small.subarray(lo, lo + ln)].every((x) => x === 102) && ln === 10,
+    sgd: sl ? [sl, small[sg + 20]] : null });
+}
+console.log(JSON.stringify(out));
+'''
+    def test_rewrite(self):
+        import json, shutil, subprocess
+        if not shutil.which('node'): self.skipTest('no node')
+        js = os.path.join(TOOLS, '..', 'public', 'js', 'ktx2small.js')
+        r = subprocess.run(['node', '--input-type=module', '-e', self.JS.replace('FILE', 'file://' + os.path.abspath(js))], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        zstd, basis = json.loads(r.stdout)
+        self.assertEqual((zstd['w'], zstd['h'], zstd['levels'], zstd['level'], zstd['sgd']), (16, 8, 1, True, None))
+        self.assertEqual((basis['levels'], basis['level'], basis['sgd']), (1, True, [48, 12]))      # one image description left: level 2's
+
+
 if __name__ == '__main__':
     unittest.main()
