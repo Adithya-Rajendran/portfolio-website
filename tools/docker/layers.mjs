@@ -19,6 +19,8 @@ async function open(q, setup) {
 const state = (p) => p.evaluate(() => window.__lobby.scene.userData.stream.state());
 const settled = (p, ms = 90000) => p.waitForFunction(() => window.__lobby.scene.userData.stream.settled(), null, { polling: 100, timeout: ms }).then(() => true, () => false);
 const turns = async (p) => { const a = (await state(p)).chand; await p.waitForTimeout(1500); const c = (await state(p)).chand; return !!a && a.some((x, i) => Math.abs(x - c[i]) > 1e-4); };
+// the sky's light samples only layers that are in, in every sky group
+const skyIn = (s) => { const [i, j, f] = s.sky; return all(s, (n) => n.endsWith('_s')).every(([, l]) => l.have.includes(i) && (!f || l.have.includes(j))); };
 const all = (s, want = () => true) => Object.entries(s.layers).filter(([n]) => want(n));
 
 // 1. every layer arrives; the orrery turns again
@@ -28,6 +30,7 @@ for (const room of ['lobby', 'about']) {
   ok(done, `${room}: every layer fetched (${Object.keys(s.layers).length} layered textures)`);
   ok(all(s).every(([n, l]) => l.failed.length === 0 && l.have.length === (n.endsWith('_s') ? 6 : 3)), `${room}: every layer in, none given up`);
   ok(!s.hold, `${room}: no hold left`);
+  ok(skyIn(s), `${room}: the sky samples only layers that are in`);
   if (room === 'lobby') ok(await turns(p), 'lobby: the orrery turns once its phases are in');
   ok(!errors.length, `${room}: no page error ${errors.join(' | ')}`);
   await ctx.close();
@@ -66,6 +69,7 @@ for (const room of ['lobby', 'about']) {
   for (let i = 0; i < 100 && !left; i++) await p.waitForTimeout(100);
   await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   await p.waitForFunction(() => window.__lobby.mode().room === 'about' && window.__lobby.ready() > 0, null, { polling: 100, timeout: 180000 });
+  ok(skyIn(await state(p)), 'leaving: as its cover lifts, the next room samples only sky layers that are in');
   await p.waitForTimeout(1000);
   ok(left > 0, 'leaving: the next room started loading');
   ok(aborted >= 1, `leaving: the lobby downloads under way were aborted (${aborted})`);
