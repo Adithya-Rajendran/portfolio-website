@@ -47,7 +47,7 @@ An inline synchronous `<script>` in `<head>` (before stylesheets/body paint) set
 |---|---|---|---|---|
 | **Mode 1: Station** | `station` | Room URLs from first paint; article URLs after `stepIn()` | `<canvas id="scene">`, `#loader` (until `.done`), `#hud` (once loaded), `#lock`, `#cue`, `#inspectbar` (when focused), `#reader` (when reading), `#comms` (over 3D field) | `#page` (`display: none`), `#pagenav` (`display: none`), `#stepin` (`display: none`) |
 | **Mode 2: Reading (Deep-Link)** | `reading` | `/blog/<slug>/` and `/portfolio/<slug>/` on initial load while room loads or waiting on offer | `<nav id="pagenav">`, `<main id="page">`, compact bottom-right `#loader` pill (`z-index: 6`), or `#stepin` offer (`z-index: 6`) | `#scene`, `#hud`, `#inspectbar` (`visibility: hidden; pointer-events: none`), `#loader .mark` & `#loader .bar` (`display: none`), `<noscript>` |
-| **Mode 3: Plain / Fallback** | `""` (none) | JavaScript disabled, WebGL2 startup failure, fatal room load error when `#page` exists, or `!room.reads(url)` | `<nav id="pagenav">`, `<main id="page">` (scrollable document), `<noscript>` (ONLY when `#page` is absent, i.e., `/` with JS off) | `#loader` (`display: none`), `#scene`, `#hud`, `#inspectbar` (`visibility: hidden; pointer-events: none`), `#stepin` |
+| **Mode 3: Plain / Fallback** | `""` (none) | JavaScript disabled, WebGL2 startup failure, fatal room load error when `#page` exists, or `!station.reads(url)` | `<nav id="pagenav">`, `<main id="page">` (scrollable document), `<noscript>` (ONLY when `#page` is absent, i.e., `/` with JS off) | `#loader` (`display: none`), `#scene`, `#hud`, `#inspectbar` (`visibility: hidden; pointer-events: none`), `#stepin` |
 
 ### 2.3 `<noscript>` and `#pagenav` Rules
 
@@ -66,7 +66,7 @@ When starting in Mode 2 (`html.reading`):
 3. **Standard load (`!saveData`):**
    - Fetch and enter the target room via `station.enter(roomId)`.
    - After ready:
-     - If `!room.reads(url)` (e.g., a post not shelved in the Library): switch `html.className = ''` (Mode 3 plain page) and do not show `#stepin`.
+     - If `!station.reads(url)` (e.g., a post not shelved in the Library): switch `html.className = ''` (Mode 3 plain page) and do not show `#stepin`.
      - Else if `!touched && window.scrollY < 80`: automatically invoke `stepIn()`.
      - Else: render `#stepin` with `<small>{readyText}</small>{enterText}` (`content.reader.ready`, `"{place} IS READY"`).
 4. **`stepIn()` transition:**
@@ -115,7 +115,7 @@ All fixed/overlay layers must preserve this exact stacking order (`style.css`, `
 | `3` | `#inspectbar` | Inspection toolbar, `#named`, door buttons/menu, volume list, `#enter` |
 | `4` | `#reader` | Holographic article reader frame (plus `.copy` inside `.post pre` has local `z-index: 1`) |
 | `5` | `#loader` | Full-screen room loading cover in `html.station` |
-| `6` | `html.reading #loader`, `#stepin` | Compact loading pill and step-in offer button above `#page` in `html.reading` |
+| `6` | `html.reading #loader`, `#stepin`, `Toast` | Compact loading pill and step-in offer button above `#page` in `html.reading`; non-blocking `Toast` above `#reader` (`z-index: 4`) |
 
 ---
 
@@ -145,17 +145,25 @@ export interface Rect {
 }
 ```
 
-In addition to `docs/program-plan.md` §4.2 (`start`, `dispose`, `enter`, `room`, `focus`, `back`, `step`, `focused`, `choose`, `travel`, `read`, `picks`, `pointed`, `rectOf`, `reader`, `readAt`, `closeReader`, `frameOf`, `contact`, `contactLinkRect`, `setCovered`, `view`, `setView`, `turn`, `onFrame`, `debug`), `F3` must implement these `U0c` specifications:
+In addition to `docs/program-plan.md` §4.2 (`start`, `dispose`, `enter`, `room`, `focus`, `back`, `step`, `focused`, `choose`, `travel`, `read`, `picks`, `pointed`, `rectOf`, `reader`, `readAt`, `closeReader`, `frameOf`, `contact`, `contactLinkRect`, `setCovered`, `view`, `setView`, `turn`, `onFrame`, `debug`), `F3` must implement these `U0c` and page-layer boundary additions:
 
-1. **`picks: Readable<StationPick[]>`:** Excludes the synthetic unnamed `reads` pick (`aside: true, name: ''`) and emits only live picks (`!p.live || p.live()`), re-emitting whenever liveness changes. Each `StationPick` has `{ id: PickId; name: string; verb: string; kind: PickKind; canRead?: boolean; cue?: { pointer: string; touch: string } }` with non-empty uppercase `name` and `verb`.
+1. **`picks: Readable<StationPick[]>`:** Excludes the synthetic unnamed `reads` pick (`aside: true, name: ''`) and emits only live picks (`!p.live || p.live()`), re-emitting whenever liveness changes. Each `StationPick` has `{ id: PickId; name: string; verb: string; kind: PickKind; cta?: boolean; canRead?: boolean; cue?: { pointer: string; touch: string } }` (where `PickKind = 'door' | 'terminal' | 'exhibit' | 'station' | 'contact' | 'thing'`) with non-empty uppercase `name` and `verb`.
 2. **`rectOf(pick: PickId): Rect | null`:** Uses cached viewport dimensions (updated on `resize`, never reading `canvas.clientWidth` inside `rectOf`), `PAD = 6`, `EDGE = 8`, `MOST = 0.6`. Returns `null` if any outline corner has `_v.z > -camera.near`, clamped `width < 2 || height < 2`, or clamped `width * height > 0.6 * W * H`. Safe inside `onFrame` after `camera.updateMatrixWorld()`.
 3. **`gliding: Readable<boolean>`:** `focus.f < 1` (needed by `U4` for `display.state().gliding` without polling).
 4. **`wideAtRest: Readable<boolean>`:** `!busy && !focus.pick && focus.f >= 1 && view === 0 && since > 0.8` (gates `#cue` alongside `#lock` inactivity).
 5. **Turn-by-hand completion:** Expose `hintTurnDone: Readable<boolean>` (or `turn.byHand()` triggering a reactive notification) so `U2` clears Navigation's `"until": "turn"` hint without reading signals inside `onFrame`.
-6. **`focused.typing?: boolean` and `reader` state:** `focused` includes `typing?: boolean`; `reader: Readable<{ state: 'closed' | 'scanning' | 'open'; url: string | null; title: string | null; phone: boolean; reveal: number }>` replaces `was.reads` (`station.reader.get().state !== 'closed'`).
-7. **Single-stop door `1500ms` delayed `travel`:** `station.focus(doorPick)` for a single-stop door (`!door.stops && door.to`) internally schedules `travel(door.to, 1500)` and cancels that timer on `back()`, `focus(other)`, or `dispose()`.
-8. **`read(pick?: PickId): boolean`:** Calling `station.read()` reads the currently focused pick; calling `station.read(pickId)` focuses `pickId` (if not already focused) and opens its reading if readable, returning `true` when reading started and `false` otherwise.
-9. **`debug.display.state`:** Delegates to `U4`'s plain-JS frame mirror (`() => DisplayState`).
+6. **`focused.typing?: boolean`, `reader` state, and `frameOf('reader')` (`ReaderFrame`):**
+   - `focused` includes `typing?: boolean`; `reader: Readable<{ state: 'closed' | 'scanning' | 'open'; url: string | null; title: string | null; phone: boolean }>` replaces `was.reads` (`station.reader.get().state !== 'closed'`), with `phone` unified to `W <= 720` (matching CSS `@media (max-width: 720px)`).
+   - `reveal: number` lives on `ReaderFrame = { width: number; height: number; transform: string; reveal: number }` returned by `frameOf('reader'): ReaderFrame | null` — **not** on `Readable` `reader` — so zero Solid signals update per frame during reveal (`reader.state` stays `'scanning'` until `reveal >= 1`, then transitions to `'open'`).
+   - `frameOf('reader')` returns `null` whenever `reader.state === 'closed' || !ready || T < REVEAL[0]` (where `T` is scan/unfold elapsed time and `ready` is set via `setReaderContentReady`).
+7. **Reader ready & `headHeight` handshake (`U5`):** `setReaderContentReady(ready: boolean, headHeight?: number): void` lets `src/app/` notify `reader3d.ts` when article fetch/adoption (or error fallback) completes and pass `.reader-head` `offsetHeight` into `uHead` (and on resize), releasing `w.waits` scan-hold and revealing `frameOf('reader')` once `T >= REVEAL[0] && ready` without DOM fetches or `offsetHeight` reads inside `src/engine/`. Closing resets `ready` to `false`.
+8. **Synchronous `reads(url: string): boolean` and `volumesCount: number`:**
+   - `reads(url: string): boolean` synchronously reports whether `url` can be read in the active room (mirroring `room.reads(url)`, returning `false` when no room is loaded or a Library post is not shelved).
+   - `volumesCount: number` exposes the active room's shelved volume count (`room?.volumes?.length ?? 0`) for `writing`'s `"{count} VOLUMES"` fact.
+9. **Contact link hover & `:focus-visible` notification (`U6`):** `setContactLinkState(index: number | null, state: { hover: boolean; focusVisible: boolean }): void` notifies `comms3d.ts` on `pointerenter`/`pointerleave`/`focus`/`blur` of the 3 `<a>` elements so the 3D field canvas redraws `INK.lit` hover states and `INK.warm` `:focus-visible` rings with zero DOM access in `src/engine/`.
+10. **Single-stop door `1500ms` delayed `travel`:** `station.focus(doorPick)` for a single-stop door (`!door.stops && door.to`) internally schedules `travel(door.to, 1500)` and cancels that timer on `back()`, `focus(other)`, or `dispose()`.
+11. **`read(pick?: PickId): boolean`:** Calling `station.read()` reads the currently focused pick; calling `station.read(pickId)` checks readability (`canRead`) **before** focusing `pickId` (returning `false` immediately with zero side effects — no `focus(pickId)` and no single-stop door `travel()` — when unreadable), and only when readable focuses `pickId` (if not already focused) and opens its reading, returning `true` when reading started.
+12. **`debug.display.state`:** Delegates to `U4`'s plain-JS frame mirror (`() => DisplayState`).
 
 ### 4.3 Vite / Vitest / Solid 2 Configuration Constraints (`U0b`, `U0c`)
 
@@ -179,7 +187,7 @@ In addition to `docs/program-plan.md` §4.2 (`start`, `dispose`, `enter`, `room`
   - `<nav aria-label="Rooms">` (or `<nav>` inside `#hud > header`):
     - Room links: `<a href={urlFor(k)} data-room={k} class={k === roomId ? 'here' : undefined} aria-current={k === roomId ? 'page' : undefined}>{v.nav}</a>`. Clicking without modifier keys calls `e.preventDefault(); enter(k)` (or router navigation in `U8`).
     - Separator: `<span class="sep" aria-hidden="true"></span>`.
-    - View toggle: Wrapped `@ui-sdk/solid` `SegmentedControl` inside `src/app/ui/SegmentedControl.tsx` (`aria-label="Camera view"`), containing two items/links/buttons preserving `data-view="0"` (`WIDE`) and `data-view="1"` (`r.close`, e.g., `"THE OCULUS"`, `"THE WINDOW"`, `"THE CRANE"`, `"THE MAP"`). Clicking sets `navTouched = true` and `station.setView(v === 0 ? 'wide' : 'close')`. Preserving `a[data-view]` / `[data-view="0"|"1"]` keeps existing selectors working while satisfying `checkPattern` on the segmented control / radiogroup.
+    - View toggle: Wrapped `@ui-sdk/solid` `SegmentedControl` inside `src/app/ui/SegmentedControl.tsx` (`aria-label="Camera view"`), pinned to render `<a data-view="0">` (`WIDE`) and `<a data-view="1">` (`r.close`, e.g., `"THE OCULUS"`, `"THE WINDOW"`, `"THE CRANE"`, `"THE MAP"`) inside `#hud nav`. Clicking sets `navTouched = true` and `station.setView(v === 0 ? 'wide' : 'close')`. Pinning `<a data-view="0"|"1">` preserves `turn.mjs:174` (`#hud nav a[data-view="0"]`) unchanged while passing `checkPattern` on the segmented control / radiogroup. *(Note: if live `@ui-sdk/solid@0.1.0-beta.16` `SegmentedControl` verification in `U1`/`U2` shows it cannot render `<a>` items and requires `<button>`/`[role="radio"]`, `U2` must explicitly update `turn.mjs:174` to `#hud nav [data-view="0"]` alongside keeping `data-view="0"|"1"`.)*
 - **Hero (`<section class="hero">`):**
   - States: `.yield` (when `#lock` overlaps `.hero` or `footer`, `opacity: .16`).
   - `<p class="kicker">{r.kicker}</p>`
@@ -187,10 +195,10 @@ In addition to `docs/program-plan.md` §4.2 (`start`, `dispose`, `enter`, `room`
   - `<p class="sub" hidden={!r.sub.length}>`:
     - When `r.sub` is empty (`projects`, `experience`, `writing`, `comms`, or missing profile in `lobby`/`about`), `hidden` MUST be `true`, `textContent` MUST be `""`, and computed bounding height MUST be `0` (`rooms.text.mjs`).
     - When `r.sub` is non-empty (`lobby`: `["{name}  ·  {headline}"]`; `about`: `["{headline}  ·  {location}"]`), render plain text spans via JSX text interpolation — **never `innerHTML`**. Any `{tminus}`, `{aboard}`, `{received}` live tokens render `<span data-live={key}>{value}</span>` updated on a `500ms` interval (`screens.ts` `live()`/`fill()`). Zero HTML markup in JSON strings may ever create DOM nodes (`hostile.mjs`).
-  - Optional `<Button class="cta">` (wrapped in `src/app/ui/Button.tsx`): Rendered **only** when `r.cta` is non-empty. Click/Enter invokes `station.readAt(r.ctaReads, { fly: false })` if `r.ctaReads` exists, else `station.focus(ctaPick.id)`.
+  - Optional `<Button class="cta">` (wrapped in `src/app/ui/Button.tsx`): Rendered **only** when `r.cta` is non-empty. Click/Enter invokes `station.readAt(r.ctaReads, { fly: false })` if `r.ctaReads` exists, else `station.focus(ctaPick.id)` where `ctaPick = station.picks.get().find((p) => p.cta)`.
 - **Footer (`<footer>`):**
   - States: `.yield` on `#lock` overlap.
-  - Facts: `<div><b>{label}</b> {value}</div>` (with `{count} VOLUMES` pluralized `1 VOLUME` / `N VOLUMES` in `writing`). All text rendered via JSX text nodes (never `innerHTML`).
+  - Facts: `<div><b>{label}</b> {value}</div>` (with `{count} VOLUMES` pluralized `1 VOLUME` / `N VOLUMES` in `writing` from `station.volumesCount`). All text rendered via JSX text nodes (never `innerHTML`).
   - Hint: `<div class="hint" classList={{ gone: !hintText }}><span class="how">{hintText}</span>{r.credit && <small>{content.credit}</small>}</div>`.
     - Hint selection rule: room's own `r.hint[kind]` while `!hintTurnDone()` (when `r.hint.until === 'turn'`), else `content.display.hint[kind]` until first inspection (`!inspected`), else `""`. `kind` is `'touch'` when `hover: none` or last `pointerType === 'touch'`, else `'pointer'`.
 
@@ -210,28 +218,28 @@ In addition to `docs/program-plan.md` §4.2 (`start`, `dispose`, `enter`, `room`
   - `<span id="named" aria-live="polite" title={focused?.name ?? ''}>{focused?.name ?? ''}</span>`
   - Positioned above `#back` (`bottom: calc(100% + 12px)`); CSS `:empty { display: none; }`.
 - **Navigation Toolbar (`src/app/ui/Toolbar.tsx`):**
-  - Wraps `@ui-sdk/solid` `Toolbar` (`role="toolbar"`, `aria-label="Inspect controls"`), containing:
+  - Wraps `@ui-sdk/solid` `Toolbar` (`role="toolbar"`, `aria-label="Inspect controls"`), where `[role="toolbar"]` roving owns `ArrowLeft`/`ArrowRight` (`e.preventDefault()`) across `#back`, `#prev`, `#next` (passing `checkPattern(..., 'toolbar')` in `U3`), containing:
     - `Button#back` (`type="button"`): text `{focused.backLabel ?? '←  BACK'}`, invokes `station.back()`.
-    - `Button#prev` (`type="button"`, `aria-label="Previous"`): text `"‹"`, invokes `station.step(-1)`.
+    - `Button#prev` (`type="button"`, `aria-label="Previous"`): text `"‹"`, invokes `station.step(-1)` on activation.
     - `<span id="count">{`${tour.index + 1} / ${tour.count}`}</span>` (note: in `body.bright`, `#count` gets `color: var(--fg); background: rgba(2,5,9,.6); backdrop-filter: blur(6px)`).
-    - `Button#next` (`type="button"`, `aria-label="Next"`): text `"›"`, invokes `station.step(1)`.
+    - `Button#next` (`type="button"`, `aria-label="Next"`): text `"›"`, invokes `station.step(1)` on activation.
 - **Actions & Choices (`#ways`):**
   - **Single-stop door (`ways.length === 1`):** `Button` with `data-to={way.to}`, `disabled={!way.to}`, text `{way.label}{way.to ? '  →' : '  ·  NOT YET OPEN'}`. Click calls `station.travel(way.to)`.
-  - **Multi-stop door (`ways.length > 1`, e.g., Ring Line):** `@ui-sdk/solid` `Menu` (wrapped in `src/app/ui/Menu.tsx`) triggered by a `Button` (e.g., `"STATIONS  ▾"` or door label), listing each stop with `data-to={way.to}`, `disabled={!way.to}`. `checkPattern(..., 'menu')` must pass. (If `ways` are rendered as menu items inside `#ways`, `#ways button[data-to]` / `[role="menuitem"][data-to]` preserves test targeting.)
-  - **Pick with `options` (Library terminal volumes):** `#ways` carries `.list` (and `.chosen` when `current >= 0`), wrapping `@ui-sdk/solid` `Listbox` (`src/app/ui/Listbox.tsx`, `aria-label="Catalogue volumes"`). Each option exposes `data-option={i}`, `aria-current={current === i ? 'true' : undefined}` (plus UI SDK `aria-selected` mapped cleanly so `checkPattern(..., 'listbox')` passes), primary title text, and optional `<small>{sub}</small>`. Selecting calls `station.choose(i)`.
-  - **Read button (`#enter`):** `Button#enter` (`hidden={!focused.canRead}`, `aria-label={content.reader.readThis}`, text `{focused.readLabel}`, e.g. `"READ"`), invokes `station.read()`.
+  - **Multi-stop door (`ways.length > 1`, e.g., Ring Line):** `@ui-sdk/solid` `Menu` (wrapped in `src/app/ui/Menu.tsx`) triggered by a `Button` (e.g., `"STATIONS  ▾"` or door label), listing each stop as `[role="menuitem"][data-to={way.to}]`, `disabled={!way.to}`. `checkPattern(..., 'menu')` must pass. The `Menu` wrapper must render non-portaled inside `#ways` (or if `@ui-sdk/solid@0.1.0-beta.16` `Menu` portals to `<body>`/top-layer by default when verified live in `U1`/`U3`, `U3` must either disable portaling on the wrapper or explicitly update the ported `ringline` E2E spec to click the `Menu` trigger before targeting `[role="menuitem"][data-to]` and include the open menu rect in `setCovered('bar', rect)` / `hud.mjs` bar-clear checks).
+  - **Pick with `options` (Library terminal volumes):** `#ways` carries `.list` (and `.chosen` when `current >= 0`), wrapping `@ui-sdk/solid` `Listbox` (`src/app/ui/Listbox.tsx`, `aria-label="Catalogue volumes"`) and `<Button id="enter">` as **siblings** inside `#ways` (never nesting `#enter` inside `[role="listbox"]`, so `checkPattern(..., 'listbox')` passes). Each option inside `[role="listbox"]` exposes `data-option={i}`, `aria-current={current === i ? 'true' : undefined}` (plus UI SDK `aria-selected` mapped cleanly so `checkPattern(..., 'listbox')` passes), primary title text, and optional `<small>{sub}</small>`. Selecting option `i` calls `station.choose(i)`. Activating/`Enter`-pressing the **already-current** option (`current === i && focused.canRead`, except on `<= 720px` when expanding a folded `.chosen` list) calls `station.read()` (preserving `library.mjs:305`, where focus remains on `[data-option="1"]` when the second `Enter` starts reading).
+  - **Read button (`#enter`):** `Button#enter` (sibling to `[role="listbox"]` inside `#ways`, `hidden={!focused.canRead}`, `aria-label={content.reader.readThis}`, text `{focused.readLabel}`, e.g. `"READ"`), invokes `station.read()`.
 - **`setCovered('bar', rect)` (Zero `getBoundingClientRect` in `onFrame`):**
-  - A `ResizeObserver` + effect (never inside `onFrame`) measures the bounding union of visible `#inspectbar` controls (`button, #named, #ways.list`) whenever `focused`, `ways`, `options`, `chosen`, or viewport size changes, and calls `station.setCovered('bar', rect)` (or `null` when `hidden`).
+  - A `ResizeObserver` + effect (never inside `onFrame`) measures the bounding union of visible `#inspectbar` controls (`button, #named, #ways.list`, plus any open non-portaled/portaled menu or phone drawer panel) whenever `focused`, `ways`, `options`, `chosen`, or viewport size changes, and calls `station.setCovered('bar', rect)` (or `null` when `hidden`).
   - Engine `reader3d.ts` uses that cached rect to keep `ReadGlyph` clear above the bar with zero per-frame forced layout.
 
 #### Phone Layout (`<= 720px`) & Touch Targets
 - `#inspectbar` wraps (`flex-wrap: wrap; max-width: calc(100vw - 2 * var(--edge))`).
 - `#ways:not(.list) button[data-to]` moves to its own full-width row above `#back`/`#prev`/`#next` (`order: -1; flex: 1 0 100%`).
-- **Phone volume list (`U3`):** On `<= 720px`, once a volume is chosen (`.chosen`), the list folds down to the currently selected volume (`[aria-current="true"]` with `"▾"` indicator) — tapping it opens the full volume list (via UI SDK `Drawer` on mobile or expanded `#ways.list`, see §10 Open Questions). All `[data-option]` buttons on phone must be **>= 44 CSS px** tall (currently `>= 40px` in `library.mjs:112`; bump mobile padding/min-height to `44px` where it does not collide with `#inspectbar`).
+- **Phone volume list (`U3`):** On `<= 720px`, once a volume is chosen (`.chosen`), the list folds down to the currently selected volume (`[aria-current="true"]` with `"▾"` indicator); tapping/activating it opens the full volume list inside `#ways.list` (or via a non-portaled / inline `Drawer` inside `#ways`, see §9 Open Questions — or if `@ui-sdk/solid` `Drawer` portals to `<body>`/top-layer by default, `U3` must explicitly align `library.mjs` / `hud.mjs` selectors and `setCovered('bar', rect)`). Unfolded `#ways.list` on `<= 720px` caps height with `max-height: calc(100vh - 180px); overflow-y: auto` so expanded lists with `>= 44 CSS px` rows cannot collide with the top of a `390×844` viewport. All `[data-option]` buttons on phone must be **>= 44 CSS px** tall (currently `>= 40px` in `library.mjs:112`; bump mobile padding/min-height to `44px` where it does not collide with `#inspectbar`).
 - `#inspectbar button` and `#prev`/`#next` on `<= 720px`: `min-height: 44px; min-width: 44px`.
 
 #### Focus & Keyboard (`bar`)
-- `Toolbar` supports `ArrowLeft`/`ArrowRight` (or standard toolbar roving when focus is inside `#inspectbar`) while preserving global `D5` `Escape` (`station.back()`) and `Enter` (`station.read()` when `focused.canRead` and focus is not on a different control).
+- `[role="toolbar"]` roving owns `ArrowLeft`/`ArrowRight` (`e.preventDefault()`) when focus is inside `#back`, `#prev`, `#next`, while `ArrowLeft`/`ArrowRight` outside `[role="toolbar"]` and `[data-slot="scene-picks"]` (or activating `#prev`/`#next`) invokes `station.step(-1 | 1)`. Global `D5` `Escape` (`station.back()`) and `Enter` (`station.read()` when focus is on an already-current `[data-option]` with `focused.canRead` except folded phone expand, or on `body`/non-control with `focused.canRead`; normal buttons `#back`, `#prev`, `#next`, `#ways [data-to]`, `.cta`, `#enter` use native activation) stay preserved.
 - After reading closes (`Escape` or `.reader-close`), focus returns to `#ways [aria-current], #enter:not([hidden]), #ways [data-option], .hero .cta, #back` in that priority order (`main.js:301`).
 
 ---
@@ -266,12 +274,12 @@ Built with `@ui-sdk/core@0.1.0-beta.16` `definePrimitive` in `src/app/ui/ScenePi
 #### `#lock` and `#cue` Marks & Stillness Contract
 - **`#lock` (`z-index: 2`, `aria-hidden="true"`, `pointer-events: none` on root and all children):**
   - Structure: `.lock-box` (4 `.c` corners `.tl`, `.tr`, `.bl`, `.br`) + `.lock-tag` (`span.lock-name`, `span.lock-verb`).
-  - Driven in `onFrame` from `targetId = activeProxyId ?? pointedPickId`, shown **only** when `targetId !== null && targetId !== focused?.pick && rectOf(targetId) !== null`.
+  - Driven in `onFrame` from `targetId = activeProxyId ?? pointedPickId`, shown **only** when `targetId !== null && targetId !== focused?.pick && !busy && reader.state === 'closed' && rectOf(targetId) !== null` (`busy` corresponds to `room.status !== 'ready'`, matching `main.js:527`).
   - States: `.on` (visible/settled), `.cut` (applied briefly during initial show/swap to restart transition cleanly, or permanently under `prefers-reduced-motion: reduce`), `hidden` when dropped (`150ms` delay on motion, immediate `0ms` on reduced motion).
   - Thresholded DOM updates: skip style writes if all 4 `[x, y, w, h]` values changed by `< 0.05` px.
   - Overlap yielding: measures `#hud .hero` and `#hud > footer` rects on show/resize (not per-frame), toggling `.yield` (`opacity: .16`) when `#lock` box or `.lock-tag` intersects them.
 - **`#cue` (`z-index: 2`, `aria-hidden="true"`):**
-  - Same inner structure as `#lock`, plus `.first` on first appearance per pick in the current room visit; `#cue.on .lock-tag` has `pointer-events: auto; cursor: pointer;` and clicking it calls `e.stopPropagation(); choose(cuedPick)`.
+  - Same inner structure as `#lock`, plus `.first` on first appearance per pick in the current room visit; `#cue.on .lock-tag` has `pointer-events: auto; cursor: pointer;` and clicking it calls `e.stopPropagation(); station.focus(cuedPick.id)`.
   - Shown **only** when `wideAtRest && !lockActive` for the first live pick with `.cue` not yet in `spent` (cleared when that pick enters focus; reset on room re-entry).
   - Tag placement (`under`, `right`, `left`, `over` in order): `GAP = 6px`, `EDGE = 8px`, clears HUD `wordZones` by `CLEAR = 20px` (fallback `0px`), and retains `cSide` until occluded so the tag never hops during camera sway.
 - **Stillness invariant (`v1-contracts.md` §4, `hud.mjs`):**
@@ -284,35 +292,34 @@ Built with `@ui-sdk/core@0.1.0-beta.16` `definePrimitive` in `src/app/ui/ScenePi
 ### 5.4 Region `reader` (`U5` — The Reader's Frame)
 
 #### Elements, Roles, Accessible Names, and States
-- **Root:** `<div id="reader" role="region" aria-label={content.reader.label} hidden={reader.state === 'closed'} classList={{ open: reader.state === 'open', plain: !heads.length, phone: reader.phone }}>` (`z-index: 4`, `transform-origin: 0 0`).
+- **Root:** `<div id="reader" role="region" aria-label={content.reader.label} hidden={reader.state === 'closed'} classList={{ open: reader.state === 'open', plain: !heads.length, phone: reader.phone }}>` (`z-index: 4`, `transform-origin: 0 0`; `reader.phone` follows `W <= 720`, matching CSS `@media (max-width: 720px)`).
 - **Header (`.reader-head`):**
-  - `<span class="reader-mark">{roomMark}</span>` (hidden on `#reader.phone`).
+  - `<span class="reader-mark">{roomMark}</span>` (where `{roomMark} = content.rooms[roomId].nav`, matching `public/js/room.js:553`; hidden on `#reader.phone`).
   - `<span class="reader-title">{title !== mark ? title : ''}</span>`.
-  - `<Button class="reader-close" type="button">{content.reader.back}</Button>` (`"CLOSE"`, `>= 44×44 CSS px` on phone). Clicking invokes `station.closeReader()` / `station.back()`.
+  - `<Button class="reader-close" type="button">{content.reader.back}</Button>` (`"CLOSE"`, `>= 44×44 CSS px` on phone `<= 720px`). Clicking invokes `station.closeReader()` / `station.back()`.
 - **Contents Rail (`<nav class="reader-rail" aria-label={content.reader.contents}>`):**
-  - Hidden when `#reader.plain`, `#reader.phone`, or `@media (max-width: 1000px)`.
+  - Hidden when `#reader.plain`, `#reader.phone` (`<= 720px`), or `@media (max-width: 1000px)`.
   - `<p>{content.reader.contents}</p>` (`"CONTENTS"`) + `<ol>` of `<li><a href={`#${h.id}`} aria-current={activeIdx === i ? 'location' : undefined}>{h.text}</a></li>`.
 - **Article Scroll Container (UI SDK `ScrollArea` in `src/app/ui/ScrollArea.tsx`):**
   - Class `.reader-scroll`, `tabindex="0"`, `overscroll-behavior: contain`.
-  - **Verbatim Element Adoption:** Adopts the existing `#page article.post, #page section.post-list` (when `path === initialPath`) or fetched HTML parsed via `DOMParser` + `document.adoptNode(el)` (cached per `path`) directly into `.reader-scroll` — **never** re-renders article prose through Solid JSX.
-  - On fetch/parse error, renders `<p class="reader-error">{content.reader.failed}</p>`.
+  - **Verbatim Element Adoption & Ready Handshake:** Adopts the existing `#page article.post, #page section.post-list` (when `path === initialPath`) or fetched HTML parsed via `DOMParser` + `document.adoptNode(el)` (cached per `path`) directly into `.reader-scroll` — **never** re-renders article prose through Solid JSX. On fetch/parse error, renders `<p class="reader-error">{content.reader.failed}</p>`. Once settled (and on resize), calls `station.setReaderContentReady(true, headEl.offsetHeight)` so `reader3d.ts` releases `w.waits` and populates `uHead`.
 - **Progress Bar (UI SDK `Progress` in `src/app/ui/Progress.tsx`):**
   - `.reader-progress > i`, `transform: scaleX(scrollFraction)` updated on scroll (`max > 0 ? scrollTop / max : 1`).
 - **Code Copy (`button.copy` + UI SDK `Toast`):**
-  - Each `<pre>` inside adopted article gets a `<button class="copy" type="button" aria-label={content.reader.copyCode}>{content.reader.copy}</button>` (`"COPY"`).
-  - On click: `navigator.clipboard.writeText(pre.textContent)`, updates button text to `content.reader.copied` (`"COPIED"`) for `1600ms`, and triggers a polite non-blocking UI SDK `Toast` (`role="status"` / `aria-live="polite"`) saying `"Copied"` / `content.reader.copied`.
+  - Each `<pre>` inside adopted article gets a `<button class="copy" type="button" aria-label={content.reader.copyCode}>{content.reader.copy}</button>` (`"COPY"`, omitting `aria-live="polite"` from `button.copy` itself so `Toast` does not double-announce).
+  - On click: `navigator.clipboard.writeText(pre.textContent)`, updates button text to `content.reader.copied` (`"COPIED"`) for `1600ms`, and triggers a polite non-blocking UI SDK `Toast` (`role="status"` / `aria-live="polite"`, `z-index: 6` above `#reader`) saying `"Copied"` / `content.reader.copied`.
 
 #### Per-Frame Placement, Links, and Focus
-- **`onFrame` placement:** Reads `station.frameOf('reader')` via direct `#reader` element ref (zero Solid signal reads):
-  - Applies `width`, `height`, and `transform` (`translate(${x}px, ${y}px)` once settled at rest; `matrix3d(...)` during camera glide — required by `rooms.kit.mjs` `frameChecks` and `deeplink.mjs:23`).
-  - Applies `clip-path: inset(0 0 ${((1 - reveal) * 100).toFixed(2)}% 0)` while `reveal < 1` (instant `''` on reduced motion), clearing `clipPath = ''` once `'open'`.
+- **`onFrame` placement:** Reads `frame = station.frameOf('reader')` via direct `#reader` element ref (zero Solid signal reads or writes):
+  - When `frame === null` (`reader.state === 'closed' || !ready || T < REVEAL[0]`), keeps `#reader.hidden = true` (matches `reader.js:297`).
+  - Once `frame !== null`, unhides `#reader` (resetting scroll to top or deep-linked `#fragment` and updating progress on first show), applies `width`, `height`, and `transform` (`translate(${x}px, ${y}px)` once settled at rest; `matrix3d(...)` during camera glide — required by `rooms.kit.mjs` `frameChecks` and `deeplink.mjs:23`), and applies `clip-path: inset(0 0 ${((1 - frame.reveal) * 100).toFixed(2)}% 0)` while `frame.reveal < 1` (instant `''` on reduced motion), clearing `clipPath = ''` once `'open'`. `reader.state` remains `'scanning'` until `frame.reveal >= 1`.
 - **Link interception inside `#reader`:**
   - `/blog/files/*` and `/resume/*`: set `target="_blank" rel="noopener"` and let browser handle.
   - `#fragment`: prevent default and `scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })` inside `.reader-scroll`.
-  - Same-origin room/article `/` links: prevent default and dispatch via `@solidjs/router` / `station.readAt` / `station.enter` (`U8`); if `!room.reads(url)`, allow normal browser navigation.
+  - Same-origin room/article `/` links: prevent default and dispatch via `@solidjs/router` / `station.readAt` / `station.enter` (`U8`); if `!station.reads(url)`, allow normal browser navigation.
 - **Focus lifecycle:**
   - Transition to `'open'`: scroll to top or deep-linked `#fragment`, then `.reader-scroll.focus({ preventScroll: true })`.
-  - Transition to `'closed'`: blur active element inside `#reader` if any, then return focus to `[aria-current], #enter:not([hidden]), [data-option], .hero .cta, #back`.
+  - Transition to `'closed'`: blur active element inside `#reader` if any, then return focus to `#ways [aria-current], #enter:not([hidden]), #ways [data-option], .hero .cta, #back`.
 - **Engine DOM removal (`U5`):** Delete all DOM elements, `DOMParser`, `adoptNode`, `.copy` buttons, and `#reader` CSS writes from `src/engine/reader3d.ts` (clearing its `src/engine/DOM.md` lines).
 
 ---
@@ -336,7 +343,7 @@ Per owner decision `D4`, `U6a` (`f4bc684d`), and `R1`:
   - Every `<a>` bounding box MUST measure **>= 44 × 44 CSS px** (`contact.mjs:121`), lie fully inside viewport, not overlap any sibling link or `#inspectbar`/`#named`, and be the top `document.elementFromPoint` hit at its center.
 - **Keyboard & Focus Ring:**
   - Opening via keyboard (e.g., `Enter` on `.hero .cta` or `scene-picks` proxy) captures `opener = document.activeElement`, waits for field settle (`900ms`, skipped/instant if already open), and focuses `links[0]` (`.focus({ preventScroll: true })`) when keyboard-driven (`keys || pointer: fine`).
-  - Visual `:focus-visible` ring is drawn in the 3D field canvas (`INK.warm` `#ffdcae`, 5px outer rounded rect) triggered by focus/blur notifications from the 3 `<a>` elements (or engine tracking).
+  - Visual `:focus-visible` ring (`INK.warm` `#ffdcae`, 5px outer rounded rect) and hover state (`INK.lit`) are drawn in the 3D field canvas (`comms3d.ts`), driven by `station.setContactLinkState(index, { hover, focusVisible })` on `pointerenter`/`pointerleave`/`focus`/`blur` of the 3 `<a>` elements (zero DOM reads in `src/engine/`).
   - `Tab` walks `LinkedIn` -> `GitHub` -> `Résumé`. `Enter` opens the focused link in a new tab (`target="_blank" rel="noopener"`) without navigating the station.
   - Closing (`Escape` or `#back`) re-sets `inert = true` and restores focus to `opener` (`.hero .cta`).
 - **`/contact/` Static Alignment (`U6a`, `R1`):**
@@ -392,9 +399,10 @@ Per owner decision `D5` and `U0c` verification (`ui-spike-notes.md` §2):
 | Context | Key | Behavior | Notes |
 |---|---|---|---|
 | **Reader open or typing** (`station.reader.get().state !== 'closed'` or `focused.get()?.typing` or editable control) | Any key except `Escape` | Suppressed by `scene-picks` and global `D5` listener | Preserves scroll keys inside `#reader .reader-scroll` and avoids hijacking arrows/Enter |
-| **Global (anywhere)** | `Escape` | Capture `wasReading = station.reader.get().state !== 'closed'` before calling `station.back()`. If `wasReading`, restore focus to `[aria-current], #enter:not([hidden]), [data-option], .hero .cta, #back`. If in Contact (`#comms`), restores focus to `opener` | Evaluated before typing suppression; never trapped |
-| **Outside `scene-picks`** (`#hud`, `#inspectbar`, `body`; reader closed & not typing) | `ArrowLeft` / `ArrowRight` | `e.preventDefault(); station.step(-1 \| 1)` | Steps tour left-to-right (`tourOrder()`); ignored if inside `[data-slot="scene-picks"]` or `e.defaultPrevented` |
-| **Outside `scene-picks`** (reader closed & not typing) | `Enter` | If `e.target` is a native `<button>` or `<a>`, let native activation run; else if `focused?.canRead`, call `station.read()` | Second `Enter` reads held Library volume (`library.mjs`) |
+| **Global (anywhere)** | `Escape` | Capture `wasReading = station.reader.get().state !== 'closed'` before calling `station.back()`. If `wasReading`, restore focus to `#ways [aria-current], #enter:not([hidden]), #ways [data-option], .hero .cta, #back`. If in Contact (`#comms`), restores focus to `opener` | Evaluated before typing suppression; never trapped (scoped `#ways` prefix prevents matching `#hud nav a.here[aria-current="page"]`) |
+| **Inside `[role="toolbar"]`** (`#inspectbar` `#back`, `#prev`, `#next`; reader closed & not typing) | `ArrowLeft` / `ArrowRight` | Roving focus across toolbar buttons (`e.preventDefault()`); activating `#prev` / `#next` (`Enter`/`Space`/click) calls `station.step(-1 \| 1)` | Satisfies APG `toolbar` pattern (`checkPattern('toolbar')` in `U3`) without leaking to global tour stepper |
+| **Outside `scene-picks` & `[role="toolbar"]`** (`body`, `#hud`, non-toolbar `#inspectbar` controls; reader closed & not typing) | `ArrowLeft` / `ArrowRight` | `e.preventDefault(); station.step(-1 \| 1)` | Steps tour left-to-right (`tourOrder()`); applies only outside `[role="toolbar"]` and `[data-slot="scene-picks"]` (ignored if `e.defaultPrevented`) |
+| **Outside `scene-picks`** (reader closed & not typing) | `Enter` | Normal buttons/links (`#back`, `#prev`, `#next`, `#ways [data-to]`, `.cta`, `#enter`, `#hud nav a`) use native activation; in `#ways.list` (`Listbox`), activating/`Enter`-pressing the already-current option (`current === i && focused.canRead`, except on `<= 720px` when expanding folded `.chosen` list) calls `station.read()`; otherwise if `focused?.canRead`, call `station.read()` | Preserves `main.js:428` and `library.mjs:305` (second `Enter` while focus stays on `[data-option="1"]` starts reading held volume) |
 | **Page -> `scene-picks`** | `Tab` / `Shift+Tab` | Single roving stop enters `scene-picks` on `tabindex="0"` (last focused visible pick, else inspected visible pick, else first pick with `rectOf !== null`) | Offscreen `rectOf === null` picks are skipped at mount and mid-session |
 | **Inside `scene-picks`** (proxy `<button>` focused; reader closed) | `ArrowLeft` / `ArrowRight` / `ArrowUp` / `ArrowDown` | `spatialMove({ rect })` moves focus to nearest visible pick in screen direction; announces `"${name}, ${verb}"`. Calls `e.preventDefault()` **even at spatial edges** | Prevents leaking `ArrowLeft`/`ArrowRight` to global tour stepper |
 | **Inside `scene-picks`** | `Home` / `End` | Moves focus to first / last visible pick (`e.preventDefault()`) | Standard roving endpoints |
@@ -412,7 +420,7 @@ All page-layer UI (`#hud`, `#inspectbar`, `#reader`, `#comms`, `#loader`, `#step
 | Surface / Context | Minimum Contrast | Measured / Enforced Value | Reference |
 |---|---|---|---|
 | **Plain & Reader text (`#page`, `#pagenav`, `#reader`)** | `>= 4.5:1` normal text; `>= 3.0:1` large text (`>= 24px` or `>= 18.66px` bold `>= 700`) | Enforced across composited ancestor backgrounds & gradient stops | `plaincheck.mjs:80` |
-| **Loader label (`#loader .label` `#7d94a3` on `#04060a`)** | `>= 4.5:1` | `6.08:1` | `style.css:15` |
+| **Loader label (`#loader .label` `#7d94a3` on `#04060a`)** | `>= 4.5:1` | `6.41:1` | `style.css:15` |
 | **`body.bright` (Comms) HUD DOM text** | `>= 4.5:1` at sky angles `[0, 120, 240]` | Measured `>= 6.0:1` across all HUD text runs (desktop & mobile) | `style.css:63-78`, `contact.mjs:6,161-169` |
 | **`body.bright` (Comms) 3D field text** | `>= 4.5:1` at sky angles `[0, 120, 240]` (standby & open) | Measured `>= 8.75:1` | `contact.mjs:6,170-184` |
 | **UI components & `:focus-visible` indicators** | `>= 3.0:1` | Visible cyan/amber/warm outlines (`#7fe3ff`, `#ff9a4a`, `#ffdcae`, `#ffffff`) | WCAG 2.2 SC 1.4.11, 2.4.7 |
@@ -441,7 +449,7 @@ When `content.rooms[id].bright === true` (`comms`), `body.bright` applies these 
   - Every `scene-picks` proxy has `aria-label="${name}: ${verb}"` and `aria-pressed`.
   - `#named` has `aria-live="polite"`.
   - `scene-picks` calls `prepareAnnouncements` / `announce(..., { priority: "polite" })` on spatial navigation, inspection, and reading start.
-  - `.copy` / `Toast` announces `"COPIED"` via polite live region (`role="status"` / `aria-live="polite"`).
+  - `Toast` announces `"COPIED"` via a single polite live region (`role="status"` / `aria-live="polite"`, `z-index: 6`); `aria-live` is omitted from `button.copy` to prevent duplicate announcements.
   - `#comms` links expose `aria-label="${label}, ${opens}"` and `aria-description="${writeNote}"` on LinkedIn (`index 0`).
   - Current room link in `#hud nav` uses `aria-current="page"`; current heading in `.reader-rail` uses `aria-current="location"`.
 
@@ -477,11 +485,11 @@ Any new DOM `id` added at runtime by Solid components or `@ui-sdk/solid` wrapper
 
 | Region | Required Selectors / Attributes | Relied Upon By |
 |---|---|---|
-| **Shell / Modes** | `html.station`, `html.reading`, `html:not(.station)`, `<canvas id="scene.turns">`, `main#page`, `nav#pagenav`, `#loader` (`.done`, `[data-failed]`, `#progress`, `#what`, `#pct`, `.percentage`, `.bar`, `.mark`), `button#stepin` | `plainpage`, `plaincheck`, `deeplink`, `hud`, `rooms.*` |
-| **`hud` (`U2`)** | `#hud` (`.hidden`, `.inspecting`), `#brand`, `#hud nav a[data-room]`, `#hud nav a.here`, `#hud nav [data-view="0"\|"1"]`, `.hero`, `.kicker`, `.headline[role="heading"][aria-level="1"]`, `.sub`, `button.cta`, `footer`, `.hint`, `.how`, `.gone`, `.yield`, `[data-live]`, `body.bright` | `hud`, `rooms.text`, `contact`, `hostile`, `cue` |
-| **`bar` (`U3`)** | `#inspectbar` (`.aside`), `#named[aria-live="polite"]`, `#back`, `#prev[aria-label="Previous"]`, `#count`, `#next[aria-label="Next"]`, `#ways` (`.list`, `.chosen`), `[data-to]`, `[data-option]`, `[aria-current="true"]`, `#enter[aria-label="Read what this shows"]` | `library`, `hud`, `cue`, `rooms.read`, `contact` |
+| **Shell / Modes** | `html.station`, `html.reading`, `html:not(.station)`, `<canvas id="scene">` (with `.turns` class when `turn !== null`, i.e., `canvas#scene.turns`), `main#page`, `nav#pagenav`, `#loader` (`.done`, `[data-failed]`, `#progress`, `#what`, `#pct`, `.percentage`, `.bar`, `.mark`), `button#stepin` | `plainpage`, `plaincheck`, `deeplink`, `hud`, `rooms.*`, `turn` |
+| **`hud` (`U2`)** | `#hud` (`.hidden`, `.inspecting`), `#brand`, `#hud nav a[data-room]`, `#hud nav a.here`, `#hud nav a[data-view="0"\|"1"]` (or `[data-view="0"\|"1"]` if `U2` explicitly updates `turn.mjs:174`), `.hero`, `.kicker`, `.headline[role="heading"][aria-level="1"]`, `.sub`, `button.cta`, `footer`, `.hint`, `.how`, `.gone`, `.yield`, `[data-live]`, `body.bright` | `hud`, `rooms.text`, `contact`, `hostile`, `cue`, `turn` |
+| **`bar` (`U3`)** | `#inspectbar` (`.aside`), `#named[aria-live="polite"]`, `[role="toolbar"]` (`#back`, `#prev[aria-label="Previous"]`, `#count`, `#next[aria-label="Next"]`), `#ways` (`.list`, `.chosen`; wrapping `[role="listbox"]` and sibling `#enter[aria-label="Read what this shows"]`), `[data-to]`, `[data-option]`, `[aria-current="true"]` | `library`, `hud`, `cue`, `rooms.read`, `contact`, `ringline` |
 | **`picks` (`U4`)** | `[data-slot="scene-picks"]` (or `role="group"`), proxy `<button>`s, `#lock` (`.on`, `.cut`, `.lock-box`, `.c.tl/.tr/.bl/.br`, `.lock-tag`, `.lock-name`, `.lock-verb`), `#cue` (`.on`, `.first`, same inner structure) | `hud`, `cue`, `U4` keyboard walk |
-| **`reader` (`U5`)** | `#reader[role="region"][aria-label="What is being read"]` (`.open`, `.plain`, `.phone`), `.reader-head`, `.reader-mark`, `.reader-title`, `button.reader-close`, `nav.reader-rail[aria-label="Contents"]` (`a[aria-current="location"]`), `.reader-scroll[tabindex="0"]`, `.reader-progress i`, `article.post[data-slug]`, `section.post-list`, `button.copy`, `.reader-error` | `library`, `deeplink`, `rooms.read`, `rooms.cross`, `rooms.deeplink`, `history` |
+| **`reader` (`U5`)** | `#reader[role="region"][aria-label="What is being read"]` (`.open`, `.plain`, `.phone`), `.reader-head`, `.reader-mark`, `.reader-title`, `button.reader-close`, `nav.reader-rail[aria-label="Contents"]` (`a[aria-current="location"]`), `.reader-scroll[tabindex="0"]`, `.reader-progress i`, `article.post[data-slug]`, `section.post-list`, `.post-next a`, `pre[data-lang] > code`, `button.copy`, `.reader-error` | `library`, `deeplink`, `rooms.read`, `rooms.cross`, `rooms.deeplink`, `history`, `page` |
 | **`contact` (`U6`)** | `section#comms[data-mode="links"][aria-label="CONTACT"][inert]`, 3 `a[target="_blank"][rel="noopener"]` (`aria-label="<label>, opens in a new tab"`, `aria-description="Write to me"` on index `0`) | `contact` |
 
 ---
@@ -493,6 +501,14 @@ Any new DOM `id` added at runtime by Solid components or `@ui-sdk/solid` wrapper
 | **Q1 (`D6`)** | **Page-layer styling system** | Plain CSS with existing custom properties (`tokens.css` + component CSS) vs Tailwind | **Recommend Plain CSS** (`D6` + `R1` default; already locked in `decisions.md`). Zero Tailwind, zero `@ui-sdk/solid` `web.css`. |
 | **Q2 (`U0-contact`)** | **Do "what to write about" sections stay on `/contact/`?** | Keep `h2#what-to-write-about` & `.route` sections vs remove them now that visitors write via LinkedIn (`D4`) | **Recommend Remove** (`R1` + `U0-contact`; already implemented by `U6a` `f4bc684d` in `tools/site.py`, while retaining `contact_routes` in `profile.json`). |
 | **Q3 (`D11`, `U9`)** | **Agent bridge default state in `public/content.json`** | `agent.enabled: false` (lazy-loaded only when enabled) vs `true` | **Recommend `agent.enabled: false`** (`D11` + `R1`). Zero bundle/runtime cost for normal visitors; tests and opt-in sessions enable it explicitly. |
-| **Q4 (`U3`)** | **Phone volume list presentation (`<= 720px`)** | Folded inline `.chosen` `Listbox` (tapping selected item re-expands) vs `@ui-sdk/solid` `Drawer` sheet triggered by selected item | **Recommend UI SDK `Drawer` on `<= 720px`** per §4.3, keeping `[data-option]` and `[aria-current="true"]` on trigger/items with `>= 44×44 CSS px` targets and fallback compatibility for `library.mjs` fold/reopen behavior. |
-| **Q5 (`U5`)** | **Code block copy confirmation feedback** | `.copy` button text change (`COPY` -> `COPIED`) alone vs button text + polite UI SDK `Toast` | **Recommend Both**: update button label `COPY` -> `COPIED` (`1600ms`) AND trigger non-blocking UI SDK `Toast` (`role="status"` / `aria-live="polite"`) so sighted and screen-reader users get immediate confirmation without layout shift. |
+| **Q4 (`U3`)** | **Phone volume list presentation (`<= 720px`)** | Folded inline `.chosen` `Listbox` (capped at `max-height: calc(100vh - 180px); overflow-y: auto`) vs non-portaled/inline `@ui-sdk/solid` `Drawer` sheet triggered by `[aria-current="true"]` | **Recommend non-portaled/inline UI SDK `Drawer` (or inline `#ways.list` with `max-height: calc(100vh - 180px); overflow-y: auto`) on `<= 720px`** per §4.3, keeping `[data-option]` and `[aria-current="true"]` inside `#ways` with `>= 44×44 CSS px` rows; if `@ui-sdk/solid` `Drawer` forces `<body>` portaling, `U3` explicitly aligns `library.mjs` / `hud.mjs` selectors and `setCovered('bar', rect)`. |
+| **Q5 (`U5`)** | **Code block copy confirmation feedback** | `.copy` button text change (`COPY` -> `COPIED`) alone vs button text + polite UI SDK `Toast` | **Recommend Both**: update button label `COPY` -> `COPIED` (`1600ms`) AND trigger non-blocking UI SDK `Toast` (`role="status"` / `aria-live="polite"`, `z-index: 6` above `#reader`; `aria-live` omitted from `button.copy` to prevent double announcement). |
 | **Q6 (`G4` vs `U0b`)** | **First-frame gzip JS budget alignment** | `U0b` measured Solid + `Listbox` + `Dialog` at `86.82 kB` gzip (`72.96 kB` eager), above Gate `G4`'s `<= 60 KB` gzip delta target over `G2` | **Recommend Lazy-Loading Non-Eager UI SDK Parts**: code-split `Drawer`, `Menu`, `Toast`, `ScrollArea` (with `#reader`), `Listbox` (until inspect), and `@ui-sdk/solid/agent` (`U9`), leaving only `hud` + `cover` + `picks` on the critical first-frame chunk; verify chunk sizes at `U1` and Gate `G4`. |
+
+### Live `@ui-sdk/solid@0.1.0-beta.16` Verification Note (`U1`–`U3`)
+
+Because `@ui-sdk/solid@0.1.0-beta.16` is not installed in the repository prior to `F1`/`U1`, `U1`–`U3` must verify the live `node_modules/@ui-sdk/solid/docs/` and rendered DOM in Chromium before locking wrapper internals:
+
+1. **`SegmentedControl` tag support (`U1`/`U2`):** Verify whether `SegmentedControl` supports rendering `<a data-view="0"|"1">` items inside `#hud nav`; if it enforces `<button>` / `[role="radio"]`, explicitly update `turn.mjs:174` (`#hud nav [data-view="0"]`) in `U2`.
+2. **`Menu` & `Drawer` Popover / portaling (`U1`/`U3`):** Verify whether `Menu` and `Drawer` render inline inside `#ways` or portal to `<body>` / top-layer by default; keep wrappers non-portaled inside `#ways` where possible, or explicitly align `U3` E2E specs (`ringline.mjs`, `library.mjs`, `hud.mjs` bar-clear bounding rect) and `setCovered('bar', rect)` in `U3`.
+3. **`Toast` stacking (`U1`/`U5`):** Verify `Toast` container mounts at `z-index: 6` (or top-layer) above `#reader` (`z-index: 4`) and registers any runtime `id` in `tools/site.py` `RUNTIME_IDS` (`U10`).
