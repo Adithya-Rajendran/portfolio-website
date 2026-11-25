@@ -108,7 +108,8 @@ async function run(name) {
         const onBooks = async (target) => {
           for (let i = 0; i < 10; i++) {
             const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); await sleep(700);
-            const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - (e.l + e.r) / 2) < 8) return true;
+            // the view follows the pointer: settled once the lock is on and the target has stayed under the pointer, across and up and down
+            const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - ptr[0]) < 8 && Math.abs((f.t + f.b) / 2 - ptr[1]) < 8) return true;
           }
           return false;
         };
