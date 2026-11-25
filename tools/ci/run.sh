@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run one CI check tier on this checkout, either under /srv/arcadia/bin/ci (CI_JOB + CI_HOME) or standalone locally.
 #   tools/ci/run.sh <tier> [args...]
-# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB>
+# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>]
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -13,92 +13,124 @@ if [[ "$OUT" != /* ]]; then
 elif [ -d "$OUT" ]; then
   OUT="$(cd "$OUT" && pwd)"
 fi
-if [ -n "${ASSETS:-}" ] && [ -d "$ASSETS" ]; then
-  ASSETS="$(cd "$ASSETS" && pwd)"
+USER_ASSETS=""
+if [ -n "${ASSETS:-}" ]; then
+  if [ -d "$ASSETS" ]; then
+    USER_ASSETS="$(cd "$ASSETS" && pwd)"
+    ASSETS="$USER_ASSETS"
+  else
+    USER_ASSETS="$ASSETS"
+  fi
 fi
 IMG="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
+BASE_SRC_CLEANUP=""
+cleanup_run() {
+  [ -n "$BASE_SRC_CLEANUP" ] && rm -rf "$BASE_SRC_CLEANUP" || true
+}
+trap cleanup_run EXIT
 
-asset_key() {
-  ( cd "$ROOT" && find assets-src tools/pack.py -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -c1-20 )
+asset_key_for() {
+  local src="${1:-$ROOT}"
+  ( cd "$src" && find assets-src tools/pack.py -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -c1-20 )
 }
 
-assets() {
-  if [ -n "${ASSETS:-}" ]; then
-    [ -d "$ASSETS" ] || { echo "ci: ASSETS directory does not exist: $ASSETS" >&2; exit 3; }
-    [ -n "$(ls -A "$ASSETS" 2>/dev/null)" ] || { echo "ci: ASSETS directory is empty: $ASSETS" >&2; exit 3; }
-    if [ -L "$ROOT/public/assets" ]; then rm -f "$ROOT/public/assets"; fi
-    mkdir -p "$ROOT/public/assets"
-    export ASSETS
+asset_key() {
+  asset_key_for "$ROOT"
+}
+
+resolve_assets_for() {
+  local src="${1:-$ROOT}"
+  local log_name="${2:-pack.log}"
+  local resolved=""
+
+  if [ "$src" = "$ROOT" ] && [ -n "$USER_ASSETS" ]; then
+    [ -d "$USER_ASSETS" ] || { echo "ci: ASSETS directory does not exist: $USER_ASSETS" >&2; exit 3; }
+    [ -n "$(ls -A "$USER_ASSETS" 2>/dev/null)" ] || { echo "ci: ASSETS directory is empty: $USER_ASSETS" >&2; exit 3; }
+    if [ -L "$src/public/assets" ]; then rm -f "$src/public/assets"; fi
+    mkdir -p "$src/public/assets"
+    RESOLVED_ASSETS="$USER_ASSETS"
     return 0
   fi
 
   if [ -n "${CI_HOME:-}" ]; then
     local key log_dir
-    key="$(asset_key)"
-    ASSETS="$CI_HOME/cache/assets/$key"
+    key="$(asset_key_for "$src")"
+    resolved="$CI_HOME/cache/assets/$key"
     log_dir="${CI_JOB:-$OUT}"
     mkdir -p "$CI_HOME/cache/assets" "$log_dir"
     (
       flock 9
-      if [ ! -d "$ASSETS" ]; then
+      if [ ! -d "$resolved" ]; then
         echo "ci: packing rooms ($key)"
-        rm -rf "$ROOT/public/assets"
-        if ( cd "$ROOT" && python3 tools/pack.py ) > "$log_dir/pack.log" 2>&1; then
+        rm -rf "$src/public/assets"
+        if ( cd "$src" && python3 tools/pack.py ) > "$log_dir/$log_name" 2>&1; then
           local tmp_assets="$CI_HOME/cache/assets/.tmp-$key-$$"
           rm -rf "$tmp_assets"
-          mv "$ROOT/public/assets" "$tmp_assets"
-          mv "$tmp_assets" "$ASSETS"
+          mv "$src/public/assets" "$tmp_assets"
+          mv "$tmp_assets" "$resolved"
         else
-          echo "ci: pack failed, see $log_dir/pack.log" >&2
-          tail -20 "$log_dir/pack.log" >&2 || true
-          rm -rf "$ROOT/public/assets"
+          echo "ci: pack failed, see $log_dir/$log_name" >&2
+          tail -20 "$log_dir/$log_name" >&2 || true
+          rm -rf "$src/public/assets"
           exit 3
         fi
       fi
     ) 9>"$CI_HOME/cache/pack.lock" || exit 3
-    if [ -L "$ROOT/public/assets" ]; then rm -f "$ROOT/public/assets"; fi
-    mkdir -p "$ROOT/public/assets"
-    export ASSETS
+    if [ -L "$src/public/assets" ]; then rm -f "$src/public/assets"; fi
+    mkdir -p "$src/public/assets"
+    RESOLVED_ASSETS="$resolved"
     return 0
   fi
 
   # Standalone local run without CI_HOME or ASSETS
-  if [ -d "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ] && [ -n "$(ls -A "$ROOT/public/assets" 2>/dev/null)" ]; then
-    ASSETS="$ROOT/public/assets"
+  if [ -d "$src/public/assets" ] && [ ! -L "$src/public/assets" ] && [ -n "$(ls -A "$src/public/assets" 2>/dev/null)" ]; then
+    resolved="$src/public/assets"
   elif git -C "$ROOT" rev-parse --git-common-dir >/dev/null 2>&1; then
     local common main_assets
     common="$(git -C "$ROOT" rev-parse --git-common-dir)"
     main_assets="$(cd "$ROOT" && cd "$common/.." && pwd)/public/assets"
-    if [ -d "$main_assets" ] && [ ! -L "$main_assets" ] && [ -n "$(ls -A "$main_assets" 2>/dev/null)" ]; then
-      ASSETS="$main_assets"
+    if [ "$src" = "$ROOT" ] && [ -d "$main_assets" ] && [ ! -L "$main_assets" ] && [ -n "$(ls -A "$main_assets" 2>/dev/null)" ]; then
+      resolved="$main_assets"
     fi
   fi
 
-  if [ -z "${ASSETS:-}" ]; then
+  if [ -z "$resolved" ]; then
     mkdir -p "$OUT"
-    echo "ci: packing rooms locally"
-    rm -rf "$ROOT/public/assets"
-    if ! ( cd "$ROOT" && python3 tools/pack.py ) > "$OUT/pack.log" 2>&1; then
-      echo "ci: pack failed, see $OUT/pack.log" >&2
-      tail -20 "$OUT/pack.log" >&2 || true
+    echo "ci: packing rooms locally ($src)"
+    rm -rf "$src/public/assets"
+    if ! ( cd "$src" && python3 tools/pack.py ) > "$OUT/$log_name" 2>&1; then
+      echo "ci: pack failed, see $OUT/$log_name" >&2
+      tail -20 "$OUT/$log_name" >&2 || true
       exit 3
     fi
-    ASSETS="$ROOT/public/assets"
+    resolved="$src/public/assets"
   fi
 
-  if [ -L "$ROOT/public/assets" ]; then rm -f "$ROOT/public/assets"; fi
-  mkdir -p "$ROOT/public/assets"
+  if [ -L "$src/public/assets" ]; then rm -f "$src/public/assets"; fi
+  mkdir -p "$src/public/assets"
+  RESOLVED_ASSETS="$resolved"
+}
+
+assets() {
+  resolve_assets_for "$ROOT" "pack.log"
+  ASSETS="$RESOLVED_ASSETS"
   export ASSETS
 }
 
-site() {
+site_for() {
+  local src="${1:-$ROOT}"
+  local log_name="${2:-site.log}"
   local log_dir="${CI_JOB:-$OUT}"
   mkdir -p "$log_dir"
-  if ! ( cd "$ROOT" && python3 tools/site.py ) > "$log_dir/site.log" 2>&1; then
+  if ! ( cd "$src" && python3 tools/site.py ) > "$log_dir/$log_name" 2>&1; then
     echo "ci: site.py failed" >&2
-    tail -10 "$log_dir/site.log" >&2 || true
+    tail -10 "$log_dir/$log_name" >&2 || true
     return 1
   fi
+}
+
+site() {
+  site_for "$ROOT" "site.log"
 }
 
 gpu() {
@@ -115,21 +147,22 @@ dt() {
   ( cd "$ROOT" && OUT="$OUT" ASSETS="$ASSETS" tools/dtest.sh "$@" )
 }
 
-pw() {
-  local s="${1:?missing script}"; shift
-  mkdir -p "$OUT"
+pw_for() {
+  local site_src="${1:?missing src}" assets_dir="${2:?missing assets}" out_dir="${3:?missing out}" s="${4:?missing script}"
+  shift 4
+  mkdir -p "$out_dir"
   local dev=()
   [ -d /dev/dri ] && dev=(--device /dev/dri)
   local assets_mount=()
-  if [ "$ASSETS" != "$ROOT/public/assets" ]; then
-    assets_mount=(-v "$ASSETS":/site/assets:ro)
+  if [ "$assets_dir" != "$site_src/public/assets" ]; then
+    assets_mount=(-v "$assets_dir":/site/assets:ro)
   fi
   docker run --rm --ipc=host "${dev[@]}" \
     -e ORIGIN=http://127.0.0.1:8080 -e SETUP -e UNTIL \
     -v "$ROOT/tools/docker":/work:ro \
-    -v "$ROOT/public":/site:ro \
+    -v "$site_src/public":/site:ro \
     "${assets_mount[@]}" \
-    -v "$OUT":/out \
+    -v "$out_dir":/out \
     -v lobby_pw_modules:/w:ro \
     "$IMG" bash -c '
       set -e
@@ -157,6 +190,27 @@ pw() {
       node "$s" "$@"
     ' _ "$s" "$@" 2>&1 | grep -v "GL Driver"
   return ${PIPESTATUS[0]}
+}
+
+pw() {
+  local s="${1:?missing script}"; shift
+  pw_for "$ROOT" "$ASSETS" "$OUT" "$s" "$@"
+}
+
+resolve_commit() {
+  local gdir="$1" ref="$2"
+  git --git-dir="$gdir" rev-parse --verify -q "$ref^{commit}" 2>/dev/null \
+    || { [[ "$ref" == origin/* ]] && git --git-dir="$gdir" rev-parse --verify -q "${ref#origin/}^{commit}" 2>/dev/null; } \
+    || { [[ "$ref" == ci/* ]] && git --git-dir="$gdir" rev-parse --verify -q "${ref#ci/}^{commit}" 2>/dev/null; }
+}
+
+render_pictures_checkout() {
+  local src_dir="$1" out_dir="$2" tag="$3"
+  local RESOLVED_ASSETS=""
+  resolve_assets_for "$src_dir" "${tag}-pack.log"
+  site_for "$src_dir" "${tag}-site.log" || return 1
+  mkdir -p "$out_dir"
+  gpu pw_for "$src_dir" "$RESOLVED_ASSETS" "$out_dir" detsnap.mjs http://127.0.0.1:8080 /out 90 "${PIC_STATES[@]}"
 }
 
 tier="${1:?usage: tools/ci/run.sh <tier> [args...]}"; shift
@@ -257,6 +311,161 @@ case "$tier" in
         ' 2>&1 | grep -v "GL Driver"
       exit ${PIPESTATUS[0]}
     fi
+    ;;
+  pictures)
+    against=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --against)
+          [ $# -ge 2 ] || { echo "ci: --against requires a ref" >&2; exit 2; }
+          against="$2"; shift 2
+          ;;
+        --against=*)
+          against="${1#--against=}"; shift
+          ;;
+        *)
+          echo "ci: unknown pictures arg '$1'" >&2; exit 2
+          ;;
+      esac
+    done
+
+    LIST_FILE="$ROOT/tools/ci/pictures.txt"
+    [ -f "$LIST_FILE" ] || { echo "ci: missing state list: $LIST_FILE" >&2; exit 2; }
+    mapfile -t PIC_STATES < <(grep -vE '^\s*(#|$)' "$LIST_FILE")
+    [ ${#PIC_STATES[@]} -gt 0 ] || { echo "ci: empty state list: $LIST_FILE" >&2; exit 2; }
+    list_hash="$(sha256sum "$LIST_FILE" | cut -c1-12)"
+
+    cur_sha=""
+    repo_git=""
+    is_dirty=0
+    if [ -n "${CI_HOME:-}" ]; then
+      repo_git="$CI_HOME/repo.git"
+      job_base="$(basename "${CI_JOB:-}")"
+      if [[ "$job_base" =~ ^[0-9]{8}-[0-9]{6}-([0-9a-f]{7,40})- ]]; then
+        cur_sha="$(git --git-dir="$repo_git" rev-parse --verify -q "${BASH_REMATCH[1]}^{commit}" 2>/dev/null || true)"
+      fi
+      [ -n "$cur_sha" ] || cur_sha="$(git -C "$ROOT" rev-parse --verify -q HEAD 2>/dev/null || true)"
+    else
+      if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+        repo_git="$(cd "$ROOT" && cd "$(git -C "$ROOT" rev-parse --git-dir)" && pwd)"
+        cur_sha="$(git -C "$ROOT" rev-parse --verify -q HEAD 2>/dev/null || true)"
+        if git -C "$ROOT" status --porcelain 2>/dev/null | grep -q .; then
+          is_dirty=1
+        fi
+      fi
+    fi
+
+    base_sha=""
+    if [ -n "$against" ]; then
+      [ -n "$repo_git" ] || { echo "ci: cannot resolve --against '$against' without git repo" >&2; exit 2; }
+      base_sha="$(resolve_commit "$repo_git" "$against")" || { echo "ci: unknown base ref '$against'" >&2; exit 2; }
+    else
+      base_sha="$cur_sha"
+    fi
+
+    cur_dir="$OUT/current"
+    rm -rf "$cur_dir"
+    echo "ci: rendering current pictures (${#PIC_STATES[@]} states, list=$list_hash)"
+    render_pictures_checkout "$ROOT" "$cur_dir" "cur" || exit 1
+
+    base_dir=""
+    if [ -n "${CI_HOME:-}" ]; then
+      mkdir -p "$CI_HOME/cache/pictures"
+      if [ -n "$cur_sha" ]; then
+        cur_cache="$CI_HOME/cache/pictures/${cur_sha}_${list_hash}"
+        if [ ! -d "$cur_cache" ]; then
+          tmp_cur="$CI_HOME/cache/pictures/.tmp-${cur_sha}_${list_hash}-$$"
+          rm -rf "$tmp_cur"
+          cp -a "$cur_dir" "$tmp_cur"
+          (
+            flock 6
+            if [ ! -d "$cur_cache" ]; then
+              mv "$tmp_cur" "$cur_cache"
+            else
+              rm -rf "$tmp_cur"
+            fi
+          ) 6>"$CI_HOME/cache/pictures.lock"
+        fi
+      fi
+
+      [ -n "$base_sha" ] || { echo "ci: could not resolve base commit" >&2; exit 2; }
+      base_dir="$CI_HOME/cache/pictures/${base_sha}_${list_hash}"
+      if [ ! -d "$base_dir" ]; then
+        echo "ci: rendering base golden (${base_sha:0:8}_${list_hash})"
+        base_src="${CI_JOB:-$OUT}/base-src"
+        rm -rf "$base_src"
+        mkdir -p "$base_src"
+        BASE_SRC_CLEANUP="$base_src"
+        git --git-dir="$repo_git" archive "$base_sha" | tar -x -C "$base_src"
+        tmp_base="$CI_HOME/cache/pictures/.tmp-${base_sha}_${list_hash}-$$"
+        rm -rf "$tmp_base"
+        if ! render_pictures_checkout "$base_src" "$tmp_base" "base"; then
+          rm -rf "$tmp_base"
+          exit 1
+        fi
+        (
+          flock 6
+          if [ ! -d "$base_dir" ]; then
+            mv "$tmp_base" "$base_dir"
+          else
+            rm -rf "$tmp_base"
+          fi
+        ) 6>"$CI_HOME/cache/pictures.lock"
+        rm -rf "$base_src"
+        BASE_SRC_CLEANUP=""
+      else
+        echo "ci: using cached golden (${base_sha:0:8}_${list_hash})"
+      fi
+    else
+      # Local run without CI_HOME
+      if [ -n "$against" ]; then
+        base_dir="$OUT/base"
+        rm -rf "$base_dir"
+        base_src="$OUT/base-src"
+        rm -rf "$base_src"
+        mkdir -p "$base_src"
+        BASE_SRC_CLEANUP="$base_src"
+        git --git-dir="$repo_git" archive "$base_sha" | tar -x -C "$base_src"
+        render_pictures_checkout "$base_src" "$base_dir" "base" || exit 1
+        rm -rf "$base_src"
+        BASE_SRC_CLEANUP=""
+      elif [ "$is_dirty" -eq 0 ] && [ -n "$cur_sha" ]; then
+        local_cache="${XDG_CACHE_HOME:-$HOME/.cache}/arcadia/pictures/${cur_sha}_${list_hash}"
+        mkdir -p "$(dirname "$local_cache")"
+        if [ ! -d "$local_cache" ]; then
+          cp -a "$cur_dir" "$local_cache"
+        fi
+        base_dir="$local_cache"
+      else
+        base_dir="$OUT/base"
+        rm -rf "$base_dir"
+        render_pictures_checkout "$ROOT" "$base_dir" "base" || exit 1
+      fi
+    fi
+
+    mkdir -p "$OUT/heat"
+    echo "ci: comparing pictures (${base_sha:+${base_sha:0:8} -> }${cur_sha:+${cur_sha:0:8}})"
+    docker run --rm --ipc=host \
+      -v "$ROOT/tools/docker":/work:ro \
+      -v "$base_dir":/dirA:ro \
+      -v "$cur_dir":/dirB:ro \
+      -v "$OUT/heat":/heat \
+      -v lobby_pw_modules:/w:ro \
+      "$IMG" bash -c '
+        set -e
+        X=$(mktemp -d)
+        trap "rm -rf \"$X\"" EXIT
+        cp /work/*.mjs "$X"/
+        if [ -d /w/node_modules/playwright ]; then
+          ln -s /w/node_modules "$X/node_modules"
+        else
+          npm --prefix "$X" i --silent --no-save playwright@1.64.1 >/dev/null 2>&1
+        fi
+        cd "$X"
+        set +e
+        node pdiff.mjs --strict --fail-max=0 /dirA /dirB /heat
+      ' 2>&1 | grep -v "GL Driver"
+    exit ${PIPESTATUS[0]}
     ;;
   *)
     echo "ci: unknown tier '$tier'" >&2
