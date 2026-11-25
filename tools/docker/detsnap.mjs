@@ -57,8 +57,10 @@ for (const raw of jobs) {
   const { name, q, frames: jobFrames, action } = parseJob(raw);
   const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
-  // Install and pause atomically at the same timestamp so Date.now() and performance.now() have zero wall-clock slip.
+  // Install and pause atomically at the same timestamp, then trigger _replayLogOnce() at document_start so
+  // Playwright's 100 ms real-time inject timer cannot fire before module scripts load.
   await p.clock.pauseAt(new Date('2026-11-20T12:00:00Z'));
+  await p.addInitScript(() => { performance.now(); });
   await p.addInitScript(SEED);
   await p.addInitScript(BUSY);
   p.on('pageerror', (e) => { console.log(`[${name}] pageerror`, e.message); failed = true; });
