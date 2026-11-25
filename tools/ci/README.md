@@ -25,11 +25,12 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 | `snap` | `<name> <state=query>...` | Deterministic `1920x1080` screenshots (`detsnap.mjs`, 60 frames) into `$OUT/<name>/` | `quiet.lock` (shared), `gpu.lock` |
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | Pixel difference (`pdiff.mjs`) in Docker without GPU device or `gpu.lock` | `quiet.lock` (shared) |
 | `pictures` | `[--against <base>]` | Render fixed 34-state suite (`tools/ci/pictures.txt`), cache goldens by `<sha>_<list_hash>`, compare with `pdiff.mjs --strict --fail-max=0` | `quiet.lock` (shared), `gpu.lock`, `pictures.lock` |
+| `e2e` | `[playwright args...]` | Playwright Test suite (`tests/e2e/run.mjs`) in `mcr.microsoft.com/playwright:v1.65.1-noble` (parallel non-`@timing`, then serial `@timing`) | `quiet.lock` (shared), `gpu.lock` |
 
 ## Locks
 
 - **`$CI_HOME/quiet.lock`**: acquired by `/srv/arcadia/bin/ci` before `run.sh` (shared `-s` for all tiers except `bench`, which takes exclusive `-x` so benchmarks run alone). `tools/ci/run.sh` never re-acquires `quiet.lock`.
-- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`, `pictures`) when `CI_HOME` is set.
+- **`$CI_HOME/gpu.lock`**: acquired by `tools/ci/run.sh` around GPU/browser tiers (`smoke`, `script`, `suite`, `bench`, `snap`, `pictures`, `e2e`) when `CI_HOME` is set.
 - **`$CI_HOME/cache/pack.lock`**: acquired around packing rooms into `$CI_HOME/cache/assets/<key>`.
 - **`$CI_HOME/cache/pictures.lock`**: acquired around atomic golden directory swaps into `$CI_HOME/cache/pictures/<commit_sha>_<list_hash>/`.
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run one CI check tier on this checkout, either under /srv/arcadia/bin/ci (CI_JOB + CI_HOME) or standalone locally.
 #   tools/ci/run.sh <tier> [args...]
-# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>]
+# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>] | e2e [playwright args...]
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -23,6 +23,7 @@ if [ -n "${ASSETS:-}" ]; then
   fi
 fi
 IMG="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
+E2E_IMG="${PLAYWRIGHT_E2E_IMAGE:-mcr.microsoft.com/playwright:v1.65.1-noble}"
 BASE_SRC_CLEANUP=""
 cleanup_run() {
   [ -n "$BASE_SRC_CLEANUP" ] && rm -rf "$BASE_SRC_CLEANUP" || true
@@ -195,6 +196,35 @@ pw_for() {
 pw() {
   local s="${1:?missing script}"; shift
   pw_for "$ROOT" "$ASSETS" "$OUT" "$s" "$@"
+}
+
+run_e2e() {
+  mkdir -p "$OUT/test-results" "$OUT/playwright-report"
+  local dev=()
+  [ -d /dev/dri ] && dev=(--device /dev/dri)
+  local assets_mount=()
+  if [ "$ASSETS" != "$ROOT/public/assets" ]; then
+    assets_mount=(-v "$ASSETS":/repo/public/assets:ro)
+  fi
+  docker run --rm --init --ipc=host "${dev[@]}" \
+    -e CI=1 \
+    -e PLAYWRIGHT_OUTPUT_DIR=/out/test-results \
+    -e PLAYWRIGHT_HTML_REPORT=/out/playwright-report \
+    -e SITE_DIR=/repo/public \
+    -e ASSETS=/repo/public/assets \
+    -v "$ROOT":/repo:ro \
+    "${assets_mount[@]}" \
+    -v "$OUT":/out \
+    "$E2E_IMG" bash -c '
+      set -e
+      TMP_E2E=$(mktemp -d /out/e2e-tmp.XXXXXX)
+      trap "rm -rf \"$TMP_E2E\"" EXIT
+      export TMPDIR="$TMP_E2E"
+      cd /repo
+      set +e
+      xvfb-run -a -s "-screen 0 1280x720x24" node tests/e2e/run.mjs "$@"
+    ' _ "$@" 2>&1 | grep -v "GL Driver"
+  return ${PIPESTATUS[0]}
 }
 
 resolve_commit() {
@@ -466,6 +496,26 @@ case "$tier" in
         node pdiff.mjs --strict --fail-max=0 /dirA /dirB /heat
       ' 2>&1 | grep -v "GL Driver"
     exit ${PIPESTATUS[0]}
+    ;;
+  e2e)
+    assets
+    site || exit 1
+    log_dir="${CI_JOB:-$OUT}"
+    mkdir -p "$log_dir"
+    if command -v pnpm >/dev/null 2>&1; then
+      ( cd "$ROOT" && pnpm install --frozen-lockfile --ignore-scripts ) > "$log_dir/pnpm.log" 2>&1 || {
+        echo "ci: pnpm install failed, see $log_dir/pnpm.log" >&2
+        tail -20 "$log_dir/pnpm.log" >&2 || true
+        exit 1
+      }
+    else
+      ( cd "$ROOT" && npx --yes pnpm@12.23.0 install --frozen-lockfile --ignore-scripts ) > "$log_dir/pnpm.log" 2>&1 || {
+        echo "ci: pnpm install failed, see $log_dir/pnpm.log" >&2
+        tail -20 "$log_dir/pnpm.log" >&2 || true
+        exit 1
+      }
+    fi
+    gpu run_e2e "$@"
     ;;
   *)
     echo "ci: unknown tier '$tier'" >&2
