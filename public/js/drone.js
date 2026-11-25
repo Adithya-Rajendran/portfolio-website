@@ -66,50 +66,57 @@ const gilt = (v) => canvasTex(512, 720, (c, w, h) => {             // tooling on
   c.beginPath(); c.arc(w / 2, 580, 30, 0, TAU); c.stroke(); c.beginPath(); c.ellipse(w / 2, 580, 48, 14, -0.4, 0, TAU); c.stroke();
 });
 
-// ---- static geometry merging: bake local transforms relative to `target` and merge per material to cut draw calls
-const _inv = new THREE.Matrix4(), _m = new THREE.Matrix4();
-function mergeStatic(target, skip, casters) {
-  target.updateMatrixWorld(true);
-  _inv.copy(target.matrixWorld).invert();
-  const buckets = new Map(), parents = new Set(), replaced = new Set();
-  const walk = (node) => {
-    for (const c of [...node.children]) {
-      if (skip?.has(c)) continue;
-      if (c.isMesh) {
-        let b = buckets.get(c.material);
-        if (!b) buckets.set(c.material, b = []);
-        b.push(c);
-      } else {
-        parents.add(c);
-        walk(c);
+// ---- one draw for each material. The drone and its books are about a hundred meshes in a few materials. Each mesh stays where
+// it is in the scene graph: it moves as it did and casts the window sun's shadow (layer 1, room.js), but it leaves layer 0, and
+// the camera's passes draw all the meshes of one material with one mesh. Its vertex shader takes each part's matrices from a
+// small float texture: the same float32 matrices three.js would give that part, computed the same way, so each pixel is what it
+// was when the parts were drawn one by one. (Baking the parts' transforms into one geometry is not: the rounding differs and
+// moves a few samples on the edges.) A part that is hidden, or under something hidden, gets zero matrices and draws nothing.
+const PART = 12;                                    // texels a part: modelViewMatrix (4), normalMatrix (3 and a spare), modelMatrix (4)
+const _mv = new THREE.Matrix4(), _nm = new THREE.Matrix3();
+const PART_VERT = `attribute float aPart; uniform highp sampler2D tParts;
+mat4 partMat(int c, int r) { return mat4(texelFetch(tParts, ivec2(c, r), 0), texelFetch(tParts, ivec2(c + 1, r), 0), texelFetch(tParts, ivec2(c + 2, r), 0), texelFetch(tParts, ivec2(c + 3, r), 0)); }
+void main() {
+  int partRow = int(aPart + 0.5); mat4 partMV = partMat(0, partRow), partM = partMat(8, partRow);
+  mat3 partNM = mat3(texelFetch(tParts, ivec2(4, partRow), 0).xyz, texelFetch(tParts, ivec2(5, partRow), 0).xyz, texelFetch(tParts, ivec2(6, partRow), 0).xyz);
+#define modelViewMatrix partMV
+#define modelMatrix partM
+#define normalMatrix partNM
+`;
+function drawTogether(owner, meshes) {
+  const byMat = new Map();
+  for (const m of meshes) {
+    const mat = m.material, g = m.geometry;
+    if (!mat?.isMeshStandardMaterial || mat.transparent || g.morphAttributes.position || g.groups.length || !g.index) continue;
+    if (!byMat.has(mat)) byMat.set(mat, []);
+    byMat.get(mat).push(m);
+  }
+  for (const [mat, parts] of byMat) {
+    if (parts.length < 2) continue;
+    const geos = parts.map((p, i) => { const g = p.geometry.clone(); g.setAttribute('aPart', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(i), 1)); return g; });
+    const geometry = mergeGeometries(geos); for (const g of geos) g.dispose();
+    if (!geometry) continue;                                                     // parts whose attributes differ are left as they are
+    const data = new Float32Array(PART * 4 * parts.length), tex = new THREE.DataTexture(data, PART, parts.length, THREE.RGBAFormat, THREE.FloatType);
+    tex.magFilter = tex.minFilter = THREE.NearestFilter;
+    // the material serves this one mesh now; room.js (receiveWindowSun) sets its own onBeforeCompile later, so both are kept
+    let inner = mat.onBeforeCompile, key = mat.customProgramCacheKey;
+    const patch = (shader, renderer) => { inner.call(mat, shader, renderer); shader.uniforms.tParts = { value: tex }; shader.vertexShader = shader.vertexShader.replace('void main() {', PART_VERT); };
+    Object.defineProperty(mat, 'onBeforeCompile', { get: () => patch, set: (f) => { inner = f; } });
+    Object.defineProperty(mat, 'customProgramCacheKey', { get: () => () => `${key.call(mat)}:parts`, set: (f) => { key = f; } });
+    mat.needsUpdate = true;
+    const out = new THREE.Mesh(geometry, mat); out.name = 'drawn together'; out.frustumCulled = false; out.raycast = () => {};
+    out.onBeforeRender = (renderer, scene, camera) => {
+      for (let i = 0, o = 0; i < parts.length; i++, o += PART * 4) {
+        let shown = true; for (let a = parts[i]; a && a !== owner; a = a.parent) if (!a.visible) { shown = false; break; }
+        if (!shown) { data.fill(0, o, o + PART * 4); continue; }
+        _mv.multiplyMatrices(camera.matrixWorldInverse, parts[i].matrixWorld); _nm.getNormalMatrix(_mv);       // as three.js does for a mesh
+        const n = _nm.elements; data.set(_mv.elements, o); data.set(parts[i].matrixWorld.elements, o + 32);
+        for (let c = 0; c < 3; c++) { data[o + 16 + 4 * c] = n[3 * c]; data[o + 17 + 4 * c] = n[3 * c + 1]; data[o + 18 + 4 * c] = n[3 * c + 2]; data[o + 19 + 4 * c] = 0; }
       }
-    }
-  };
-  walk(target);
-  for (const [mat, meshes] of buckets) {
-    if (meshes.length === 1 && meshes[0].parent === target) continue;
-    const geos = [];
-    for (const mesh of meshes) {
-      _m.multiplyMatrices(_inv, mesh.matrixWorld);
-      mesh.geometry.applyMatrix4(_m);
-      geos.push(mesh.geometry);
-      mesh.parent.remove(mesh);
-      replaced.add(mesh);
-    }
-    const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
-    if (!merged) throw new Error('drone: mergeGeometries failed');
-    if (geos.length > 1) for (const g of geos) g.dispose();
-    const out = new THREE.Mesh(merged, mat);
-    target.add(out);
-    if (casters && mat.isMeshStandardMaterial && !mat.transparent) casters.push(out);
-  }
-  for (const p of [...parents].reverse()) {
-    if (p.children.length === 0) p.parent?.remove(p);
-  }
-  if (casters && replaced.size) {
-    let w = 0;
-    for (let i = 0; i < casters.length; i++) if (!replaced.has(casters[i])) casters[w++] = casters[i];
-    casters.length = w;
+      tex.needsUpdate = true;
+    };
+    owner.add(out);
+    for (const p of parts) p.layers.disable(0);
   }
 }
 
@@ -143,7 +150,6 @@ function makeBook(v, i, mats) {
   book.add(spine); box(spine, 0.006, BT, BH, -0.003, half, 0, leather);
   for (const z of [-0.12, -0.06, 0.06, 0.12]) box(spine, 0.009, BT + 0.002, 0.007, -0.0035, half, z, leather);
   box(spine, 0.0065, BT * 0.7, 0.04, -0.0034, half, -0.005, brass);
-  mergeStatic(spine);
   box(book, 0.012, 0.0008, 0.07, BW * 0.55, half + 0.001, BH / 2 + 0.02, std(0x7a1410, 0, 0.7));       // a ribbon marker
   book.userData.open = (k) => { left.rotation.z = k * PI; spine.rotation.z = k * PI / 2; pl.morphTargetInfluences[0] = pr.morphTargetInfluences[0] = k; };
   return book;
@@ -178,7 +184,6 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   add(body, new THREE.CylinderGeometry(0.009, 0.009, 0.02, 12), M.glass, (m) => { m.rotation.x = PI / 2; m.position.set(0.05, -0.002, -0.15); });
   const leds = [-1, 0, 1].map((i) => add(body, new THREE.SphereGeometry(0.0035, 8, 6), glow(new THREE.Color(2.2, 1.2, 0.4)), (m) => m.position.set(i * 0.014, 0.012, 0.166)));
   // ---- four ducted rotors on arms: motor pod, three stator struts, the duct with a brass lip, a three-bladed rotor, a foot
-  const portGlow = glow(new THREE.Color(2.2, 0.4, 0.2)), stbdGlow = glow(new THREE.Color(0.3, 2.0, 0.6));
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     const c = V(sx * 0.215, 0.014, sz * 0.195), root_ = V(sx * 0.1, 0.004, sz * 0.105), pod = new THREE.Group(); pod.position.copy(c); body.add(pod);
     between(root_, c, 0.017, 0.011, M.graphite); add(body, new THREE.SphereGeometry(0.02, 12, 8), M.ceramic, (m) => { m.position.copy(root_); m.scale.y = 0.7; });
@@ -191,9 +196,8 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     const rotor = new THREE.Group(); rotor.position.y = 0.012; pod.add(rotor); rotors.push(rotor);
     for (let k = 0; k < 3; k++) { const g = new THREE.Group(); g.rotation.y = k * TAU / 3; rotor.add(g); add(g, new THREE.BoxGeometry(0.07, 0.0025, 0.02), M.blade, (m) => { m.position.set(0.05, 0, 0); m.rotation.x = 0.3; }); }
     add(rotor, new THREE.CylinderGeometry(0.012, 0.012, 0.01, 12), M.brass);
-    mergeStatic(rotor, undefined, casters);
     discs.push(add(pod, new THREE.CircleGeometry(0.09, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.45, 0.55, 0.7), opacity: 0, side: THREE.DoubleSide, ...GLOW }), (m) => { m.position.y = 0.012; m.rotation.x = -PI / 2; }));
-    add(pod, new THREE.SphereGeometry(0.004, 8, 6), sx < 0 ? portGlow : stbdGlow, (m) => m.position.set(sx * 0.108, 0, 0));   // running lights
+    add(pod, new THREE.SphereGeometry(0.004, 8, 6), glow(sx < 0 ? new THREE.Color(2.2, 0.4, 0.2) : new THREE.Color(0.3, 2.0, 0.6)), (m) => m.position.set(sx * 0.108, 0, 0));   // running lights
   }
   // ---- the tray: carried flat under the belly with the book on it; to present, it drops on two rods and tilts like a lectern
   const tray = new THREE.Group(), TW = 0.56, TD = 0.4, HINGE = V(0, -0.105, 0.15); tray.position.copy(HINGE); body.add(tray);
@@ -202,16 +206,16 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     add(tray, new THREE.CylinderGeometry(0.006, 0.006, 0.03, 10), M.brass, (m) => { m.rotation.z = PI / 2; m.position.set(sx * 0.07, -0.002, 0); }); }
   add(tray, new THREE.BoxGeometry(TW, 0.022, 0.006), M.brass, (m) => m.position.set(0, 0.008, -TD)); add(tray, new THREE.BoxGeometry(TW, 0.012, 0.006), M.brass, (m) => m.position.set(0, 0.003, 0));
   for (const x of [-0.14, 0.14]) add(tray, new THREE.BoxGeometry(0.03, 0.004, TD * 0.8), M.rubber, (m) => m.position.set(x, 0.001, -TD / 2));            // pads the book rests on
-  mergeStatic(tray, undefined, casters);
-  const rodGeos = [-1, 1].map((sx) => new THREE.CylinderGeometry(0.005, 0.005, 1, 8).translate(sx * 0.07, -0.5, 0));
-  const rods = add(body, mergeGeometries(rodGeos, false), M.brass, (m) => m.position.set(0, -0.04, 0.15));
-  for (const g of rodGeos) g.dispose();
+  const rods = [-1, 1].map((sx) => add(body, new THREE.CylinderGeometry(0.005, 0.005, 1, 8).translate(0, -0.5, 0), M.brass, (m) => m.position.set(sx * 0.07, -0.04, 0.15)));
   for (const sx of [-1, 1]) add(body, new THREE.BoxGeometry(0.02, 0.05, 0.03), M.graphite, (m) => m.position.set(sx * 0.07, -0.03, 0.13));
-  mergeStatic(body, new Set([gimbal, tray, rods, tip, ...leds, ...rotors, ...discs]), casters);
   // the books: one per volume, made once; the one in hand sits on the tray, turned to face whoever the drone faces
   const books = volumes.map((v, i) => { const b = makeBook(v, i, M); b.rotation.y = PI; b.position.set(0, 0.004, -TD / 2); b.visible = false; tray.add(b); return b; });
   for (const b of books) b.traverse((o) => { if (o.isMesh) casters.push(o); });
   for (const m of casters) m.layers.enable(1);                    // they cast shadows in the sunlight (see room.js)
+  // each book's meshes are drawn by meshes of its own (a hidden book costs nothing), the rest of the drone's by meshes on the root
+  const inBooks = new Set(), ofDrone = [];
+  for (const b of books) { const mine = []; b.traverse((o) => { if (o.isMesh) { mine.push(o); inBooks.add(o); } }); drawTogether(b, mine); }
+  body.traverse((o) => { if (o.isMesh && !inBooks.has(o)) ofDrone.push(o); }); drawTogether(root, ofDrone);
   body.scale.setScalar(1.15); root.name='Catalogue drone'; root.add(body); root.position.copy(dock); scene.add(root);
 
   // ---- flight: a queue of legs, each "go to p, then do this". Flying = any leg left, or away from the cradle.
@@ -259,7 +263,7 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
     present.to = +(shown >= 0 || (!!leg?.lower && leg.k > 0.75)); opened.to = +(shown >= 0 && present.x > 0.9);      // the tray is on its way down as the drone comes in over the table
     const p = present.step(dt), o = opened.step(dt), drop = 0.24 * p;
     if (opened.x > 0.03) present.x = Math.max(present.x, 0.9);                           // the tray waits for the book to shut
-    tray.position.set(HINGE.x, HINGE.y - drop, HINGE.z); tray.rotation.x = -0.96 * p; rods.scale.y = 0.065 + drop;
+    tray.position.set(HINGE.x, HINGE.y - drop, HINGE.z); tray.rotation.x = -0.96 * p; for (const r of rods) r.scale.y = 0.065 + drop;
     if (held >= 0) books[held].userData.open(o);
   }
   /** Everything PBR here is lit by this environment map (room.js renders it from the room). */
