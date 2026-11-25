@@ -3,7 +3,7 @@ import { attachErrorCollector, expect, test } from '../fixtures/site.ts';
 test.use({ viewport: { width: 960, height: 540 } });
 
 test('view: landing page loads and renders WebGL frame across browser engines', async ({ page }, testInfo) => {
-  test.setTimeout(660_000);
+  test.setTimeout(360_000);
   const errors = attachErrorCollector(page);
   // Software-rendered Firefox draws about one frame in ten seconds at full size (the intro advances per frame, 50 ms of
   // scene time each), so it is pinned to the cheap tier at half scale; the other engines load the page as a visitor does.
@@ -20,7 +20,7 @@ test('view: landing page loads and renders WebGL frame across browser engines', 
     loaderDone: boolean;
   } | null = null;
 
-  while (Date.now() - t0 < 600_000) {
+  while (Date.now() - t0 < 300_000) {
     state = await page.evaluate(() => ({
       lobby: !!(window as any).__lobby,
       intro: (window as any).__lobby ? (window as any).__lobby.ready() : -1,
