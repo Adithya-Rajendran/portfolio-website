@@ -187,5 +187,5 @@ function frame() {
     t.el.style.display = show ? '' : 'none'; if (show) { t.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; t.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px'; } }
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }
-for (const r of ROOMS) r.glb ? addRoom(r).then(() => q.get('room') === r.id && select(r)) : addPlanned(r);
+for (const r of ROOMS) r.glb ? addRoom(r).then(() => location.hash.slice(1) === r.id && select(r)) : addPlanned(r);
 frame(); window.__bp = { ready: () => picks.length >= ROOMS.length };

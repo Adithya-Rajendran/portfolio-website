@@ -169,7 +169,7 @@ should get the same depth-only child (item 3) and enable layer 1 to cast sunligh
 ## Reproduce
 
 ```
-tools/dbench.sh "?room=lobby&shot=hero&scale=1&tier=1" 5          # frame / GPU / memory / requests
+tools/dbench.sh "?shot=hero&scale=1&tier=1" 5          # frame / GPU / memory / requests
 ORIGIN=http://<host>:<port> tools/detsnap.sh base                  # 24 deterministic states of some other checkout
 tools/detsnap.sh final && tools/pdiff.sh base final                # max / mean pixel difference per state
 ```

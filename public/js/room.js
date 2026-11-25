@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { DEV } from './dev.js';
+import { DEV } from './dev.js';                    // strict mode (a missing or unused texture throws) on every DEV host, LAN and tailnet previews included; see dev.js
 import { Q, SKIP, num, B, V, VERT, DIST, DSCALE, ADD, GLOW, uTime, uPx, uMirror, cloud, dispose } from './kit.js';
 import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';

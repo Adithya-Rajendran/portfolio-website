@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 import { params } from './dev.js';
-export const Q = params();                                       // the address's switches: only ?room= off a DEV host (dev.js)
+export const Q = params();                                       // the address's switches: none off a DEV host (dev.js)
 export const SKIP = new Set((Q.get('skip') || '').split(','));    // profiling switches: sunlight, mirror, bloom, holo, dust, shaft, storms, zpre
 export const num = (k, d) => (Q.has(k) && !Number.isNaN(parseFloat(Q.get(k))) ? parseFloat(Q.get(k)) : d);
 export const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
