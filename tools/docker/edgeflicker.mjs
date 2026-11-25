@@ -1,5 +1,5 @@
 // Temporal flicker measure (tools/ci/run.sh script edgeflicker.mjs ...).
-//   node edgeflicker.mjs <origin|-> <frames> <name=query[|still]>...
+//   node edgeflicker.mjs <origin|-> <frames> <name=path-and-query[|still]...>...      e.g. 'lib=/writing/?shot=hero&scale=1&tier=0'
 // Loads each state at 1920x1080 under a paused clock (exact 16 ms steps, seeded Math.random, as detsnap.mjs), lets it
 // settle, then records <frames> consecutive frames. "|still" holds the camera where it settled (the sun and everything
 // else still move); without it the camera keeps its slow sway. Per pixel (luma 0-255):
