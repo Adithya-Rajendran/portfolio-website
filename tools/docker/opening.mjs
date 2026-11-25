@@ -9,7 +9,7 @@
 //   reduced motion, in each: the page of words is in its place from the first moment it shows (the recorder's astray: never outside the viewport)
 // "ok" / "FAIL [profile item] what"; exit code 1 if any check failed. Frames are slow here: everything waits on a condition.
 import { PROFILES, ORIGIN, load, json, suite, launch, context, spy, open, until, snap, sources, rayHits, readNow, frameChecks, leave, focus } from './rooms.kit.mjs';
-import { sleep, WAYS, GATE, gate, look, camStill, boxCorners, dstate } from './r2.kit.mjs';
+import { sleep, WAYS, GATE, gate, look, camStill, boxCorners, dstate, sampled } from './r2.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('opening'), { chk, note } = S;
 const { projects, content } = await load(), scene = await json('/assets/about/scene.json'), books = scene.focus[0].boxes, bookCorners = boxCorners(books);
 const b = await launch();
@@ -36,7 +36,7 @@ async function run(name) {
     const ex = src[0]; await focus(p, ex.i); await camStill(p); await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000);
     let l = await look(p); chk('F', l.live && l.glyph, 'an exhibit in focus: READ is offered (the glyph is shown)', l);
     await p.evaluate(() => window.__w.mark()); let r = await readNow(p, phone, 'glyph'); await sleep(300); let rec = await p.evaluate(() => window.__w.mark());
-    chk('F', r.ok, 'READ on an exhibit opens its article');
+    sampled(S, 'F', rec, 'an exhibit being read'); chk('F', r.ok, 'READ on an exhibit opens its article');
     if (still) chk('F', rec.astray < 1, 'an exhibit: reduced motion: the page of words is in its place from the first moment it shows (never outside the viewport)', rec.astray);
     if (!still) {
       chk('F', rec.states.includes('scanning') && rec.states.at(-1) === 'open', 'an exhibit: the reader goes scanning, then open', rec.states);
@@ -52,7 +52,7 @@ async function run(name) {
       await p.evaluate(() => window.__w.mark());
       if (via === 'button') await p.evaluate(() => document.querySelector('.hero .cta').click()); else await p.evaluate((u) => window.__lobby.reader.read(u), url);
       const ok = await until(p, () => window.__lobby.reader.state() === 'open', null, 120000); await sleep(300); rec = await p.evaluate(() => window.__w.mark());
-      chk('F', ok, `${tag}: it opens`);
+      sampled(S, 'F', rec, tag); chk('F', ok, `${tag}: it opens`);
       if (still) chk('F', rec.astray < 1, `${tag}: reduced motion: the page of words is in its place from the first moment it shows (never outside the viewport)`, rec.astray);
       chk('F', (still || rec.states.includes('scanning')) && none(rec, ['ReadGlyph', 'ScanFan', 'ScanSheet', 'ScanBody', 'ReadBeam']).length === 0 && !rec.live,      // (reduced motion: a cut, the state between may last less than a look)
         `${tag}: no READ glyph at any time, no ScanFan, ScanSheet, ScanBody or ReadBeam, and the READ pick is never live`, { max: rec.max, live: rec.live, states: rec.states });
@@ -96,10 +96,20 @@ async function run(name) {
       for (const [k, e] of rx.each.entries()) { const x = (e.l + e.r) / 2, y = (e.t + e.b) / 2, hits = await rayHits(p, x, y); chk('L', e.ok && x > 0 && x < W && y > 0 && y < H && hits[0]?.[0] === bk, `a ${phone ? 'tap' : 'click'} at the middle of book ${k + 1} (${Math.round(x)}, ${Math.round(y)}) reaches the pick`, { hits: hits.slice(0, 3), pick: bk }); }
       if (!phone) {
         // the lock lies on the books, with the pointer on them and the view swaying under it
+        let ptr = [0, 0];                                         // where the pointer was put last, for the detail of a FAIL
+        // what lies under the pointer now (one ray, no retry), the books' rectangles, and the display's state: said when the lock is not where it should be
+        const under = (p) => p.evaluate(async ({ pts, x, y }) => {
+          const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live()); l.camera.updateMatrixWorld(true);
+          for (const q of live) q.mesh.updateWorldMatrix(true, false); ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
+          const proj = (set) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const c of set) { const v = new THREE.Vector3(...c).project(l.camera), px = (v.x * 0.5 + 0.5) * innerWidth, py = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); } return [x0, y0, x1, y1].map(Math.round); };
+          const d = l.display.state();
+          return { pointer: [x, y].map(Math.round), hits: ray.intersectObjects(live.map((q) => q.mesh), false).map((h) => l.picks.findIndex((q) => q.mesh === h.object)), books: pts.map(proj), mode: l.mode(), gliding: d.gliding, named: d.named, hint: d.hint };
+        }, { pts: bookCorners, x: ptr[0], y: ptr[1] });
         const onBooks = async (target) => {
           for (let i = 0; i < 10; i++) {
-            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; await p.mouse.move((e.l + e.r) / 2, (e.t + e.b) / 2, { steps: 3 }); await sleep(700);
-            const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - (e.l + e.r) / 2) < 8) return true;
+            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); await sleep(700);
+            // the view follows the pointer: settled once the lock is on and the target has stayed under the pointer, across and up and down
+            const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - ptr[0]) < 8 && Math.abs((f.t + f.b) / 2 - ptr[1]) < 8) return true;
           }
           return false;
         };
@@ -108,7 +118,7 @@ async function run(name) {
           for (let k = 0; k < 3 && got; k++) {
             await sleep(900); const s = await rectOf(p), [x, y, w, h] = s.lock?.rect ?? [0, 0, 0, 0], a = s.all, tol = 2.5, pad = 6;
             chk('L', !!s.lock && x <= a.l - pad + tol && x >= a.l - pad - tol && y <= a.t - pad + tol && y >= a.t - pad - tol && x + w >= a.r + pad - tol && x + w <= a.r + pad + tol && y + h >= a.b + pad - tol && y + h <= a.b + pad + tol,
-              `${what} (look ${k + 1}): the lock's rectangle is the projected corners of focus[0].boxes, 6 px out (eye ${s.eye.map((v) => v.toFixed(3)).join(',')})`, { lock: s.lock, books: [a.l, a.t, a.r, a.b].map(Math.round) });
+              `${what} (look ${k + 1}): the lock's rectangle is the projected corners of focus[0].boxes, 6 px out (eye ${s.eye.map((v) => v.toFixed(3)).join(',')})`, { lock: s.lock, books: [a.l, a.t, a.r, a.b].map(Math.round), ...(s.lock ? {} : { under: await under(p) }) });
           }
         }
         await p.mouse.move(W - 4, 4); await until(p, () => !window.__lobby.display.state().lock, null, 15000);
@@ -117,7 +127,7 @@ async function run(name) {
       await focus(p, bk); await camStill(p); await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000);
       const l = await look(p); chk('L', l.live && l.glyph, 'the books in focus: READ is offered', l);
       await p.evaluate(() => window.__w.mark()); const r = await readNow(p, phone, 'glyph'); await sleep(300); const rec = await p.evaluate(() => window.__w.mark());
-      chk('L', r.ok, 'READ opens the article');
+      sampled(S, 'L', rec, 'the books being read'); chk('L', r.ok, 'READ opens the article');
       if (still) chk('L', rec.astray < 1, 'reduced motion: the page of words is in its place from the first moment it shows (never outside the viewport)', rec.astray);
       if (!still) {
         chk('L', rec.states.includes('scanning') && rec.states.at(-1) === 'open', 'the reader goes scanning, then open', rec.states);
@@ -147,7 +157,7 @@ async function run(name) {
     await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000);
     let l = await look(p); chk('N', l.live && l.glyph, 'a station in focus: READ is offered under it', l);
     await p.evaluate(() => window.__w.mark()); const r = await readNow(p, phone, 'glyph', 120000); await sleep(300); const rec = await p.evaluate(() => window.__w.mark());
-    chk('N', r.ok, 'READ on a station opens its entry');
+    sampled(S, 'N', rec, 'a station being read'); chk('N', r.ok, 'READ on a station opens its entry');
     if (still) chk('N', rec.astray < 1, 'reduced motion: the page of words is in its place from the first moment it shows (never outside the viewport)', rec.astray);
     chk('N', (still || rec.states.includes('scanning')) && rec.states.at(-1) === 'open', still ? 'the reader is open (reduced motion: a cut)' : 'the reader goes scanning, then open', rec.states);
     chk('N', rec.word < 0.5, 'asked, the glyph shuts saying READ: it never says SCANNING', rec.word);

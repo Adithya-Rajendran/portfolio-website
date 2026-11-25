@@ -41,7 +41,7 @@ All 44 task cards from `docs/program-plan.md` §7.1:
 | O6a | The orrery's reflection costs less CPU | opt | A | O6b | S | pending | — | — |
 | O6b | World matrices are updated once a frame | opt | A | P0 | S | done | `prog/O6b-matrices` / PR #206 (`c2e8bb63` -> `2ff2e0e8`) | HD 630 `umw_incl_ms` `1.472 -> 0.166 ms/frame` (Challenger `0.9181 -> 0.1993 ms/frame`), 0 pixel diff |
 | O6c | The Library's drone is a few meshes | opt | A | I2 | M | pending | — | — |
-| O6d | One primitive for each baked group | opt | A | I2 | S | pending | — | — |
+| O6d | One primitive for each baked group | opt | A | I2 | S | closed | `prog/O6d-one-primitive` (no PR) | Every baked group was already one primitive; the only split mesh is the static strips, whose merge changes pictures. Draw calls unchanged; deferred by the owner until after the refactor (D14). |
 | O7 | Small textures first | opt | B | O2, O6d, F1 | L | pending | — | — |
 | O8 | The report and the budgets | opt | D | every other O task | S | pending | — | — |
 | F1 | A build step, and nothing else changes | found | freeze | gate G1, during the layout freeze | L | pending | — | — |
