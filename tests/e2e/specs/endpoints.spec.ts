@@ -91,7 +91,7 @@ const PROFILE_SHAPE: ShapeSpec = {
   contact: {
     intro: 'string',
     invitation: 'string',
-    email: 'null',
+    links: [{ label: 'string', url: 'string' }],
     routes: [{ id: 'string', title: 'string', prompt: 'string' }],
   },
   resume: 'string?',
@@ -158,6 +158,7 @@ test('endpoints: feed, sitemap, llms, robots, resume, and JSON contracts match',
     ...profile.curiosities.map((c: { url: string | null }) => c.url).filter(Boolean),
     ...profile.timeline.map((e: { url: string }) => e.url),
     ...profile.links.map((l: { url: string }) => l.url),
+    ...(profile.contact?.links ?? []).map((l: { url: string }) => l.url),
     ...(profile.resume ? [profile.resume] : []),
   ];
   const seen = new Map<string, string>();
