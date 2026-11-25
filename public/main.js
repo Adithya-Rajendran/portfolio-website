@@ -86,8 +86,10 @@ const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3000), maxAniso = re
 const mirror = { cam: new THREE.PerspectiveCamera(), vp: new THREE.Matrix4(), size: new THREE.Vector2(4, 4), pxPerRad: { value: 500 }, minLod: { value: 0 },
   rt: new THREE.WebGLRenderTarget(4, 4, { type: HDR_OK ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true,
     minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, samples: 4, resolveDepthBuffer: false }) };     // MSAA: thin light strips must not alias in it
+// Live tuning: ?bloom=<multiplier> scales the bloom strength of every room (1 = as authored, 0 = none); ?bloomth=<luma> sets the
+// brightness above which light blooms (authored 1.3, scene-linear before exposure). Both are harmless when absent.
 const post = new Post(renderer, { hdr: HDR_OK, packed: FLOAT, msaa: 4, look: { contrast: num('contrast', 1.3), saturation: num('sat', 1.08),
-  bloom: num('bloom', 0.05), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
+  bloom: 0.05 * num('bloom', 1), threshold: num('bloomth', 1.3), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
 let room = null, busy = false;
 
 // Quality tiers. 0: 4x MSAA on the scene and on the mirror image (cheap on discrete GPUs, ~45% of the frame on an
