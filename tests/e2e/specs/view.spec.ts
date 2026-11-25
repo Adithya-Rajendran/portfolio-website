@@ -5,7 +5,10 @@ test.use({ viewport: { width: 960, height: 540 } });
 test('view: landing page loads and renders WebGL frame across browser engines', async ({ page }, testInfo) => {
   test.setTimeout(660_000);
   const errors = attachErrorCollector(page);
-  await page.goto('/', { waitUntil: 'load', timeout: 60_000 });
+  // Software-rendered Firefox draws about one frame in ten seconds at full size (the intro advances per frame, 50 ms of
+  // scene time each), so it is pinned to the cheap tier at half scale; the other engines load the page as a visitor does.
+  const lite = testInfo.project.name === 'smoke-firefox' ? '/?tier=1&scale=0.5' : '/';
+  await page.goto(lite, { waitUntil: 'load', timeout: 60_000 });
 
   const t0 = Date.now();
   let state: {
