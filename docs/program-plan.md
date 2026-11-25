@@ -1151,7 +1151,7 @@ Branch `prog/U8-router` · after U2 to U7 · size L
 
 - **Context.** `route()`, `syncUrl()`, `readPost()`, `onLink()` and the `popstate` handler in `main.js`. Every case
   in `history.mjs` was a bug once: one history entry per reading, Back and Forward reopen without the flight, a
-  fragment is a place in a page, `?room=` still works.
+  fragment is a place in a page, and `?room=` names nothing (a path is the only way to name a room).
 - **Goal.** `@solidjs/router` owns the address. A room is an async value under a `Loading` boundary, and the engine is
   told to enter and to read. `src/legacy-shell/` is deleted.
 - **Done when.** The history specs are green; no `pushState` or `replaceState` outside the router's adapter;

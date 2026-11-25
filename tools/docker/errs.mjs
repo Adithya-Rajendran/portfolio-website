@@ -1,8 +1,8 @@
 import { chromium } from 'playwright';
 const origin = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const url = new URL(process.argv[2] || '/', origin), rooms = (await (await fetch(new URL('/content.json', url))).json()).rooms;
-// the room a URL names: by its path (content.json "path"), or the older ?room=
-const first = `/${url.pathname.split('/')[1]}/`.replace('//', '/'), room = (first !== '/' && Object.keys(rooms).find((id) => rooms[id].path === first)) || url.searchParams.get('room') || 'lobby';
+// the room a URL names: by its path (content.json "path"); any other address is the Atrium
+const first = `/${url.pathname.split('/')[1]}/`.replace('//', '/'), room = (first !== '/' && Object.keys(rooms).find((id) => rooms[id].path === first)) || 'lobby';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
   const p = await b.newPage({ viewport: { width: 960, height: 540 } });

@@ -251,6 +251,7 @@ case "$tier" in
       cd "$ROOT" &&
       python3 tools/content.py &&
       for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done &&
+      node --test tools/test_*.mjs &&
       python3 tools/site.py > /dev/null
     )
     ;;
@@ -258,7 +259,7 @@ case "$tier" in
     assets
     site || exit 1
     bad=0
-    for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do
+    for u in "/" "/about/" "/portfolio/" "/experience/" "/contact/" "/blog/"; do
       gpu dt errs.mjs "http://127.0.0.1:8080$u" || bad=1
     done
     exit "$bad"

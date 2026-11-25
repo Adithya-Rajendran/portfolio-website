@@ -1,6 +1,7 @@
 // Check actual packed lighting, not just different screenshots of different views.
 // node lighting.mjs URL [output-directory] [spec|shadow|caster|all]
 import { chromium } from 'playwright';
+import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const [base,out,which='all']=process.argv.slice(2), errors=[];
@@ -11,7 +12,7 @@ try {
   p.on('pageerror',e=>errors.push(e.message)); p.on('requestfailed',r=>errors.push(r.url()));
   p.on('console',m=>{if(m.type()==='error')errors.push(m.text());}); p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
   async function load(room,params={}){
-    const u=new URL(base);u.search=new URLSearchParams({room,shot:'hero',lightcheck:1,scale:1,tier:1,roll:120,chand:0,grain:0,bloom:0,vig:0,skip:'dust',...params});
+    const u=new URL(base);u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({shot:'hero',lightcheck:1,scale:1,tier:1,roll:120,chand:0,grain:0,bloom:0,vig:0,skip:'dust',...params});
     await p.goto(u.href);await p.waitForFunction(r=>window.__lobby?.mode().room===r&&document.querySelector('#loader.done'),room,{timeout:120000});
   }
   async function save(result){

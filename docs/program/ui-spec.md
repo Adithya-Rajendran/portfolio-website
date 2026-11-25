@@ -39,7 +39,7 @@ An inline synchronous `<script>` in `<head>` (before stylesheets/body paint) set
 
 - Must stay synchronous in `<head>` in the Vite `index.html` shell so `tools/site.py --shell` embeds it into every generated page (`D2`, `D3`, `U7`).
 - Article deep-links (`/blog/<slug>/` and `/portfolio/<slug>/`) start in `'reading'`.
-- All room URLs (`/`, `/about/`, `/portfolio/`, `/experience/`, `/blog/`, `/contact/`, `/?room=<id>`) start in `'station'`.
+- All room URLs (`/`, `/about/`, `/portfolio/`, `/experience/`, `/blog/`, `/contact/`) start in `'station'`.
 
 ### 2.2 Mode Matrix
 
@@ -372,8 +372,8 @@ Per owner decision `D4`, `U6a` (`f4bc684d`), and `R1`:
 
 - **`@solidjs/router` (`2.0.1`)** owns browser history and URL synchronization (`src/app/routes/`). Zero `history.pushState` / `history.replaceState` calls may exist outside the router adapter.
 - **Canonical routes:**
-  - `/` (`lobby`), `/about/` (`about`), `/portfolio/` (`projects`), `/portfolio/<slug>/` (`projects` + read), `/experience/` (`experience`), `/experience/#<id>` (`experience` + read), `/blog/` (`writing`), `/blog/<slug>/` (`writing` + read), `/contact/` (`comms`), `/contact/#availability` (`comms`), plus `/?room=<id>` compatibility (including guarding `Object.hasOwn(content.rooms, id)` against `'constructor'`).
-- **Query parameter preservation:** `?shot=`, `?tier=`, `?msaa=`, `?scale=`, `?rollat=`, `?debug=`, `?lightcheck=`, etc. are preserved across room and article navigations (stripping only `?room=`).
+  - `/` (`lobby`), `/about/` (`about`), `/portfolio/` (`projects`), `/portfolio/<slug>/` (`projects` + read), `/experience/` (`experience`), `/experience/#<id>` (`experience` + read), `/blog/` (`writing`), `/blog/<slug>/` (`writing` + read), `/contact/` (`comms`), `/contact/#availability` (`comms`), plus guarding `Object.hasOwn(content.rooms, id)` against `'constructor'`.
+- **Query parameter preservation:** `?shot=`, `?tier=`, `?msaa=`, `?scale=`, `?rollat=`, `?debug=`, `?lightcheck=`, etc. are preserved across room and article navigations on DEV hosts only (localhost, private and LAN addresses, tailnet and CI preview hosts: see `public/js/dev.js`). On every other host these switches are not read and not kept; there is no `?room=` on any host.
 - **History & `popstate` semantics (`history.mjs`):**
   - Entering a room pushes a URL only when path+search changes.
   - Opening an article pushes exactly `1` history entry; changing `#fragment` within the same open article uses `replace` (`replaceState` equivalent).

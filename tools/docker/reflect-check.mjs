@@ -11,7 +11,7 @@ try {
   const p = await b.newPage({ viewport: { width: 1024, height: 640 } });
   p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => errors.push(r.url()));
   p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  const u = new URL(base); u.search = 'room=lobby&lightcheck=1&shot=hero&tier=1&scale=1&rollat=0&chand=0&grain=0&bloom=0&vig=0&skip=dust';
+  const u = new URL(base); u.pathname = '/'; u.search = 'lightcheck=1&shot=hero&tier=1&scale=1&rollat=0&chand=0&grain=0&bloom=0&vig=0&skip=dust';
   await p.goto(u.href); await p.waitForFunction(() => window.__lobby?.mode().room === 'lobby' && document.querySelector('#loader.done'), null, { timeout: 180000 });
   const r = await p.evaluate(async (wantImages) => {
     const T = await import('three'), l = window.__lobby, gl = l.renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
