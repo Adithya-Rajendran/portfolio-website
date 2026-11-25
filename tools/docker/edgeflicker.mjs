@@ -8,7 +8,8 @@
 // "edge" pixels: within 2 px of both a bright pixel (mean luma >= 200) and a darker one (<= 140): the bright window edges.
 // Prints one JSON line per state and writes /out/<name>/{heat.png,f000.png,last.png,stats.json}. heat.png: mean d2, x8.
 // "|crop=x,y,w,h" also writes strip.png (that region of 8 consecutive frames side by side, enlarged 4x) and reports the
-// region on its own: its mean luma, the mean and largest change of that mean between frames (a glow that pulses), d1, d2.
+// region on its own: its mean luma, the mean and largest change of that mean between frames (a glow that pulses), d1, d2;
+// jump.png shows the region's frames around its largest change (3x, grey luma) and, last, that change itself (|difference| x4).
 // <origin> "-" means $ORIGIN (the branch's own site); any other origin (a preview) is measured with this branch's script.
 import { chromium } from 'playwright';
 import fs from 'fs';
@@ -47,6 +48,25 @@ const ANALYSE = {
     if (s.p2) { s.k2++; for (let i = 0; i < n; i++) { const a = Math.abs(L[i] - 2 * s.p1[i] + s.p2[i]); s.d2[i] += a; f2 += a; if (a > 24) s.ev[i]++; } }
     s.per.push([+(f1 / n).toFixed(3), +(f2 / n).toFixed(3)]);
     s.p3 = s.p2; s.p2 = s.p1; s.p1 = L;
+  },
+  keep([x, y, w, h]) {                                    // this frame's crop, kept to show the biggest jump at the end
+    const s = window.__s, W = s.W, c = new Float32Array(w * h);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) c[j * w + i] = s.p1[(y + j) * W + x + i];
+    (s.crops ??= []).push(c); s.cw = w; s.ch = h;
+  },
+  async jump() {                                          // frames around the largest change of the region's mean, and |difference| x4
+    const s = window.__s, r = s.reg, w = s.cw, h = s.ch; if (!r || r.length < 3) return null;
+    let k = 1; for (let i = 1; i < r.length; i++) if (Math.abs(r[i][0] - r[i - 1][0]) > Math.abs(r[k][0] - r[k - 1][0])) k = i;
+    const lo = Math.max(0, k - 2), hi = Math.min(r.length, lo + 5), n = hi - lo, S = 3;
+    const c = new OffscreenCanvas((w * S + 4) * (n + 1), h * S), g = c.getContext('2d'), img = g.createImageData(c.width, c.height);
+    const put = (col, f) => { for (let j = 0; j < h * S; j++) for (let i = 0; i < w * S; i++) { const v = f(((j / S) | 0) * w + ((i / S) | 0)), o = 4 * (j * c.width + col * (w * S + 4) + i);
+      img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.min(255, v); img.data[o + 3] = 255; } };
+    for (let f = lo; f < hi; f++) put(f - lo, (q) => s.crops[f][q]);
+    put(n, (q) => 4 * Math.abs(s.crops[k][q] - s.crops[k - 1][q]));
+    g.putImageData(img, 0, 0);
+    const buf = new Uint8Array(await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer());
+    let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    return { k, png: btoa(bin) };
   },
   region([x, y, w, h]) {                                  // the crop region of the frame just added: its mean luma, and its d1/d2
     const s = window.__s, W = s.W; let m = 0, a = 0, b = 0;
@@ -141,11 +161,12 @@ for (const raw of jobs) {
     if (f === 0) fs.writeFileSync(dir + '/f000.png', png);
     if (f === FRAMES - 1) fs.writeFileSync(dir + '/last.png', png);
     await an.evaluate(ANALYSE.add, png.toString('base64'));
-    if (crop) await an.evaluate(ANALYSE.region, crop);
+    if (crop) { await an.evaluate(ANALYSE.region, crop); await an.evaluate(ANALYSE.keep, crop); }
     if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
     if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
   }
+  if (crop) { const j = await an.evaluate(ANALYSE.jump); if (j) { fs.writeFileSync(dir + '/jump.png', Buffer.from(j.png, 'base64')); console.log('JUMP', name, 'frame', j.k); } }
   const { st, heat } = await an.evaluate(ANALYSE.finish);
   fs.writeFileSync(dir + '/heat.png', Buffer.from(heat, 'base64'));
   st.modes = [...new Set(modes)]; st.query = q; st.still = still; st.origin = originArg === '-' ? 'branch' : 'given';
