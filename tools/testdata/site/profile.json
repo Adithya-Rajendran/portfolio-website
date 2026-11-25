@@ -89,7 +89,15 @@
   {
    "label": "GitHub",
    "url": "https://github.com/example"
+  },
+  {
+   "label": "Credly",
+   "url": "https://example.org/credly"
   }
+ ],
+ "contact_links": [
+  "Profile <one> & \"more\"",
+  "GitHub"
  ],
  "current_curiosities": [
   {
