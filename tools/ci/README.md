@@ -26,6 +26,25 @@ Push a branch to the `ci` remote, then invoke `/srv/arcadia/bin/ci` or `/srv/arc
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | Pixel difference (`pdiff.mjs`) in Docker without GPU device or `gpu.lock` | `quiet.lock` (shared) |
 | `pictures` | `[--against <base>]` | Render fixed 34-state suite (`tools/ci/pictures.txt`), cache goldens by `<sha>_<list_hash>`, compare with `pdiff.mjs --strict --fail-max=0` | `quiet.lock` (shared), `gpu.lock`, `pictures.lock` |
 
+## The Suite's Steps and Their Folders
+
+`tools/check.sh` (tier `suite`) runs the static preflight, then the browser steps: the independent ones `CHECK_JOBS` at a time, then the motion and stillness steps (hud, turn, cue) one by one. Every browser step has its own folder under `$OUT/steps/`, and nothing is deleted at the end:
+
+```text
+$OUT/steps/
+  01-rooms.cross.mjs_desktop/     NN: the order the steps start in (the parallel ones in queue order, then the serial ones)
+    log.txt                       everything the step printed (the suite's output shows it again once the step ends)
+    ...                           what the script wrote to /out (screenshots, JSON)
+  02-rooms.read.mjs_desktop/
+  ...
+```
+
+The folder name is the step's title with every character outside `A-Za-z0-9._-` turned into `_`, cut to 80 characters. The suite's own output ends with `=== summary`: `all steps passed`, or one `FAILED:` line per failed step. A step that did not report (the suite's wait failed) or was never started is listed as failed too, with `(did not report; stopped)` or `(not run)` after its name.
+
+Stopping the suite (SIGINT or SIGTERM, also during the serial steps) stops every running step: each one is a process group of its own, which is killed whole, and the containers carry the label `arcadia.check=<run id>` (`CHECK_RUN`, passed to `tools/dtest.sh`), so any that outlive their client are removed with `docker rm -f`. `tools/check-selftest.sh` shows it with stand-in steps (SIGTERM in the parallel and in the serial phase, a failed `wait`, a normal run); it needs Docker and takes under a minute.
+
+The recorder of `tools/docker/r2.kit.mjs` (used by `opening.mjs`) counts its samples and the largest gap between them; its "never" checks are only trusted when the gap is at most 250 ms, and otherwise fail as a set-up failure (`SET-UP, not the page`).
+
 ## Locks
 
 - **`$CI_HOME/quiet.lock`**: acquired by `/srv/arcadia/bin/ci` before `run.sh` (shared `-s` for all tiers except `bench`, which takes exclusive `-x` so benchmarks run alone). `tools/ci/run.sh` never re-acquires `quiet.lock`.
