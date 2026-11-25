@@ -23,6 +23,24 @@ const CH_GAIN = num('chandgain', 1), EARTH = num('earth', 1), CH_SPEED = (2 * Ma
 // ?rollat=<degrees> holds one angle.
 const ROLL = num('roll', 0), ROLL_AT = num('rollat', NaN), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math.PI / 180;      // ?chand=<degrees> stops the orrery there
+const DEV = (typeof location !== 'undefined' && (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.hostname.endsWith('.local'))) || Q.has('dev') || !!import.meta.env?.DEV;
+
+function predictTextures(info, live) {
+  const list = [];
+  for (const g of info.groups || []) list.push([g, g.startsWith('floor') ? 2 : 4, false]);
+  if (info.chand?.phases?.length === 3) {
+    for (const g of info.chand.layered || []) list.push([`${g}_c`, 1, false]);
+  }
+  for (const g of info.spin?.layered || []) list.push([`${g}_a`, 4, false], [`${g}_s`, 1, false]);
+  if (live) {
+    for (const g of info.finish?.groups || []) {
+      if (!g.startsWith('floor')) list.push([`${g}_f`, 2, false]);
+    }
+  }
+  if (info.portal) list.push(['backdrop', 4, false]);
+  if (info.probe) list.push(['probe_c', 1, true]);
+  return list;
+}
 
 /**
  * @param text  this room's entry in content.json
@@ -36,16 +54,53 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // pixels are HDR-encoded and decoded in the shaders. Returns the uniform now; the texture drops into it when it arrives,
   // and once it is on the GPU the copy in RAM is let go.
   ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
-  const pending = []; let textureError;
+  const pending = [], texCache = new Map(), predicted = new Set(), used = new Set(); let textureError;
+  function requestTex(name, aniso = 4, panorama = false) {
+    const hit = texCache.get(name);
+    if (hit) {
+      if (hit.aniso !== aniso || hit.panorama !== panorama) {
+        const msg = `${id}: texture sampler mismatch for ${name} (predicted aniso=${hit.aniso}, panorama=${hit.panorama}; got aniso=${aniso}, panorama=${panorama})`;
+        if (DEV) { console.error(msg); throw new Error(msg); }
+        hit.aniso = aniso; hit.panorama = panorama;
+        const t = hit.u.value;
+        if (t) {
+          t.wrapS = panorama ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+          t.anisotropy = Math.min(aniso, maxAniso);
+          t.needsUpdate = true;
+        }
+      }
+      return hit.u;
+    }
+    const entry = { u: { value: null }, aniso, panorama };
+    texCache.set(name, entry);
+    const got = () => onProgress(++arrived / pending.length);
+    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => {
+      if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
+      t.anisotropy = Math.min(entry.aniso, maxAniso);
+      t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; };
+      entry.u.value = t;
+      renderer.initTexture(t);
+      done();
+    }, undefined, (e) => {
+      textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, { cause: e });
+      done();
+    })).then(got));
+    return entry.u;
+  }
   function bakeTex(name, aniso = 4, panorama = false) {
-    const u = { value: null }, got = () => onProgress(++arrived / pending.length);
-    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { if (panorama) t.wrapS = THREE.RepeatWrapping; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; renderer.initTexture(t); done(); }, undefined, (e) => { textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, {cause:e}); done(); })).then(got));
-    return u;
+    used.add(name);
+    return requestTex(name, aniso, panorama);
   }
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
   // that name, so a browser can never mix an old texture into a new bake.
   info = await fetch(`${base}/scene.json`, { cache: 'no-cache' }).then((r) => r.json());
-  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
+  const gltfPromise = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
+  const LIVE = !!info.finish && !SKIP.has('live');
+  for (const [name, aniso, panorama] of predictTextures(info, LIVE)) {
+    predicted.add(name);
+    requestTex(name, aniso, panorama);
+  }
+  const gltf = await gltfPromise;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
   const floors = [], hidden = [];                                  // not drawn into the mirror image: the floor itself; glass and dust
@@ -87,7 +142,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     return { tAlb: bakeTex(`${grp}_a`, 4), sk: bakeTex(`${grp}_s`, 1), tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSky };
   };
   // LIVE: a bake with nothing view-dependent in it (blender/bake.py 'finish'); every reflection is drawn here.
-  const LIVE = !!info.finish && !SKIP.has('live');
   const probe = info.probe, polished = new Set(LIVE ? [] : probe?.groups || []), finished = new Set(LIVE ? info.finish.groups : []);
   const chart = probe && info.map && !SKIP.has('chartreflection') ? chartReflection(B(info.map.c),info.map.r,mirror) : null;
   let probeU;
@@ -620,11 +674,24 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     picks.push({ mesh, door, name: door.label.toUpperCase(), verb, bounds: () => [top.clone().add(along), top.clone().sub(along), foot.clone().add(along), foot.clone().sub(along)], pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
   }
 
+  const unused = [...predicted].filter((n) => !used.has(n));
+  const unpredicted = [...used].filter((n) => !predicted.has(n));
+  if (DEV && (unused.length || unpredicted.length)) {
+    const parts = [];
+    if (unused.length) parts.push(`predicted but not used: ${unused.join(', ')}`);
+    if (unpredicted.length) parts.push(`used but not predicted: ${unpredicted.join(', ')}`);
+    const msg = `${id}: texture prediction mismatch (${parts.join('; ')})`;
+    console.error(msg);
+    throw new Error(msg);
+  }
   let frames = 0;
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
   { const was = renderer.getRenderTarget(); renderer.setRenderTarget(mirror.rt); renderer.compile(scene, camera); renderer.setRenderTarget(was); }      // the shaders start compiling while the textures are on their way
   await Promise.all(pending);
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
+  if (!DEV && unused.length) {
+    for (const n of unused) texCache.get(n)?.u.value?.dispose();
+  }
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
   const commsLit = comms && probe ? probeEnvironment(renderer, probeU, probe) : null; if (commsLit) comms.setEnv(commsLit.texture);
   let last = 0;
