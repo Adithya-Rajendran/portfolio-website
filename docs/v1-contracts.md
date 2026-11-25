@@ -228,6 +228,8 @@ The other browser scripts print `ok` or `FAIL [profile item] what` and exit 1 on
 
 `rooms.kit.mjs` and `r2.kit.mjs` are what these share (the profiles, a recorder of the reader's meshes, a gate on the page's frames).
 
+Playwright's test runner lives alongside them under `tests/e2e/` (`playwright.config.ts` with `desktop`, `phone`, `reduced`, `smoke-firefox`, and `smoke-webkit`; `serve.mjs`; `fixtures/site.ts`; `pages/station.ts`; `helpers/plaincheck.ts`; and `specs/`). `tests/e2e/README.md` maps every script in `tools/check.sh` to its spec and owning task; legacy scripts in `tools/docker/` stay in place until their owning UI tasks (`U2`–`U8`) replace them.
+
 ## 6. A project: `data/projects/<slug>.md`
 
 Read only through `content.load_projects()`. The slug is the file name (lower-case words joined by hyphens). Same file shape as a post: a header between two `---` lines in the same strict subset of YAML (§2), then a body.
