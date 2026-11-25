@@ -96,9 +96,18 @@ async function run(name) {
       for (const [k, e] of rx.each.entries()) { const x = (e.l + e.r) / 2, y = (e.t + e.b) / 2, hits = await rayHits(p, x, y); chk('L', e.ok && x > 0 && x < W && y > 0 && y < H && hits[0]?.[0] === bk, `a ${phone ? 'tap' : 'click'} at the middle of book ${k + 1} (${Math.round(x)}, ${Math.round(y)}) reaches the pick`, { hits: hits.slice(0, 3), pick: bk }); }
       if (!phone) {
         // the lock lies on the books, with the pointer on them and the view swaying under it
+        let ptr = [0, 0];                                         // where the pointer was put last, for the detail of a FAIL
+        // what lies under the pointer now (one ray, no retry), the books' rectangles, and the display's state: said when the lock is not where it should be
+        const under = (p) => p.evaluate(async ({ pts, x, y }) => {
+          const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live()); l.camera.updateMatrixWorld(true);
+          for (const q of live) q.mesh.updateWorldMatrix(true, false); ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
+          const proj = (set) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const c of set) { const v = new THREE.Vector3(...c).project(l.camera), px = (v.x * 0.5 + 0.5) * innerWidth, py = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); } return [x0, y0, x1, y1].map(Math.round); };
+          const d = l.display.state();
+          return { pointer: [x, y].map(Math.round), hits: ray.intersectObjects(live.map((q) => q.mesh), false).map((h) => l.picks.findIndex((q) => q.mesh === h.object)), books: pts.map(proj), mode: l.mode(), gliding: d.gliding, named: d.named, hint: d.hint };
+        }, { pts: bookCorners, x: ptr[0], y: ptr[1] });
         const onBooks = async (target) => {
           for (let i = 0; i < 10; i++) {
-            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; await p.mouse.move((e.l + e.r) / 2, (e.t + e.b) / 2, { steps: 3 }); await sleep(700);
+            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); await sleep(700);
             const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - (e.l + e.r) / 2) < 8) return true;
           }
           return false;
@@ -108,7 +117,7 @@ async function run(name) {
           for (let k = 0; k < 3 && got; k++) {
             await sleep(900); const s = await rectOf(p), [x, y, w, h] = s.lock?.rect ?? [0, 0, 0, 0], a = s.all, tol = 2.5, pad = 6;
             chk('L', !!s.lock && x <= a.l - pad + tol && x >= a.l - pad - tol && y <= a.t - pad + tol && y >= a.t - pad - tol && x + w >= a.r + pad - tol && x + w <= a.r + pad + tol && y + h >= a.b + pad - tol && y + h <= a.b + pad + tol,
-              `${what} (look ${k + 1}): the lock's rectangle is the projected corners of focus[0].boxes, 6 px out (eye ${s.eye.map((v) => v.toFixed(3)).join(',')})`, { lock: s.lock, books: [a.l, a.t, a.r, a.b].map(Math.round) });
+              `${what} (look ${k + 1}): the lock's rectangle is the projected corners of focus[0].boxes, 6 px out (eye ${s.eye.map((v) => v.toFixed(3)).join(',')})`, { lock: s.lock, books: [a.l, a.t, a.r, a.b].map(Math.round), ...(s.lock ? {} : { under: await under(p) }) });
           }
         }
         await p.mouse.move(W - 4, 4); await until(p, () => !window.__lobby.display.state().lock, null, 15000);
