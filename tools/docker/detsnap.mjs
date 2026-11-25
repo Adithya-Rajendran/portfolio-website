@@ -144,6 +144,14 @@ for (const raw of jobs) {
     uTime: (await import('./js/kit.js')).uTime.value,
     now: performance.now(),
   }))));
+  console.log(name, 'probe', JSON.stringify(await p.evaluate(() => {
+    const seen = new Set(), out = [];
+    const h = (cv) => { const d = new Uint32Array(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.buffer); let x = 2166136261; for (let i = 0; i < d.length; i++) x = Math.imul(x ^ d[i], 16777619); return (x >>> 0).toString(16); };
+    const look = (v) => { const im = v && v.isTexture && v.image; if (im instanceof HTMLCanvasElement && !seen.has(im)) { seen.add(im); out.push(im.width + 'x' + im.height + ':' + h(im)); } };
+    window.__lobby.scene.traverse((o) => { for (const m of [].concat(o.material || [])) { for (const k in m) look(m[k]); for (const k in m.uniforms || {}) look(m.uniforms[k].value); } });
+    const r = window.__lobby.renderer.info;
+    return { frame: r.render.frame, tex: r.memory.textures, geo: r.memory.geometries, prog: r.programs.length, canvases: out };
+  })));
   await ctx.close();
 }
 
