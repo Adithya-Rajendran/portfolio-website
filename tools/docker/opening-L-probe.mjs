@@ -21,8 +21,14 @@ const inside = (r, x, y) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
 let lost = { all: 0, 0: 0, 1: 0 }, looks = { all: 0, 0: 0, 1: 0 };
 for (let i = 0; i < rounds; i++) {
   for (const target of ['all', 0, 1]) {
-    const s0 = await probeAt(0, 0), r = target === 'all' ? s0.all : s0.each[target], x = (r[0] + r[2]) / 2, y = (r[1] + r[3]) / 2;
-    await p.mouse.move(x, y, { steps: 3 }); await sleep(700);
+    // as opening.mjs onBooks(): move to the target's middle, wait 700 ms, until the lock is on and the target has stayed within 8 px (the view follows the pointer)
+    let x = 0, y = 0, got = false, tries = 0;
+    for (; tries < 10 && !got; tries++) {
+      const s0 = await probeAt(0, 0), r = target === 'all' ? s0.all : s0.each[target]; x = (r[0] + r[2]) / 2; y = (r[1] + r[3]) / 2;
+      await p.mouse.move(x, y, { steps: 3 }); await sleep(700);
+      const s1 = await probeAt(x, y), f = target === 'all' ? s1.all : s1.each[target]; got = !!s1.lock && Math.abs((f[0] + f[2]) / 2 - x) < 8;
+    }
+    console.log(JSON.stringify({ i, target, settled: got, tries }));
     for (let k = 0; k < 4; k++) {
       if (k) await sleep(900); const s = await probeAt(x, y); looks[target]++; if (!s.lock) lost[target]++;
       console.log(JSON.stringify({ i, target, k, ptr: [+x.toFixed(1), +y.toFixed(1)], lock: s.lock, hits: s.hits, inBook: s.each.map((e) => inside(e, x, y)), each: s.each, eye: s.eye }));
