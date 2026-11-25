@@ -3,12 +3,13 @@
 // node light-compat.mjs URL chromium|webkit width height [rooms...] (LIGHT_DEFAULT=1: use the visitor's adaptive quality)
 import {chromium,webkit} from 'playwright'; import assert from 'node:assert/strict';
 import { ROOM_PATH } from './roompath.mjs';
+import { streamAbort } from './reqfail.mjs';
 const [base,engine='chromium',width=960,height=540,...rooms]=process.argv.slice(2);
 const b=await ({chromium,webkit})[engine].launch(engine==='chromium'?{args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']}:{});
 try {
   const p=await b.newPage({viewport:{width:+width,height:+height},reducedMotion:'reduce'}), errors=[];
   p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  p.on('requestfailed',r=>errors.push(r.url()));p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
+  p.on('requestfailed',r=>streamAbort(r) || errors.push(r.url()));p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
   for(const room of rooms.length?rooms:['lobby','about','projects','experience','writing']){
     const u=new URL(base);u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({...(process.env.LIGHT_DEFAULT==='1'?{}:{tier:1,scale:1}),lightcheck:1,grain:0});await p.goto(u.href);
     await p.waitForFunction(r=>document.querySelector('#loader.done')&&window.__lobby?.mode().room===r,room,{timeout:120000});

@@ -2,6 +2,7 @@
 // that cannot be fetched is given up after its retries without freezing the orrery; leaving a room while its layers
 // stream in aborts the downloads under way.     node layers.mjs      (ORIGIN: the site)   exit 1 if a check fails
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');
 let failed = 0;
@@ -36,14 +37,20 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   await ctx.close();
 }
 
-// 2. layers that cannot be fetched (an orrery phase and a sky angle, every try refused): given up, nothing frozen
+// 2. layers that cannot be fetched (an orrery phase and a sky angle refused, another sky angle a 404, every try): given
+// up, nothing frozen; and the checks still count those as failures (only an abort when a room is left is not one)
 {
-  let tries = 0;
-  const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/(foliage_c1|archC_s4)\.ktx2/, (r) => { tries++; r.abort(); }));
+  let tries = 0, counted = 0, missing = 0;
+  const { ctx, p, errors } = await open('', (pg) => {
+    pg.on('requestfailed', (r) => { if (!streamAbort(r)) counted++; });
+    pg.on('response', (r) => { if (r.status() === 404 && /archC_s5\.ktx2/.test(r.url())) missing++; });
+    return pg.route(/\/assets\/lobby\/tex\/(foliage_c1|archC_s4|archC_s5)\.ktx2/, (r) => { tries++; return /s5/.test(r.request().url()) ? r.fulfill({ status: 404, body: 'Not found' }) : r.abort(); });
+  });
   const done = await settled(p), s = await state(p);
   ok(done, 'refused layers: streaming ends');
-  ok(s.layers.foliage_c.failed.includes(1) && s.layers.archC_s.failed.includes(4), `refused layers: given up (${tries} requests refused)`);
-  ok(tries >= 8, 'refused layers: each was tried four times');
+  ok(s.layers.foliage_c.failed.includes(1) && s.layers.archC_s.failed.includes(4) && s.layers.archC_s.failed.includes(5), `refused layers: given up (${tries} requests refused)`);
+  ok(tries >= 12, 'refused layers: each was tried four times');
+  ok(counted >= 8 && missing >= 4, `refused layers: a refused .ktx2 still counts as a failed request (${counted}) and a 404 as an HTTP error (${missing})`);
   ok(!s.hold, 'refused layers: the orrery hold let go');
   ok(await turns(p), 'refused layers: the orrery turns');
   ok(!errors.length, `refused layers: no page error ${errors.join(' | ')}`);

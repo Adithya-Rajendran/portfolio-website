@@ -4,12 +4,13 @@ import {chromium} from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
+import { streamAbort } from './reqfail.mjs';
 const [before,after,out]=process.argv.slice(2),errors=[];
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
   const p=await browser.newPage({viewport:{width:1100,height:740}});
-  p.on('pageerror',e=>errors.push(e.message)); p.on('requestfailed',r=>errors.push(r.url()));
+  p.on('pageerror',e=>errors.push(e.message)); p.on('requestfailed',r=>streamAbort(r) || errors.push(r.url()));
   p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);}); p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   for(const [name,base] of [['before',before],['after',after]]){
     const url=new URL(base);url.pathname=ROOM_PATH.about;url.search=new URLSearchParams({lightcheck:1,rollat:0,tier:1,scale:1,shot:'hero',grain:0});

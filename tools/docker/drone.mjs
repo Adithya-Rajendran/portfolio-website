@@ -2,12 +2,13 @@
 // node drone.mjs ['http://HOST/blog/' [/out]]   (tools/dtest.sh drone.mjs: the defaults are this checkout's Library and /out)
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { streamAbort } from './reqfail.mjs';
 const [url_, out_] = process.argv.slice(2), url = url_ || `${process.env.ORIGIN || 'http://127.0.0.1:8080'}/blog/`, out = out_ || '/out';      // (dtest.sh passes an empty argument when there is none)
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
 const p = await b.newPage({ viewport: { width: 1600, height: 900 } }), errors=[];
 p.on('pageerror', e=>errors.push(e.message)); p.on('console', m=>{if(m.type()==='error')errors.push(m.text());});
-p.on('requestfailed', r=>errors.push(r.url())); p.on('response', r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
+p.on('requestfailed', r=>streamAbort(r) || errors.push(r.url())); p.on('response', r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
 await p.goto(url); await p.waitForFunction(() => window.__lobby?.ready() >= 1, null, { timeout: 120000 }); await p.waitForTimeout(1500);
 const i = await p.evaluate(() => { const L = window.__lobby, i = L.picks.findIndex((q) => q.options); L.setFocus(L.picks[i]); return i; });
 console.log('terminal is pick', i, 'buttons', await p.$$eval('#ways button', (bs) => bs.map((x) => x.textContent)));

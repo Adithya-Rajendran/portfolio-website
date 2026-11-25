@@ -1,11 +1,12 @@
 // Room switching without a page load: nav link, Back button, a door, and a leak check over repeated visits.
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { streamAbort } from './reqfail.mjs';
 const base = (process.argv[2] || process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/?$/, '/');
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
 const fail=(...msg)=>{process.exitCode=1;console.error(...msg);};
-p.on('pageerror',e=>fail('[pageerror]',e.message));p.on('requestfailed',r=>fail('[failed]',r.url()));p.on('response',r=>{if(r.status()>=400)fail('[http]',r.status(),r.url());});
+p.on('pageerror',e=>fail('[pageerror]',e.message));p.on('requestfailed',r=>streamAbort(r) || fail('[failed]',r.url()));p.on('response',r=>{if(r.status()>=400)fail('[http]',r.status(),r.url());});
 p.on('console',m=>{if(m.type()==='error')fail('[error]',m.text());});
 const state = () => p.evaluate(() => { globalThis.gc?.(); const L = window.__lobby; return { room: L.mode().room, url: location.search, same: window.__marker === 1,
   geo: L.renderer.info.memory.geometries, tex: L.renderer.info.memory.textures, programs: L.renderer.info.programs.length, heapMB: Math.round(performance.memory.usedJSHeapSize / 1e6), title: document.title, h1: document.querySelector('h1, [role="heading"][aria-level="1"]')?.textContent ?? '' }; });

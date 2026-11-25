@@ -5,11 +5,12 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { streamAbort } from './reqfail.mjs';
 const [base, out] = process.argv.slice(2), errors = [];
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
   const p = await b.newPage({ viewport: { width: 1024, height: 640 } });
-  p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => errors.push(r.url()));
+  p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => streamAbort(r) || errors.push(r.url()));
   p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   const u = new URL(base); u.pathname = '/'; u.search = 'lightcheck=1&shot=hero&tier=1&scale=1&rollat=0&chand=0&grain=0&bloom=0&vig=0&skip=dust';
   await p.goto(u.href); await p.waitForFunction(() => window.__lobby?.mode().room === 'lobby' && document.querySelector('#loader.done'), null, { timeout: 180000 });
