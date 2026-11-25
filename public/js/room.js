@@ -91,7 +91,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       renderer.initTexture(t);
       done();
     }, (e) => {
-      textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, { cause: e });
+      textureError ??= new Error(`Cannot load ${id}/${name}.ktx2: ${e?.message ?? e}`, { cause: e });
       done();
     })).then(got));
     return entry.u;
@@ -114,7 +114,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       if (!first.includes(k)) { later.push({ rank: rank(k), file, entry, k }); continue; }
       const got = () => onProgress(++arrived / pending.length);
       pending.push(new Promise((done) => fetchTex(file, (t) => { putLayer(entry, k, t); done(); }, (e) => {
-        textureError ??= new Error(`Cannot load ${id}/${file}.ktx2`, { cause: e });
+        textureError ??= new Error(`Cannot load ${id}/${file}.ktx2: ${e?.message ?? e}`, { cause: e });
         done();
       })).then(got));
     }
