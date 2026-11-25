@@ -47,12 +47,11 @@ export function furnish(content, { posts, projects, profile }) {
     : first ? { ...card, layout: 'card', name: first.title, meta: up(join(...profile.focus)), text: first.note ?? '' } : card));
   for (const r of [A, R.lobby]) r.sub = fill(r.sub, words).filter((l) => !/\{\w+\}/.test(l));      // a line the profile cannot fill is not said
 
-  // Contact: whose it is, who it is for in the owner's own words, and the ways to reach them (js/comms.js). With an address,
-  // or a send endpoint in content.json, the field takes a message: the room's button then says so.
+  // Contact: whose it is, who it is for in the owner's own words, and the three ways to reach them (js/comms.js).
   const C = R.comms.comms, sought = profile.availability?.status === 'open' ? profile.availability.seeking ?? [] : [];
-  Object.assign(C, { name: profile.name, intro: profile.contact.intro, invitation: profile.contact.invitation ?? '', seeking: sought, address: profile.contact.email ?? '',
-    links: [...profile.links.slice(0, profile.resume ? 5 : 6).map((l) => [l.label, l.url]), ...(profile.resume ? [[C.resume, profile.resume]] : [])] });      // the field has room for six
-  if (C.address || C.endpoint) R.comms.cta = C.write.cta;
+  const contactLinks = profile.contact.links ?? profile.links ?? [];
+  Object.assign(C, { name: profile.name, intro: profile.contact.intro, invitation: profile.contact.invitation ?? '', seeking: sought,
+    links: [...contactLinks.slice(0, profile.resume ? 5 : 6).map((l) => [l.label, l.url]), ...(profile.resume ? [[C.resume, profile.resume]] : [])] });
   // its wall: the invitation, and what the owner is open to
   const invite = { layout: 'card', name: profile.contact.intro, meta: up(join(profile.name, profile.location)), text: profile.contact.invitation ?? '' };
   R.comms.screens.list = R.comms.screens.list.map((card, i) => (i === 0 || !sought.length ? { ...card, ...invite } : { ...card, layout: 'card', name: sought.join('  ·  '), meta: up(profile.headline), text: '' }));

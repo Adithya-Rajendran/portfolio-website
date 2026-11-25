@@ -208,7 +208,7 @@ An entry of `focus` (a round-ish thing the camera can come to: `c`, `r`, `dir`) 
 - `rooms.projects.screens.inspect` and `rooms.experience.screens.inspect` are `false`, and their cards have no `cta`: the wall screens of those rooms are not picks, not on the tour and not sources.
 - `reader.receiving` ("RECEIVING") is what the receiving says; `reader.scanning` what the glyph says while a flat thing is scanned.
 - `display` holds the display's own words: the verbs `read`, `inspect`, `open`, `write`, `enter`, `stops`, `sealed`, `choose`, the names `catalogue` and `exhibit`, and `hint`.
-- `rooms.comms` (Contact): `cta` ("GET IN TOUCH  →"), `bright: true` (`main.js` sets `body.bright`), screens tag "COMMS" and two placeholders `js/site.js` fills, and `comms`: `title`, `standby`, `openTo`, `resume`, `opens`, `subject`, `write{…}`, `status{…}`, `address`, `endpoint`, `max`. Its mode is decided by data: `endpoint` set: `send`; else `address` (from `profile.contact.email`) set: `mail`; else `links`. `section#comms[data-mode]` holds real elements (links `a[target=_blank][rel=noopener]` with `aria-label` "<label>, opens in a new tab", `textarea`, `input[type=email]`, `[data-act=mail|send|copy]`, `[role=status]`), `inert` until the field is open. `send` POSTs JSON with exactly the keys `at, email, from, message`. The pick `picks.find(p => p.cta)` is named "CONTACT" and its verb is `display.open` in `links` mode, `display.write` otherwise.
+- `rooms.comms` (Contact): `cta` ("GET IN TOUCH  →"), `bright: true` (`main.js` sets `body.bright`), screens tag "COMMS" and two placeholders `js/site.js` fills, and `comms`: `title`, `standby`, `openTo`, `resume`, `opens`, `writeNote`. It offers Contact's three links (from `profile.contact.links` followed by `profile.resume`, with the first marked as the way to write to the owner). `section#comms[data-mode="links"]` holds real links `a[target=_blank][rel=noopener]` with `aria-label` `"<label>, opens in a new tab"`, `inert` until the field is open. The pick `picks.find(p => p.cta)` is named "CONTACT" and its verb is `display.open`.
 
 ## 5. Tests
 
@@ -222,7 +222,7 @@ The other browser scripts print `ok` or `FAIL [profile item] what` and exit 1 on
 | `opening.mjs` | the ways of opening: Fabrication (scan, receive), the Lounge's books, a station unfolding |
 | `turn.mjs` | the route map's turn (mouse, pen, touch, wheel), the tour, Navigation's hint |
 | `cue.mjs` | the Library's cue and the drone's errand |
-| `contact.mjs` | Contact in `links`, `mail` and `send`, and its legibility |
+| `contact.mjs` | Contact's three links (LinkedIn marked to write, GitHub, résumé), keyboard, new tabs, and legibility |
 | `rooms.read.mjs`, `rooms.others.mjs`, `rooms.cross.mjs`, `rooms.deeplink.mjs` | each room at its path; what is read in Fabrication, Navigation, the Lounge; links from one reading into another; a project's and an entry's own address |
 | `library.mjs`, `history.mjs`, `deeplink.mjs`, `hostile.mjs` | the Library; the address and Back; an article's own URL; the rooms against hostile and thin data |
 
@@ -334,10 +334,11 @@ All text is plain text, shown as written (no Markdown). Strings are not empty an
 | `featured_post` | post slug | optional |
 | `resume` | file name (a PDF) | optional. `/resume/<file>.pdf` is written from it (§1) |
 | `availability` | record, below | required |
-| `contact_routes` | record: route id → `{title, prompt}` (both required strings) | required, not empty. The ids (`hello`, `hiring`, …) are valid HTML ids and keep their order |
+| `contact_routes` | record: route id → `{title, prompt}` (both required strings) | required, not empty (retained in the profile data; not rendered on `/contact/`) |
 | `credentials` | list of records, below | optional |
 | `skill_groups` | list of `{title, skills}`; `skills` a list of strings | required, neither list empty |
 | `social_links` | list of `{label, url}` | required, not empty |
+| `contact_links` | list of strings naming `social_links[].label` entries | optional, not empty when present, unique; the first is the way to write to the owner. Absent falls back to `social_links` |
 | `current_curiosities` | list of records: `title` (required string), `note` (string), `project` (a project slug) | optional |
 | `curiosities_updated_at` | date | optional |
 | `talks_and_papers` | list of records, below | optional |
@@ -378,13 +379,13 @@ Every room has a path, and the page at that path holds the room's text, so it re
 | `/portfolio/` | Fabrication | `section.post-list`: every project |
 | `/portfolio/<slug>/` | Fabrication, that project read | `article.post.project[data-slug]` |
 | `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, skills, credentials, talks, the résumé |
-| `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, what to write about, the links |
+| `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, the links, the availability |
 
 - `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects` (Cloudflare adds the trailing slash to `/about` and `/portfolio/<slug>` itself).
 - An article page (`/blog/<slug>/`, `/portfolio/<slug>/`) starts as a readable page (`html.reading`); a room's page starts as the station.
 - All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`, and a mistake anywhere writes nothing at all.
 - On these pages a link to a project is its page, `/portfolio/<slug>/` (a §6 link's `project`, a curiosity's or a paper's `project`, and `/portfolio/<slug>/` in a project's body or inline lists). A post's links to a project are the same.
-- Every heading id on a page is unique and none is an id of the shell or of `RUNTIME_IDS` (§3's rule). Ids the data fixes (a timeline entry's `id`, a contact route's id) are used as they are and are reserved first, so a section heading of the same words takes `-2`; one that is an id of the shell is an error.
+- Every heading id on a page is unique and none is an id of the shell or of `RUNTIME_IDS` (§3's rule). Ids the data fixes (a timeline entry's `id`) are used as they are and are reserved first, so a section heading of the same words takes `-2`; one that is an id of the shell is an error.
 
 ### Markup
 
@@ -434,11 +435,11 @@ Exactly, page by page (an optional part is left out when its field is absent or 
 
 **`/about/`**: `header`: `p.post-meta` (headline · location), `h1` (name), `p.post-lede` (tagline). `div.post-body`: `<p>` introduction; `h2#story` `The story so far` and a `<p>` per paragraph of `bio`; `h2#focus` `Current focus` and a `<ul>` of focus areas; `h2#curiosities` `Curiosities`, `<p class="post-meta">Updated <time>…</time></p>` (with `curiosities_updated_at`) and `<ul class="post-curiosities"><li><strong>title</strong> <p>note</p> <p class="post-meta">Project: <a href="/portfolio/<slug>/">project name</a></p></li></ul>`; the availability (below); `h2#featured-writing` `Featured writing` and `<p class="post-featured"><a href="/blog/<slug>/">title</a> description</p>`; `h2#elsewhere` `Elsewhere` and `ul.post-links` of the social links, then `Résumé (PDF)` → `/resume/<file>.pdf`.
 
-The availability (on `/about/` and `/contact/`): `h2#availability` `Availability`; `<p class="post-availability" data-status="open"><b>Open</b> · updated <time datetime="2026-09-29">29 September 2026</time></p>`; a `<ul>` of `seeking`; `<p class="post-cta"><a href="/contact/#hiring">cta</a></p>` (`/contact/` when there is no `hiring` route).
+The availability (on `/about/` and `/contact/`): `h2#availability` `Availability`; `<p class="post-availability" data-status="open"><b>Open</b> · updated <time datetime="2026-09-29">29 September 2026</time></p>`; a `<ul>` of `seeking`; `<p class="post-cta"><a href="/contact/">cta</a></p>` (omitted on `/contact/`).
 
 **`/experience/`**: `header`: `h1` `Experience`, `p.post-lede` the `work_summary`. `div.post-body`: a `<section class="entry" id="<id>" data-kind="work|education">` per timeline entry, newest first, holding `<img class="entry-logo">` (with `logo`), `<h2>title</h2>`, `<p class="post-meta">organization · period · location · employment</p>`, `<p>summary</p>`, `<ul>` of highlights. The period is the timeline period (below), with ` (expected 2028)` when there is an `expected_end_year` and no end; employment is `Full-time`, `Internship`, …, left out when the title says it (`Internship` beside `… Intern`). The entry's `h2` has no id: the section has it. Then `h2#skills` `Skills`, and per group `<h3 id="…">title</h3><ul class="post-tags"><li>skill</li></ul>`; `h2#credentials` `Credentials` and `<ul class="post-credentials"><li><img class="post-badge"> <a href="verification_url">title</a> <span class="post-meta">issuer · Sep 2023 – Sep 2026</span></li></ul>` (the issuer is left out when the title names it; a lifetime credential or one without an expiry shows its issue month alone; no link without `verification_url`); `h2#talks-and-papers` `Talks and papers` and `<ul class="post-talks"><li><strong>title</strong> <p class="post-meta">Kind · <time datetime="2026-10-23">Oct 2026</time> · venue · authors</p> <p>abstract</p> <ul class="post-links">links, then <a href="/portfolio/<slug>/">Project: name</a></ul></li></ul>`; `h2#resume` `Résumé` and `ul.post-links` with the PDF.
 
-**`/contact/`**: `header`: `h1` `Contact`, `p.post-lede` the `contact_intro`. `div.post-body`: `<p>` the `contact_invitation`; `h2#what-to-write-about` `What to write about` and a `<section class="route" id="<route id>"><h3>title</h3> <p>prompt</p></section>` per route, in the profile's order; `h2#elsewhere` and the links as on `/about/`; the availability. No form, and no address (§7 has none).
+**`/contact/`**: `header`: `h1` `Contact`, `p.post-lede` the `contact_intro`. `div.post-body`: `<p>` the `contact_invitation`; `h2#elsewhere` `Elsewhere` and `ul.post-links` of `contact_links` (falling back to `social_links`; the first marked as the way to write) then `Résumé (PDF)` → `/resume/<file>.pdf`, each with `target="_blank" rel="noopener"`; the availability. No form, and no address (§7 has none).
 
 Every `img` on these pages has `width`, `height` (the written file's), `alt` (`""` when the data has none: decorative), `loading="lazy"` (except the cover) and `decoding="async"`.
 
@@ -498,10 +499,10 @@ Exactly: the keys in this order; `v` is the first 8 hex of the SHA-256 of the `p
   "timeline": [ { "id": "canonical-2024", "url": "/experience/#canonical-2024", "kind": "work", "title": "…", "organization": "…", "org_short": "Canonical",
                   "period": "May 2024 – Jul 2026", "year": "2024", "current": false, "location": "Remote", "employment": "full-time", "summary": "…" } ],
   "links": [ { "label": "LinkedIn", "url": "https://…" } ],
-  "contact": { "intro": "…", "invitation": "…", "email": null, "routes": [ { "id": "hello", "title": "Hello", "prompt": "…" } ] },
+  "contact": { "intro": "…", "invitation": "…", "links": [ { "label": "LinkedIn", "url": "https://…" } ], "routes": [ { "id": "hello", "title": "Hello", "prompt": "…" } ] },
   "resume": "/resume/<file>.pdf" }
 ```
 
-What the rooms show of the profile, as plain text (no markup). `timeline` is newest first. `availability`, `resume`, `contact.email` and the optional fields of a record may be `null`. `url` values are site paths or `http(s)` URLs.
+What the rooms show of the profile, as plain text (no markup). `timeline` is newest first. `availability`, `resume` and the optional fields of a record may be `null`. `url` values are site paths or `http(s)` URLs.
 
-Exactly: the keys in this order. `v` is the first 8 hex of the SHA-256 of the rest of the object as JSON with sorted keys. `focus` is `focus_areas` (`[]` without); `availability.label` is `cta` and `seeking` `[]` without; a curiosity's `kind` is `"question"` when its title ends with `?`, else `null` (§7 has no field for it), `note` may be `null`, `url` is `/portfolio/<slug>/` of its project or `null`; a timeline entry's `period` is the timeline period (above), `year` the year of `start_date`, `current` is `is_current` (`false` without), `location`, `employment` (§7's value, `full-time`) and `summary` may be `null`; `links` are the social links; `contact.routes` are `contact_routes` in the profile's order; `contact.email` is `null` (§7 has no address); `resume` is `/resume/<original name, percent-encoded>` or `null`. `availability` is never `null` today (§7 requires it).
+Exactly: the keys in this order. `v` is the first 8 hex of the SHA-256 of the rest of the object as JSON with sorted keys. `focus` is `focus_areas` (`[]` without); `availability.label` is `cta` and `seeking` `[]` without; a curiosity's `kind` is `"question"` when its title ends with `?`, else `null` (§7 has no field for it), `note` may be `null`, `url` is `/portfolio/<slug>/` of its project or `null`; a timeline entry's `period` is the timeline period (above), `year` the year of `start_date`, `current` is `is_current` (`false` without), `location`, `employment` (§7's value, `full-time`) and `summary` may be `null`; `links` are all `social_links` (used by `/about/`); `contact.links` are the ordered `contact_links` (falling back to `social_links`, first = way to write); `contact.routes` are `contact_routes` in the profile's order; `resume` is `/resume/<original name, percent-encoded>` or `null`. `availability` is never `null` today (§7 requires it).
