@@ -123,6 +123,21 @@ const ANALYSE = {
   },
 };
 
+// "|hdr" (with a crop): each frame, the HDR values in the crop of the scene target (after the MSAA resolve) and of the
+// first bloom level: the largest, where, how many pass 16, 64 and 1000, and how many are not finite.
+const HDR = ([x, y, w, h]) => {
+  const { renderer: r, post } = window.__lobby, gl = r.getContext();
+  const read = (rt, X, Y, W, H) => {
+    const fb = r.properties.get(rt).__webglFramebuffer; gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fb);
+    const a = new Float32Array(W * H * 4); gl.readPixels(X, Y, W, H, gl.RGBA, gl.FLOAT, a); gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    let max = 0, at = -1, n16 = 0, n64 = 0, n1k = 0, bad = 0;
+    for (let i = 0; i < W * H; i++) { const v = Math.max(a[4 * i], a[4 * i + 1], a[4 * i + 2]);
+      if (!Number.isFinite(v)) { bad++; continue; } if (v > max) { max = v; at = i; } if (v > 16) n16++; if (v > 64) n64++; if (v > 1000) n1k++; }
+    return { max: +max.toPrecision(4), at: at < 0 ? null : [X + at % W, Y + ((at / W) | 0)], n16, n64, n1k, bad };
+  };
+  const H0 = post.scene.height, sy = H0 - y - h;                  // GL rows count from the bottom
+  return { scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
+};
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const an = await (await b.newContext()).newPage();
 await an.goto('about:blank');
@@ -162,6 +177,7 @@ for (const raw of jobs) {
     if (f === FRAMES - 1) fs.writeFileSync(dir + '/last.png', png);
     await an.evaluate(ANALYSE.add, png.toString('base64'));
     if (crop) { await an.evaluate(ANALYSE.region, crop); await an.evaluate(ANALYSE.keep, crop); }
+    if (crop && opts.includes('hdr')) console.log('HDR', name, f, JSON.stringify(await p.evaluate(HDR, crop)));
     if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
     if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
