@@ -55,6 +55,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // and once it is on the GPU the copy in RAM is let go.
   ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
   const pending = [], texCache = new Map(), predicted = new Set(), used = new Set(); let textureError;
+  // Sky angles (<group>_s) and orrery phases (<group>_c) come one file per layer (tools/pack.py; scene.json "tex_layers"
+  // counts them) into one array texture. Only the layers the first frame samples hold the cover; the others are fetched
+  // once it has lifted, soonest needed first (streamRest), and until they are in, update() keeps the sky's light on a
+  // layer that is in and holds the orrery at its phase (decision D18). Layer by layer needs a block-compressed format:
+  // without one (an RGBA fallback) every layer is waited for and they go up together.
+  const STREAM = ['astc', 'bptc', 'etc2', 'dxt', 'etc1', 'pvrtc'].some((f) => ktx2.workerConfig?.[`${f}Supported`]);
+  const later = [], skyLayers = [], chandLayers = []; let disposed = false, streaming = false, chOff = 0, chHold = null;
+  const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
   function requestTex(name, aniso = 4, panorama = false) {
     const hit = texCache.get(name);
     if (hit) {
@@ -63,7 +71,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         if (DEV) { console.error(msg); throw new Error(msg); }
         hit.aniso = aniso; hit.panorama = panorama;
         const t = hit.u.value;
-        if (t) {
+        if (t && !hit.n) {                                        // (a layered texture keeps its sampler: its layers are no longer in RAM)
           t.wrapS = panorama ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
           t.anisotropy = Math.min(aniso, maxAniso);
           t.needsUpdate = true;
@@ -73,20 +81,91 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     }
     const entry = { u: { value: null }, aniso, panorama };
     texCache.set(name, entry);
+    if (info.tex_layers?.[name]) { requestLayers(name, entry, info.tex_layers[name]); return entry.u; }
     const got = () => onProgress(++arrived / pending.length);
-    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => {
+    pending.push(new Promise((done) => fetchTex(name, (t) => {
       if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
       t.anisotropy = Math.min(entry.aniso, maxAniso);
       t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; };
       entry.u.value = t;
       renderer.initTexture(t);
       done();
-    }, undefined, (e) => {
+    }, (e) => {
       textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, { cause: e });
       done();
     })).then(got));
     return entry.u;
   }
+  // The layers of <group>_s or <group>_c that the first frame samples, and how soon each other one is needed (0 = next).
+  function firstLayers(name, n) {
+    if (name.endsWith('_s')) {
+      const i = Math.floor(SKY0) % n, f = SKY0 - Math.floor(SKY0);
+      return [f ? [i, (i + 1) % n] : [i], (k) => (k - i + n) % n];
+    }
+    if (CH_FIXED != null) return [CH_AT.map((p, k) => k).filter((k) => Math.abs(1 + 2 * Math.cos(CH_FIXED - CH_AT[k])) > 1e-6), (k) => k];
+    return [[CH0], (k) => (k - CH0 + n) % n];
+  }
+  function requestLayers(name, entry, n) {
+    Object.assign(entry, { n, have: new Set() });
+    (name.endsWith('_s') ? skyLayers : chandLayers).push(entry);
+    const [first, rank] = STREAM ? firstLayers(name, n) : [[...Array(n).keys()], null];
+    for (let k = 0; k < n; k++) {
+      const file = `${name}${k}`;
+      if (!first.includes(k)) { later.push({ rank: rank(k), file, entry, k }); continue; }
+      const got = () => onProgress(++arrived / pending.length);
+      pending.push(new Promise((done) => fetchTex(file, (t) => { putLayer(entry, k, t); done(); }, (e) => {
+        textureError ??= new Error(`Cannot load ${id}/${file}.ktx2`, { cause: e });
+        done();
+      })).then(got));
+    }
+  }
+  // Layer k has arrived (lt, a one-layer texture never put on the GPU). The first layer makes the array texture; its
+  // storage is made for every layer at the first upload, then each layer is uploaded on its own.
+  function putLayer(entry, k, lt) {
+    if (disposed || entry.dead) return;
+    let t = entry.u.value;
+    if (!t) {
+      t = new THREE.CompressedArrayTexture(lt.mipmaps.map(({ width, height }) => ({ width, height, data: null })), lt.image.width, lt.image.height, entry.n, lt.format, lt.type);
+      Object.assign(t, { minFilter: lt.minFilter, magFilter: lt.magFilter, colorSpace: lt.colorSpace, premultiplyAlpha: lt.premultiplyAlpha, generateMipmaps: false, anisotropy: Math.min(entry.aniso, maxAniso) });
+      if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
+      entry.u.value = t;
+    }
+    if (STREAM) {
+      // three.js uploads each layer named in layerUpdates from the level's data, cut at that layer's offset. Hand it this
+      // layer alone (a stand-in whose subarray() is the layer) rather than a whole array's worth of memory.
+      const data = lt.mipmaps.map((m) => m.data);
+      t.mipmaps.forEach((m, i) => { m.data = { BYTES_PER_ELEMENT: 1, subarray: () => data[i] }; });
+      t.layerUpdates.clear(); t.addLayerUpdate(k); t.source.dataReady = true; t.needsUpdate = true;
+      renderer.initTexture(t);
+      t.source.dataReady = false; for (const m of t.mipmaps) m.data = null;
+      entry.have.add(k);
+    } else {
+      (entry.parts ??= [])[k] = lt.mipmaps.map((m) => m.data);
+      if (entry.parts.filter(Boolean).length < entry.n) return;
+      t.mipmaps.forEach((m, i) => {
+        const one = entry.parts[0][i]; m.data = new one.constructor(one.length * entry.n);
+        entry.parts.forEach((p, j) => m.data.set(p[i], j * one.length));
+      });
+      t.needsUpdate = true; renderer.initTexture(t);
+      for (const m of t.mipmaps) m.data = null;
+      entry.parts = null; for (let j = 0; j < entry.n; j++) entry.have.add(j);
+    }
+    // every orrery phase is in: it turns on from the phase it held
+    if (chHold != null && chandLayers.every((e) => e.have.size === e.n)) { chOff = chHold - uTime.value * CH_SPEED; chHold = null; }
+  }
+  // After the cover has lifted: the layers still to come, soonest needed first, three at a time.
+  function streamRest() {
+    later.sort((a, b) => a.rank - b.rank);
+    let running = 0;
+    const next = () => {
+      while (!disposed && running < 3 && later.length) {
+        const { file, entry, k } = later.shift(); running++;
+        fetchTex(file, (t) => { running--; putLayer(entry, k, t); next(); }, (e) => { running--; console.warn(`Cannot load ${id}/${file}.ktx2`, e); next(); });
+      }
+    };
+    next();
+  }
+  const skyIn = (k) => skyLayers.every((e) => e.have.has(k));
   function bakeTex(name, aniso = 4, panorama = false) {
     used.add(name);
     return requestTex(name, aniso, panorama);
@@ -94,6 +173,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
   // that name, so a browser can never mix an old texture into a new bake.
   info = await fetch(`${base}/scene.json`, { cache: 'no-cache' }).then((r) => r.json());
+  const PERIOD = Q.has('roll') ? ROLL : (info.spin?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
+  // Where the sky (SKY0: its position among the baked angles) and the orrery (CH0: the nearest baked phase) are as the
+  // room starts loading: the layers they sample there are the ones the cover waits for.
+  const SKY0 = info.spin?.phases ? ((rollAt(uTime.value) / (2 * Math.PI)) % 1 + 1) % 1 * info.spin.phases : 0;
+  const CH_AT = (info.chand?.phases || []).map((d) => d * Math.PI / 180), off = (p) => Math.abs(Math.atan2(Math.sin(uTime.value * CH_SPEED - p), Math.cos(uTime.value * CH_SPEED - p)));
+  const CH0 = CH_AT.reduce((best, p, k) => (off(p) < off(CH_AT[best]) ? k : best), 0);
+  if (STREAM && CH_FIXED == null && CH_AT.length === 3 && info.chand.layered?.some((g) => info.tex_layers?.[`${g}_c`])) chHold = CH_AT[CH0];
   const gltfPromise = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
   const LIVE = !!info.finish && !SKIP.has('live');
   for (const [name, aniso, panorama] of predictTextures(info, LIVE)) {
@@ -726,12 +812,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     throw new Error(msg);
   }
   let frames = 0;
-  const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
   { const was = renderer.getRenderTarget(); renderer.setRenderTarget(mirror.rt); renderer.compile(scene, camera); renderer.setRenderTarget(was); }      // the shaders start compiling while the textures are on their way
   await Promise.all(pending);
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (!DEV && unused.length) {
-    for (const n of unused) texCache.get(n)?.u.value?.dispose();
+    for (const n of unused) { const e = texCache.get(n); if (e) e.dead = true; e?.u.value?.dispose(); }
   }
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
   const commsLit = comms && probe ? probeEnvironment(renderer, probeU, probe) : null; if (commsLit) comms.setEnv(commsLit.texture);
@@ -775,12 +860,18 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     }),
     /** Per frame, after the camera has been placed. */
     update(t) {
+      if (!streaming) { streaming = true; streamRest(); }             // the first frame: the cover is lifting
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       if (skyU?.frame) skyU.uSkyM.value.copy(skyU.frame).multiply(_m3.setFromMatrix4(_m4.makeRotationFromQuaternion(_q.copy(sky.quaternion).invert())));
-      if (NSKY) { const x = ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, i = Math.floor(x) % NSKY; uSky.value.set(i, (i + 1) % NSKY, x - Math.floor(x)); }
-      // orrery: turn the rings and blend the three baked light phases for the current angle
-      const phi = CH_FIXED ?? t * CH_SPEED;
+      if (NSKY) {
+        const x = ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, i = Math.floor(x) % NSKY, j = (i + 1) % NSKY, f = x - Math.floor(x);
+        if (skyIn(i) && (!f || skyIn(j))) uSky.value.set(i, j, f);
+        else if (skyIn(i) || skyIn(j)) { const k = skyIn(i) ? i : j; uSky.value.set(k, k, 0); }      // a layer still on its way: the light holds on one that is in
+      }
+      // orrery: turn the rings and blend the three baked light phases for the current angle (held at a phase while
+      // the other phases are on their way)
+      const phi = CH_FIXED ?? chHold ?? t * CH_SPEED + chOff;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
       hologram?.update(t); routeMap?.update(t); drone?.update(t); reader?.update(t);
@@ -800,6 +891,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       liveCam.update(renderer, scene);
       scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
     }),
-    dispose: () => { reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { disposed = true; later.length = 0; reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }
