@@ -7,6 +7,7 @@
 //   d2 = |L(t) - 2 L(t-1) + L(t-2)|    temporal second difference: near 0 for smooth motion, large where a pixel flips
 // "edge" pixels: within 2 px of both a bright pixel (mean luma >= 200) and a darker one (<= 140): the bright window edges.
 // Prints one JSON line per state and writes /out/<name>/{heat.png,f000.png,last.png,stats.json}. heat.png: mean d2, x8.
+// "|hide=<three material type>" leaves the meshes with that material undrawn (a diagnostic).
 // "|crop=x,y,w,h" also writes strip.png (that region of 8 consecutive frames side by side, enlarged 4x) and reports the
 // region on its own: its mean luma, the mean and largest change of that mean between frames (a glow that pulses), d1, d2;
 // jump.png shows the region's frames around its largest change (3x, grey luma) and, last, that change itself (|difference| x4).
@@ -171,6 +172,8 @@ for (const raw of jobs) {
   await step(p, WARM);
   await p.evaluate(() => { const st = document.createElement('style');
     st.textContent = 'body > :not(#scene) { visibility: hidden !important; opacity: 0 !important; transition: none !important; animation: none !important; }'; document.head.append(st); });
+  const hideOpt = opts.find((o) => o.startsWith('hide='));        // "|hide=<material type>": those meshes are not drawn (a diagnostic)
+  if (hideOpt) console.log('HIDDEN', name, await p.evaluate((t) => { let n = 0; window.__lobby.scene.traverse((o) => { if (o.isMesh && o.material?.type === t) { o.visible = false; n++; } }); return n; }, hideOpt.slice(5)));
   if (still) await p.evaluate(() => {                    // the camera stays where it is: lookAt() and lerps write the same values every frame
     const cam = window.__lobby.camera, pos = cam.position.clone(), quat = cam.quaternion.clone();
     const lock = () => { cam.position.copy(pos); cam.quaternion.copy(quat); };
