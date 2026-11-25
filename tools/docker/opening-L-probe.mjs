@@ -2,9 +2,11 @@
 // then each book's middle), and every 900 ms logs the lock, the pointer, each book's projected rectangle and what a ray under the pointer hits.
 import { PROFILES, load, json, launch, context, open, until } from './rooms.kit.mjs';
 import { sleep, boxCorners } from './r2.kit.mjs';
-const which = process.argv[2] || 'desktop', rounds = +(process.argv[3] || 12);
+const which = process.argv[2] || 'desktop', rounds = +(process.argv[3] || 12), load = +(process.argv[4] || 0);   // load: other rooms kept running beside it, to load the GPU as the parallel suite does
 const { content } = await load(), scene = await json('/assets/about/scene.json'), books = scene.focus[0].boxes, bookCorners = boxCorners(books);
 const b = await launch(); const P = PROFILES[which], errs = [];
+const ROOMS = [['lobby', '/'], ['projects', '/portfolio/'], ['experience', '/experience/'], ['writing', '/blog/'], ['comms', '/contact/'], ['about', '/about/']];
+for (let j = 0; j < load; j++) { const c = await context(b, PROFILES.desktop), [id, path] = ROOMS[j % ROOMS.length]; open(c, path, id, []).catch(() => {}); }
 const ctx = await context(b, P); const p = await open(ctx, '/about/', 'about', errs);
 await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
 const bk = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.source?.().bodies?.length));
