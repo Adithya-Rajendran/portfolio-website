@@ -167,3 +167,158 @@ Exact pinned versions installed via `npx --yes pnpm@12.23.0 install` (zero `^` o
    - `vite` dev automatically enables `POST /__solid/diagnostics` (`diagnostics: false` opts out), which is useful for live attribution debugging in `U1`–`U8`.
 8. **`/tmp` tmpfs exhaustion causes Vitest Playwright Chromium session timeouts:**
    - Playwright browser profiles write into `TMPDIR` (default `/tmp`). When `/tmp` tmpfs is nearly full (`~75 MB` free), Vitest Chromium fails with `Failed to connect to the browser session ... [chromium] within the timeout`. For `F2`/`I5`, ensure `/tmp` has ample space or redirect `TMPDIR` to a scratch directory on a larger filesystem.
+
+
+---
+
+# U0c Picks Primitive Spike Notes: `scene-picks`, D5 Keyboard Model, and `Station` Contract
+
+**Status:** Verified empirically in `spikes/solid-uisdk/` (`@ui-sdk/core@0.1.0-beta.16` `mount()` in Chromium, Solid `2.0.3` + `@ui-sdk/solid@0.1.0-beta.16` + `@ui-sdk/solid/agent` + `three@0.181.2` `rAF` projections, and `@solidjs/diagnostics@2.0.3`).
+
+---
+
+## 1. Does `scene-picks` work as a UI SDK primitive?
+
+**Answer: Yes.** A custom `scene-picks` primitive built with `definePrimitive` (`@ui-sdk/core@0.1.0-beta.16`) composes `createRovingFocus`, `spatialMove({ rect })`, `createChange`, `prepareAnnouncements`/`announce`, `pointer-events: none` DOM proxy `<button>` elements positioned in `onFrame` via element refs, and an `agent` key (`inspect`, `read`) cleanly under both `@ui-sdk/core/testing` `mount()` and `@ui-sdk/solid` + `createAgent()`.
+
+### Verified Behavior & Implementation Details
+
+1. **Roles, slots, and roving focus (`definePrimitive`):**
+   - `root`: `role: "group"`, `aria-label` (default `"Room things"`), `bind` calls `prepareAnnouncements(el.ownerDocument)`.
+   - `item`: `role: "button"`, `focus: "roving"`, `props: { value: "string", name: "string", verb: "string" }`, `selects: selects({ focused: ({ key }) => [key, null], value: ({ key }) => [key, null] })`, `controlled: ["value"]`.
+   - **Important `live` vs `tabindex` finding:** Do **not** place `focused` in `live: ["focused"]` when `attrs` computes `tabindex: roving.tabIndex(state, part)`. In `@ui-sdk/solid`'s `use-primitive.jsx`, `live`-only updates skip `attrsTick`, freezing `tabindex` on `"0"`/`"-1"` in Solid components even while `rovingFocus` moves DOM focus. Omitting `live` while keeping `selects` ensures only the two affected proxy items update `tabindex` cleanly.
+   - Each proxy `<button type="button">` carries `tabindex` from `roving.tabIndex(state, part)` (`"0"` on one active focusable item, `"-1"` on the rest and when `state.focused === null && !isRectVisible(key)`), `aria-label={`${name}: ${verb}`}`, and `aria-pressed` reflecting whether that pick is currently inspected (`state.value === key`).
+   - Why `role: "group"` + `<button>` over `listbox`/`toolbar`: room things are interactive triggers (inspect / travel / read), not form selection options, and `@ui-sdk/core` `checkPattern` assumes linear DOM-order movement for `listbox`/`toolbar` rather than 2D spatial navigation.
+
+2. **`spatialMove({ rect })` with moving rectangles & `mount()` bypass:**
+   - `spatialMove({ rect: (el, key) => ... })` calls `rect(el, key)` on demand on every `keydown`, not once at mount. When Three.js camera sway or mesh motion (e.g., the Navigation route map or Atrium orrery) moves projections across frames, arrow navigation immediately follows the updated live CSS rectangles rather than stale DOM order.
+   - `@ui-sdk/core/testing`'s `mount()` overrides `el.getBoundingClientRect()` with synthetic row/column coordinates (`[100, 40]` / `[200, 40]`). Passing `rectOf` via primitive options bypasses that override identically in both `mount()` unit tests and the Three.js `Station` overlay.
+
+3. **`null` / offscreen rect handling (`claims`, `focusable`, `move`, and `reconcileFocus`):**
+   - `@ui-sdk/core`'s `spatialMove` does **not** check for `null` rects and will throw if `rect()` returns `null` (when a pick is behind `camera.near`, `< 2px`, or `> 60%` of the viewport per `hud.js:42` `frameOf`).
+   - **Mount-time `claims` guard:** `createRovingFocus`'s `claims` runs before `afterBind` `check()`, so `claims` must explicitly verify `isRectVisible(item.key)` (`rectOf(item.key) !== null && (state.value === null || item.key === state.value)`). Otherwise, if `items[0]` starts offscreen (`null`), it grabs initial `tabindex="0"`. Verified empirically in Chromium at `414×896` portrait viewport: `catalogue` (`items[0]`) and `ring-door` fall outside the narrow frustum (`rectOf === null`), and `Tab` lands directly on `THE ORRERY` (`items[1]`).
+   - **Dynamic mid-session `null` reconciliation (`reconcileFocus`):** Because `rectOf` is an external per-frame projection rather than a slot prop, `createRovingFocus` does not automatically re-run `roving.check()` when a previously visible focused pick moves behind the camera or shrinks offscreen (`roving.keydown` returns `undefined` when `from` is missing from `focusables()`). Exposing `reconcileFocus()` and calling it in `onFrame` (only when `focused` becomes invalid, `focused === null` while a pick becomes visible, or the active DOM element becomes offscreen) plus on `keydown`/`focus`/`blur` runs `roving.check()`, moves `tabindex="0"` to the next visible pick, and moves DOM focus (`roving.focus(nextKey)`, or `el.blur()` when zero picks are visible) so neither `Arrow*`, `End`, nor `Tab` re-entry gets trapped.
+
+4. **Spatial edge `preventDefault()` (critical for D5):**
+   - `@ui-sdk/core`'s `createRovingFocus.keydown` returns `undefined` **without** calling `event.preventDefault()` when `spatialMove` finds no target ahead in that direction (at a spatial edge).
+   - Therefore, `scene-picks`'s `item` `on.keydown` handler explicitly calls `event.preventDefault()` **after** `roving.keydown(event, el)` (calling `preventDefault()` beforehand would cause `roving.keydown` to abort!) for all navigation keys (`ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home`, `End`, excluding `Alt`/`Ctrl`/`Meta`) **even when at a spatial edge**, ensuring `ArrowLeft`/`ArrowRight` never leak out to `D5`'s global tour stepper while a proxy has focus.
+
+5. **DOM proxies (`pointer-events: none`), `onFrame` refs, and `checkVisibility()`:**
+   - Proxy `<button>`s use `position: fixed; left: 0; top: 0; opacity: 0; pointer-events: none;`.
+   - Verified in Chromium via `document.elementFromPoint(cx, cy)` at a moving proxy's center: hit testing passes straight through to `<canvas id="scene">`, preserving Three.js raycasting, route-map dragging, and `hud.mjs` assertions (`elementFromPoint?.id === 'scene'`).
+   - `ScenePicks` mirrors non-reactive plain JS fields (`currentPicks`, `inspectedPickId`, `pointedPickId`, `activeProxyId`) via `station.subscribe(...)` and positions proxy buttons and `#lock` directly through element refs inside `station.onFrame(...)`, with **zero Solid signal reads inside `onFrame`**.
+   - Offscreen (`rectOf(id) === null`) proxies are parked off-viewport (`transform: translate(-9999px, -9999px); width: 1px; height: 1px;`) rather than `display: none` or `aria-hidden="true"`, because `@ui-sdk/core/agent`'s `scan()` uses `el.checkVisibility({ visibilityProperty: true, checkVisibilityCSS: true })` and drops components whose parts are hidden.
+
+6. **Selection, second-`Enter` reading, dynamic `canRead`, announcements, and `agent` key (`inspect`, `read`):**
+   - `press` (click or `Enter`/`Space`) checks `state.value === key && canReadForPress(item)`: the **first `Enter`** calls `api.inspect(key, event)` -> `createChange("value", key, { reason: "item-press", event })` -> `station.focus(key)` and `announce("${name}: ${verb}")` (`details.source === "keyboard"`); a **second `Enter`** while focus remains on the already-inspected readable proxy invokes `api.read(key)` -> `station.read(key)` and `announce("Reading ${name}")`.
+   - Keep `onInspect` strictly idempotent (`if (props.station.focused.get()?.pick !== id) props.station.focus(id)`): never escalate a second `onInspect` on an already-focused readable pick into `station.read(id)`, so `@ui-sdk/solid/agent`'s `createAgent({ allow })` gating on `'read'` cannot be bypassed by calling `inspect` twice (`press` already routes second-`Enter` reading directly through `api.read(key)`).
+   - `onRead` accepts `boolean | void` alongside a dynamic `canRead?: (pickId) => boolean | undefined` option: when `focused?.pick === id`, return `focused.canRead`; when `id` is unfocused and `Station.picks` omits `canRead` per §4.2, return `undefined` (`picks.find(...)?.canRead`) rather than `false` so `api.read(id)` delegates dynamically to `station.read(id)` (`onRead(): boolean`) instead of blocking unfocused `read(id)`. Crucially, `api.read()` invokes `onRead(item.id)` **before** `change('value', item.id, { reason: 'api' })` or `onInspect(item.id)` so a failed read (`canRead(id) === false` or `onRead(id) === false`) throws `Error(\`"\${item.name}" has nothing to read.\`)` immediately with **zero** `store.value`, `aria-pressed`, `station.focus()`, or single-stop door `travel()` side effects (and only updates `value` / calls `onInspect` if `result !== false` and not already inspected).
+   - Spatial arrow movement announces `"${name}, ${verb}"` via `announce(..., { priority: "polite" })`.
+   - `agent: { actions: ['inspect', 'read'], closed: true, items: (api) => api.items(), shown: (state) => state.items.length > 0 }`:
+     - **Important `@ui-sdk/core/agent` alignment finding:** `agent.snapshot()` builds `items[].label` from the rendered button's accessible name (`renderedItems(parts)` -> `"${name}: ${verb}"`), while `agent.act()` resolves string `args[0]` against `agent.items()`; `api.items()` must return `{ value: item.id, label: item.verb ? `${item.name}: ${item.verb}` : item.name }` so `snapshot()` labels and `act()` label resolution stay identical, and works seamlessly with `createAgent({ allow })` gating (`details.source === "agent"`).
+
+7. **Solid 2 & Diagnostics compatibility (`HOT_SCOPE_TIME` avoidance & WebGL isolation):**
+   - Solid 2.0.3 removes `onMount` in favor of `onSettled(() => { ... return cleanup; })`, and `slot<Props, Public>`'s second type parameter is the slot's public state (not root primitive state).
+   - **Critical perf finding:** Calling synchronous layout-reading `syncFrame()` inside `onSettled()` (or reading `canvas.clientWidth` inside `rectOf()` every call) can trip `HOT_SCOPE_TIME` (`8ms` budget) in `onSettled`. Deferring initial `syncFrame()` via `requestAnimationFrame` and caching viewport width/height on `resize` prevents `HOT_SCOPE_TIME` in `onSettled`.
+   - However, under live SwiftShader `THREE.WebGLRenderer` load, `@ui-sdk/solid`'s internal `item attrs` memo (`use-primitive.jsx:595:5`, which invokes `isRectVisible()`/`rectOf()`) can still exceed the `8ms` wall-clock `HOT_SCOPE_TIME` budget (`8.3ms` observed). Therefore, per `U0b`, `U4` should isolate `{ allow: [] }` `@solidjs/diagnostics` tests (`expectNoDiagnostics(artifact, { allow: [] })` + `expectNoSilentHolds(artifact)`) from SwiftShader `THREE.WebGLRenderer` using a lightweight `Station`-compatible rect provider (or cache visibility / allow `@ui-sdk/solid` internal `HOT_SCOPE_TIME` while keeping correctness diagnostics and `expectNoSilentHolds` strict).
+   - With `optimizeDeps: { exclude: ['@ui-sdk/core'], include: ['@solidjs/diagnostics'] }` and `"skipLibCheck": true`, `deps/_metadata.json` contained **zero** `@ui-sdk/core*` entries.
+
+---
+
+## 2. Proposed `D5` Keyboard Model
+
+`D5`: *"Escape, Enter and the left and right arrows keep their meaning. Tab reaches the room's things; arrows move among them by position while one has focus; Enter acts."*
+
+| Context | Key | Behavior | Notes |
+|---|---|---|---|
+| **Reader open or typing** (`station.reader.get().state !== 'closed'` or `focused.get()?.typing` or input/editable) | Any key except `Escape` | Suppressed by `scene-picks` & global `D5` listener (arrows, `Enter`, etc. do not step tour or trigger picks) | Matches `main.js:426` (`if (focus.pick?.typing?.() && e.key !== 'Escape') return`) and `room.js:612` (`reader.state() !== 'closed'`). |
+| **Outside `scene-picks`** (body, `#hud`, `#inspectbar`; reader closed and not typing) | `ArrowLeft` / `ArrowRight` | `e.preventDefault(); station.step(-1 | 1)` | Preserves global left-to-right tour (`tourOrder()`) and `rooms.read.mjs` / `tour.mjs`. |
+| **Outside `scene-picks`** (reader closed and not typing) | `Enter` | If target is a DOM button/link, native activation runs; else if `focused?.canRead`, calls `station.read()` | Preserves `main.js:428` and `library.mjs:305` (second `Enter` reads selected volume). |
+| **Outside `scene-picks`** | `Escape` | Checked before form-control early-return (`main.js:426-427`): capture `wasReading = station.reader.get().state !== 'closed'` before calling `station.back()`; if `wasReading`, restore DOM focus to inspect bar / CTA / `#back` | Replaces non-existent `was.reads` with `station.reader.get().state !== 'closed'` (`main.js:299-302`) and lets `Escape` exit Comms inputs. |
+| **Page -> `scene-picks`** | `Tab` / `Shift+Tab` | Enters `scene-picks` at its single roving stop (`tabindex="0"`: last focused visible pick, else inspected visible pick, else first focusable pick). Next `Tab` exits to next page region | One tab stop for the entire room (`rovingFocus`); skips `rectOf === null` items at mount and mid-session. |
+| **Inside `scene-picks`** (proxy `<button>` has focus; reader closed and not typing) | `ArrowLeft` / `ArrowRight` / `ArrowUp` / `ArrowDown` | `spatialMove({ rect })` moves focus to nearest focusable (`rectOf(id) !== null`) pick in that screen direction and announces `"${name}, ${verb}"`. Calls `e.preventDefault()` **even at spatial edges** | Global `D5` `ArrowLeft`/`ArrowRight` tour stepper ignores events inside `[data-slot="scene-picks"]` or `defaultPrevented`. |
+| **Inside `scene-picks`** | `Home` / `End` | Moves focus to first / last focusable pick proxy (`e.preventDefault()`) | Standard roving focus endpoints. |
+| **Inside `scene-picks`** | `Enter` / `Space` | Fires `press` -> `station.focus(pick.id)` on first `Enter`, or `station.read(pick.id)` on second `Enter` while focus remains on the proxy when `focused.pick === pick.id && focused.canRead`; single-stop doors schedule `1500ms` travel | Matches pointer click behavior (`U4`: *"Enter does what a click does"*). |
+| **Inside `scene-picks`** | `Escape` | If `station.focused.get()` is non-null or `station.reader.get().state !== 'closed'`, calls `station.back()` (exiting reading/inspection to wide view); if already in wide view (`!focused`), blurs the proxy (`activeEl.blur()`, clearing `activeProxyId` and hiding `#lock`) | Preserves `Escape` meaning everywhere in the station without trapping `#lock` in wide view. |
+
+### `#lock`, `#cue`, and `hud.mjs` Compatibility
+
+- **Lock (`#lock`) visibility:** Driven in `onFrame` from `targetId = activeProxyId ?? pointedPickId`. Shows at `rectOf(targetId)` **only when `targetId !== focused?.pick`** (once `Enter` or click inspects a pick, `#lock` drops for that pick, preserving `hud.mjs:344` while showing `#lock` on the keyboard-focused proxy prior to `Enter`).
+- **Cue (`#cue`) exclusion:** `#cue` renders only when `wideAtRest` is true **and** `#lock` is inactive (`!(activeProxyId ?? pointedPickId)`), dropping immediately whenever `#lock` is active (`hud.js:154`).
+- **Pointer passthrough & `mousedown`:** Proxies and `#lock` keep `pointer-events: none` (`document.elementFromPoint(x, y)` returns `canvas#scene`, preserving `hud.mjs:112,319`); `pointerdown` clears `pointed` (`hud.mjs:334`). Only `#cue .lock-tag` keeps `pointer-events: auto` (`cue.mjs:61-67`).
+- **`display.state()`:** `window.__lobby.display.state()` continues returning `{ lock, named, hint, gliding, cue }` with `rect` rounded to `0.1` CSS px (`[left, top, width, height]`).
+
+---
+
+## 3. Exact `Station` Boundary Specification (`F3`, `U4`, `U9`)
+
+In addition to the §4.2 sketch (`start`, `dispose`, `enter`, `room`, `focus`, `back`, `step`, `focused`, `choose`, `travel`, `read`, `picks`, `pointed`, `rectOf`, `reader`, `readAt`, `closeReader`, `frameOf('reader')`, `contact`, `contactLinkRect`, `setCovered`, `view`, `setView`, `turn`, `onFrame`, `debug`), `U0c` pins down the following concrete contract requirements and additions:
+
+1. **Live non-`reads` `picks` filtering:**
+   - `picks: Readable<StationPick[]>` (`{ id: PickId; name: string; verb: string; kind: PickKind; canRead?: boolean; cue?: { pointer: string; touch: string } }[]`) **excludes** the synthetic unnamed `reads` pick (`aside: true, name: ''`) and emits only currently live picks (updating reactively whenever a pick's `live()` changes, e.g., terminal/books/Contact). Every item in `picks` has a non-empty uppercase `name` and `verb` (`hud.mjs:375-381`).
+2. **Pinned `Rect` shape & `rectOf(pick)` semantics:**
+   - Pin `Rect` explicitly across `F3`, `U4`, and `U6` to the 8-field `SpatialRect`-compatible interface:
+     ```ts
+     export interface Rect {
+       left: number;
+       top: number;
+       right: number;
+       bottom: number;
+       x: number;
+       y: number;
+       width: number;
+       height: number;
+     }
+     ```
+     Shared directly by `rectOf(pick)`, `contactLinkRect(index)`, and `setCovered('bar', rect)` (converting to `[x, y, width, height]` only at the `display.state()` boundary).
+   - `rectOf(pick)` computes CSS viewport pixels with `PAD = 6`, `EDGE = 8`, `MOST = 0.6` (matching `hud.js:42` `frameOf`) using cached viewport dimensions (updated on resize, never reading `canvas.clientWidth` per call), returning `null` when any outline corner is behind `camera.near` (`_v.z > -camera.near`), clamped width/height `< 2px`, or area `> 60%` of viewport (`MOST * W * H`). Safe to call inside `onFrame` after `camera.updateMatrixWorld()`.
+3. **`gliding`, `wideAtRest`, `turn` hint readiness, and `typing` / `reader` state:**
+   - Add `gliding: Readable<boolean>` (`focus.f < 1`, needed for `display.state().gliding` in `hud.mjs:89` without polling).
+   - Add `wideAtRest: Readable<boolean>` (`!busy && !focus.pick && focus.f >= 1 && view === 0 && since > LIFT`, gating `#cue` visibility for `U4` alongside `#lock` inactivity per `hud.js:154`).
+   - Expose turn-by-hand completion (either via `turn.byHand()` or `hintTurnDone: Readable<boolean>`) so `U2`/`U4` clear Navigation's `"until": "turn"` hint without reading Solid signals in `onFrame`.
+   - Expose `focused.typing?: boolean` (for Contact/writer input gating) and `reader: Readable<{ state: ReaderState }>` where `ReaderState = 'closed' | 'scanning' | 'open'` (`docs/program-plan.md` §4.2; `station.reader.get().state !== 'closed'` replaces `was.reads` for both `D5` `typing()` suppression and post-`Escape` focus restoration).
+4. **Single-stop door `1500ms` delayed `travel`:**
+   - Calling `station.focus(doorPick)` for a single-stop door (`!door.stops && door.to`) internally schedules `travel(door.to, 1500)` and cancels that pending timer on `back()`, `focus(other)`, or `dispose()` (matching `main.js:202,218,422`), so pointer clicks, keyboard `Enter`, and `U9` `agent.act` `inspect` behave identically.
+5. **`read(pick?)` return & dynamic `canRead` semantics:**
+   - Extend `read(pick?: PickId): boolean` so calling `station.read()` reads the currently focused pick (`focused.get()?.canRead`), while `station.read(pickId)` focuses `pickId` first (if not already focused) and opens its reading if readable—returning `true` when reading started and `false` when nothing is readable (so `scene-picks` `api.read()` throws a descriptive `Error` instead of falsely announcing).
+   - In `U4`, `scenePicks`' `canRead(id)` must only gate on `focused.get()?.canRead` when `focused?.pick === id` (returning `picks.find(...)?.canRead`, i.e., `undefined` when `Station.picks` omits `canRead` per §4.2) so unfocused `api.read(id)` delegates dynamically to `station.read(id): boolean` instead of returning `false`.
+6. **`StationDebug` / `display.state()` ownership:**
+   - `Station.debug` delegates `display.state()` to `U4`'s plain-JS frame mirror (`{ lock, named, hint, gliding, cue }` with `0.1`-rounded `[l, t, w, h]` rects) so existing e2e assertions work without reading Solid signals in `onFrame`.
+
+---
+
+## 4. Verification Commands & Verbatim Output
+
+Run in `spikes/solid-uisdk/` with `TMPDIR` on a non-`/tmp` filesystem (`2/2` consecutive Chromium runs passed):
+
+```sh
+./node_modules/.bin/tsc --noEmit && CI=1 ./node_modules/.bin/vitest run --reporter=verbose
+```
+
+Observed output (Run 2 of 2 consecutive passing runs; Run 1 passed `12/12` in `9.75s`):
+
+```text
+TSC_EXIT=0
+
+ RUN  v5.1.1 /home/ubuntu/.gemini/antigravity-cli/scratch/wt-U0c-picks-spike/spikes/solid-uisdk
+
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > tracks moving Three.js rAF projections via onFrame refs, preserves pointer-events: none hit-test, and implements D5 keyboard model 951ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > calls station.read() on second Enter inside scene-picks and suppresses Arrow/Enter while reader is open 604ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > reconciles focus and #lock in onFrame when the active proxy moves behind the camera mid-session 385ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > skips offscreen items[0] at 414x896 portrait viewport so initial Tab lands on THE ORRERY 178ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > exposes scene-picks to @ui-sdk/solid/agent (snapshot, act inspect/read, and allow refusal) 453ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > delegates unfocused read(id) to station.read(id) when Station.picks omits canRead 132ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > aborts failed agent read on omitted-canRead single-stop door without focusing or scheduling travel() 1834ms
+ ✓  chromium  src/ScenePicks.test.tsx > ScenePicks Solid 2 + Three.js + @ui-sdk/solid/agent in Chromium > passes @solidjs/diagnostics expectNoDiagnostics({ allow: [] }) and expectNoSilentHolds isolated from SwiftShader WebGLRenderer 335ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > supports Tab roving focus, spatialMove with moving rects across frames, null skipping, edge preventDefault, selection, announcements, and agent actions 427ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > skips an initially-offscreen items[0] (rectOf === null) at mount so Tab lands on items[1] 28ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > recovers rovingFocus, Arrow*, End, and Tab re-entry when the active focused pick becomes null mid-session 167ms
+ ✓  chromium  src/scene-picks.test.ts > scene-picks primitive via @ui-sdk/core/testing mount() > rejects api.read() when onRead returns false or dynamic canRead returns false (even if item.canRead is omitted) 5ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  16:34:30
+   Duration  9.87s (tests 62%, worker 23%, import 15%)
+```
+
+Verified `spikes/solid-uisdk/node_modules/.vite/.../deps/_metadata.json` contains zero `@ui-sdk/core*` entries (`META_GREP_EXIT=1`).
