@@ -177,6 +177,24 @@ def separate_once(src, dst, lift, plane, least, only=None):
     for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
     away = {r for r, c in cover.items() if c / area[r] > 0.999}
     sunk = {r for r, c in floor.items() if c / area[r] > 0.999}
+    if sunk:
+        xz = lambda q: [(p[0], p[2]) for p in tris[q][2]]
+        wind = lambda f: f if (f[1][0] - f[0][0]) * (f[2][1] - f[0][1]) - (f[1][1] - f[0][1]) * (f[2][0] - f[0][0]) >= 0 else [f[0], f[2], f[1]]
+        roof, cell = {}, 0.25
+        for q, tr in enumerate(tris):
+            if tr[3][1] > 1 - 1e-6 and plane < tr[2][0][1] <= 2.0:
+                f = xz(q)
+                for gx in range(int(min(p[0] for p in f) // cell), int(max(p[0] for p in f) // cell) + 1):
+                    for gy in range(int(min(p[1] for p in f) // cell), int(max(p[1] for p in f) // cell) + 1): roof.setdefault((gx, gy), []).append(q)
+        hid = {}
+        for q, tr in enumerate(tris):
+            r = find(q)
+            if r not in sunk: continue
+            f = wind(xz(q)); near = set()
+            for gx in range(int(min(p[0] for p in f) // cell), int(max(p[0] for p in f) // cell) + 1):
+                for gy in range(int(min(p[1] for p in f) // cell), int(max(p[1] for p in f) // cell) + 1): near.update(roof.get((gx, gy), ()))
+            hid[r] = hid.get(r, 0.0) + min(tr[5], sum(clipped_area(f, wind(xz(u))) for u in sorted(near)))
+        sunk = {r for r in sunk if hid.get(r, 0.0) / area[r] < 0.999}
     key = lambda r: (area[r], first[r])
     over, drop, twin = {}, set(sunk), {}
     for (a, b), ov in sorted(overlap.items()):

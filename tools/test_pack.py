@@ -92,6 +92,11 @@ class SeparateTest(unittest.TestCase):
         stats, before, after, js = self.run_on([flat(quad(0.2, 0.2, 0.6, 0.6)), flat(quad(0, 0, 1, 1, up=False))], cam=(0.5, 5, -0.5))
         self.assertEqual((stats['floor'], stats['dropped']), (0, 0))
         self.assertEqual(after, before)
+
+    def test_keeps_the_underside_of_an_inlay_whose_own_top_hides_it_from_above(self):
+        stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False)), flat(quad(0.2, 0.2, 0.6, 0.6), 0.004)], cam=(0.5, 5, -0.5))
+        self.assertEqual((stats['floor'], stats['dropped']), (0, 0))
+        self.assertEqual(after, before)
         stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1), 1.0), flat(quad(0.2, 0.2, 0.6, 0.6, up=False), 1.0)], cam=(0.5, 5, -0.5))
         self.assertEqual(stats['backs'], 1)
         self.assertEqual(sorted(round(p[1], 6) for t, _ in after[2:] for p in t), [0.997] * 6)
