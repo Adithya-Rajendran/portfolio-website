@@ -207,7 +207,7 @@ for (const raw of jobs) {
       const g = window.__lobby.gov, t0 = performance.now(), up = g.update.bind(g), m0 = window.__lobby.mode(), out = [{ t: 0, at: Math.round(t0), mode: m0.scale + '/' + m0.tier }]; let n = 0, dt = 0, gs = [];
       g.update = (d, s) => { n++; dt += d; if (Array.isArray(s)) gs.push(...s); else if (typeof s === 'number') gs.push(s);
         const ch = up(d, s); const m = window.__lobby.mode();
-        if (ch || performance.now() - (out.at(-1)?.t ?? -1e9) > 1000) { gs.sort((a, b) => a - b);
+        if (ch || performance.now() - t0 - out.at(-1).t > 1000) { gs.sort((a, b) => a - b);
           out.push({ t: Math.round(performance.now() - t0), frames: n, dt: +(dt / Math.max(1, n)).toFixed(2), gpu: gs.length ? +gs[gs.length >> 1].toFixed(2) : null, nGpu: gs.length, mode: m.scale + '/' + m.tier, changed: ch }); n = 0; dt = 0; gs = []; }
         return ch; };
       await new Promise((r) => setTimeout(r, secs * 1000));
