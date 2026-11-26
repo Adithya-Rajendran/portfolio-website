@@ -704,17 +704,17 @@ test('a remembered tier 1 is tried at tier 0 only when the estimated MSAA cost f
   for (const f of frames) {
     if (heavy.update(f.dtMs, heavy.tier === 0 ? 20 : 5.5)) {
       heavyChanges.push({ t: f.t, tier: heavy.tier, scale: heavy.scale });
-      saveRoomMode(storage, 'writing', { tier: heavy.tier, scale: heavy.scale, held: heavy.tierHeld });
+      saveRoomMode(storage, 'writing', { ...heavy.savedMode(1000), bake: 7 });
     }
   }
   assert.equal(heavyChanges.length, 2, JSON.stringify(heavyChanges));
   assert.equal(heavy.tier, 1);
   assert.equal(heavy.scale, 1);
-  const saved = loadRoomMode(storage, 'writing');
-  assert.deepEqual(saved, { tier: 1, scale: 1, held: true });
+  const saved = loadRoomMode(storage, 'writing', { bake: 7, now: 2000 });
+  assert.deepEqual(saved, { tier: 1, scale: 1, held: true, at: 1000 });
 
   const again = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
-  again.reset({ ...saved, warm: 600 });
+  again.reset({ ...saved, heldAt: saved.at, warm: 600 });
   assert.equal(run(again, frames, (g) => (g.tier === 0 ? 20 : 5.5)).length, 0, 'a remembered failed try is not repeated');
 });
 
@@ -815,8 +815,8 @@ test('frames that upload textures are left out: over-limit upload frames do not 
   const uploadTrace = (gpuOn) => {
     const frames = [];
     for (let i = 0; i < 900; i++) {
-      const upload = i >= 40 && i < 400 && i % 6 < 2;
-      frames.push({ dtMs: upload ? 120 : 16.67, gpuMs: gpuOn ? (upload ? 22 : 9) : null, upload });
+      const upload = i >= 40 && i < 400 && i % 12 < 2;
+      frames.push({ dtMs: upload ? 60 : 16.67, gpuMs: gpuOn ? (upload ? 22 : 9) : null, upload });
     }
     return frames;
   };
@@ -841,4 +841,62 @@ test('frames that upload textures are left out: over-limit upload frames do not 
   busy.reset({ tier: 0, scale: 1, warm: 600 });
   const sustained = Array.from({ length: 300 }, (_, i) => ({ dtMs: 33.3, gpuMs: 25, upload: i % 10 === 0 }));
   assert.ok(feed(busy, sustained).length >= 1, 'sustained GPU overload between uploads must still downgrade');
+});
+
+test('a long texture stream cannot blind the governor: over half the last 3 s in upload frames stops the exclusion', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  const frames = [];
+  let t = 0;
+  let next = 0;
+  let uploads = 0;
+  while (t < 20000) {
+    const dtMs = 33.3;
+    t += dtMs;
+    const upload = uploads < 400 && t >= next;
+    if (upload) { uploads++; next += 50; }
+    frames.push({ dtMs, gpuMs: 4 + 21 * gov.scale * gov.scale, upload: upload || (frames.length > 0 && frames[frames.length - 1].fresh), fresh: upload });
+  }
+  const changes = [];
+  let pending = null;
+  t = 0;
+  for (const f of frames) {
+    t += f.dtMs;
+    if (gov.update(f.dtMs, pending, f.upload)) changes.push({ t, tier: gov.tier, scale: gov.scale });
+    pending = gov.excluded ? null : 4 + 21 * gov.scale * gov.scale;
+  }
+  assert.ok(changes.length >= 1, 'expected a downgrade while uploads keep streaming');
+  assert.ok(changes[0].t <= 4000, `first downgrade at ${changes[0].t.toFixed(0)} ms`);
+});
+
+test('a CPU-bound room (GPU timer low, frames slow) is not lowered below scale 0.75', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  const changes = [];
+  for (let i = 0; i < 18000; i++) if (gov.update(33.3, 5)) changes.push({ tier: gov.tier, scale: gov.scale });
+  assert.ok(changes.length >= 1, 'expected the frame-interval fallback to react');
+  assert.ok(gov.scale >= 0.75, `scale ${gov.scale}`);
+});
+
+test('the stored mode keeps the remembered tier for unheld drops, and held expires after 7 days or a new bake', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  for (let i = 0; i < 120 && gov.tier === 0; i++) gov.update(16.67, 25);
+  assert.equal(gov.tier, 1);
+  assert.equal(gov.tierHeld, false, 'a GPU drop before the mode settles is not held');
+  assert.deepEqual(gov.savedMode(5), { tier: 0, scale: gov.scale });
+
+  const map = new Map();
+  const storage = { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, String(v)) };
+  const day = 24 * 3600 * 1000;
+  saveRoomMode(storage, 'lobby', { tier: 1, scale: 0.8, held: true, at: 10 * day, bake: 3 });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 3, now: 16 * day }), { tier: 1, scale: 0.8, held: true, at: 10 * day });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 3, now: 18 * day }), { tier: 1, scale: 0.8 });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 4, now: 11 * day }), { tier: 1, scale: 0.8 });
+  saveRoomMode(storage, 'lobby', { tier: 1, scale: 0.8, held: true });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { now: 11 * day }), { tier: 1, scale: 0.8 }, 'held without a time is not stored');
+
+  const kept = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  kept.reset({ tier: 1, scale: 1, held: true, heldAt: 10 * day, warm: 0 });
+  assert.deepEqual(kept.savedMode(12 * day), { tier: 1, scale: 1, held: true, at: 10 * day }, 'a later visit keeps the first time');
 });

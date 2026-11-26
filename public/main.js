@@ -318,10 +318,10 @@ async function enter(id, push = true) {
   if (room.turn) unturn = turning(room.turn);                                // a route map: the visitor's drags and sideways wheel turn it
   display.room(room.picks, content.rooms[id].hint);                           // the display learns what this room has: a pick with a cue, a hint of its own
   savedRoom = null;
-  const remembered = loadRoomMode(safeStorage(), id, { min: gov.min, max: gov.max });
+  const remembered = loadRoomMode(safeStorage(), id, { min: gov.min, max: gov.max, bake: room.scene.userData.stream?.bake?.() });
   const startTier = TIER_PINNED ? PINNED_TIER : (remembered ? remembered.tier : 0);
   const startScale = PINNED_SCALE != null ? PINNED_SCALE : (remembered ? remembered.scale : gov.max);
-  gov.reset({ tier: startTier, scale: startScale, warm: 600, held: !TIER_PINNED && !!remembered?.held });
+  gov.reset({ tier: startTier, scale: startScale, warm: 600, held: !TIER_PINNED && !!remembered?.held, heldAt: remembered?.at ?? null });
   setTier(gov.tier);
   fillHud(id); post.setExposure(room.exposure); resize(); resetGpuTimer();
   document.body.classList.toggle('bright', !!content.rooms[id].bright);      // a pale room says so (content.json "bright"): the page's words get more behind them (style.css)
@@ -473,11 +473,11 @@ function frame() {
     applyScale();
     resetGpuTimer();
     if (!gov.scalePinned && !TIER_PINNED && room) {
-      saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale, held: gov.tierHeld }, { min: gov.min, max: gov.max });
+      saveRoomMode(safeStorage(), room.id, { ...gov.savedMode(Date.now()), bake: room.scene.userData.stream?.bake?.() }, { min: gov.min, max: gov.max });
       savedRoom = room.id;
     }
   } else if (!calm && room && savedRoom !== room.id && !gov.scalePinned && !TIER_PINNED && gov.warm <= 0 && gov.settledMs >= 2000) {
-    saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale, held: gov.tierHeld }, { min: gov.min, max: gov.max });
+    saveRoomMode(safeStorage(), room.id, { ...gov.savedMode(Date.now()), bake: room.scene.userData.stream?.bake?.() }, { min: gov.min, max: gov.max });
     savedRoom = room.id;
   }
   // The route map. A station that comes into focus some other way (a click, the tour, a link), or is read, has the map turn
@@ -522,7 +522,7 @@ function frame() {
   } finally {
     if (gpuQuery && !gl.isContextLost()) {
       gl.endQuery(timerExt.TIME_ELAPSED_EXT);
-      gpuPending.push({ q: gpuQuery, epoch: gpuEpoch, upload: uploadFrame });
+      gpuPending.push({ q: gpuQuery, epoch: gpuEpoch, upload: gov.excluded });
     }
   }
   // the lock: on the pick the pointer rests on, looked for again as the view moves under a still pointer

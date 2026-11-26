@@ -14,7 +14,9 @@ export function storageKey(roomId) {
   return `${STORAGE_PREFIX}${roomId}`;
 }
 
-export function loadRoomMode(storage, roomId, { min = 0.5, max = 1 } = {}) {
+export const HELD_MS = 7 * 24 * 3600 * 1000;
+
+export function loadRoomMode(storage, roomId, { min = 0.5, max = 1, bake, now = Date.now() } = {}) {
   if (!storage || typeof storage.getItem !== 'function' || typeof roomId !== 'string' || !roomId) return null;
   try {
     const raw = storage.getItem(storageKey(roomId));
@@ -24,7 +26,8 @@ export function loadRoomMode(storage, roomId, { min = 0.5, max = 1 } = {}) {
     if (data.tier !== 0 && data.tier !== 1) return null;
     if (typeof data.scale !== 'number' || !Number.isFinite(data.scale)) return null;
     if (data.scale < min || data.scale > max) return null;
-    return data.held === true ? { tier: data.tier, scale: data.scale, held: true } : { tier: data.tier, scale: data.scale };
+    const held = data.held === true && Number.isFinite(data.at) && data.at <= now && now - data.at <= HELD_MS && (bake === undefined || data.bake === bake);
+    return held ? { tier: data.tier, scale: data.scale, held: true, at: data.at } : { tier: data.tier, scale: data.scale };
   } catch {
     return null;
   }
@@ -36,7 +39,8 @@ export function saveRoomMode(storage, roomId, mode, { min = 0.5, max = 1 } = {})
   if (tier === null || typeof mode.scale !== 'number' || !Number.isFinite(mode.scale)) return false;
   const scale = Math.round(clamp(mode.scale, min, max) * 10000) / 10000;
   try {
-    storage.setItem(storageKey(roomId), JSON.stringify(mode.held === true ? { v: 1, tier, scale, held: true } : { v: 1, tier, scale }));
+    const held = mode.held === true && Number.isFinite(mode.at) ? { held: true, at: mode.at, ...(mode.bake !== undefined && { bake: mode.bake }) } : {};
+    storage.setItem(storageKey(roomId), JSON.stringify({ v: 1, tier, scale, ...held }));
     return true;
   } catch {
     return false;
@@ -82,6 +86,8 @@ export class Governor {
     this.gpuUpCoolMs = 1000;
     this.tierProbeMs = 3000;
     this.tierCost = 1.5;
+    this.cpuFloor = 0.75;
+    this.uploadShare = 0.5;
     this.dtShare = 0.6;
     this.baseBackoffMs = 28000;
     this.maxBackoffMs = 120000;
@@ -100,6 +106,13 @@ export class Governor {
     this._gpuSeen = false;
     this._sinceGpu = 0;
     this.tierHeld = false;
+    this.heldAt = null;
+    this.excluded = false;
+    this._startTier = this.tier;
+    this._recentGpu = null;
+    this._upWins = [];
+    this._upSpan = 0;
+    this._upMs = 0;
     this._tierByDt = false;
     this._tierTried = false;
     this._tier0Gpu = null;
@@ -141,7 +154,7 @@ export class Governor {
     this._resetWindow();
   }
 
-  reset({ tier = 0, scale = this.max, warm = 250, held = false } = {}) {
+  reset({ tier = 0, scale = this.max, warm = 250, held = false, heldAt = null } = {}) {
     if (!this.tierPinned) this.tier = tier ? 1 : 0;
     if (!this.scalePinned) this.scale = clamp(scale ?? this.max, this.min, this.max);
     this.downgradeCool = 0;
@@ -152,6 +165,9 @@ export class Governor {
     this.capMs = 0;
     this._sinceCap = 1e9;
     this.tierHeld = !!held;
+    this.heldAt = held ? heldAt : null;
+    this._startTier = this.tier;
+    this._recentGpu = null;
     this._tierByDt = false;
     this._tierTried = false;
     this._tier0Gpu = null;
@@ -161,6 +177,24 @@ export class Governor {
     this._sinceGpu = 0;
     this.settledMs = 0;
     this.rest(warm);
+  }
+
+  savedMode(now) {
+    const tier = this.tierHeld ? this.tier : Math.min(this.tier, this._startTier);
+    return this.tierHeld && tier === 1 ? { tier, scale: this.scale, held: true, at: this.heldAt ?? now } : { tier, scale: this.scale };
+  }
+
+  _uploadSkip(dtMs, upload) {
+    const ms = Math.min(dtMs, 1000);
+    this._upWins.push([ms, upload]);
+    this._upSpan += ms;
+    if (upload) this._upMs += ms;
+    while (this._upWins.length > 1 && this._upSpan - this._upWins[0][0] >= this.dtGraceMs) {
+      const [m, u] = this._upWins.shift();
+      this._upSpan -= m;
+      if (u) this._upMs -= m;
+    }
+    return upload && this._upMs <= Math.max(this._upSpan, this.dtGraceMs) * this.uploadShare;
   }
 
   _changed(cool) {
@@ -175,7 +209,9 @@ export class Governor {
   }
 
   update(dtMs, gpuSamples = null, upload = false) {
-    if (this.allPinned || !Number.isFinite(dtMs) || dtMs < 0) return false;
+    if (!Number.isFinite(dtMs) || dtMs < 0) return false;
+    const skip = this.excluded = this._uploadSkip(dtMs, upload);
+    if (this.allPinned) return false;
     if (dtMs > 1000) {
       this._slowDtStreak = 0;
       this._slowGpuStreak = 0;
@@ -207,7 +243,7 @@ export class Governor {
       return false;
     }
 
-    if (!upload) {
+    if (!skip) {
       this._winMs += dtMs;
       this._dtSum += dtMs;
       this._dtCount++;
@@ -233,6 +269,7 @@ export class Governor {
     if (gpuMed !== null) {
       this._gpuSeen = true;
       this._sinceGpu = 0;
+      this._recentGpu = gpuMed;
       this._lastGpu = this.tier === 0 && this.scale >= this.max ? gpuMed : null;
     } else {
       this._sinceGpu += winMs;
@@ -266,6 +303,7 @@ export class Governor {
       const factor = clamp(Math.sqrt(Math.max(0.1, (aimMs - fixedMs) / Math.max(1, effectiveMs - fixedMs))), 0.45, 0.88);
       let nextScale = Math.max(this.min, this.scale * factor);
       if (nextScale - this.min < 0.05) nextScale = this.min;
+      if (!gpuOver && gpuTimed && this._recentGpu !== null && this._recentGpu < this.gpuAim) nextScale = Math.max(nextScale, Math.min(this.scale, this.cpuFloor));
       nextScale = Math.round(nextScale * 1000) / 1000;
 
       const overScale = this.scale;
@@ -274,7 +312,10 @@ export class Governor {
       let droppedTierOnly = false;
       if (this.tier === 0 && !this.tierPinned && (nextScale < 0.85 || this.scalePinned)) {
         this.tier = 1;
-        if ((gpuOver && settled) || this._tierByDt || this._tierTried) this.tierHeld = true;
+        if ((gpuOver && settled) || this._tierByDt || this._tierTried) {
+          this.tierHeld = true;
+          this.heldAt = null;
+        }
         else {
           this._tierByDt = true;
           this._tier0Gpu = gpuTimed ? this._lastGpu : null;

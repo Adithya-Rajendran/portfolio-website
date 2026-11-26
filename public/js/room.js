@@ -243,6 +243,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       queued: later.length, running, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
     settled: () => streaming && !later.length && !running,
     uploads: () => uploads,
+    bake: () => info.v || 0,
   };
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
   const floors = [], hidden = [];                                  // not drawn into the mirror image: the floor itself; glass and dust
