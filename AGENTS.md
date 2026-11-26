@@ -211,3 +211,7 @@ python3 tools/content.py
 for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done
 python3 tools/site.py --out <temp_dir>   # pass --out so generated pages stay out of public/, then delete <temp_dir>
 ```
+
+## Comments
+
+Code carries no comments except one short header at the top of each file saying what is in the file. No explanations, justifications, summaries, TODOs or commented-out code, in any language (JS/TS, GLSL, Python, shell, CSS, HTML). Allowed beyond the header: shebangs, license headers of vendored code (public/vendor is not ours to edit), and directives tools need (for example `// @ts-expect-error`, `# noqa`, `/* eslint-disable */`). Reasons and evidence go in the pull request, not the code. (Owner, 2026-11-25, D22.)
