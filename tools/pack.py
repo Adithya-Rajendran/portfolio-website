@@ -136,7 +136,7 @@ def separate_once(src, dst, lift, plane, least, only=None):
     buckets = {}
     for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round(d * 1000)), []).append(i)
     facing = lambda i, j: dot(tris[i][3], tris[j][3]) < -1 + 1e-6 and abs(tris[i][4] + tris[j][4]) < plane
-    overlap, seen, cover, floor = {}, set(), {}, 0
+    overlap, seen, cover, floor = {}, set(), {}, {}
     for key, ks in buckets.items():
         if only is not None and key not in only: continue
         near = [i for sg in (1, -1) for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1) for dd in (-1, 0, 1)
@@ -170,13 +170,15 @@ def separate_once(src, dst, lift, plane, least, only=None):
                 elif ov > least:
                     mid = lambda q: tuple(sum(p[c] for p in tris[q][2]) / 3 for c in range(3))
                     q = i if dot(tris[i][3], sub(eye, mid(i))) < dot(tris[j][3], sub(eye, mid(j))) else j
-                    if abs(tris[q][3][1]) > 1 - 1e-6 and abs(mid(q)[1]) < plane: floor += 1
+                    if abs(tris[q][3][1]) > 1 - 1e-6 and abs(mid(q)[1]) < plane:
+                        q = i if tris[i][3][1] < 0 else j; floor[find(q)] = floor.get(find(q), 0.0) + ov
                     else: cover[find(q)] = cover.get(find(q), 0.0) + ov
     area, first = {}, {}
     for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
     away = {r for r, c in cover.items() if c / area[r] > 0.999}
+    sunk = {r for r, c in floor.items() if c / area[r] > 0.999}
     key = lambda r: (area[r], first[r])
-    over, drop, twin = {}, set(), {}
+    over, drop, twin = {}, set(sunk), {}
     for (a, b), ov in sorted(overlap.items()):
         if ov / area[a] > 0.999 and ov / area[b] > 0.999:
             gone = min(a, b, key=lambda r: (round(tris[first[r]][4], 6), first[r])); drop.add(gone); twin[gone] = b if gone == a else a; continue
@@ -203,7 +205,7 @@ def separate_once(src, dst, lift, plane, least, only=None):
         if r in drop: moved.setdefault(k, {})[t] = None
         elif shift.get(r, 0.0) > 0: moved.setdefault(k, {})[t] = (r, tuple(shift[r] * c for c in n))
     stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
-             'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': floor, 'area': round(sum(overlap.values()), 3)}
+             'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': len(sunk), 'area': round(sum(overlap.values()), 3)}
     for k, change in moved.items():
         pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
         A3 = [[M[r][c] for c in range(3)] for r in range(3)]

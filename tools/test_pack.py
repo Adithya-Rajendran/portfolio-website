@@ -85,9 +85,12 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'levels': 0, 'deepest_mm': 0.0, 'backs': 0, 'loose': 0, 'floor': 0, 'area': 0, 'passes': 1})
         self.assertEqual(after, before)
 
-    def test_leaves_the_underside_of_a_thing_standing_on_the_floor_where_the_floor_mirror_sees_it(self):
+    def test_drops_the_underside_of_a_thing_standing_on_the_floor_instead_of_moving_it_under_the_floor_mirror(self):
         stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False))], cam=(0.5, 5, -0.5))
-        self.assertEqual((stats['backs'], stats['floor']), (0, 2))
+        self.assertEqual((stats['backs'], stats['floor'], stats['dropped']), (0, 1, 2))
+        self.assertEqual(after, before[:2])
+        stats, before, after, js = self.run_on([flat(quad(0.2, 0.2, 0.6, 0.6)), flat(quad(0, 0, 1, 1, up=False))], cam=(0.5, 5, -0.5))
+        self.assertEqual((stats['floor'], stats['dropped']), (0, 0))
         self.assertEqual(after, before)
         stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1), 1.0), flat(quad(0.2, 0.2, 0.6, 0.6, up=False), 1.0)], cam=(0.5, 5, -0.5))
         self.assertEqual(stats['backs'], 1)
