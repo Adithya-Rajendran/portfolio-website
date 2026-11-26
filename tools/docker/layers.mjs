@@ -102,12 +102,16 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
 }
 
 {
-  const { ctx, p, errors } = await open('?roll=60');
+  const { ctx, p, errors } = await open('?roll=36');
   await settled(p);
   const cdp = await ctx.newCDPSession(p);
   await cdp.send('Network.enable');
   await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
-  await p.evaluate(() => window.__lobby.enter('about'));
+  await p.evaluate(async () => {
+    const { uTime } = await import('/js/kit.js'), at = () => ((uTime.value / 36) % 1) * 6 % 1;
+    while (!(at() > 0.25 && at() < 0.35)) await new Promise((r) => requestAnimationFrame(r));
+    window.__lobby.enter('about');
+  });
   await p.waitForFunction(() => window.__lobby.mode().room === 'about' && window.__lobby.ready() > 0, null, { polling: 100, timeout: 180000 });
   const { cover } = await state(p);
   ok(!!cover && cover.at[0] !== cover.first[0], `re-choose: the sky crossed into another layer while the room loaded (${JSON.stringify(cover?.first)} -> ${JSON.stringify(cover?.at)})`);
