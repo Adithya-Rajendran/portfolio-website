@@ -27,6 +27,8 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   ok(done, `${room}: every layer fetched (${Object.keys(s.layers).length} layered textures)`);
   ok(all(s).every(([n, l]) => l.failed.length === 0 && l.have.length === (n.endsWith('_s') ? 6 : 3)), `${room}: every layer in, none given up`);
   ok(!s.hold, `${room}: no hold left`);
+  const f = await state(p);
+  ok(f.split > 0 && f.small === 0, `${room}: every texture cut in two ends at full detail (${f.split} textures, ${f.small} still small)`);
   ok(skyIn(s), `${room}: the sky samples only layers that are in`);
   if (room === 'lobby') ok(await turns(p), 'lobby: the orrery turns once its phases are in');
   ok(!errors.length, `${room}: no page error ${errors.join(' | ')}`);
@@ -48,6 +50,27 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   ok(!s.hold, 'refused layers: the orrery hold let go');
   ok(await turns(p), 'refused layers: the orrery turns');
   ok(!errors.length, `refused layers: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+
+{
+  const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/props\.tail\.ktx2/, (r) => r.fulfill({ status: 404, body: 'Not found' })));
+  const done = await settled(p);
+  const s = await state(p);
+  ok(done && s.small === 1 && !s.hold, `refused tail: streaming ends, one texture stays small (${s.small}), nothing held`);
+  ok(!errors.length, `refused tail: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+{
+  let tails = 0;
+  const { ctx, p, errors } = await open('', async (pg) => {
+    await pg.addInitScript(() => Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true }));
+    pg.on('request', (r) => { if (/\.tail\.ktx2/.test(r.url())) tails++; });
+  });
+  const done = await settled(p), s = await state(p);
+  ok(done && tails === 0 && s.small === s.split && s.split > 0, `save data: no tail fetched (${tails}), every texture stays small (${s.small} of ${s.split}); the layers still come`);
+  ok(Object.values(s.layers).every((l) => !l.failed.length) && !s.hold, 'save data: the sky and orrery layers all arrive');
+  ok(!errors.length, `save data: no page error ${errors.join(' | ')}`);
   await ctx.close();
 }
 
@@ -79,12 +102,16 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
 }
 
 {
-  const { ctx, p, errors } = await open('?roll=60');
+  const { ctx, p, errors } = await open('?roll=48');
   await settled(p);
   const cdp = await ctx.newCDPSession(p);
   await cdp.send('Network.enable');
   await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
-  await p.evaluate(() => window.__lobby.enter('about'));
+  await p.evaluate(async () => {
+    const { uTime } = await import('/js/kit.js'), at = () => ((uTime.value / 48) % 1) * 6 % 1;
+    while (!(at() > 0.25 && at() < 0.35)) await new Promise((r) => requestAnimationFrame(r));
+    window.__lobby.enter('about');
+  });
   await p.waitForFunction(() => window.__lobby.mode().room === 'about' && window.__lobby.ready() > 0, null, { polling: 100, timeout: 180000 });
   const { cover } = await state(p);
   ok(!!cover && cover.at[0] !== cover.first[0], `re-choose: the sky crossed into another layer while the room loaded (${JSON.stringify(cover?.first)} -> ${JSON.stringify(cover?.at)})`);
