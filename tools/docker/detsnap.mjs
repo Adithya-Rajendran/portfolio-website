@@ -75,8 +75,6 @@ for (const raw of jobs) {
   for (let i = 0; i < 600 && !(await p.evaluate(() => !!window.__lobby)); i++) await new Promise((r) => setTimeout(r, 100));
   while (inflight > 0 || Date.now() - last < 1500) await new Promise((r) => setTimeout(r, 100));
   await new Promise((r) => setTimeout(r, 1500));                    // image decodes
-  // The room loader streams the sky and orrery layers in after the first frame (task O7): wait until every one is in
-  // (transcoded and uploaded), so no state is pictured with a layer still to come. Commits before O7 have nothing to wait for.
   for (let i = 0; i < 1200 && !(await p.evaluate(() => window.__lobby?.scene?.userData?.stream?.settled?.() ?? true)); i++) await new Promise((r) => setTimeout(r, 100));
 
   // Ensure ?focus= poses settle completely even when called with a smaller default frame count (e.g. run.sh snap 60).

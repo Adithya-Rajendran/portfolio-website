@@ -1,8 +1,4 @@
-// Frames while a room's textures stream in after the cover has lifted (task O7).  node stream.mjs <url> [mbps] [rtt ms] [runs]
-// Per run, over a throttled link (as load.mjs): the time to the first frame, the bytes fetched by then and in all, and
-// every frame interval (requestAnimationFrame) from the first frame until no request has been in flight for 2 s (the
-// streaming), then for 5 s more (settled). Prints the worst and the median frame while streaming, the median once
-// settled, and worst / settled median. Fails (exit 1) on a page error.
+// Frames, bytes and first-frame time while a room streams its textures in.  node stream.mjs <url> [mbps] [rtt ms] [runs]
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

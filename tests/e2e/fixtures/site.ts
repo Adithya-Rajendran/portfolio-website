@@ -141,7 +141,6 @@ export function attachErrorCollector(page: Page, errors: string[] = []): string[
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(`console: ${m.text().slice(0, 300)}`);
   });
-  // the room loader aborts texture-layer downloads under way when a room is left (task O7): only that abort is not an error
   page.on('requestfailed', (r) => (r.failure()?.errorText === 'net::ERR_ABORTED' && /^\/assets\/[^/]+\/tex\/[^/]+\.ktx2$/.test(new URL(r.url()).pathname)) || errors.push(`request failed: ${r.url()} ${r.failure()?.errorText ?? ''}`));
   page.on('response', (r) => {
     if (r.status() >= 400) errors.push(`http ${r.status()}: ${r.url()}`);
