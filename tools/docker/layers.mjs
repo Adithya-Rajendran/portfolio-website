@@ -102,13 +102,13 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
 }
 
 {
-  const { ctx, p, errors } = await open('?roll=36');
+  const { ctx, p, errors } = await open('?roll=48');
   await settled(p);
   const cdp = await ctx.newCDPSession(p);
   await cdp.send('Network.enable');
   await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
   await p.evaluate(async () => {
-    const { uTime } = await import('/js/kit.js'), at = () => ((uTime.value / 36) % 1) * 6 % 1;
+    const { uTime } = await import('/js/kit.js'), at = () => ((uTime.value / 48) % 1) * 6 % 1;
     while (!(at() > 0.25 && at() < 0.35)) await new Promise((r) => requestAnimationFrame(r));
     window.__lobby.enter('about');
   });
