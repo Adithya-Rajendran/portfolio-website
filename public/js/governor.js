@@ -366,7 +366,7 @@ export class Governor {
     }
 
     if (this.tier === 1 && !this.tierPinned && !this.tierHeld && this.scale >= this.max
-      && (this._tier0Gpu !== null ? this._tier0Gpu < this.gpuAim : g * this.tierCost < this.gpuFast)) {
+      && (this._tier0Gpu !== null ? this._tier0Gpu < this.gpuSlow : g * this.tierCost < this.gpuFast)) {
       this._probeMs += this.fitMs;
       if (this._probeMs >= this.tierProbeMs) {
         this.tier = 0;

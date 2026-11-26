@@ -786,7 +786,7 @@ test('a tier drop caused by slow frames during a load is undone once the GPU sho
   while (t < 20000) {
     const dtMs = t > 600 && t < loadEnd ? 30 : 16.67;
     t += dtMs;
-    const gpu = 4 + (gov.tier === 0 ? 4 : 1.5) * gov.scale * gov.scale;
+    const gpu = 4 + (gov.tier === 0 ? 8 : 1.5) * gov.scale * gov.scale;
     if (gov.update(dtMs, gpu)) changes.push({ t: Math.round(t), tier: gov.tier, scale: gov.scale });
   }
   assert.equal(changes[0]?.tier, 1, JSON.stringify(changes));
