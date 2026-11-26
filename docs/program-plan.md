@@ -530,6 +530,7 @@ its own (5.1).
 | O1 | The load path wastes no time | opt | A | P0 | S |
 | O2 | Textures are requested as soon as scene.json is read | opt | A | O1 | M |
 | O3 | The governor measures the GPU | opt | A | P0 | M |
+| O3b | Loading hitches do not lower the quality | opt | A2 | O3, O7 | M |
 | O4a | A pixel walks only the lamps that can reach it | opt | A | P0 | M |
 | O5 | The mirror at tier 1: pictures and numbers for a talk with the owner | opt | A | O0 | S |
 | O6a | The orrery's reflection costs less CPU | opt | A | O6b | S |
@@ -718,6 +719,13 @@ Branch `prog/O3-governor` · after P0 · size M · owns `Governor` in `public/js
   6 s of the cover lifting the mode stops changing for 20 s, and the rate is 50 fps or more or the scale is at its
   floor; a second visit starts at the remembered mode; with the extension hidden there is no error. The pull request
   asks the owner to look at `preview` in a real browser.
+
+#### O3b · Loading hitches do not lower the quality
+Branch `prog/O3b-governor-load` · after O3 and O7 · size M · owns `public/js/governor.js`, `tools/test_governor.mjs`, and the governor's wiring in `public/main.js` and the room loader's upload count
+
+- **Context.** O3's governor lowers resolution and tier when a few slow frames during loading (texture transcodes and uploads) lift the frame-interval average, even when the GPU timer shows headroom; lower resolution makes thin bright edges shimmer, which the owner saw.
+- **Goal.** With a GPU timer, loading hitches and texture-upload frames do not lower the quality; a room that fits the budget climbs back within seconds; a room just over budget settles without oscillating; without a timer the fallback behaves as before; a drop that is not held is not remembered.
+- **Done when.** Unit tests for each case pass in `ci static`; an unpinned 30 s visit to every room on both CI hosts is no worse than before (3 interleaved runs); under a 12x CPU throttle during load, rooms keep full quality where the base drops them; pictures 0; suite and e2e pass.
 
 #### O4a · A pixel walks only the lamps that can reach it
 Branch `prog/O4a-lamp-grid` · after P0 · size M · owns the lamp code of `public/js/room.js` (lines 108 to 112 and where `lampU` is used) and `lampLobe` in `public/js/reflections.js`
