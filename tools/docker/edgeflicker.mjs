@@ -176,7 +176,8 @@ const IDSUM = () => {
   const byKind = {}; for (const r of rows) { const k = r.kind.replace(/~.*/, ''); byKind[k] ??= { pairs: 0, flips: 0, px: 0 }; byKind[k].pairs++; byKind[k].flips += r.flips; byKind[k].px += r.px; }
   for (const k in byKind) byKind[k].perPx = +(byKind[k].flips / Math.max(1, byKind[k].px)).toFixed(2);
   const top = rows.filter((r) => r.kind !== 'adjacent').sort((a, b) => b.flips - a.flips).slice(0, 12);
-  return { size: [st.Wd, st.Hd], at: [st.X, st.Y], frames: st.frames, byKind, top };
+  const topByKind = {}; for (const r of rows.sort((a, b) => b.flips - a.flips)) { const k = r.kind.replace(/~.*/, ''); if (k === 'adjacent') continue; (topByKind[k] ??= []).length < 6 && topByKind[k].push(r); }
+  return { size: [st.Wd, st.Hd], at: [st.X, st.Y], frames: st.frames, byKind, top, topByKind };
 };
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const an = await (await b.newContext()).newPage();
