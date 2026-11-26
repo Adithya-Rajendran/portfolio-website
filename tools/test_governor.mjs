@@ -629,7 +629,7 @@ test('sustained GPU overload downgrades as before (tier first, then scale, settl
   const changes = run(gov, frames, (g) => cost(g));
   assert.ok(changes.length >= 2, `expected tier and scale drops: ${JSON.stringify(changes)}`);
   assert.equal(changes[0].tier, 1);
-  assert.ok(changes[0].t <= 1000, `first drop at ${changes[0].t} ms`);
+  assert.ok(changes[0].t <= 1250, `first drop at ${changes[0].t} ms`);
   const last = changes[changes.length - 1].t;
   assert.ok(last <= 6000, `settled at ${last} ms`);
   assert.ok(cost(gov) <= 14.33 && cost(gov) >= 9.33, `final GPU ${cost(gov).toFixed(2)} ms at ${gov.scale}`);
@@ -795,5 +795,18 @@ test('a tier drop caused by slow frames during a load is undone once the GPU sho
   assert.ok(back && back.t - loadEnd <= 8000, JSON.stringify(changes));
   assert.equal(gov.tier, 0);
   assert.equal(gov.scale, 1);
+  assert.equal(gov.tierHeld, false);
+});
+
+test('one GPU window over the limit while textures upload after the cover lift does not drop the tier', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  const frames = [
+    ...Array(60).fill({ dtMs: 16.67, gpuMs: 10 }),
+    ...Array(16).fill({ dtMs: 16.67, gpuMs: 18 }),
+    ...Array(600).fill({ dtMs: 16.67, gpuMs: 10 }),
+  ];
+  const { changes } = simulateTrace(gov, frames);
+  assert.equal(changes.length, 0, JSON.stringify(changes));
   assert.equal(gov.tierHeld, false);
 });

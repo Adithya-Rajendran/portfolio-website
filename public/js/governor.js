@@ -101,6 +101,7 @@ export class Governor {
     this._sinceGpu = 0;
     this.tierHeld = false;
     this._tierByDt = false;
+    this._tierTried = false;
     this._tier0Gpu = null;
     this._lastGpu = null;
     this._probeMs = 0;
@@ -152,6 +153,7 @@ export class Governor {
     this._sinceCap = 1e9;
     this.tierHeld = !!held;
     this._tierByDt = false;
+    this._tierTried = false;
     this._tier0Gpu = null;
     this._lastGpu = null;
     this._goodMs = 0;
@@ -252,7 +254,7 @@ export class Governor {
     const gpuLimit = settled ? this.gpuHoldSlow : this.gpuSlow;
     if (gpuMed !== null && gpuMed > gpuLimit) this._slowGpuStreak++;
     else this._slowGpuStreak = 0;
-    const gpuOver = gpuMed !== null && (settled ? this._slowGpuStreak >= 2 : gpuMed > gpuLimit);
+    const gpuOver = gpuMed !== null && this._slowGpuStreak >= 2;
     const overloaded = gpuOver || sustainedDtOver;
 
     if (overloaded) {
@@ -270,7 +272,7 @@ export class Governor {
       let droppedTierOnly = false;
       if (this.tier === 0 && !this.tierPinned && (nextScale < 0.85 || this.scalePinned)) {
         this.tier = 1;
-        if (gpuOver || this._tierByDt) this.tierHeld = true;
+        if ((gpuOver && settled) || this._tierByDt || this._tierTried) this.tierHeld = true;
         else {
           this._tierByDt = true;
           this._tier0Gpu = gpuTimed ? this._lastGpu : null;
@@ -371,6 +373,7 @@ export class Governor {
       this._probeMs += this.fitMs;
       if (this._probeMs >= this.tierProbeMs) {
         this.tier = 0;
+        this._tierTried = true;
         this._sinceUpgrade = 0;
         return this._changed(this.gpuUpCoolMs);
       }
