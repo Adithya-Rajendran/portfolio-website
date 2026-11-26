@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Turn a bake (assets-src/<room>/, written by blender/bake.py) into what the site serves (public/assets/<room>/).
-  tools/pack.py [room ...]
-Textures -> KTX2: block-compressed on the GPU (a quarter to an eighth of the memory of RGBA8), mipmaps included, and
-the layers of one group (orrery phases _c0.., sky angles _s0..) packed into a single array texture.
-Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
+"""Packs the bakes in assets-src/<room>/ into public/assets/<room>/: KTX2 textures, and room geometry with faces that lie on each other separated, meshopt-compressed."""
 import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -86,6 +82,14 @@ def clipped_area(t1, t2):
     return abs(sum(poly[k][0] * poly[(k + 1) % len(poly)][1] - poly[(k + 1) % len(poly)][0] * poly[k][1] for k in range(len(poly)))) / 2
 
 def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
+    stats, cur, only = None, src, None
+    for n in range(1, 6):
+        once, only = separate_once(cur, dst, lift, plane, least, only)
+        stats = once if stats is None else dict(stats, lifted=stats['lifted'] + once['lifted'], dropped=stats['dropped'] + once['dropped'], deepest_mm=max(stats['deepest_mm'], once['deepest_mm'])); cur = dst
+        if not once['lifted'] and not once['dropped']: break
+    return dict(stats, passes=n)
+
+def separate_once(src, dst, lift, plane, least, only=None):
     js, bin_ = glb_read(src)
     uses = {}
     for m, _ in mesh_nodes(js): uses[m] = uses.get(m, 0) + 1
@@ -130,12 +134,13 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
                 e = sub(b, a); h = cross(tris[i][3], e)
                 if dot(h, sub(pi, a)) * dot(h, sub(pj, a)) < 0: parent[find(i)] = find(j)
     buckets = {}
-    for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0], 3), round(n[1], 3), round(n[2], 3), round(d, 3)), []).append(i)
+    for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round(d * 1000)), []).append(i)
     facing = lambda i, j: dot(tris[i][3], tris[j][3]) < -1 + 1e-6 and abs(tris[i][4] + tris[j][4]) < plane
     overlap, seen, cover, floor = {}, set(), {}, 0
     for key, ks in buckets.items():
-        near = [i for sg in (1, -1) for dx in (-1e-3, 0, 1e-3) for dy in (-1e-3, 0, 1e-3) for dz in (-1e-3, 0, 1e-3) for dd in (-1e-3, 0, 1e-3)
-                for i in buckets.get((round(sg * key[0] + dx, 3), round(sg * key[1] + dy, 3), round(sg * key[2] + dz, 3), round(sg * key[3] + dd, 3)), ())]
+        if only is not None and key not in only: continue
+        near = [i for sg in (1, -1) for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1) for dd in (-1, 0, 1)
+                for i in buckets.get((sg * key[0] + dx, sg * key[1] + dy, sg * key[2] + dz, sg * key[3] + dd), ())]
         if len(near) < 2: continue
         ax = max(range(3), key=lambda q: abs(key[q])); u, v = (ax + 1) % 3, (ax + 2) % 3
         flat = lambda i: [(p[u], p[v]) for p in tris[i][2]]
@@ -170,24 +175,35 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
     area, first = {}, {}
     for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
     away = {r for r, c in cover.items() if c / area[r] > 0.999}
-    over, drop = {}, set()
-    for (a, b), ov in overlap.items():
-        fa, fb = ov / area[a], ov / area[b]
-        if fa > 0.999 and fb > 0.999: drop.add(min(a, b, key=lambda r: (round(tris[first[r]][4], 6), first[r]))); continue
-        top, base = (a, b) if (fa, -area[a]) > (fb, -area[b]) else (b, a)
+    key = lambda r: (area[r], first[r])
+    over, drop, twin = {}, set(), {}
+    for (a, b), ov in sorted(overlap.items()):
+        if ov / area[a] > 0.999 and ov / area[b] > 0.999:
+            gone = min(a, b, key=lambda r: (round(tris[first[r]][4], 6), first[r])); drop.add(gone); twin[gone] = b if gone == a else a; continue
+        top, base = sorted((a, b), key=key)
         over.setdefault(top, set()).add(base)
-    level = {r: 1 for r in over}
-    for _ in range(4):
-        for r, bases in over.items(): level[r] = max(level[r], max(level.get(q, 0) for q in bases) + 1)
+    def kept(q):
+        while q in drop and q in twin: q = twin[q]
+        return q
+    under = lambda r: tris[first[r]][3][1] < -1 + 1e-6 and abs(tris[first[r]][4]) < plane
+    shift, level = {r: lift for r in away if r not in drop}, {}
+    for _ in range(len(over) + 1):
+        changed = False
+        for r in sorted(over, key=key, reverse=True):
+            if r in drop or under(r): continue
+            bases = sorted({kept(q) for q in over[r]} - {r})
+            if not bases: continue
+            s = max(lift if r in away else 0.0, max(tris[first[q]][4] + shift.get(q, 0.0) for q in bases) + lift - tris[first[r]][4])
+            lv = 1 + max(level.get(q, 0) for q in bases)
+            if abs(s - shift.get(r, 0.0)) > 1e-9 or lv != level.get(r): shift[r], level[r], changed = s, lv, True
+        if not changed: break
     moved = {}
     for i, (k, t, V, n, d, A) in enumerate(tris):
         r = find(i)
         if r in drop: moved.setdefault(k, {})[t] = None
-        elif r in level or r in away:
-            s = max(lift * min(level[r], 5) - tris[first[r]][4] + max(tris[first[q]][4] for q in over[r]) if r in level else 0, lift if r in away else 0)
-            moved.setdefault(k, {})[t] = (r, tuple(s * c for c in n))
+        elif shift.get(r, 0.0) > 0: moved.setdefault(k, {})[t] = (r, tuple(shift[r] * c for c in n))
     stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
-             'surfaces': len([r for r in level if r not in drop]), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': floor, 'area': round(sum(overlap.values()), 3)}
+             'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': floor, 'area': round(sum(overlap.values()), 3)}
     for k, change in moved.items():
         pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
         A3 = [[M[r][c] for c in range(3)] for r in range(3)]
@@ -213,7 +229,10 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
         like['componentType'] = ct
         p['indices'] = append(js, bin_, [struct.pack('<' + COMP[ct], x) for x in idx], '<' + COMP[ct], like, 34963)
     glb_write(dst, js, bin_)
-    return stats
+    near = {(sg * a + x, sg * b + y, sg * c + z, sg * e + w) for i, (k, t, V, n, d, A) in enumerate(tris) if shift.get(find(i), 0.0) > 0 and find(i) not in drop
+            for a, b, c, e in [(round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round((d + shift[find(i)]) * 1000))]
+            for sg in (1, -1) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1) for w in (-1, 0, 1)}
+    return stats, near
 
 def run(*cmd):
     r = subprocess.run(cmd, env=ENV, capture_output=True, text=True)

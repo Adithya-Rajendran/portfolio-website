@@ -17,7 +17,7 @@ def flat(part, h=0.0):
     return [(x, z + h, -y) for x, y, z in v], t, (n[0], n[2], -n[1])
 
 
-def build(path, parts, cam=None):
+def build(path, parts, cam=None, node=None):
     pos, nrm, uv, idx = [], [], [], []
     for verts, tri, n in parts:
         base = len(pos)
@@ -28,7 +28,7 @@ def build(path, parts, cam=None):
     views, off, bin_ = [], 0, b''
     for b in blobs:
         b += bytes(-len(b) % 4); views.append({'buffer': 0, 'byteOffset': off, 'byteLength': len(b)}); bin_ += b; off += len(b)
-    js = {'asset': {'version': '2.0'}, 'scene': 0, 'scenes': [{'nodes': [0]}], 'nodes': [{'mesh': 0, 'name': 'arch', 'extras': {'grp': 'archC'}}],
+    js = {'asset': {'version': '2.0'}, 'scene': 0, 'scenes': [{'nodes': [0]}], 'nodes': [dict({'mesh': 0, 'name': 'arch', 'extras': {'grp': 'archC'}}, **(node or {}))],
           'meshes': [{'primitives': [{'attributes': {'POSITION': 0, 'NORMAL': 1, 'TEXCOORD_0': 2}, 'indices': 3}]}],
           'buffers': [{'byteLength': len(bin_)}], 'bufferViews': views,
           'accessors': [{'bufferView': 0, 'componentType': 5126, 'count': len(pos), 'type': 'VEC3',
@@ -52,7 +52,7 @@ def triangles(path):
 class SeparateTest(unittest.TestCase):
     def run_on(self, parts, **kw):
         with tempfile.TemporaryDirectory() as d:
-            build(f'{d}/a.glb', parts, kw.pop('cam', None))
+            build(f'{d}/a.glb', parts, kw.pop('cam', None), kw.pop('node', None))
             stats = pack.separate(f'{d}/a.glb', f'{d}/b.glb', **kw)
             before, _ = triangles(f'{d}/a.glb'); after, js = triangles(f'{d}/b.glb')
             return stats, before, after, js
@@ -82,7 +82,7 @@ class SeparateTest(unittest.TestCase):
 
     def test_leaves_mere_neighbours_alone(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
-        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'loose': 0, 'floor': 0, 'area': 0})
+        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'levels': 0, 'deepest_mm': 0.0, 'backs': 0, 'loose': 0, 'floor': 0, 'area': 0, 'passes': 1})
         self.assertEqual(after, before)
 
     def test_leaves_the_underside_of_a_thing_standing_on_the_floor_where_the_floor_mirror_sees_it(self):
@@ -92,6 +92,11 @@ class SeparateTest(unittest.TestCase):
         stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1), 1.0), flat(quad(0.2, 0.2, 0.6, 0.6, up=False), 1.0)], cam=(0.5, 5, -0.5))
         self.assertEqual(stats['backs'], 1)
         self.assertEqual(sorted(round(p[1], 6) for t, _ in after[2:] for p in t), [0.997] * 6)
+
+    def test_leaves_undersides_lying_on_each_other_in_the_floor_plane(self):
+        stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1, up=False)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False)), flat(quad(0.3, 0.3, 0.5, 0.5, up=False), 1.0), flat(quad(0, 0, 1, 1, up=False), 1.0)])
+        self.assertEqual(after[:4], before[:4])
+        self.assertEqual(sorted({round(p[1], 6) for t, _ in after[4:6] for p in t}), [0.997])
 
     def test_leaves_a_back_face_that_reaches_past_the_face_it_lies_on(self):
         stats, before, after, js = self.run_on([quad(0.2, 0.2, 0.6, 0.6), quad(0, 0, 1, 1, up=False)], cam=(0.5, 0.5, 5))
@@ -120,6 +125,40 @@ class SeparateTest(unittest.TestCase):
     def test_stacks_a_third_layer_above_the_second(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.1, 0.1, 0.9, 0.9), quad(0.3, 0.3, 0.5, 0.5)])
         self.assertEqual(sorted({round(p[2], 6) for t, _ in after for p in t}), [0.0, 0.003, 0.006])
+        self.assertEqual((stats['levels'], stats['deepest_mm']), (2, 6.0))
+
+    def test_stacks_a_surface_on_a_back_face_that_moved_away_on_top_of_its_move(self):
+        parts = [quad(0, 0, 1, 1), quad(0.1, 0.1, 0.9, 0.9, up=False), quad(0.3, 0.3, 0.5, 0.5, up=False), quad(0.8, 0.1, 1.2, 0.3, up=False)]
+        stats, before, after, js = self.run_on(parts, cam=(0.5, 0.5, 5))
+        z = [sorted({round(p[2], 6) for t, _ in after[k:k + 2] for p in t}) for k in (0, 2, 4, 6)]
+        self.assertEqual(z, [[0.0], [-0.003], [-0.006], [-0.006]])
+
+    def test_changes_nothing_when_run_again_on_its_own_output(self):
+        parts = [quad(0, 0, 1, 1), quad(0.1, 0.1, 0.9, 0.9), quad(0.3, 0.3, 0.5, 0.5), quad(2, 0, 3, 1), quad(2, 0, 3, 1),
+                 quad(4, 0, 5, 1), quad(4.1, 0.1, 4.9, 0.9, up=False), quad(4.3, 0.3, 4.5, 0.5, up=False), quad(4.8, 0.1, 5.2, 0.3, up=False)]
+        with tempfile.TemporaryDirectory() as d:
+            build(f'{d}/a.glb', parts, cam=(2.5, 0.5, 5))
+            first = pack.separate(f'{d}/a.glb', f'{d}/b.glb')
+            second = pack.separate(f'{d}/b.glb', f'{d}/c.glb')
+            self.assertGreater(first['lifted'], 0)
+            self.assertEqual((second['lifted'], second['dropped'], second['surfaces'], second['backs'], second['passes']), (0, 0, 0, 0, 1))
+            self.assertEqual(triangles(f'{d}/c.glb')[0], triangles(f'{d}/b.glb')[0])
+
+    def test_lifts_3_mm_in_the_room_through_a_rotated_scaled_and_moved_node(self):
+        node = {'translation': [5.0, 1.0, 2.0], 'rotation': [0.5 ** 0.5, 0.0, 0.0, 0.5 ** 0.5], 'scale': [2.0, 2.0, 2.0]}
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.4, 0.8)], node=node)
+        M = pack.node_matrix(js['nodes'][0])
+        world = lambda p: [sum(M[r][c] * p[c] for c in range(3)) + M[r][3] for r in range(3)]
+        ys = sorted({round(world(p)[1], 6) for t, _ in after for p in t})
+        self.assertEqual(ys, [0.997, 1.0])
+        self.assertEqual(sorted({round(p[2], 6) for t, _ in after for p in t}), [0.0, 0.0015])
+
+    def test_writes_the_same_bytes_every_time(self):
+        parts = [quad(0, 0, 1, 1), quad(0.1, 0.1, 0.9, 0.9), quad(0.3, 0.3, 0.5, 0.5), quad(2, 0, 3, 1), quad(2, 0, 3, 1), quad(4, 0, 5, 1), quad(4.1, 0.1, 4.9, 0.9, up=False)]
+        with tempfile.TemporaryDirectory() as d:
+            build(f'{d}/a.glb', parts, cam=(2.5, 0.5, 5))
+            pack.separate(f'{d}/a.glb', f'{d}/b.glb'); pack.separate(f'{d}/a.glb', f'{d}/c.glb')
+            with open(f'{d}/b.glb', 'rb') as b, open(f'{d}/c.glb', 'rb') as c: self.assertEqual(b.read(), c.read())
 
 
 if __name__ == '__main__':
