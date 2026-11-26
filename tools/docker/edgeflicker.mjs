@@ -172,8 +172,9 @@ const IDSUM = () => {
     if (Math.abs(d) > 0.999 && off < 2e-3) return (d > 0 ? 'coplanar-same' : 'coplanar-opposite') + (off < 1e-5 ? '' : '~' + (off * 1000).toFixed(2) + 'mm');
     return 'crossing'; };
   const rows = [...st.pairs.entries()].map(([k, e]) => { const [a, b] = k.split(':').map(Number), A = dec(a), B = dec(b), TA = tri(A), TB = tri(B);
-    return { pair: A.name + ' <> ' + B.name, kind: kind(TA, TB), flips: e.n, px: e.px.size, frames: e.frames.size, sample: [...e.px].slice(0, 3).map((q) => (st.X + q % Wd) + ',' + (st.Y + ((q / Wd) | 0))), A: TA && { n: TA.n.map((q) => +q.toFixed(3)), v0: TA.v[0].map((q) => +q.toFixed(4)), uv0: TA.uv[0] }, B: TB && { n: TB.n.map((q) => +q.toFixed(3)), v0: TB.v[0].map((q) => +q.toFixed(4)), uv0: TB.uv[0] } }; });
+    return { pair: A.name + ' <> ' + B.name, kind: kind(TA, TB), flips: e.n, px: e.px.size, frames: e.frames.size, sample: [...e.px].slice(0, 3).map((q) => (st.X + q % Wd) + ',' + (st.Y + st.Hd - 1 - ((q / Wd) | 0))), A: TA && { n: TA.n.map((q) => +q.toFixed(3)), v0: TA.v[0].map((q) => +q.toFixed(4)), uv0: TA.uv[0] }, B: TB && { n: TB.n.map((q) => +q.toFixed(3)), v0: TB.v[0].map((q) => +q.toFixed(4)), uv0: TB.uv[0] } }; });
   const byKind = {}; for (const r of rows) { const k = r.kind.replace(/~.*/, ''); byKind[k] ??= { pairs: 0, flips: 0, px: 0 }; byKind[k].pairs++; byKind[k].flips += r.flips; byKind[k].px += r.px; }
+  for (const k in byKind) byKind[k].perPx = +(byKind[k].flips / Math.max(1, byKind[k].px)).toFixed(2);
   const top = rows.filter((r) => r.kind !== 'adjacent').sort((a, b) => b.flips - a.flips).slice(0, 12);
   return { size: [st.Wd, st.Hd], at: [st.X, st.Y], frames: st.frames, byKind, top };
 };
@@ -226,7 +227,7 @@ for (const raw of jobs) {
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
   }
   if (crop) { const j = await an.evaluate(ANALYSE.jump); if (j) { fs.writeFileSync(dir + '/jump.png', Buffer.from(j.png, 'base64')); console.log('JUMP', name, 'frame', j.k); } }
-  if (idcrop) { const idr = await p.evaluate(IDSUM); fs.writeFileSync(dir + '/id.json', JSON.stringify(idr)); console.log('IDWIN', name, JSON.stringify(idr)); }
+  if (idcrop) { const idr = await p.evaluate(IDSUM); fs.writeFileSync(dir + '/id.json', JSON.stringify(idr)); console.log('IDWIN', name, JSON.stringify(idr.byKind)); }
   const { st, heat } = await an.evaluate(ANALYSE.finish);
   fs.writeFileSync(dir + '/heat.png', Buffer.from(heat, 'base64'));
   st.modes = [...new Set(modes)]; st.query = q; st.still = still; st.origin = originArg === '-' ? 'branch' : 'given';
