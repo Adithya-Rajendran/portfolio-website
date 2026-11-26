@@ -1,5 +1,4 @@
-// Pure adaptive quality controller and per-room mode storage helpers.
-// Zero imports and zero DOM/WebGL globals so Node unit tests and the browser run the exact same code.
+// Adaptive quality controller (tier and render scale from GPU timer samples, else frame intervals) and per-room mode storage.
 
 export const STORAGE_PREFIX = 'arcadia:gov:v1:';
 
@@ -15,8 +14,9 @@ export function storageKey(roomId) {
   return `${STORAGE_PREFIX}${roomId}`;
 }
 
-/** Read a saved `{ tier, scale }` entry for `roomId` from `storage`, returning null on missing/corrupt/out-of-range data. */
-export function loadRoomMode(storage, roomId, { min = 0.5, max = 1 } = {}) {
+export const HELD_MS = 7 * 24 * 3600 * 1000;
+
+export function loadRoomMode(storage, roomId, { min = 0.5, max = 1, bake, now = Date.now() } = {}) {
   if (!storage || typeof storage.getItem !== 'function' || typeof roomId !== 'string' || !roomId) return null;
   try {
     const raw = storage.getItem(storageKey(roomId));
@@ -26,31 +26,27 @@ export function loadRoomMode(storage, roomId, { min = 0.5, max = 1 } = {}) {
     if (data.tier !== 0 && data.tier !== 1) return null;
     if (typeof data.scale !== 'number' || !Number.isFinite(data.scale)) return null;
     if (data.scale < min || data.scale > max) return null;
-    return { tier: data.tier, scale: data.scale };
+    const held = data.held === true && Number.isFinite(data.at) && data.at <= now && now - data.at <= HELD_MS && (bake === undefined || data.bake === bake);
+    return held ? { tier: data.tier, scale: data.scale, held: true, at: data.at } : { tier: 0, scale: data.scale };
   } catch {
     return null;
   }
 }
 
-/** Persist `{ tier, scale }` for `roomId` into `storage`, guarding against SecurityError / quota failures. */
 export function saveRoomMode(storage, roomId, mode, { min = 0.5, max = 1 } = {}) {
   if (!storage || typeof storage.setItem !== 'function' || typeof roomId !== 'string' || !roomId || !mode) return false;
   const tier = mode.tier === 1 ? 1 : mode.tier === 0 ? 0 : null;
   if (tier === null || typeof mode.scale !== 'number' || !Number.isFinite(mode.scale)) return false;
   const scale = Math.round(clamp(mode.scale, min, max) * 10000) / 10000;
   try {
-    storage.setItem(storageKey(roomId), JSON.stringify({ v: 1, tier, scale }));
+    const held = mode.held === true && Number.isFinite(mode.at) ? { held: true, at: mode.at, ...(mode.bake !== undefined && { bake: mode.bake }) } : {};
+    storage.setItem(storageKey(roomId), JSON.stringify({ v: 1, tier, scale, ...held }));
     return true;
   } catch {
     return false;
   }
 }
 
-/**
- * Dynamic quality controller: adjusts `tier` (0: 4x MSAA, 1: FXAA) and `scale` (render resolution factor)
- * from per-frame GPU timer samples when available, otherwise from unclamped frame intervals (`dtMs`).
- * Never disables reflections or alters mirror ratio (D10).
- */
 export class Governor {
   constructor({
     min = 0.5,
@@ -73,31 +69,66 @@ export class Governor {
     this.hasGpuTimer = !!hasGpuTimer;
 
     this.frameBudget = 1000 / target;
-    this.gpuSlow = this.frameBudget * 0.86;    // ~14.33 ms at 60 Hz: drive below vblank with margin while preserving 14 ms tier-1 GPUs
-    this.gpuHoldSlow = this.frameBudget * 0.94; // ~15.67 ms at 60 Hz: hysteresis guard once settled
-    this.gpuAim = this.frameBudget * 0.66;     // ~11.0 ms at 60 Hz: target headroom
-    this.gpuFast = this.frameBudget * 0.56;    // ~9.33 ms at 60 Hz: upgrade threshold
-    this.slow = 1000 / (target * 0.86);        // ~19.38 ms at 60 Hz: dt fallback slow threshold
-    this.fast = 1000 / (target * 0.95);        // ~17.54 ms at 60 Hz: dt fallback fast threshold
-    this.dtAim = this.frameBudget * 0.80;      // ~13.33 ms at 60 Hz: dt fallback target
+    this.gpuSlow = this.frameBudget * 0.86;
+    this.gpuHoldSlow = this.frameBudget * 0.94;
+    this.gpuAim = this.frameBudget * 0.66;
+    this.gpuFast = this.frameBudget * 0.56;
+    this.gpuRoom = this.frameBudget * 0.6;
+    this.gpuReach = this.frameBudget * 0.78;
+    this.slow = 1000 / (target * 0.86);
+    this.fast = 1000 / (target * 0.95);
+    this.dtAim = this.frameBudget * 0.80;
 
     this.windowMs = 250;
+    this.gpuStaleMs = 1000;
+    this.dtGraceMs = 3000;
+    this.fitMs = 1000;
+    this.gpuUpCoolMs = 1000;
+    this.tierProbeMs = 3000;
+    this.tierCost = 1.5;
+    this.cpuFloor = 0.75;
+    this.uploadShare = 0.5;
+    this.dtShare = 0.6;
     this.baseBackoffMs = 28000;
     this.maxBackoffMs = 120000;
     this.backoffMs = this.baseBackoffMs;
     this.downgradeCool = 0;
     this.upgradeCool = 0;
     this.settledMs = 0;
+    this.capScale = null;
+    this.capMs = 0;
     this._goodMs = 0;
     this._sinceUpgrade = 1e9;
     this._slowDtStreak = 0;
     this._slowGpuStreak = 0;
+    this._dtWins = [];
+    this._sinceCap = 1e9;
+    this._gpuSeen = false;
+    this._sinceGpu = 0;
+    this.tierHeld = false;
+    this.heldAt = null;
+    this.excluded = false;
+    this._startTier = this.tier;
+    this._recentGpu = null;
+    this._upWins = [];
+    this._upSpan = 0;
+    this._upMs = 0;
+    this._tierByDt = false;
+    this._tierTried = false;
+    this._tier0Gpu = null;
+    this._lastGpu = null;
+    this._probeMs = 0;
+    this._resetFit();
     this._resetWindow();
     this.rest(250);
   }
 
   get allPinned() {
     return this.scalePinned && this.tierPinned;
+  }
+
+  get gpuTimed() {
+    return this._gpuSeen ? this._sinceGpu < this.gpuStaleMs : this.hasGpuTimer && this.settledMs < this.gpuStaleMs;
   }
 
   _resetWindow() {
@@ -108,40 +139,86 @@ export class Governor {
     this._gpuSamples = [];
   }
 
-  /** Ignore the next `ms` of frames while startup/room-change/calm transitions settle. */
+  _resetFit() {
+    this._fitMs = 0;
+    this._fitMeds = [];
+  }
+
   rest(ms) {
     this.warm = Math.max(0, ms);
     this._slowDtStreak = 0;
     this._slowGpuStreak = 0;
+    this._dtWins = [];
+    this._probeMs = 0;
+    this._resetFit();
     this._resetWindow();
   }
 
-  /** Reset controller state for a room entry (preserving URL query pins). */
-  reset({ tier = 0, scale = this.max, warm = 250 } = {}) {
+  reset({ tier = 0, scale = this.max, warm = 250, held = false, heldAt = null } = {}) {
     if (!this.tierPinned) this.tier = tier ? 1 : 0;
     if (!this.scalePinned) this.scale = clamp(scale ?? this.max, this.min, this.max);
     this.downgradeCool = 0;
     this.backoffMs = this.baseBackoffMs;
     const restoredBelowMax = (!this.scalePinned && this.scale < this.max) || (!this.tierPinned && this.tier > 0);
-    this.upgradeCool = restoredBelowMax ? this.backoffMs : 0;
+    this.upgradeCool = restoredBelowMax ? (this.hasGpuTimer ? this.gpuUpCoolMs : this.backoffMs) : 0;
+    this.capScale = null;
+    this.capMs = 0;
+    this._sinceCap = 1e9;
+    this.tierHeld = !!held;
+    this.heldAt = held ? heldAt : null;
+    this._startTier = this.tier;
+    this._recentGpu = null;
+    this._tierByDt = false;
+    this._tierTried = false;
+    this._tier0Gpu = null;
+    this._lastGpu = null;
     this._goodMs = 0;
     this._sinceUpgrade = 1e9;
+    this._sinceGpu = 0;
     this.settledMs = 0;
     this.rest(warm);
   }
 
-  /**
-   * Feed one frame's unclamped `dtMs` and optional GPU ms sample(s).
-   * @param {number} dtMs - unclamped frame interval in milliseconds
-   * @param {number|number[]|null} [gpuSamples] - GPU render time sample(s) in milliseconds
-   * @returns {boolean} true when `tier` or `scale` changed
-   */
-  update(dtMs, gpuSamples = null) {
-    if (this.allPinned || !Number.isFinite(dtMs) || dtMs < 0) return false;
+  savedMode(now) {
+    const tier = this.tierHeld ? this.tier : Math.min(this.tier, this._startTier);
+    if (!this.tierHeld || tier !== 1) return { tier, scale: this.scale };
+    this.heldAt ??= now;
+    return { tier, scale: this.scale, held: true, at: this.heldAt };
+  }
+
+  _uploadSkip(dtMs, upload) {
+    const ms = Math.min(dtMs, 1000);
+    this._upWins.push([ms, upload]);
+    this._upSpan += ms;
+    if (upload) this._upMs += ms;
+    while (this._upWins.length > 1 && this._upSpan - this._upWins[0][0] >= this.dtGraceMs) {
+      const [m, u] = this._upWins.shift();
+      this._upSpan -= m;
+      if (u) this._upMs -= m;
+    }
+    return upload && this._upMs <= Math.max(this._upSpan, this.dtGraceMs) * this.uploadShare;
+  }
+
+  _changed(cool) {
+    this.downgradeCool = 50;
+    this.upgradeCool = cool;
+    this._goodMs = 0;
+    this._slowGpuStreak = 0;
+    this._dtWins = [];
+    this._probeMs = 0;
+    this._resetFit();
+    return true;
+  }
+
+  update(dtMs, gpuSamples = null, upload = false) {
+    if (!Number.isFinite(dtMs) || dtMs < 0) return false;
+    const skip = this.excluded = this._uploadSkip(dtMs, upload);
+    if (this.allPinned) return false;
     if (dtMs > 1000) {
-      // Tab switch or long OS pause: discard in-progress window and streaks without counting toward warm/cooldowns.
       this._slowDtStreak = 0;
       this._slowGpuStreak = 0;
+      this._dtWins = [];
+      this._resetFit();
       this._resetWindow();
       return false;
     }
@@ -153,6 +230,13 @@ export class Governor {
     this.settledMs += dtMs;
     if (this.upgradeCool > 0) this.upgradeCool = Math.max(0, this.upgradeCool - dtMs);
     if (this._sinceUpgrade < 1e9) this._sinceUpgrade += dtMs;
+    if (this.capMs > 0) {
+      this.capMs = Math.max(0, this.capMs - dtMs);
+      if (this.capMs <= 0) {
+        this.capScale = null;
+        this._sinceCap = 0;
+      }
+    } else if (this._sinceCap < 1e9) this._sinceCap += dtMs;
 
     if (this.downgradeCool > 0) {
       this.downgradeCool = Math.max(0, this.downgradeCool - dtMs);
@@ -161,10 +245,12 @@ export class Governor {
       return false;
     }
 
-    this._winMs += dtMs;
-    this._dtSum += dtMs;
-    this._dtCount++;
-    if (dtMs > 150) this._hadHitch = true;
+    if (!skip) {
+      this._winMs += dtMs;
+      this._dtSum += dtMs;
+      this._dtCount++;
+      if (dtMs > 150) this._hadHitch = true;
+    }
 
     if (typeof gpuSamples === 'number') {
       if (Number.isFinite(gpuSamples) && gpuSamples > 0 && gpuSamples < 2000) this._gpuSamples.push(gpuSamples);
@@ -182,18 +268,34 @@ export class Governor {
     const gpuMed = this._gpuSamples.length >= 2 ? median(this._gpuSamples) : null;
     this._resetWindow();
 
-    // Isolated 150-1000 ms hitch affects a single window; sustained overload or repeated burst pauses persist >= 1.5 streak.
-    // Once settled (>= 4.9s post-warm, ~5.5s after cover lift), widen GPU hysteresis, decay dt streaks faster, and require 2 consecutive slow windows.
+    if (gpuMed !== null) {
+      this._gpuSeen = true;
+      this._sinceGpu = 0;
+      this._recentGpu = gpuMed;
+      this._lastGpu = this.tier === 0 && this.scale >= this.max ? gpuMed : null;
+    } else {
+      this._sinceGpu += winMs;
+    }
+    const gpuTimed = this.gpuTimed;
+
     const settled = this.settledMs >= 4900;
     const dtDecayMs = settled ? 2500 : 5000;
     if (dtAvg > this.slow) this._slowDtStreak += 1;
     else this._slowDtStreak = Math.max(0, this._slowDtStreak - winMs / dtDecayMs);
+    this._dtWins.push([winMs, dtAvg > this.slow]);
+    let spanMs = 0;
+    for (const [ms] of this._dtWins) spanMs += ms;
+    while (this._dtWins.length > 1 && spanMs - this._dtWins[0][0] >= this.dtGraceMs) spanMs -= this._dtWins.shift()[0];
+    let slowMs = 0;
+    for (const [ms, slow] of this._dtWins) if (slow) slowMs += ms;
 
-    const sustainedDtOver = (hadHitch || settled) ? this._slowDtStreak >= 1.5 : dtAvg > this.slow;
+    const sustainedDtOver = gpuTimed
+      ? settled && spanMs >= this.dtGraceMs && slowMs >= spanMs * this.dtShare
+      : (hadHitch || settled) ? this._slowDtStreak >= 1.5 : dtAvg > this.slow;
     const gpuLimit = settled ? this.gpuHoldSlow : this.gpuSlow;
     if (gpuMed !== null && gpuMed > gpuLimit) this._slowGpuStreak++;
     else this._slowGpuStreak = 0;
-    const gpuOver = gpuMed !== null && (settled ? this._slowGpuStreak >= 2 : gpuMed > gpuLimit);
+    const gpuOver = gpuMed !== null && this._slowGpuStreak >= 2;
     const overloaded = gpuOver || sustainedDtOver;
 
     if (overloaded) {
@@ -203,19 +305,30 @@ export class Governor {
       const factor = clamp(Math.sqrt(Math.max(0.1, (aimMs - fixedMs) / Math.max(1, effectiveMs - fixedMs))), 0.45, 0.88);
       let nextScale = Math.max(this.min, this.scale * factor);
       if (nextScale - this.min < 0.05) nextScale = this.min;
+      if (!gpuOver && gpuTimed && this._recentGpu !== null && this._recentGpu < this.gpuAim) nextScale = Math.max(nextScale, Math.min(this.scale, this.cpuFloor));
       nextScale = Math.round(nextScale * 1000) / 1000;
 
+      const overScale = this.scale;
+      const recent = this._sinceUpgrade < 60000;
       let changed = false;
       let droppedTierOnly = false;
       if (this.tier === 0 && !this.tierPinned && (nextScale < 0.85 || this.scalePinned)) {
         this.tier = 1;
+        if ((gpuOver && settled) || this._tierByDt || this._tierTried) {
+          this.tierHeld = true;
+          this.heldAt = null;
+        }
+        else {
+          this._tierByDt = true;
+          this._tier0Gpu = gpuTimed ? this._lastGpu : null;
+        }
+        this.capScale = null;
+        this.capMs = 0;
         if (!this.scalePinned) {
           if (gpuOver) {
             this.scale = this.max;
             droppedTierOnly = true;
           } else {
-            // In dt-fallback mode, GPU queue stalls only surface every ~1-2s when overrun is small;
-            // apply nextScale alongside tier 1 instead of resetting to 1.0 and waiting for tier 1 to stall again.
             this.scale = Math.min(this.scale, nextScale);
           }
         }
@@ -226,16 +339,19 @@ export class Governor {
       }
 
       if (changed) {
-        if (this._sinceUpgrade < 60000) this.backoffMs = Math.min(this.maxBackoffMs, this.backoffMs * 2);
-        this.downgradeCool = 50;
-        this.upgradeCool = this.backoffMs;
-        this._goodMs = 0;
+        if (recent) this.backoffMs = Math.min(this.maxBackoffMs, this.backoffMs * 2);
+        if (gpuOver && recent && !droppedTierOnly) {
+          this.capMs = this.capScale !== null || this.backoffMs >= this.maxBackoffMs ? Infinity : this.backoffMs;
+          this.capScale = this.capScale === null ? overScale : Math.min(this.capScale, overScale);
+        }
+        this._changed(gpuOver || gpuTimed ? this.gpuUpCoolMs : this.backoffMs);
         this._slowDtStreak = droppedTierOnly && !gpuOver ? 1 : 0;
-        this._slowGpuStreak = 0;
         return true;
       }
       return false;
     }
+
+    if (gpuTimed) return this._gpuUpgrade(winMs, gpuMed, hadHitch || dtAvg > this.slow);
 
     const hasHeadroom = gpuMed !== null
       ? (gpuMed < this.gpuFast && dtAvg < this.fast && !hadHitch)
@@ -257,6 +373,56 @@ export class Governor {
       }
     }
 
+    return false;
+  }
+
+  _gpuUpgrade(winMs, gpuMed, slowFrames) {
+    if (gpuMed === null || slowFrames) {
+      this._resetFit();
+      this._probeMs = 0;
+      return false;
+    }
+    if (gpuMed < this.gpuRoom && this.capScale === null && this._sinceCap >= this.backoffMs) {
+      this._goodMs += winMs;
+      if (this._goodMs >= 60000) this.backoffMs = this.baseBackoffMs;
+    }
+    this._fitMs += winMs;
+    this._fitMeds.push(gpuMed);
+    if (this._fitMs < this.fitMs) return false;
+    const g = median(this._fitMeds);
+    this._resetFit();
+    if (this.upgradeCool > 0) {
+      this._probeMs = 0;
+      return false;
+    }
+
+    if (!this.scalePinned && this.scale < this.max) {
+      if (g >= this.gpuRoom) return false;
+      let limit = this.max;
+      if (this.capScale !== null) limit = Math.min(limit, this.capScale * 0.97);
+      const fixedMs = this.frameBudget * 0.25;
+      const grow = Math.min((this.gpuAim - fixedMs) / Math.max(0.5, g - fixedMs), this.gpuReach / g);
+      let nextScale = Math.min(limit, this.scale * Math.sqrt(Math.max(1, grow)));
+      if (limit === this.max && this.max - nextScale < 0.015) nextScale = this.max;
+      nextScale = Math.floor(nextScale * 1000) / 1000;
+      if (nextScale > this.scale + 0.01 || (nextScale === this.max && nextScale > this.scale)) {
+        this.scale = nextScale;
+        this._sinceUpgrade = 0;
+        return this._changed(this.gpuUpCoolMs);
+      }
+      return false;
+    }
+
+    if (this.tier === 1 && !this.tierPinned && !this.tierHeld && this.scale >= this.max
+      && (this._tier0Gpu !== null ? this._tier0Gpu < this.gpuSlow : g * this.tierCost < this.gpuFast)) {
+      this._probeMs += this.fitMs;
+      if (this._probeMs >= this.tierProbeMs) {
+        this.tier = 0;
+        this._tierTried = true;
+        this._sinceUpgrade = 0;
+        return this._changed(this.gpuUpCoolMs);
+      }
+    } else this._probeMs = 0;
     return false;
   }
 }
