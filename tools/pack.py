@@ -132,7 +132,7 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
     buckets = {}
     for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0], 3), round(n[1], 3), round(n[2], 3), round(d, 3)), []).append(i)
     facing = lambda i, j: dot(tris[i][3], tris[j][3]) < -1 + 1e-6 and abs(tris[i][4] + tris[j][4]) < plane
-    overlap, seen, away = {}, set(), set()
+    overlap, seen, away, floor = {}, set(), set(), 0
     for key, ks in buckets.items():
         near = [i for sg in (1, -1) for dx in (-1e-3, 0, 1e-3) for dy in (-1e-3, 0, 1e-3) for dz in (-1e-3, 0, 1e-3) for dd in (-1e-3, 0, 1e-3)
                 for i in buckets.get((round(sg * key[0] + dx, 3), round(sg * key[1] + dy, 3), round(sg * key[2] + dz, 3), round(sg * key[3] + dd, 3)), ())]
@@ -164,7 +164,9 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
                     if a != b: overlap[(a, b)] = overlap.get((a, b), 0.0) + ov
                 elif ov > least:
                     mid = lambda q: tuple(sum(p[c] for p in tris[q][2]) / 3 for c in range(3))
-                    away.add(find(i) if dot(tris[i][3], sub(eye, mid(i))) < dot(tris[j][3], sub(eye, mid(j))) else find(j))
+                    q = i if dot(tris[i][3], sub(eye, mid(i))) < dot(tris[j][3], sub(eye, mid(j))) else j
+                    if abs(tris[q][3][1]) > 1 - 1e-6 and abs(mid(q)[1]) < plane: floor += 1
+                    else: away.add(find(q))
     area, first = {}, {}
     for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
     over, drop = {}, set()
@@ -184,7 +186,7 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
             s = max(lift * min(level[r], 5) - tris[first[r]][4] + max(tris[first[q]][4] for q in over[r]) if r in level else 0, lift if r in away else 0)
             moved.setdefault(k, {})[t] = (r, tuple(s * c for c in n))
     stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
-             'surfaces': len([r for r in level if r not in drop]), 'backs': len(away - drop), 'area': round(sum(overlap.values()), 3)}
+             'surfaces': len([r for r in level if r not in drop]), 'backs': len(away - drop), 'floor': floor, 'area': round(sum(overlap.values()), 3)}
     for k, change in moved.items():
         pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
         A3 = [[M[r][c] for c in range(3)] for r in range(3)]

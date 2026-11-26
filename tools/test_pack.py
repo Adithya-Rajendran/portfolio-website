@@ -12,6 +12,11 @@ def quad(x0, y0, x1, y1, z=0.0, up=True):
     return v, ([0, 1, 2, 0, 2, 3] if up else [0, 2, 1, 0, 3, 2]), (0, 0, 1 if up else -1)
 
 
+def flat(part, h=0.0):
+    v, t, n = part
+    return [(x, z + h, -y) for x, y, z in v], t, (n[0], n[2], -n[1])
+
+
 def build(path, parts, cam=None):
     pos, nrm, uv, idx = [], [], [], []
     for verts, tri, n in parts:
@@ -77,8 +82,16 @@ class SeparateTest(unittest.TestCase):
 
     def test_leaves_mere_neighbours_alone(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
-        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'area': 0})
+        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'floor': 0, 'area': 0})
         self.assertEqual(after, before)
+
+    def test_leaves_the_underside_of_a_thing_standing_on_the_floor_where_the_floor_mirror_sees_it(self):
+        stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False))], cam=(0.5, 5, -0.5))
+        self.assertEqual((stats['backs'], stats['floor']), (0, 2))
+        self.assertEqual(after, before)
+        stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1), 1.0), flat(quad(0.2, 0.2, 0.6, 0.6, up=False), 1.0)], cam=(0.5, 5, -0.5))
+        self.assertEqual(stats['backs'], 1)
+        self.assertEqual(sorted(round(p[1], 6) for t, _ in after[2:] for p in t), [0.997] * 6)
 
     def test_moves_the_back_of_two_faces_that_face_each_other_away_from_the_camera(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.6, 0.6, up=False)], cam=(0.5, 0.5, 5))
