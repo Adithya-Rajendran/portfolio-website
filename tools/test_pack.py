@@ -82,7 +82,7 @@ class SeparateTest(unittest.TestCase):
 
     def test_leaves_mere_neighbours_alone(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
-        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'floor': 0, 'area': 0})
+        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'loose': 0, 'floor': 0, 'area': 0})
         self.assertEqual(after, before)
 
     def test_leaves_the_underside_of_a_thing_standing_on_the_floor_where_the_floor_mirror_sees_it(self):
@@ -93,15 +93,20 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual(stats['backs'], 1)
         self.assertEqual(sorted(round(p[1], 6) for t, _ in after[2:] for p in t), [0.997] * 6)
 
+    def test_leaves_a_back_face_that_reaches_past_the_face_it_lies_on(self):
+        stats, before, after, js = self.run_on([quad(0.2, 0.2, 0.6, 0.6), quad(0, 0, 1, 1, up=False)], cam=(0.5, 0.5, 5))
+        self.assertEqual((stats['backs'], stats['loose']), (0, 1))
+        self.assertEqual(after, before)
+
     def test_moves_the_back_of_two_faces_that_face_each_other_away_from_the_camera(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.6, 0.6, up=False)], cam=(0.5, 0.5, 5))
         self.assertEqual(stats['backs'], 1); self.assertEqual(stats['surfaces'], 0)
         z = {tuple(u[0]): round(t[0][2], 6) for t, u in after}
         self.assertEqual(sorted(set(z.values())), [-0.003, 0.0])
         self.assertEqual(sorted(round(p[2], 6) for t, _ in after[:2] for p in t), [0.0] * 6)
-        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.6, 0.6, up=False)], cam=(0.5, 0.5, -5))
-        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[:2] for p in t), [0.003] * 6)
-        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[2:] for p in t), [0.0] * 6)
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1, up=False), quad(0.2, 0.2, 0.6, 0.6)], cam=(0.5, 0.5, -5))
+        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[:2] for p in t), [0.0] * 6)
+        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[2:] for p in t), [0.003] * 6)
 
     def test_lifts_a_surface_a_hair_behind_to_the_same_height(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.4, 0.8, z=-0.0002)])
