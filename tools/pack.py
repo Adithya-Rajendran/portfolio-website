@@ -182,7 +182,7 @@ def separate_once(src, dst, lift, plane, least, only=None):
         wind = lambda f: f if (f[1][0] - f[0][0]) * (f[2][1] - f[0][1]) - (f[1][1] - f[0][1]) * (f[2][0] - f[0][0]) >= 0 else [f[0], f[2], f[1]]
         roof, cell = {}, 0.25
         for q, tr in enumerate(tris):
-            if tr[3][1] > 1 - 1e-6 and plane < tr[2][0][1] <= 2.0:
+            if tr[3][1] > 1 - 1e-6 and plane < tr[2][0][1] <= 0.05:
                 f = xz(q)
                 for gx in range(int(min(p[0] for p in f) // cell), int(max(p[0] for p in f) // cell) + 1):
                     for gy in range(int(min(p[1] for p in f) // cell), int(max(p[1] for p in f) // cell) + 1): roof.setdefault((gx, gy), []).append(q)

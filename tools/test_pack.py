@@ -93,6 +93,10 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual((stats['floor'], stats['dropped']), (0, 0))
         self.assertEqual(after, before)
 
+    def test_drops_the_underside_of_a_thing_under_a_table_top_the_view_sees_past(self):
+        stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False)), flat(quad(0, 0, 1, 1), 0.7)], cam=(0.5, 5, -0.5))
+        self.assertEqual((stats['floor'], stats['dropped']), (1, 2))
+
     def test_keeps_the_underside_of_an_inlay_whose_own_top_hides_it_from_above(self):
         stats, before, after, js = self.run_on([flat(quad(0, 0, 1, 1)), flat(quad(0.2, 0.2, 0.6, 0.6, up=False)), flat(quad(0.2, 0.2, 0.6, 0.6), 0.004)], cam=(0.5, 5, -0.5))
         self.assertEqual((stats['floor'], stats['dropped']), (0, 0))
