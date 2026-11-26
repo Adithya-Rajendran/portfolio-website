@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
 const [origin, out, frames, ...jobs] = process.argv.slice(2);
 const DEFAULT_FRAMES = +frames || 90;
 
-const BUSY = () => {                                               // fetches (to the end of their bodies) and image decodes still running
+const BUSY = () => {
   window.__busy = 0;
   const track = (f) => function (...a) { window.__busy++; return f.apply(this, a).finally(() => window.__busy--); };
   window.fetch = track(window.fetch);
@@ -44,8 +44,6 @@ function parseJob(job) {
   return { name, q, frames: n, action };
 }
 
-// One frame of fake time at a time; before the next, wait (in real time) until no request is open and nothing the page
-// fetched or decodes is still pending, so a file asked for mid-way lands in the same frame on every run.
 let net = { inflight: 0 };
 async function stepFrames(p, count) {
   for (let i = 0; i < count; i++) {
@@ -57,10 +55,6 @@ async function stepFrames(p, count) {
   }
 }
 
-// 2D canvases are drawn in software. With GPU canvases Chrome decides per canvas, at run time, whether a canvas is
-// accelerated, and texImage2D takes a different path for each (a GPU copy that unpremultiplies in a shader, or a
-// readback that unpremultiplies on the CPU). The two round the soft edges of text differently, so a text texture could
-// come out one way or the other on the same code. In software there is one path.
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-accelerated-2d-canvas'] });
 let failed = false;
 
@@ -79,7 +73,7 @@ for (const raw of jobs) {
 
   net = { inflight: 0 };
   let last = Date.now(), settled = false;
-  const late = [];                                                  // requests made after the first wait: logged with the probe
+  const late = [];
   p.on('request', (r) => { net.inflight++; last = Date.now(); if (settled) late.push(r.url().replace(/^https?:\/\/[^/]+/, '')); });
   p.on('requestfinished', () => { net.inflight--; last = Date.now(); });
   p.on('requestfailed', () => { net.inflight--; });
@@ -159,8 +153,6 @@ for (const raw of jobs) {
     now: performance.now(),
   }))));
   console.log(name, 'probe', JSON.stringify(await p.evaluate(() => {
-    // For every texture drawn from a 2D canvas: a hash of the canvas, then of the texture's levels 0 and 1 as uploaded
-    // (read back from the GPU), so a picture that differs can be traced to the drawing or to the upload.
     const seen = new Set(), out = [], R = window.__lobby.renderer, gl = R.getContext(), fb = gl.createFramebuffer();
     const fnv = (d) => { let x = 2166136261; for (let i = 0; i < d.length; i++) x = Math.imul(x ^ d[i], 16777619); return (x >>> 0).toString(16); };
     const h = (cv) => fnv(new Uint32Array(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.buffer));
