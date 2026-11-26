@@ -133,8 +133,14 @@ def separate_once(src, dst, lift, plane, least, only=None):
                 if not same(i, j): continue
                 e = sub(b, a); h = cross(tris[i][3], e)
                 if dot(h, sub(pi, a)) * dot(h, sub(pj, a)) < 0: parent[find(i)] = find(j)
+    twins, dup = {}, set()
+    for i, (k, t, V, n, d, A) in enumerate(tris):
+        twin = (tuple(sorted(tuple(round(c, 5) for c in p) for p in V)), tuple(round(c, 3) for c in n))
+        if twin in twins: dup.add(twins[twin])
+        twins[twin] = i
     buckets = {}
-    for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round(d * 1000)), []).append(i)
+    for i, (k, t, V, n, d, A) in enumerate(tris):
+        if i not in dup: buckets.setdefault((round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round(d * 1000)), []).append(i)
     facing = lambda i, j: dot(tris[i][3], tris[j][3]) < -1 + 1e-6 and abs(tris[i][4] + tris[j][4]) < plane
     overlap, seen, cover, floor = {}, set(), {}, {}
     for key, ks in buckets.items():
@@ -220,7 +226,7 @@ def separate_once(src, dst, lift, plane, least, only=None):
     moved = {}
     for i, (k, t, V, n, d, A) in enumerate(tris):
         r = find(i)
-        if r in drop: moved.setdefault(k, {})[t] = None
+        if r in drop or i in dup: moved.setdefault(k, {})[t] = None
         elif shift.get(r, 0.0) > 0: moved.setdefault(k, {})[t] = (r, tuple(shift[r] * c for c in n))
     stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
              'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': len(sunk), 'area': round(sum(overlap.values()), 3)}

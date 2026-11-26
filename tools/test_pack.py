@@ -1,5 +1,5 @@
 """Tests for tools/pack.py: the separation of coplanar surfaces, and what each room's textures are packed into. python3 -m unittest tools/test_pack.py"""
-import importlib.util, json, os, struct, tempfile, unittest
+import importlib.util, json, math, os, struct, tempfile, unittest
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location('pack', os.path.join(TOOLS, 'pack.py'))
@@ -38,6 +38,15 @@ def build(path, parts, cam=None, node=None):
                         {'bufferView': 3, 'componentType': 5123, 'count': len(idx), 'type': 'SCALAR'}]}
     if cam: js['scenes'][0]['extras'] = {'lobby': {'cam': [cam[0], -cam[2], cam[1]]}}
     pack.glb_write(path, js, bytearray(bin_))
+
+
+def pole(x, z, r=0.02, y0=0.04, y1=0.92, sides=40):
+    parts = []
+    for s in range(sides):
+        a, b = 2 * math.pi * s / sides, 2 * math.pi * (s + 1) / sides
+        v = [(x + r * math.cos(a), y0, z + r * math.sin(a)), (x + r * math.cos(b), y0, z + r * math.sin(b)), (x + r * math.cos(b), y1, z + r * math.sin(b)), (x + r * math.cos(a), y1, z + r * math.sin(a))]
+        m = (a + b) / 2; parts.append((v, [0, 2, 1, 0, 3, 2], (math.cos(m), 0, math.sin(m))))
+    return parts
 
 
 def triangles(path):
@@ -79,6 +88,11 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual(stats['dropped'], 2); self.assertEqual(stats['lifted'], 0)
         self.assertEqual(len(after), 2)
         self.assertEqual(sorted(map(str, (u for _, u in after))), sorted(map(str, (u for _, u in before[2:]))))
+
+    def test_drops_one_of_two_identical_thin_poles_instead_of_opening_the_kept_one_into_slats(self):
+        stats, before, after, js = self.run_on(pole(-6.6, -0.6) + pole(-6.6, -0.6), cam=(0, 1.6, 5))
+        self.assertEqual((stats['lifted'], stats['dropped']), (0, 80))
+        self.assertEqual(after, before[80:])
 
     def test_leaves_mere_neighbours_alone(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
