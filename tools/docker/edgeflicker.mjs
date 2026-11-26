@@ -131,7 +131,7 @@ const HDR = ([x, y, w, h]) => {
 };
 const IDPASS = async ([x, y, w, h, f]) => {
   const THREE = await import('three'), L = window.__lobby, r = L.renderer, cam = L.camera, W0 = L.post.scene.width, H0 = L.post.scene.height;
-  const st = (window.__idp ??= { list: [], grids: [], frames: [] });
+  const st = (window.__idp ??= { list: [], pairs: new Map(), frames: 0 });
   if (!st.scene) {
     st.scene = new THREE.Scene(); st.rt = new THREE.WebGLRenderTarget(W0, H0, { depthBuffer: true });
     const vs = 'flat varying highp int vTri; void main(){ vTri = gl_VertexID / 3; vec4 w = modelMatrix*vec4(position,1.0); gl_Position = projectionMatrix*viewMatrix*w; }';
@@ -152,28 +152,30 @@ const IDPASS = async ([x, y, w, h, f]) => {
   r.setRenderTarget(st.rt); r.setClearColor(0x000000, 0); r.autoClear = true; r.clear(); r.render(st.scene, cam);
   const buf = new Uint8Array(Wd * Hd * 4); r.readRenderTargetPixels(st.rt, X, H0 - Y - Hd, Wd, Hd, buf);
   r.setRenderTarget(prevRT); r.setClearColor(prevClear, prevA); r.autoClear = prevAuto;
-  const grid = new Int32Array(Wd * Hd * 2);
-  for (let j = 0; j < Hd; j++) for (let i = 0; i < Wd; i++) { const s = 4 * ((Hd - 1 - j) * Wd + i), d = 2 * (j * Wd + i); grid[d] = buf[s]; grid[d + 1] = (buf[s + 1] << 16) | (buf[s + 2] << 8) | buf[s + 3]; }
-  st.grids.push(grid); st.frames.push(f); st.Wd = Wd; st.Hd = Hd; st.X = X; st.Y = Y; st.cams = (st.cams ?? []).concat([[...cam.matrixWorld.elements].map((v) => +v.toFixed(6))]);
+  const cur = new Float64Array(Wd * Hd);
+  for (let k = 0; k < Wd * Hd; k++) cur[k] = buf[4 * k] * 16777216 + ((buf[4 * k + 1] << 16) | (buf[4 * k + 2] << 8) | buf[4 * k + 3]);
+  if (st.prev && st.prev.length === cur.length) for (let k = 0; k < cur.length; k++) { const a = st.prev[k], b = cur[k]; if (a === b) continue;
+    const key = a < b ? a + ':' + b : b + ':' + a; let e = st.pairs.get(key); if (!e) st.pairs.set(key, e = { n: 0, px: new Set(), frames: new Set() });
+    e.n++; if (e.px.size < 4000) e.px.add(k); e.frames.add(f); }
+  st.prev = cur; st.frames++; st.Wd = Wd; st.Hd = Hd; st.X = X; st.Y = Y;
 };
 const IDSUM = () => {
-  const st = window.__idp, { Wd, Hd, grids } = st, n = Wd * Hd, pairs = new Map(), changed = [];
-  const key = (g, k) => g[2 * k] ? st.list[g[2 * k] - 1].name + '#' + g[2 * k + 1] : 'none';
-  for (let k = 0; k < n; k++) for (let f = 1; f < grids.length; f++) {
-    const a = key(grids[f - 1], k), b = key(grids[f], k);
-    if (a !== b) { const pk = [a, b].sort().join(' <> '); const e = pairs.get(pk) ?? { n: 0, frames: new Set(), px: new Set() }; e.n++; e.frames.add(st.frames[f]); e.px.add((st.X + k % Wd) + ',' + (st.Y + ((k / Wd) | 0))); pairs.set(pk, e); }
-  }
-  const tri = (nm) => {
-    const [mesh, t] = nm.split('#'); const e = st.list.find((q) => q.name === mesh); if (!e) return null;
-    const g = e.p.geometry, P = g.attributes.position, U = g.attributes.uv, N = g.attributes.normal, M = e.o.matrixWorld, out = { side: e.o.material.side, type: e.o.material.type, v: [], uv: [], n: null };
-    for (let i = 0; i < 3; i++) { const v = 3 * +t + i; const p = { x: P.getX(v), y: P.getY(v), z: P.getZ(v) };
-      const e2 = M.elements; out.v.push([p.x * e2[0] + p.y * e2[4] + p.z * e2[8] + e2[12], p.x * e2[1] + p.y * e2[5] + p.z * e2[9] + e2[13], p.x * e2[2] + p.y * e2[6] + p.z * e2[10] + e2[14]].map((q) => +q.toFixed(5)));
-      if (U) out.uv.push([+U.getX(v).toFixed(4), +U.getY(v).toFixed(4)]); }
-    if (N) out.n = [N.getX(3 * +t), N.getY(3 * +t), N.getZ(3 * +t)].map((q) => +q.toFixed(3));
-    return out;
-  };
-  const top = [...pairs.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 8).map(([k, e]) => ({ pair: k, flips: e.n, px: e.px.size, frames: [...e.frames].slice(0, 24), sample: [...e.px].slice(0, 6), tris: Object.fromEntries(k.split(' <> ').map((q) => [q, tri(q)])) }));
-  return { size: [Wd, Hd], at: [st.X, st.Y], frames: grids.length, changedPairs: pairs.size, top, cam0: st.cams[0] };
+  const st = window.__idp, { Wd } = st;
+  const dec = (c) => { const m = Math.floor(c / 16777216), t = c % 16777216; return { m, t, name: m ? st.list[m - 1].name + '#' + t : 'none' }; };
+  const tri = ({ m, t }) => { if (!m) return null; const e = st.list[m - 1], g = e.p.geometry, P = g.attributes.position, U = g.attributes.uv, M = e.o.matrixWorld.elements, v = [], uv = [];
+    for (let i = 0; i < 3; i++) { const q = 3 * t + i, a = P.getX(q), b = P.getY(q), c = P.getZ(q); v.push([a * M[0] + b * M[4] + c * M[8] + M[12], a * M[1] + b * M[5] + c * M[9] + M[13], a * M[2] + b * M[6] + c * M[10] + M[14]]); if (U) uv.push([+U.getX(q).toFixed(4), +U.getY(q).toFixed(4)]); }
+    const e1 = v[1].map((q, i) => q - v[0][i]), e2 = v[2].map((q, i) => q - v[0][i]), n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]], l = Math.hypot(...n) || 1;
+    return { v, uv, n: n.map((q) => q / l), side: e.o.material.side, mat: e.o.material.type }; };
+  const kind = (A, B) => { if (!A || !B) return 'sky';
+    const key = (p) => p.map((q) => q.toFixed(4)).join(','), sa = new Set(A.v.map(key)); if (B.v.filter((p) => sa.has(key(p))).length >= 2) return 'adjacent';
+    const d = A.n[0] * B.n[0] + A.n[1] * B.n[1] + A.n[2] * B.n[2], off = Math.max(...B.v.map((p) => Math.abs((p[0] - A.v[0][0]) * A.n[0] + (p[1] - A.v[0][1]) * A.n[1] + (p[2] - A.v[0][2]) * A.n[2])));
+    if (Math.abs(d) > 0.999 && off < 2e-3) return (d > 0 ? 'coplanar-same' : 'coplanar-opposite') + (off < 1e-5 ? '' : '~' + (off * 1000).toFixed(2) + 'mm');
+    return 'crossing'; };
+  const rows = [...st.pairs.entries()].map(([k, e]) => { const [a, b] = k.split(':').map(Number), A = dec(a), B = dec(b), TA = tri(A), TB = tri(B);
+    return { pair: A.name + ' <> ' + B.name, kind: kind(TA, TB), flips: e.n, px: e.px.size, frames: e.frames.size, sample: [...e.px].slice(0, 3).map((q) => (st.X + q % Wd) + ',' + (st.Y + ((q / Wd) | 0))), A: TA && { n: TA.n.map((q) => +q.toFixed(3)), v0: TA.v[0].map((q) => +q.toFixed(4)), uv0: TA.uv[0] }, B: TB && { n: TB.n.map((q) => +q.toFixed(3)), v0: TB.v[0].map((q) => +q.toFixed(4)), uv0: TB.uv[0] } }; });
+  const byKind = {}; for (const r of rows) { const k = r.kind.replace(/~.*/, ''); byKind[k] ??= { pairs: 0, flips: 0, px: 0 }; byKind[k].pairs++; byKind[k].flips += r.flips; byKind[k].px += r.px; }
+  const top = rows.filter((r) => r.kind !== 'adjacent').sort((a, b) => b.flips - a.flips).slice(0, 12);
+  return { size: [st.Wd, st.Hd], at: [st.X, st.Y], frames: st.frames, byKind, top };
 };
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const an = await (await b.newContext()).newPage();
@@ -184,6 +186,7 @@ const step = async (p, k = 1) => { for (let i = 0; i < k; i++) { await p.clock.r
 for (const raw of jobs) {
   const eq = raw.indexOf('='), name = raw.slice(0, eq), [q, ...opts] = raw.slice(eq + 1).split('|'), still = opts.includes('still');
   const crop = opts.find((o) => o.startsWith('crop='))?.slice(5).split(',').map(Number) ?? null;
+  const idcrop = opts.find((o) => o.startsWith('idcrop='))?.slice(7).split(',').map(Number) ?? (opts.includes('id') ? crop : null);
   const dir = '/out/' + name; fs.mkdirSync(dir, { recursive: true });
   const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
@@ -217,13 +220,13 @@ for (const raw of jobs) {
     await an.evaluate(ANALYSE.add, png.toString('base64'));
     if (crop) { await an.evaluate(ANALYSE.region, crop); await an.evaluate(ANALYSE.keep, crop); }
     if (crop && opts.includes('hdr')) console.log('HDR', name, f, JSON.stringify(await p.evaluate(HDR, crop)));
-    if (crop && opts.includes('id')) await p.evaluate(IDPASS, [...crop, f]);
+    if (idcrop) await p.evaluate(IDPASS, [...idcrop, f]);
     if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
     if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
   }
   if (crop) { const j = await an.evaluate(ANALYSE.jump); if (j) { fs.writeFileSync(dir + '/jump.png', Buffer.from(j.png, 'base64')); console.log('JUMP', name, 'frame', j.k); } }
-  if (crop && opts.includes('id')) { const idr = await p.evaluate(IDSUM); fs.writeFileSync(dir + '/id.json', JSON.stringify(idr)); console.log('IDWIN', name, JSON.stringify(idr)); }
+  if (idcrop) { const idr = await p.evaluate(IDSUM); fs.writeFileSync(dir + '/id.json', JSON.stringify(idr)); console.log('IDWIN', name, JSON.stringify(idr)); }
   const { st, heat } = await an.evaluate(ANALYSE.finish);
   fs.writeFileSync(dir + '/heat.png', Buffer.from(heat, 'base64'));
   st.modes = [...new Set(modes)]; st.query = q; st.still = still; st.origin = originArg === '-' ? 'branch' : 'given';
