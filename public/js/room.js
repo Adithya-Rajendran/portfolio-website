@@ -57,7 +57,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
   const pending = [], texCache = new Map(), predicted = new Set(), used = new Set(); let textureError;
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
-  let disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
+  let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
   const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
   const swaps = [], SAVE = !!navigator.connection?.saveData;
   async function fetchBytes(file) {
@@ -132,7 +132,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     return [i, (i + 1) % n, x - Math.floor(x)];
   }
   function firstLayers(name, n) {
-    if (name.endsWith('_s')) { const [i, j, f] = skyAt(uTime.value); return [f ? [i, j] : [i], (k) => (k - i + n) % n]; }
+    if (name.endsWith('_s')) { const [i, j, f] = skyAt(uTime.value); firstSky ??= [i, j, f]; return [f ? [i, j] : [i], (k) => (k - i + n) % n]; }
     if (CH_FIXED != null) return [CH_AT.map((p, k) => k).filter((k) => Math.abs(1 + 2 * Math.cos(CH_FIXED - CH_AT[k])) > 1e-6), (k) => k];
     return [[CH0], (k) => (k - CH0 + n) % n];
   }
@@ -178,7 +178,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     renderer.initTexture(t);
     t.source.dataReady = false; t.layerUpdates.clear(); for (const m of t.mipmaps) m.data = null;
     entry.have.add(k);
-    if (entry.have.size === entry.n) entry.parts = null;
+    if (entry.have.size + entry.failed.size === entry.n) entry.parts = null;
     settle();
   }
   function settle() {
@@ -200,7 +200,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         work.catch((e) => {
           if (disposed) return;
           if (tail) { entry.head = null; console.warn(`Cannot load ${id}/${tail}.tail.ktx2, the small levels stay`, e); return; }
-          console.warn(`Cannot load ${id}/${entry.name}${k}.ktx2, given up`, e); entry.failed.add(k); settle();
+          console.warn(`Cannot load ${id}/${entry.name}${k}.ktx2, given up`, e); entry.failed.add(k); if (entry.have.size + entry.failed.size === entry.n) entry.parts = null; settle();
         }).finally(() => { running--; next(); });
       }
     };
@@ -239,7 +239,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const gltf = await gltfPromise;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   scene.userData.stream = {
-    state: () => ({ layers: Object.fromEntries([...texCache].filter(([, e]) => e.n).map(([n, e]) => [n, { have: [...e.have].sort(), failed: [...e.failed].sort() }])),
+    state: () => ({ layers: Object.fromEntries([...texCache].filter(([, e]) => e.n).map(([n, e]) => [n, { have: [...e.have].sort(), failed: [...e.failed].sort(), rgba: !!e.whole, parts: !!e.parts }])), cover: coverSky,
       queued: later.length, running, swaps: swaps.length, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
     settled: () => streaming && !later.length && !running,
   };
@@ -875,11 +875,12 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       if (e.have.has(k)) continue;
       const q = later.findIndex((job) => job.entry === e && job.k === k);
       if (q >= 0) later.splice(q, 1);
-      more.push(needLayer(e, k));
+      more.push(needLayer(e, k)); rechosen++;
     }
     if (!more.length) break;
     await Promise.all(more);
   }
+  if (skyLayers.length) coverSky = { first: firstSky, at: skyAt(uTime.value), rechosen, ok: (([i, j, f]) => skyLayers.every((e) => e.have.has(i) && (!f || e.have.has(j))))(skyAt(uTime.value)) };
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (!DEV && unused.length) {
     for (const n of unused) { const e = texCache.get(n); if (e) e.dead = true; e?.u.value?.dispose(); }
