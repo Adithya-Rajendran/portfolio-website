@@ -78,6 +78,41 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   await ctx.close();
 }
 
+{
+  let cdp;
+  const { ctx, p, errors } = await open('about/?roll=60', async (pg, c) => {
+    cdp = await c.newCDPSession(pg);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
+  });
+  const { cover } = await state(p);
+  ok(!!cover && cover.at[0] !== cover.first[0], `re-choose: the sky crossed into another layer while the room loaded (${JSON.stringify(cover?.first)} -> ${JSON.stringify(cover?.at)})`);
+  ok(!!cover && cover.rechosen > 0 && cover.ok, `re-choose: the cover waited for the layers the sky samples as it lifts (${cover?.rechosen} fetched again)`);
+  ok(!errors.length, `re-choose: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+
+{
+  const { ctx, p, errors } = await open('contact/', async (pg) => {
+    await pg.addInitScript(() => {
+      const hide = /compressed_texture|texture_compression/i;
+      for (const C of [WebGLRenderingContext, WebGL2RenderingContext]) {
+        const ge = C.prototype.getExtension, gs = C.prototype.getSupportedExtensions;
+        C.prototype.getExtension = function (n) { return hide.test(n) ? null : ge.call(this, n); };
+        C.prototype.getSupportedExtensions = function () { return gs.call(this).filter((n) => !hide.test(n)); };
+      }
+    });
+    await pg.route(/\/assets\/comms\/tex\/archC_s4\.ktx2/, (r) => r.abort());
+  });
+  const done = await settled(p, 180000), s = await state(p), L = Object.values(s.layers);
+  ok(done && L.length > 0 && L.every((l) => l.rgba), `rgba: every layered texture took the whole-array path (${L.length})`);
+  ok(L.every((l) => l.have.length + l.failed.length === 6) && s.layers.archC_s.failed.includes(4), 'rgba: every layer in but the refused one');
+  ok(L.every((l) => !l.parts), 'rgba: no layer kept in RAM once none is still to come');
+  ok(skyIn(s), 'rgba: the sky samples only layers that are in');
+  ok(!errors.length, `rgba: no page error ${errors.join(' | ')}`);
+  await ctx.close();
+}
+
 await b.close();
 console.log(failed ? `layers: ${failed} FAIL` : 'layers: all ok');
 process.exit(failed ? 1 : 0);
