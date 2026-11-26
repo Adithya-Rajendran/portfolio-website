@@ -57,7 +57,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
   const pending = [], texCache = new Map(), predicted = new Set(), used = new Set(); let textureError;
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
-  let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
+  let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, uploads = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
   const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
   const SAVE = !!navigator.connection?.saveData;
   async function fetchBytes(file) {
@@ -82,7 +82,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     t.anisotropy = Math.min(entry.aniso, maxAniso);
     t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; };
     const old = entry.u.value; entry.u.value = t;
-    renderer.initTexture(t); old?.dispose();
+    renderer.initTexture(t); uploads++; old?.dispose();
   }
   function requestSplit(name, entry) {
     entry.split = true;
@@ -108,7 +108,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         if (t && !hit.n) {
           t.wrapS = panorama ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
           t.anisotropy = Math.min(aniso, maxAniso);
-          t.needsUpdate = true;
+          t.needsUpdate = true; uploads++;
         }
       }
       return hit.u;
@@ -175,7 +175,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       });
     }
     t.source.dataReady = true; t.needsUpdate = true;
-    renderer.initTexture(t);
+    renderer.initTexture(t); uploads++;
     t.source.dataReady = false; t.layerUpdates.clear(); for (const m of t.mipmaps) m.data = null;
     entry.have.add(k);
     if (entry.have.size + entry.failed.size === entry.n) entry.parts = null;
@@ -242,6 +242,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     state: () => ({ layers: Object.fromEntries([...texCache].filter(([, e]) => e.n).map(([n, e]) => [n, { have: [...e.have].sort(), failed: [...e.failed].sort(), rgba: !!e.whole, parts: !!e.parts }])), cover: coverSky,
       queued: later.length, running, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
     settled: () => streaming && !later.length && !running,
+    uploads: () => uploads,
   };
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
   const floors = [], hidden = [];                                  // not drawn into the mirror image: the floor itself; glass and dust

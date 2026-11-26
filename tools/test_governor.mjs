@@ -810,3 +810,35 @@ test('one GPU window over the limit while textures upload after the cover lift d
   assert.equal(changes.length, 0, JSON.stringify(changes));
   assert.equal(gov.tierHeld, false);
 });
+
+test('frames that upload textures are left out: over-limit upload frames do not downgrade, sustained overload without uploads still does', () => {
+  const uploadTrace = (gpuOn) => {
+    const frames = [];
+    for (let i = 0; i < 900; i++) {
+      const upload = i >= 40 && i < 400 && i % 6 < 2;
+      frames.push({ dtMs: upload ? 120 : 16.67, gpuMs: gpuOn ? (upload ? 22 : 9) : null, upload });
+    }
+    return frames;
+  };
+  const feed = (gov, frames) => {
+    const changes = [];
+    for (const f of frames) if (gov.update(f.dtMs, f.upload ? null : f.gpuMs, f.upload)) changes.push({ tier: gov.tier, scale: gov.scale });
+    return changes;
+  };
+  for (const hasGpuTimer of [true, false]) {
+    const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer });
+    gov.reset({ tier: 0, scale: 1, warm: 600 });
+    assert.equal(feed(gov, uploadTrace(hasGpuTimer)).length, 0, `hasGpuTimer=${hasGpuTimer}`);
+    assert.equal(gov.tier, 0);
+    assert.equal(gov.scale, 1);
+
+    const same = new Governor({ min: 0.5, max: 1, hasGpuTimer });
+    same.reset({ tier: 0, scale: 1, warm: 600 });
+    const unflagged = uploadTrace(hasGpuTimer).map((f) => ({ ...f, upload: false }));
+    assert.ok(feed(same, unflagged).length >= 1, `the same frames without the upload flag must downgrade (hasGpuTimer=${hasGpuTimer})`);
+  }
+  const busy = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  busy.reset({ tier: 0, scale: 1, warm: 600 });
+  const sustained = Array.from({ length: 300 }, (_, i) => ({ dtMs: 33.3, gpuMs: 25, upload: i % 10 === 0 }));
+  assert.ok(feed(busy, sustained).length >= 1, 'sustained GPU overload between uploads must still downgrade');
+});

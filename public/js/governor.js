@@ -174,7 +174,7 @@ export class Governor {
     return true;
   }
 
-  update(dtMs, gpuSamples = null) {
+  update(dtMs, gpuSamples = null, upload = false) {
     if (this.allPinned || !Number.isFinite(dtMs) || dtMs < 0) return false;
     if (dtMs > 1000) {
       this._slowDtStreak = 0;
@@ -207,10 +207,12 @@ export class Governor {
       return false;
     }
 
-    this._winMs += dtMs;
-    this._dtSum += dtMs;
-    this._dtCount++;
-    if (dtMs > 150) this._hadHitch = true;
+    if (!upload) {
+      this._winMs += dtMs;
+      this._dtSum += dtMs;
+      this._dtCount++;
+      if (dtMs > 150) this._hadHitch = true;
+    }
 
     if (typeof gpuSamples === 'number') {
       if (Number.isFinite(gpuSamples) && gpuSamples > 0 && gpuSamples < 2000) this._gpuSamples.push(gpuSamples);

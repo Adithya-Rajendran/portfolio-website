@@ -72,7 +72,7 @@ function drainGpuTimes() {
     if (disjoint === null) disjoint = !!gl.getParameter(timerExt.GPU_DISJOINT_EXT);
     const ns = (!disjoint && head.epoch === gpuEpoch) ? gl.getQueryParameter(head.q, gl.QUERY_RESULT) : 0;
     gl.deleteQuery(head.q);
-    if (!disjoint && head.epoch === gpuEpoch && typeof ns === 'number' && Number.isFinite(ns) && ns > 0) {
+    if (!disjoint && !head.upload && head.epoch === gpuEpoch && typeof ns === 'number' && Number.isFinite(ns) && ns > 0) {
       samples.push(ns / 1e6);
     }
   }
@@ -454,7 +454,7 @@ $('#hud nav').addEventListener('click', (e) => {
 });
 
 // ---------------------------------------------------------------- frame
-const clock = new THREE.Clock(), CALM = num('calm', 0.15), LIFT = 0.8; let drawn = 0, wasCalm = false, seen = null;     // seen: the focus as the route map last knew it
+const clock = new THREE.Clock(), CALM = num('calm', 0.15), LIFT = 0.8; let drawn = 0, wasCalm = false, seen = null, uploadsSeen = 0, uploadLast = false;     // seen: the focus as the route map last knew it
 function frame() {
   requestAnimationFrame(frame);
   const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = (uTime.value += dt), since = t - t0;
@@ -465,8 +465,10 @@ function frame() {
   if (calm && t - drawn < CALM) return;
   if (calm !== wasCalm) { wasCalm = calm; resetGpuTimer(); gov.rest(600); }
   drawn = t;
+  const uploads = room.scene.userData.stream?.uploads?.() ?? 0, uploadNow = uploads !== uploadsSeen, uploadFrame = uploadNow || uploadLast;
+  uploadsSeen = uploads; uploadLast = uploadNow;
   const gpuSamples = !calm ? drainGpuTimes() : null;
-  if (!calm && gov.update(rawDt * 1000, gpuSamples)) {
+  if (!calm && gov.update(rawDt * 1000, gpuSamples, uploadFrame)) {
     setTier(gov.tier);
     applyScale();
     resetGpuTimer();
@@ -520,7 +522,7 @@ function frame() {
   } finally {
     if (gpuQuery && !gl.isContextLost()) {
       gl.endQuery(timerExt.TIME_ELAPSED_EXT);
-      gpuPending.push({ q: gpuQuery, epoch: gpuEpoch });
+      gpuPending.push({ q: gpuQuery, epoch: gpuEpoch, upload: uploadFrame });
     }
   }
   // the lock: on the pick the pointer rests on, looked for again as the view moves under a still pointer
