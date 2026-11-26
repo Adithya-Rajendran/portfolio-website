@@ -27,7 +27,6 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   ok(done, `${room}: every layer fetched (${Object.keys(s.layers).length} layered textures)`);
   ok(all(s).every(([n, l]) => l.failed.length === 0 && l.have.length === (n.endsWith('_s') ? 6 : 3)), `${room}: every layer in, none given up`);
   ok(!s.hold, `${room}: no hold left`);
-  await p.waitForFunction(() => window.__lobby.scene.userData.stream.state().swaps === 0, null, { polling: 100, timeout: 30000 }).catch(() => {});
   const f = await state(p);
   ok(f.split > 0 && f.small === 0, `${room}: every texture cut in two ends at full detail (${f.split} textures, ${f.small} still small)`);
   ok(skyIn(s), `${room}: the sky samples only layers that are in`);
@@ -57,7 +56,6 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
 {
   const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/props\.tail\.ktx2/, (r) => r.fulfill({ status: 404, body: 'Not found' })));
   const done = await settled(p);
-  await p.waitForFunction(() => window.__lobby.scene.userData.stream.state().swaps === 0, null, { polling: 100, timeout: 30000 }).catch(() => {});
   const s = await state(p);
   ok(done && s.small === 1 && !s.hold, `refused tail: streaming ends, one texture stays small (${s.small}), nothing held`);
   ok(!errors.length, `refused tail: no page error ${errors.join(' | ')}`);

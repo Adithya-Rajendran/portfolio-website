@@ -110,5 +110,24 @@ console.log(JSON.stringify(out));
         self.assertEqual((basis['levels'], basis['level'], basis['sgd']), (1, True, [48, 12]))
 
 
+class SmallKTX2RealFiles(unittest.TestCase):
+    JS = "\nimport { smallKTX2 } from '@SMALL@';\nimport { readFileSync } from 'node:fs';\nimport { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url);\nconst code = readFileSync('@BASIS@/basis_transcoder.js', 'utf8');\nconst BASIS = new Function('module', 'exports', 'require', '__dirname', code + ';return BASIS;')({}, {}, require, '@BASIS@');\nconst B = await BASIS({ wasmBinary: readFileSync('@BASIS@/basis_transcoder.wasm') }); B.initializeBasis();\nconst head = (b) => { const v = new DataView(b.buffer, b.byteOffset, b.byteLength), u32 = (o) => v.getUint32(o, true), u64 = (o) => Number(v.getBigUint64(o, true));\n  return { scheme: u32(44), n: u32(40), dfd: [u32(48), u32(52)], kvd: [u32(56), u32(60)], sgd: [u64(64), u64(72)], lv: [...Array(u32(40)).keys()].map((i) => [u64(80 + 24 * i), u64(88 + 24 * i)]) }; };\nconst out = {};\nfor (const [name, cut] of JSON.parse(process.argv.at(-1))) {\n  const full = new Uint8Array(readFileSync('@FIX@/' + name)), drop = 2, small = new Uint8Array(smallKTX2(full.slice(0, cut).buffer, drop)), F = head(full), S = head(small);\n  const same = (a, b, n) => n === 0 || Buffer.compare(Buffer.from(full.subarray(a, a + n)), Buffer.from(small.subarray(b, b + n))) === 0;\n  const r = { levels: S.n === F.n - drop, dfd: S.dfd[1] === F.dfd[1] && same(F.dfd[0], S.dfd[0], F.dfd[1]), kvd: S.kvd[1] === F.kvd[1] && same(F.kvd[0], S.kvd[0], F.kvd[1]),\n    end: small.length === Math.max(...S.lv.map(([o, l]) => o + l)), aligned: S.lv.every(([o]) => o % 16 === 0) };\n  if (F.scheme === 1) { const per = 20, tail = F.sgd[1] - 20 - F.n * per; r.sgdTail = S.sgd[1] === 20 + S.n * per + tail && same(F.sgd[0] + 20 + F.n * per, S.sgd[0] + 20 + S.n * per, tail) && same(F.sgd[0] + 20 + drop * per, S.sgd[0] + 20, S.n * per); }\n  const k = new B.KTX2File(small), kf = new B.KTX2File(full); k.startTranscoding(); kf.startTranscoding();\n  r.transcoded = k.isValid() && S.lv.every((_, lv) => { const a = new Uint8Array(k.getImageTranscodedSizeInBytes(lv, 0, 0, 13)), b = new Uint8Array(kf.getImageTranscodedSizeInBytes(lv + drop, 0, 0, 13));\n    k.transcodeImage(a, lv, 0, 0, 13, 0, -1, -1); kf.transcodeImage(b, lv + drop, 0, 0, 13, 0, -1, -1); return a.length === b.length && a.every((x, i) => x === b[i]); });\n  k.close(); k.delete(); kf.close(); kf.delete();\n  out[name] = r;\n}\nconsole.log(JSON.stringify(out));\n"
+
+    def test_heads_of_real_files(self):
+        import json, shutil, subprocess
+        if not shutil.which('node'): self.skipTest('no node')
+        root = os.path.abspath(os.path.join(TOOLS, '..'))
+        fix = os.path.join(TOOLS, 'testdata', 'ktx2')
+        cuts = [[n, pack.small_bytes(os.path.join(fix, n))] for n in ('uastc.ktx2', 'uastc-zstd.ktx2', 'etc1s.ktx2')]
+        js = self.JS.replace('@SMALL@', 'file://' + os.path.join(root, 'public', 'js', 'ktx2small.js')).replace('@BASIS@', os.path.join(root, 'public', 'vendor', 'jsm', 'libs', 'basis')).replace('@FIX@', fix)
+        r = subprocess.run(['node', '--input-type=module', '-e', js, json.dumps(cuts)], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+        out = json.loads(r.stdout)
+        for name, res in out.items():
+            for key in ('levels', 'dfd', 'kvd', 'end', 'transcoded'): self.assertTrue(res[key], (name, key))
+        self.assertTrue(out['uastc.ktx2']['aligned'])
+        self.assertTrue(out['etc1s.ktx2']['sgdTail'])
+
+
 if __name__ == '__main__':
     unittest.main()

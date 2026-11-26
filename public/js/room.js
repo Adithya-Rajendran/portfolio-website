@@ -59,7 +59,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
   let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
   const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
-  const swaps = [], SAVE = !!navigator.connection?.saveData;
+  const SAVE = !!navigator.connection?.saveData;
   async function fetchBytes(file) {
     for (let tries = 0; ; tries++) {
       try {
@@ -195,7 +195,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         const { entry, k, tail } = later.shift();
         if (entry.dead) continue;
         running++;
-        const work = tail ? loadWhole(entry, tail).then((t) => { if (disposed || entry.dead) t.dispose(); else swaps.push([entry, t]); })
+        const work = tail ? loadWhole(entry, tail).then((t) => { if (disposed || entry.dead) t.dispose(); else { entry.full = true; putTex(entry, t); } })
           : loadLayer(entry.name + k).then((t) => putLayer(entry, k, t));
         work.catch((e) => {
           if (disposed) return;
@@ -240,7 +240,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   scene.userData.stream = {
     state: () => ({ layers: Object.fromEntries([...texCache].filter(([, e]) => e.n).map(([n, e]) => [n, { have: [...e.have].sort(), failed: [...e.failed].sort(), rgba: !!e.whole, parts: !!e.parts }])), cover: coverSky,
-      queued: later.length, running, swaps: swaps.length, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
+      queued: later.length, running, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
     settled: () => streaming && !later.length && !running,
   };
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
@@ -883,7 +883,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   if (skyLayers.length) coverSky = { first: firstSky, at: skyAt(uTime.value), rechosen, ok: (([i, j, f]) => skyLayers.every((e) => e.have.has(i) && (!f || e.have.has(j))))(skyAt(uTime.value)) };
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (!DEV && unused.length) {
-    for (const n of unused) { const e = texCache.get(n); if (e) e.dead = true; e?.u.value?.dispose(); }
+    for (const n of unused) { const e = texCache.get(n); if (e) { e.dead = true; e.head = null; e.parts = null; } e?.u.value?.dispose(); }
     settle();
   }
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
@@ -929,7 +929,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     /** Per frame, after the camera has been placed. */
     update(t) {
       if (!streaming && ++updates > 1) { streaming = true; streamRest(); }
-      if (swaps.length) { const [entry, t] = swaps.shift(); entry.full = true; putTex(entry, t); }
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       if (skyU?.frame) skyU.uSkyM.value.copy(skyU.frame).multiply(_m3.setFromMatrix4(_m4.makeRotationFromQuaternion(_q.copy(sky.quaternion).invert())));
@@ -969,6 +968,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       liveCam.update(renderer, scene);
       scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
     }),
-    dispose: () => { disposed = true; abort.abort(); later.length = 0; for (const [, t] of swaps.splice(0)) t.dispose(); reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { disposed = true; abort.abort(); later.length = 0; reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }
