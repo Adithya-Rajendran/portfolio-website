@@ -264,7 +264,7 @@ test('localStorage helpers handle valid data, corrupt JSON, out-of-range values,
   };
 
   assert.equal(saveRoomMode(memStorage, 'lobby', { tier: 1, scale: 0.675 }), true);
-  assert.deepEqual(loadRoomMode(memStorage, 'lobby'), { tier: 1, scale: 0.675 });
+  assert.deepEqual(loadRoomMode(memStorage, 'lobby'), { tier: 0, scale: 0.675 });
 
   map.set(storageKey('about'), '{not-json');
   assert.equal(loadRoomMode(memStorage, 'about'), null);
@@ -891,12 +891,29 @@ test('the stored mode keeps the remembered tier for unheld drops, and held expir
   const day = 24 * 3600 * 1000;
   saveRoomMode(storage, 'lobby', { tier: 1, scale: 0.8, held: true, at: 10 * day, bake: 3 });
   assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 3, now: 16 * day }), { tier: 1, scale: 0.8, held: true, at: 10 * day });
-  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 3, now: 18 * day }), { tier: 1, scale: 0.8 });
-  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 4, now: 11 * day }), { tier: 1, scale: 0.8 });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 3, now: 18 * day }), { tier: 0, scale: 0.8 });
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { bake: 4, now: 11 * day }), { tier: 0, scale: 0.8 });
   saveRoomMode(storage, 'lobby', { tier: 1, scale: 0.8, held: true });
-  assert.deepEqual(loadRoomMode(storage, 'lobby', { now: 11 * day }), { tier: 1, scale: 0.8 }, 'held without a time is not stored');
+  assert.deepEqual(loadRoomMode(storage, 'lobby', { now: 11 * day }), { tier: 0, scale: 0.8 }, 'held without a time is not stored');
 
   const kept = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
   kept.reset({ tier: 1, scale: 1, held: true, heldAt: 10 * day, warm: 0 });
   assert.deepEqual(kept.savedMode(12 * day), { tier: 1, scale: 1, held: true, at: 10 * day }, 'a later visit keeps the first time');
+});
+
+test('an old tier 1 record without a valid hold loads as tier 0 with its scale', () => {
+  const map = new Map([[storageKey('writing'), JSON.stringify({ v: 1, tier: 1, scale: 0.5 })]]);
+  const storage = { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, String(v)) };
+  assert.deepEqual(loadRoomMode(storage, 'writing', { bake: 2 }), { tier: 0, scale: 0.5 });
+});
+
+test('the time of a hold is set when it is first saved and does not move later in the visit', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 0 });
+  for (let i = 0; i < 400; i++) gov.update(16.67, 12);
+  for (let i = 0; i < 60 && gov.tier === 0; i++) gov.update(16.67, 30);
+  assert.equal(gov.tier, 1);
+  assert.equal(gov.tierHeld, true);
+  assert.equal(gov.savedMode(100).at, 100);
+  assert.equal(gov.savedMode(200).at, 100);
 });

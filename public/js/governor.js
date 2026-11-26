@@ -27,7 +27,7 @@ export function loadRoomMode(storage, roomId, { min = 0.5, max = 1, bake, now = 
     if (typeof data.scale !== 'number' || !Number.isFinite(data.scale)) return null;
     if (data.scale < min || data.scale > max) return null;
     const held = data.held === true && Number.isFinite(data.at) && data.at <= now && now - data.at <= HELD_MS && (bake === undefined || data.bake === bake);
-    return held ? { tier: data.tier, scale: data.scale, held: true, at: data.at } : { tier: data.tier, scale: data.scale };
+    return held ? { tier: data.tier, scale: data.scale, held: true, at: data.at } : { tier: 0, scale: data.scale };
   } catch {
     return null;
   }
@@ -181,7 +181,9 @@ export class Governor {
 
   savedMode(now) {
     const tier = this.tierHeld ? this.tier : Math.min(this.tier, this._startTier);
-    return this.tierHeld && tier === 1 ? { tier, scale: this.scale, held: true, at: this.heldAt ?? now } : { tier, scale: this.scale };
+    if (!this.tierHeld || tier !== 1) return { tier, scale: this.scale };
+    this.heldAt ??= now;
+    return { tier, scale: this.scale, held: true, at: this.heldAt };
   }
 
   _uploadSkip(dtMs, upload) {
