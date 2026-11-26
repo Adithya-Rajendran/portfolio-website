@@ -2,6 +2,7 @@
 // Count local, not world, transform changes: 3 blades following one rotor are not 3 mechanisms.
 import { chromium } from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
+import { streamAbort } from './reqfail.mjs';
 const base = process.argv[2];
 const browser = await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
@@ -9,7 +10,7 @@ try {
   const errors=[];
   page.on('console',m=>{if(m.type()==='error') errors.push(m.text());});
   page.on('pageerror',e=>errors.push(e.message));
-  page.on('requestfailed',r=>errors.push(`${r.failure()?.errorText} ${r.url()}`));
+  page.on('requestfailed',r=>streamAbort(r) || errors.push(`${r.failure()?.errorText} ${r.url()}`));
   page.on('response',r=>{if(r.status()>=400) errors.push(`${r.status()} ${r.url()}`);});
   const sample = (delivery=false) => page.evaluate(async delivery => {
     const seen=new Map(), moved=new Set(), bent=new Set();
