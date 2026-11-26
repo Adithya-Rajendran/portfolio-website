@@ -12,7 +12,7 @@ def quad(x0, y0, x1, y1, z=0.0, up=True):
     return v, ([0, 1, 2, 0, 2, 3] if up else [0, 2, 1, 0, 3, 2]), (0, 0, 1 if up else -1)
 
 
-def build(path, parts):
+def build(path, parts, cam=None):
     pos, nrm, uv, idx = [], [], [], []
     for verts, tri, n in parts:
         base = len(pos)
@@ -31,6 +31,7 @@ def build(path, parts):
                         {'bufferView': 1, 'componentType': 5126, 'count': len(pos), 'type': 'VEC3'},
                         {'bufferView': 2, 'componentType': 5126, 'count': len(pos), 'type': 'VEC2'},
                         {'bufferView': 3, 'componentType': 5123, 'count': len(idx), 'type': 'SCALAR'}]}
+    if cam: js['scenes'][0]['extras'] = {'lobby': {'cam': [cam[0], -cam[2], cam[1]]}}
     pack.glb_write(path, js, bytearray(bin_))
 
 
@@ -46,7 +47,7 @@ def triangles(path):
 class SeparateTest(unittest.TestCase):
     def run_on(self, parts, **kw):
         with tempfile.TemporaryDirectory() as d:
-            build(f'{d}/a.glb', parts)
+            build(f'{d}/a.glb', parts, kw.pop('cam', None))
             stats = pack.separate(f'{d}/a.glb', f'{d}/b.glb', **kw)
             before, _ = triangles(f'{d}/a.glb'); after, js = triangles(f'{d}/b.glb')
             return stats, before, after, js
@@ -74,10 +75,20 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual(len(after), 2)
         self.assertEqual(sorted(map(str, (u for _, u in after))), sorted(map(str, (u for _, u in before[2:]))))
 
-    def test_leaves_faces_that_face_each_other_and_mere_neighbours_alone(self):
-        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0, 0, 1, 1, up=False), quad(1, 0, 2, 1)])
-        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'area': 0})
+    def test_leaves_mere_neighbours_alone(self):
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
+        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'backs': 0, 'area': 0})
         self.assertEqual(after, before)
+
+    def test_moves_the_back_of_two_faces_that_face_each_other_away_from_the_camera(self):
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.6, 0.6, up=False)], cam=(0.5, 0.5, 5))
+        self.assertEqual(stats['backs'], 1); self.assertEqual(stats['surfaces'], 0)
+        z = {tuple(u[0]): round(t[0][2], 6) for t, u in after}
+        self.assertEqual(sorted(set(z.values())), [-0.003, 0.0])
+        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[:2] for p in t), [0.0] * 6)
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.6, 0.6, up=False)], cam=(0.5, 0.5, -5))
+        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[:2] for p in t), [0.003] * 6)
+        self.assertEqual(sorted(round(p[2], 6) for t, _ in after[2:] for p in t), [0.0] * 6)
 
     def test_lifts_a_surface_a_hair_behind_to_the_same_height(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.2, 0.2, 0.4, 0.8, z=-0.0002)])

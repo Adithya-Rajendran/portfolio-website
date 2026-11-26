@@ -89,6 +89,8 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
     js, bin_ = glb_read(src)
     uses = {}
     for m, _ in mesh_nodes(js): uses[m] = uses.get(m, 0) + 1
+    cam = js['scenes'][js.get('scene', 0)].get('extras', {}).get('lobby', {}).get('cam')
+    eye = (cam[0], cam[2], -cam[1]) if cam else None
     prims, tris = [], []
     for m, M in mesh_nodes(js):
         for p in js['meshes'][m]['primitives']:
@@ -108,6 +110,9 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
                     s = [sum(M[r][q] * N[v][q] for q in range(3)) for v in (ia, ib, ic) for r in range(3)]
                     if dot(n, (s[0] + s[3] + s[6], s[1] + s[4] + s[7], s[2] + s[5] + s[8])) < 0: n = (-n[0], -n[1], -n[2])
                 tris.append((k, t, (a, b, c), n, dot(n, a), l / 2))
+    if eye is None:
+        lo = [min(v[q] for tr in tris for v in tr[2]) for q in range(3)] if tris else [0, 0, 0]; hi = [max(v[q] for tr in tris for v in tr[2]) for q in range(3)] if tris else [0, 0, 0]
+        eye = tuple((lo[q] + hi[q]) / 2 for q in range(3))
     parent = list(range(len(tris)))
     def find(i):
         while parent[i] != i: parent[i] = parent[parent[i]]; i = parent[i]
@@ -126,10 +131,11 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
                 if dot(h, sub(pi, a)) * dot(h, sub(pj, a)) < 0: parent[find(i)] = find(j)
     buckets = {}
     for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0], 3), round(n[1], 3), round(n[2], 3), round(d, 3)), []).append(i)
-    overlap, seen = {}, set()
+    facing = lambda i, j: dot(tris[i][3], tris[j][3]) < -1 + 1e-6 and abs(tris[i][4] + tris[j][4]) < plane
+    overlap, seen, away = {}, set(), set()
     for key, ks in buckets.items():
-        near = [i for dx in (-1e-3, 0, 1e-3) for dy in (-1e-3, 0, 1e-3) for dz in (-1e-3, 0, 1e-3) for dd in (-1e-3, 0, 1e-3)
-                for i in buckets.get((round(key[0] + dx, 3), round(key[1] + dy, 3), round(key[2] + dz, 3), round(key[3] + dd, 3)), ())]
+        near = [i for sg in (1, -1) for dx in (-1e-3, 0, 1e-3) for dy in (-1e-3, 0, 1e-3) for dz in (-1e-3, 0, 1e-3) for dd in (-1e-3, 0, 1e-3)
+                for i in buckets.get((round(sg * key[0] + dx, 3), round(sg * key[1] + dy, 3), round(sg * key[2] + dz, 3), round(sg * key[3] + dd, 3)), ())]
         if len(near) < 2: continue
         ax = max(range(3), key=lambda q: abs(key[q])); u, v = (ax + 1) % 3, (ax + 2) % 3
         flat = lambda i: [(p[u], p[v]) for p in tris[i][2]]
@@ -143,7 +149,9 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
             for gx in range(int(min(p[0] for p in fi) // cell), int(max(p[0] for p in fi) // cell) + 1):
                 for gy in range(int(min(p[1] for p in fi) // cell), int(max(p[1] for p in fi) // cell) + 1): cand.update(grid.get((gx, gy), ()))
             for j in cand:
-                if j == i or (min(i, j), max(i, j)) in seen or not same(i, j): continue
+                if j == i or (min(i, j), max(i, j)) in seen: continue
+                both = same(i, j)
+                if not both and not facing(i, j): continue
                 seen.add((min(i, j), max(i, j)))
                 fj = flat(j)
                 if max(p[0] for p in fj) <= min(p[0] for p in fi) or min(p[0] for p in fj) >= max(p[0] for p in fi) or max(p[1] for p in fj) <= min(p[1] for p in fi) or min(p[1] for p in fj) >= max(p[1] for p in fi): continue
@@ -151,9 +159,12 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
                 else: fi2 = fi
                 if (fj[1][0] - fj[0][0]) * (fj[2][1] - fj[0][1]) - (fj[1][1] - fj[0][1]) * (fj[2][0] - fj[0][0]) < 0: fj = [fj[0], fj[2], fj[1]]
                 ov = clipped_area(fi2, fj)
-                if ov > least:
+                if ov > least and both:
                     a, b = sorted((find(i), find(j)))
                     if a != b: overlap[(a, b)] = overlap.get((a, b), 0.0) + ov
+                elif ov > least:
+                    mid = lambda q: tuple(sum(p[c] for p in tris[q][2]) / 3 for c in range(3))
+                    away.add(find(i) if dot(tris[i][3], sub(eye, mid(i))) < dot(tris[j][3], sub(eye, mid(j))) else find(j))
     area, first = {}, {}
     for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
     over, drop = {}, set()
@@ -169,11 +180,11 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
     for i, (k, t, V, n, d, A) in enumerate(tris):
         r = find(i)
         if r in drop: moved.setdefault(k, {})[t] = None
-        elif r in level:
-            s = lift * min(level[r], 5) - tris[first[r]][4] + max(tris[first[q]][4] for q in over[r])
+        elif r in level or r in away:
+            s = max(lift * min(level[r], 5) - tris[first[r]][4] + max(tris[first[q]][4] for q in over[r]) if r in level else 0, lift if r in away else 0)
             moved.setdefault(k, {})[t] = (r, tuple(s * c for c in n))
     stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
-             'surfaces': len([r for r in level if r not in drop]), 'area': round(sum(overlap.values()), 3)}
+             'surfaces': len([r for r in level if r not in drop]), 'backs': len(away - drop), 'area': round(sum(overlap.values()), 3)}
     for k, change in moved.items():
         pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
         A3 = [[M[r][c] for c in range(3)] for r in range(3)]
