@@ -1,4 +1,4 @@
-# Tests for tools/pack.py: what each room's textures are packed into.
+# Tests for tools/pack.py: what each room's textures are packed into, and js/ktx2small.js.
 import importlib.util, os, unittest
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -44,12 +44,11 @@ class Plan(unittest.TestCase):
 
 
 class Split(unittest.TestCase):
-    """small_bytes() and split() on a made-up KTX2 file: 3 levels, the largest (level 0) stored last."""
     def make(self, d):
         import struct
         head = bytearray(80 + 24 * 3); head[:12] = b'\xabKTX 20\xbb\r\n\x1a\n'
         struct.pack_into('<I', head, 40, 3)
-        offs = [(400, 300), (300, 100), (200, 100)]               # level 0 at 400 (300 bytes), level 1 at 300, level 2 at 200
+        offs = [(400, 300), (300, 100), (200, 100)]
         for i, (o, n) in enumerate(offs): struct.pack_into('<QQQ', head, 80 + 24 * i, o, n, n)
         data = bytes(head) + bytes(200 - len(head)) + bytes(range(256)) * 2
         data = data[:700]
@@ -79,8 +78,6 @@ class Split(unittest.TestCase):
 
 
 class SmallKTX2(unittest.TestCase):
-    """public/js/ktx2small.js (run with node, skipped without it) on made-up files: the small levels become a file of
-    their own, with the base size, level count, offsets and BasisLZ image descriptions rewritten."""
     JS = r'''
 import { smallKTX2 } from 'FILE';
 const make = (scheme) => {
@@ -110,7 +107,7 @@ console.log(JSON.stringify(out));
         self.assertEqual(r.returncode, 0, r.stderr)
         zstd, basis = json.loads(r.stdout)
         self.assertEqual((zstd['w'], zstd['h'], zstd['levels'], zstd['level'], zstd['sgd']), (16, 8, 1, True, None))
-        self.assertEqual((basis['levels'], basis['level'], basis['sgd']), (1, True, [48, 12]))      # one image description left: level 2's
+        self.assertEqual((basis['levels'], basis['level'], basis['sgd']), (1, True, [48, 12]))
 
 
 if __name__ == '__main__':

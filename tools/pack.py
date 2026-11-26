@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 """Turn a bake (assets-src/<room>/, written by blender/bake.py) into what the site serves (public/assets/<room>/).
   tools/pack.py [room ...]
-Textures -> KTX2: block-compressed on the GPU (a quarter to an eighth of the memory of RGBA8), mipmaps included. The
-layers of a sky (angles _s0..) or orrery (phases _c0..) group are one file each, named as their image, and scene.json's
-"tex_layers" counts them, so the loader can fetch the layer in use first; the probe's layers stay one array texture.
-A KTX2 file stores its smallest levels first, so every other texture is cut in two: <name>.head.ktx2, its first bytes
-(header and the levels at most a quarter of the full size), and <name>.tail.ktx2, the rest. scene.json "tex_split"
-names them; the loader lifts the cover on the heads and joins each tail to its head after (the bytes join to the file).
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
 import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -21,18 +15,15 @@ ENV = dict(os.environ, LD_LIBRARY_PATH=f'{OPT}/ktx/lib')
 UASTC = ['--encode', 'uastc', '--uastc-quality', '2', '--zstd', '18']
 ETC1S = ['--encode', 'basis-lz', '--qlevel', '255', '--clevel', '3']
 
-DROP, MIN_TAIL = 2, 64 * 1024   # the two largest levels go in the tail, where they are at least 64 KB (O7b)
+DROP, MIN_TAIL = 2, 64 * 1024
 
 def small_bytes(path, drop=DROP):
-    """Where the levels of a KTX2 file other than its drop largest ones end: its header, level index, format, key/value
-    and supercompression data and those levels are stored before the largest levels. None if it has too few levels."""
     with open(path, 'rb') as f: head = f.read(80 + 24 * drop)
     if len(head) < 80 + 24 * drop or head[:12] != b'\xabKTX 20\xbb\r\n\x1a\n': return None
     if struct.unpack_from('<I', head, 40)[0] <= drop: return None
     return min(struct.unpack_from('<Q', head, 80 + 24 * i)[0] for i in range(drop))
 
 def split(path, cut):
-    """<name>.ktx2 -> <name>.head.ktx2 (its first cut bytes) and <name>.tail.ktx2 (the rest)."""
     with open(path, 'rb') as f: data = f.read()
     base = path[:-len('.ktx2')]
     with open(base + '.head.ktx2', 'wb') as f: f.write(data[:cut])
@@ -91,18 +82,14 @@ def pack(room):
             raise
 
 def plan(room, images):
-    """What encode() writes for these bake images (names of tex/*.webp without the extension): {output name: (kind,
-    [source images, in layer order])}, and {layered group: number of layers}. Each layer of a sky (_s0..) or orrery
-    (_c0..) group is a file of its own with its image's name (archC_s0.ktx2, archC_s1.ktx2, ...); the probe's layers
-    (probe_c0..) are one array texture."""
     jobs, layers = {}, {}
     for name in sorted(images):
         m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
         if m and m[1] != 'probe':
             layers.setdefault(f'{m[1]}_{m[2]}', []).append(int(m[3])); jobs[name] = ('base', [name])
         elif m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
-        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])   # _f: smooth shader data, ETC1S
-    for kind, names in jobs.values():                                # layer k is image k: 'probe_c10' sorts before 'probe_c2'
+        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])
+    for kind, names in jobs.values():
         names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
         if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
     for group, ks in layers.items():
@@ -116,7 +103,7 @@ def encode(room, src, dst, tmp, needed, rgba, info):
         name, ext = os.path.splitext(f)
         if room == 'lobby' and f in {'landmask.png', 'citylights.png'}:
             shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
-        if ext == '.webp' and name in needed: images.append(name)    # stale layers are not part of this room version
+        if ext == '.webp' and name in needed: images.append(name)
     jobs, info['tex_layers'] = plan(room, images)
     def one(item):
         out, (kind, names) = item
@@ -138,8 +125,6 @@ def encode(room, src, dst, tmp, needed, rgba, info):
         run(KTX, 'create', '--format', 'R8G8B8A8_UNORM' if out in rgba else 'R8G8B8_UNORM', '--assign-tf', 'linear', '--generate-mipmap',
             *(['--layers', str(len(pngs))] if kind == 'layers' else []), *(ETC1S if kind == 'albedo' else UASTC), *pngs, f'{dst}/tex/{out}.ktx2')
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
-    # every texture but the probe (looked up whole by the reflections) and the sky and orrery layers (one file each
-    # already, fetched as they are needed) is cut into its small levels and the rest
     layered = {f'{g}{k}' for g, n in info['tex_layers'].items() for k in range(n)}
     cuts = {}
     for out, (kind, _) in sorted(jobs.items()):

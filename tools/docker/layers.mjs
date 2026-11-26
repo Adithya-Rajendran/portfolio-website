@@ -1,7 +1,4 @@
-// The room loader's streamed textures (task O7): every sky and orrery layer and every texture's tail arrives, the
-// orrery's hold lets go and each texture ends at full detail; a layer that cannot be fetched is given up after its
-// retries without freezing the orrery, a tail that cannot leaves its texture small; a visitor who asked to save data
-// gets no tails; leaving a room while its textures stream in aborts the downloads under way.     node layers.mjs      (ORIGIN: the site)   exit 1 if a check fails
+// Checks the room loader's streamed textures: layers, holds, retries, aborts.     node layers.mjs   (ORIGIN: the site)
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 
@@ -21,11 +18,9 @@ async function open(q, setup) {
 const state = (p) => p.evaluate(() => window.__lobby.scene.userData.stream.state());
 const settled = (p, ms = 90000) => p.waitForFunction(() => window.__lobby.scene.userData.stream.settled(), null, { polling: 100, timeout: ms }).then(() => true, () => false);
 const turns = async (p) => { const a = (await state(p)).chand; await p.waitForTimeout(1500); const c = (await state(p)).chand; return !!a && a.some((x, i) => Math.abs(x - c[i]) > 1e-4); };
-// the sky's light samples only layers that are in, in every sky group
 const skyIn = (s) => { const [i, j, f] = s.sky; return all(s, (n) => n.endsWith('_s')).every(([, l]) => l.have.includes(i) && (!f || l.have.includes(j))); };
 const all = (s, want = () => true) => Object.entries(s.layers).filter(([n]) => want(n));
 
-// 1. every layer arrives; the orrery turns again
 for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   const { ctx, p, errors } = await open(path);
   const done = await settled(p), s = await state(p);
@@ -41,8 +36,6 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   await ctx.close();
 }
 
-// 2. layers that cannot be fetched (an orrery phase and a sky angle refused, another sky angle a 404, every try): given
-// up, nothing frozen; and the checks still count those as failures (only an abort when a room is left is not one)
 {
   let tries = 0, counted = 0, missing = 0;
   const { ctx, p, errors } = await open('', (pg) => {
@@ -61,7 +54,6 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   await ctx.close();
 }
 
-// 2b. a tail that cannot be fetched leaves its texture small; Save-Data fetches no tails
 {
   const { ctx, p, errors } = await open('', (pg) => pg.route(/\/assets\/lobby\/tex\/props\.tail\.ktx2/, (r) => r.fulfill({ status: 404, body: 'Not found' })));
   const done = await settled(p);
@@ -84,7 +76,6 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
   await ctx.close();
 }
 
-// 3. leaving a room while its layers stream in (10 Mbit/s, left at once) aborts the downloads under way
 {
   let cdp;
   const { ctx, p, errors } = await open('', async (pg, c) => {
