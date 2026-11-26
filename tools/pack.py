@@ -4,7 +4,7 @@
 Textures -> KTX2: block-compressed on the GPU (a quarter to an eighth of the memory of RGBA8), mipmaps included, and
 the layers of one group (orrery phases _c0.., sky angles _s0..) packed into a single array texture.
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
-import json, os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
@@ -16,6 +16,190 @@ ENV = dict(os.environ, LD_LIBRARY_PATH=f'{OPT}/ktx/lib')
 # are flat colour and only ever seen multiplied by sunlight.
 UASTC = ['--encode', 'uastc', '--uastc-quality', '2', '--zstd', '18']
 ETC1S = ['--encode', 'basis-lz', '--qlevel', '255', '--clevel', '3']
+
+COMP = {5120: 'b', 5121: 'B', 5122: 'h', 5123: 'H', 5125: 'I', 5126: 'f'}
+WIDTH = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4}
+
+def glb_read(path):
+    with open(path, 'rb') as f: b = f.read()
+    if b[:4] != b'glTF': sys.exit(f'{path}: not a binary glTF')
+    jl = struct.unpack_from('<I', b, 12)[0]; js = json.loads(b[20:20 + jl]); o = 20 + jl
+    bl = struct.unpack_from('<I', b, o)[0] if o + 8 <= len(b) else 0
+    return js, bytearray(b[o + 8:o + 8 + bl])
+
+def glb_write(path, js, bin_):
+    bin_ = bytearray(bin_) + bytes(-len(bin_) % 4)
+    js['buffers'][0]['byteLength'] = len(bin_)
+    j = json.dumps(js, separators=(',', ':')).encode(); j += b' ' * (-len(j) % 4)
+    with open(path, 'wb') as f:
+        f.write(struct.pack('<III', 0x46546C67, 2, 28 + len(j) + len(bin_)))
+        f.write(struct.pack('<II', len(j), 0x4E4F534A) + j + struct.pack('<II', len(bin_), 0x004E4942) + bin_)
+
+def accessor(js, bin_, i):
+    a = js['accessors'][i]
+    if 'sparse' in a or 'bufferView' not in a: sys.exit('sparse or empty accessors are not supported')
+    v = js['bufferViews'][a['bufferView']]; fmt = '<' + COMP[a['componentType']] * WIDTH[a['type']]; size = struct.calcsize(fmt)
+    stride, o = v.get('byteStride') or size, v.get('byteOffset', 0) + a.get('byteOffset', 0)
+    return fmt, [bytes(bin_[o + k * stride:o + k * stride + size]) for k in range(a['count'])]
+
+def append(js, bin_, items, fmt, like, target):
+    bin_ += bytes(-len(bin_) % 4); off = len(bin_); bin_ += b''.join(items)
+    js['bufferViews'].append({'buffer': 0, 'byteOffset': off, 'byteLength': len(bin_) - off, 'target': target})
+    a = {k: v for k, v in like.items() if k not in ('bufferView', 'byteOffset', 'count', 'min', 'max')}
+    a.update(bufferView=len(js['bufferViews']) - 1, count=len(items))
+    if 'min' in like:
+        vals = [struct.unpack(fmt, x) for x in items]
+        a['min'] = [min(v[c] for v in vals) for c in range(len(vals[0]))]; a['max'] = [max(v[c] for v in vals) for c in range(len(vals[0]))]
+    js['accessors'].append(a)
+    return len(js['accessors']) - 1
+
+def node_matrix(n):
+    if 'matrix' in n: m = n['matrix']; return [[m[c * 4 + r] for c in range(4)] for r in range(4)]
+    (x, y, z, w), s, t = n.get('rotation', [0, 0, 0, 1]), n.get('scale', [1, 1, 1]), n.get('translation', [0, 0, 0])
+    R = [[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)], [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)], [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]]
+    return [[R[r][0] * s[0], R[r][1] * s[1], R[r][2] * s[2], t[r]] for r in range(3)] + [[0, 0, 0, 1]]
+
+def mesh_nodes(js):
+    out = []
+    def walk(i, M):
+        n = js['nodes'][i]; L = node_matrix(n); W = [[sum(M[r][k] * L[k][c] for k in range(4)) for c in range(4)] for r in range(4)]
+        if 'mesh' in n: out.append((n['mesh'], W))
+        for c in n.get('children', []): walk(c, W)
+    for r in js['scenes'][js.get('scene', 0)]['nodes']: walk(r, [[float(r == c) for c in range(4)] for r in range(4)])
+    return out
+
+def sub(a, b): return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+def dot(a, b): return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+def cross(a, b): return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
+
+def clipped_area(t1, t2):
+    poly = list(t2)
+    for i in range(3):
+        a, b, out = t1[i], t1[(i + 1) % 3], []
+        side = lambda p: (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+        for k in range(len(poly)):
+            p, q = poly[k], poly[(k + 1) % len(poly)]; sp, sq = side(p), side(q)
+            if sp >= 0: out.append(p)
+            if (sp >= 0) != (sq >= 0): u = sp / (sp - sq); out.append((p[0] + u * (q[0] - p[0]), p[1] + u * (q[1] - p[1])))
+        poly = out
+        if len(poly) < 3: return 0.0
+    return abs(sum(poly[k][0] * poly[(k + 1) % len(poly)][1] - poly[(k + 1) % len(poly)][0] * poly[k][1] for k in range(len(poly)))) / 2
+
+def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
+    js, bin_ = glb_read(src)
+    uses = {}
+    for m, _ in mesh_nodes(js): uses[m] = uses.get(m, 0) + 1
+    prims, tris = [], []
+    for m, M in mesh_nodes(js):
+        for p in js['meshes'][m]['primitives']:
+            if p.get('mode', 4) != 4 or uses[m] > 1: continue
+            fmt, raw = accessor(js, bin_, p['attributes']['POSITION'])
+            P = [struct.unpack(fmt, r) for r in raw]
+            I = [struct.unpack(f, r)[0] for f, rs in [accessor(js, bin_, p['indices'])] for r in rs] if 'indices' in p else list(range(len(P)))
+            N = [struct.unpack(f, r) for f, rs in [accessor(js, bin_, p['attributes']['NORMAL'])] for r in rs] if 'NORMAL' in p['attributes'] else None
+            Wp = [tuple(M[r][0] * q[0] + M[r][1] * q[1] + M[r][2] * q[2] + M[r][3] for r in range(3)) for q in P]
+            k = len(prims); prims.append({'p': p, 'M': M, 'P': P, 'I': I})
+            for t in range(len(I) // 3):
+                ia, ib, ic = I[3 * t:3 * t + 3]; a, b, c = Wp[ia], Wp[ib], Wp[ic]
+                n = cross(sub(b, a), sub(c, a)); l = dot(n, n) ** 0.5
+                if l < 1e-12: continue
+                n = (n[0] / l, n[1] / l, n[2] / l)
+                if N:
+                    s = [sum(M[r][q] * N[v][q] for q in range(3)) for v in (ia, ib, ic) for r in range(3)]
+                    if dot(n, (s[0] + s[3] + s[6], s[1] + s[4] + s[7], s[2] + s[5] + s[8])) < 0: n = (-n[0], -n[1], -n[2])
+                tris.append((k, t, (a, b, c), n, dot(n, a), l / 2))
+    parent = list(range(len(tris)))
+    def find(i):
+        while parent[i] != i: parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    same = lambda i, j: dot(tris[i][3], tris[j][3]) > 1 - 1e-6 and abs(tris[i][4] - tris[j][4]) < plane
+    edges = {}
+    for i, (k, t, V, n, d, A) in enumerate(tris):
+        I = prims[k]['I'][3 * t:3 * t + 3]
+        for e in range(3): edges.setdefault((k,) + tuple(sorted((I[e], I[(e + 1) % 3]))), []).append((i, V[(e + 2) % 3], V[e], V[(e + 1) % 3]))
+    for key, items in edges.items():
+        for x in range(len(items)):
+            for y in range(x + 1, len(items)):
+                (i, pi, a, b), (j, pj, _, _) = items[x], items[y]
+                if not same(i, j): continue
+                e = sub(b, a); h = cross(tris[i][3], e)
+                if dot(h, sub(pi, a)) * dot(h, sub(pj, a)) < 0: parent[find(i)] = find(j)
+    buckets = {}
+    for i, (k, t, V, n, d, A) in enumerate(tris): buckets.setdefault((round(n[0], 3), round(n[1], 3), round(n[2], 3), round(d, 3)), []).append(i)
+    overlap, seen = {}, set()
+    for key, ks in buckets.items():
+        near = [i for dx in (-1e-3, 0, 1e-3) for dy in (-1e-3, 0, 1e-3) for dz in (-1e-3, 0, 1e-3) for dd in (-1e-3, 0, 1e-3)
+                for i in buckets.get((round(key[0] + dx, 3), round(key[1] + dy, 3), round(key[2] + dz, 3), round(key[3] + dd, 3)), ())]
+        if len(near) < 2: continue
+        ax = max(range(3), key=lambda q: abs(key[q])); u, v = (ax + 1) % 3, (ax + 2) % 3
+        flat = lambda i: [(p[u], p[v]) for p in tris[i][2]]
+        grid, cell = {}, 0.25
+        for j in near:
+            f = flat(j)
+            for gx in range(int(min(p[0] for p in f) // cell), int(max(p[0] for p in f) // cell) + 1):
+                for gy in range(int(min(p[1] for p in f) // cell), int(max(p[1] for p in f) // cell) + 1): grid.setdefault((gx, gy), []).append(j)
+        for i in ks:
+            fi = flat(i); cand = set()
+            for gx in range(int(min(p[0] for p in fi) // cell), int(max(p[0] for p in fi) // cell) + 1):
+                for gy in range(int(min(p[1] for p in fi) // cell), int(max(p[1] for p in fi) // cell) + 1): cand.update(grid.get((gx, gy), ()))
+            for j in cand:
+                if j == i or (min(i, j), max(i, j)) in seen or not same(i, j): continue
+                seen.add((min(i, j), max(i, j)))
+                fj = flat(j)
+                if max(p[0] for p in fj) <= min(p[0] for p in fi) or min(p[0] for p in fj) >= max(p[0] for p in fi) or max(p[1] for p in fj) <= min(p[1] for p in fi) or min(p[1] for p in fj) >= max(p[1] for p in fi): continue
+                if (fi[1][0] - fi[0][0]) * (fi[2][1] - fi[0][1]) - (fi[1][1] - fi[0][1]) * (fi[2][0] - fi[0][0]) < 0: fi2 = [fi[0], fi[2], fi[1]]
+                else: fi2 = fi
+                if (fj[1][0] - fj[0][0]) * (fj[2][1] - fj[0][1]) - (fj[1][1] - fj[0][1]) * (fj[2][0] - fj[0][0]) < 0: fj = [fj[0], fj[2], fj[1]]
+                ov = clipped_area(fi2, fj)
+                if ov > least:
+                    a, b = sorted((find(i), find(j)))
+                    if a != b: overlap[(a, b)] = overlap.get((a, b), 0.0) + ov
+    area, first = {}, {}
+    for i, tr in enumerate(tris): r = find(i); area[r] = area.get(r, 0.0) + tr[5]; first.setdefault(r, i)
+    over, drop = {}, set()
+    for (a, b), ov in overlap.items():
+        fa, fb = ov / area[a], ov / area[b]
+        if fa > 0.999 and fb > 0.999: drop.add(min(a, b, key=lambda r: (round(tris[first[r]][4], 6), first[r]))); continue
+        top, base = (a, b) if (fa, -area[a]) > (fb, -area[b]) else (b, a)
+        over.setdefault(top, set()).add(base)
+    level = {r: 1 for r in over}
+    for _ in range(4):
+        for r, bases in over.items(): level[r] = max(level[r], max(level.get(q, 0) for q in bases) + 1)
+    moved = {}
+    for i, (k, t, V, n, d, A) in enumerate(tris):
+        r = find(i)
+        if r in drop: moved.setdefault(k, {})[t] = None
+        elif r in level:
+            s = lift * min(level[r], 5) - tris[first[r]][4] + max(tris[first[q]][4] for q in over[r])
+            moved.setdefault(k, {})[t] = (r, tuple(s * c for c in n))
+    stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
+             'surfaces': len([r for r in level if r not in drop]), 'area': round(sum(overlap.values()), 3)}
+    for k, change in moved.items():
+        pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
+        A3 = [[M[r][c] for c in range(3)] for r in range(3)]
+        det = dot(A3[0], cross(A3[1], A3[2]))
+        inv = [[(A3[(c + 1) % 3][(r + 1) % 3] * A3[(c + 2) % 3][(r + 2) % 3] - A3[(c + 1) % 3][(r + 2) % 3] * A3[(c + 2) % 3][(r + 1) % 3]) / det for c in range(3)] for r in range(3)]
+        attrs = {name: accessor(js, bin_, i) for name, i in p['attributes'].items()}
+        rows = {name: list(raw) for name, (fmt, raw) in attrs.items()}
+        fresh, idx = {}, []
+        for t in range(len(I) // 3):
+            if t in change and change[t] is None: continue
+            for v in I[3 * t:3 * t + 3]:
+                if t not in change: idx.append(v); continue
+                r, w = change[t]
+                if (v, r) not in fresh:
+                    fresh[(v, r)] = len(rows['POSITION'])
+                    loc = [sum(inv[q][c] * w[c] for c in range(3)) for q in range(3)]
+                    for name, (fmt, raw) in attrs.items(): rows[name].append(struct.pack(fmt, *[P[v][q] + loc[q] for q in range(3)]) if name == 'POSITION' else raw[v])
+                idx.append(fresh[(v, r)])
+        if fresh:
+            for name, (fmt, raw) in attrs.items(): p['attributes'][name] = append(js, bin_, rows[name], fmt, js['accessors'][p['attributes'][name]], 34962)
+        ct = 5125 if len(rows['POSITION']) > 65535 else 5123
+        like = dict(js['accessors'][p['indices']]) if 'indices' in p else {'type': 'SCALAR'}
+        like['componentType'] = ct
+        p['indices'] = append(js, bin_, [struct.pack('<' + COMP[ct], x) for x in idx], '<' + COMP[ct], like, 34963)
+    glb_write(dst, js, bin_)
+    return stats
 
 def run(*cmd):
     r = subprocess.run(cmd, env=ENV, capture_output=True, text=True)
@@ -104,8 +288,10 @@ def encode(room, src, dst, tmp, needed, rgba, info):
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
     # geometry: keep node names, extras and unused attributes (lightmap UVs, vertex colours); lightmap UVs stay floats (quantized ones need a texture transform that our materials do not have)
     with open(f'{dst}/scene.json', 'w') as f: json.dump(info, f, indent=1)   # including the current probe.json
-    run(GLTFPACK, '-i', f'{src}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
+    print(room, 'coplanar surfaces', json.dumps(separate(f'{src}/room.glb', f'{tmp}/room.glb')), flush=True)
+    run(GLTFPACK, '-i', f'{tmp}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
     size = lambda d: sum(os.path.getsize(os.path.join(p, f)) for p, _, fs in os.walk(d) for f in fs) / 1e6
     print('%-11s %5.1f MB -> %5.1f MB   (%d files -> %d)' % (room, size(src), size(dst), sum(len(f) for *_, f in os.walk(src)), sum(len(f) for *_, f in os.walk(dst))), flush=True)
 
-for room in sys.argv[1:] or sorted(os.listdir(f'{ROOT}/assets-src')): pack(room)
+if __name__ == '__main__':
+    for room in sys.argv[1:] or sorted(os.listdir(f'{ROOT}/assets-src')): pack(room)
