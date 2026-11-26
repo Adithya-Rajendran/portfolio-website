@@ -79,12 +79,13 @@ for (const [room, path] of [['lobby', ''], ['about', 'about/']]) {
 }
 
 {
-  let cdp;
-  const { ctx, p, errors } = await open('about/?roll=60', async (pg, c) => {
-    cdp = await c.newCDPSession(pg);
-    await cdp.send('Network.enable');
-    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
-  });
+  const { ctx, p, errors } = await open('?roll=60');
+  await settled(p);
+  const cdp = await ctx.newCDPSession(p);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 125000, uploadThroughput: 10 * 125000 / 4 });
+  await p.evaluate(() => window.__lobby.enter('about'));
+  await p.waitForFunction(() => window.__lobby.mode().room === 'about' && window.__lobby.ready() > 0, null, { polling: 100, timeout: 180000 });
   const { cover } = await state(p);
   ok(!!cover && cover.at[0] !== cover.first[0], `re-choose: the sky crossed into another layer while the room loaded (${JSON.stringify(cover?.first)} -> ${JSON.stringify(cover?.at)})`);
   ok(!!cover && cover.rechosen > 0 && cover.ok, `re-choose: the cover waited for the layers the sky samples as it lifts (${cover?.rechosen} fetched again)`);
