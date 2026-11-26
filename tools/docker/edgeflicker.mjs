@@ -129,6 +129,52 @@ const HDR = ([x, y, w, h]) => {
   return { cam: [f6(c.position.x), f6(c.position.y), f6(c.position.z), f6(e[8]), f6(e[9]), f6(e[10])], frame: r.info.render.frame,
     scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
 };
+const IDPASS = async ([x, y, w, h, f]) => {
+  const THREE = await import('three'), L = window.__lobby, r = L.renderer, cam = L.camera, W0 = L.post.scene.width, H0 = L.post.scene.height;
+  const st = (window.__idp ??= { list: [], grids: [], frames: [] });
+  if (!st.scene) {
+    st.scene = new THREE.Scene(); st.rt = new THREE.WebGLRenderTarget(W0, H0, { depthBuffer: true });
+    const vs = 'flat varying highp int vTri; void main(){ vTri = gl_VertexID / 3; vec4 w = modelMatrix*vec4(position,1.0); gl_Position = projectionMatrix*viewMatrix*w; }';
+    const fs = 'uniform int uM; flat varying highp int vTri; void main(){ gl_FragColor = vec4(float(uM), float((vTri >> 16) & 255), float((vTri >> 8) & 255), float(vTri & 255)) / 255.0; }';
+    L.scene.traverse((o) => {
+      if (!o.isMesh || o.material?.colorWrite === false || o.material?.transparent || !o.visible) return;
+      let vis = true; o.traverseAncestors((a) => { if (!a.visible) vis = false; }); if (!vis) return;
+      const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry, m = st.list.length + 1;
+      if (m > 250) return;
+      const p = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: vs, fragmentShader: fs, uniforms: { uM: { value: m } }, side: o.material.side ?? THREE.FrontSide }));
+      p.matrixAutoUpdate = false; p.frustumCulled = false; p.renderOrder = o.renderOrder; st.scene.add(p);
+      st.list.push({ o, p, name: (o.name || '?') + (o.userData.grp ? ':' + o.userData.grp : '') });
+    });
+  }
+  for (const e of st.list) e.p.matrix.copy(e.o.matrixWorld), e.p.matrixWorld.copy(e.o.matrixWorld);
+  const sx = W0 / innerWidth, sy = H0 / innerHeight, X = Math.floor(x * sx), Y = Math.floor(y * sy), Wd = Math.max(1, Math.round(w * sx)), Hd = Math.max(1, Math.round(h * sy));
+  const prevRT = r.getRenderTarget(), prevClear = r.getClearColor(new THREE.Color()), prevA = r.getClearAlpha(), prevAuto = r.autoClear;
+  r.setRenderTarget(st.rt); r.setClearColor(0x000000, 0); r.autoClear = true; r.clear(); r.render(st.scene, cam);
+  const buf = new Uint8Array(Wd * Hd * 4); r.readRenderTargetPixels(st.rt, X, H0 - Y - Hd, Wd, Hd, buf);
+  r.setRenderTarget(prevRT); r.setClearColor(prevClear, prevA); r.autoClear = prevAuto;
+  const grid = new Int32Array(Wd * Hd * 2);
+  for (let j = 0; j < Hd; j++) for (let i = 0; i < Wd; i++) { const s = 4 * ((Hd - 1 - j) * Wd + i), d = 2 * (j * Wd + i); grid[d] = buf[s]; grid[d + 1] = (buf[s + 1] << 16) | (buf[s + 2] << 8) | buf[s + 3]; }
+  st.grids.push(grid); st.frames.push(f); st.Wd = Wd; st.Hd = Hd; st.X = X; st.Y = Y; st.cams = (st.cams ?? []).concat([[...cam.matrixWorld.elements].map((v) => +v.toFixed(6))]);
+};
+const IDSUM = () => {
+  const st = window.__idp, { Wd, Hd, grids } = st, n = Wd * Hd, pairs = new Map(), changed = [];
+  const key = (g, k) => g[2 * k] ? st.list[g[2 * k] - 1].name + '#' + g[2 * k + 1] : 'none';
+  for (let k = 0; k < n; k++) for (let f = 1; f < grids.length; f++) {
+    const a = key(grids[f - 1], k), b = key(grids[f], k);
+    if (a !== b) { const pk = [a, b].sort().join(' <> '); const e = pairs.get(pk) ?? { n: 0, frames: new Set(), px: new Set() }; e.n++; e.frames.add(st.frames[f]); e.px.add((st.X + k % Wd) + ',' + (st.Y + ((k / Wd) | 0))); pairs.set(pk, e); }
+  }
+  const tri = (nm) => {
+    const [mesh, t] = nm.split('#'); const e = st.list.find((q) => q.name === mesh); if (!e) return null;
+    const g = e.p.geometry, P = g.attributes.position, U = g.attributes.uv, N = g.attributes.normal, M = e.o.matrixWorld, out = { side: e.o.material.side, type: e.o.material.type, v: [], uv: [], n: null };
+    for (let i = 0; i < 3; i++) { const v = 3 * +t + i; const p = { x: P.getX(v), y: P.getY(v), z: P.getZ(v) };
+      const e2 = M.elements; out.v.push([p.x * e2[0] + p.y * e2[4] + p.z * e2[8] + e2[12], p.x * e2[1] + p.y * e2[5] + p.z * e2[9] + e2[13], p.x * e2[2] + p.y * e2[6] + p.z * e2[10] + e2[14]].map((q) => +q.toFixed(5)));
+      if (U) out.uv.push([+U.getX(v).toFixed(4), +U.getY(v).toFixed(4)]); }
+    if (N) out.n = [N.getX(3 * +t), N.getY(3 * +t), N.getZ(3 * +t)].map((q) => +q.toFixed(3));
+    return out;
+  };
+  const top = [...pairs.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 8).map(([k, e]) => ({ pair: k, flips: e.n, px: e.px.size, frames: [...e.frames].slice(0, 24), sample: [...e.px].slice(0, 6), tris: Object.fromEntries(k.split(' <> ').map((q) => [q, tri(q)])) }));
+  return { size: [Wd, Hd], at: [st.X, st.Y], frames: grids.length, changedPairs: pairs.size, top, cam0: st.cams[0] };
+};
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const an = await (await b.newContext()).newPage();
 await an.goto('about:blank');
@@ -171,11 +217,13 @@ for (const raw of jobs) {
     await an.evaluate(ANALYSE.add, png.toString('base64'));
     if (crop) { await an.evaluate(ANALYSE.region, crop); await an.evaluate(ANALYSE.keep, crop); }
     if (crop && opts.includes('hdr')) console.log('HDR', name, f, JSON.stringify(await p.evaluate(HDR, crop)));
+    if (crop && opts.includes('id')) await p.evaluate(IDPASS, [...crop, f]);
     if (crop && f < 8) await an.evaluate(ANALYSE.strip, [png.toString('base64'), f, crop]);
     if (crop && f === 7) fs.writeFileSync(dir + '/strip.png', Buffer.from(await an.evaluate(ANALYSE.stripPng), 'base64'));
     if (f % 15 === 0) modes.push(await p.evaluate(() => { const m = window.__lobby.mode(); return m.scale + '/' + m.tier + '/' + m.size; }));
   }
   if (crop) { const j = await an.evaluate(ANALYSE.jump); if (j) { fs.writeFileSync(dir + '/jump.png', Buffer.from(j.png, 'base64')); console.log('JUMP', name, 'frame', j.k); } }
+  if (crop && opts.includes('id')) { const idr = await p.evaluate(IDSUM); fs.writeFileSync(dir + '/id.json', JSON.stringify(idr)); console.log('IDWIN', name, JSON.stringify(idr)); }
   const { st, heat } = await an.evaluate(ANALYSE.finish);
   fs.writeFileSync(dir + '/heat.png', Buffer.from(heat, 'base64'));
   st.modes = [...new Set(modes)]; st.query = q; st.still = still; st.origin = originArg === '-' ? 'branch' : 'given';
