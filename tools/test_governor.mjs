@@ -568,6 +568,7 @@ test('pre-settled and post-settled 180-999ms hitches and >1000ms tab switches do
   assert.equal(govTab.tier, 0);
   assert.equal(govTab.scale, 1);
 });
+
 function libraryLoadTrace(gpuFor) {
   const frames = [];
   let t = 0;
@@ -680,19 +681,119 @@ test('recovery: a room slightly over budget at full scale does not oscillate', (
   assert.ok(cost(gov) <= 15.67, `final GPU ${cost(gov).toFixed(2)} ms`);
 });
 
-test('a remembered tier 1 is tried at tier 0 once when the GPU has wide headroom', () => {
+test('a remembered tier 1 is tried at tier 0 only when the estimated MSAA cost fits, and a failed try is remembered', () => {
+  const frames = Array.from({ length: 1800 }, (_, i) => ({ t: 600 + (i + 1) * 16.67, dtMs: 16.67 }));
+
   const cheap = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
   cheap.reset({ tier: 1, scale: 1, warm: 600 });
-  const frames = Array.from({ length: 1800 }, (_, i) => ({ t: 600 + (i + 1) * 16.67, dtMs: 16.67 }));
-  const cheapChanges = run(cheap, frames, (g) => (g.tier === 0 ? 9 : 7));
+  const cheapChanges = run(cheap, frames, (g) => (g.tier === 0 ? 8 : 5.5));
   assert.equal(cheapChanges.length, 1, JSON.stringify(cheapChanges));
   assert.equal(cheap.tier, 0);
   assert.ok(cheapChanges[0].t <= 6000, `tier 0 at ${cheapChanges[0].t} ms`);
+  assert.equal(cheap.tierHeld, false);
 
+  const tight = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  tight.reset({ tier: 1, scale: 1, warm: 600 });
+  assert.equal(run(tight, frames, (g) => (g.tier === 0 ? 18 : 9)).length, 0, 'no try when 1.5x the tier 1 time is over 9.33 ms');
+
+  const map = new Map();
+  const storage = { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, String(v)) };
   const heavy = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
   heavy.reset({ tier: 1, scale: 1, warm: 600 });
-  const heavyChanges = run(heavy, frames, (g) => (g.tier === 0 ? 20 : 7));
+  const heavyChanges = [];
+  for (const f of frames) {
+    if (heavy.update(f.dtMs, heavy.tier === 0 ? 20 : 5.5)) {
+      heavyChanges.push({ t: f.t, tier: heavy.tier, scale: heavy.scale });
+      saveRoomMode(storage, 'writing', { tier: heavy.tier, scale: heavy.scale, held: heavy.tierHeld });
+    }
+  }
   assert.equal(heavyChanges.length, 2, JSON.stringify(heavyChanges));
   assert.equal(heavy.tier, 1);
   assert.equal(heavy.scale, 1);
+  const saved = loadRoomMode(storage, 'writing');
+  assert.deepEqual(saved, { tier: 1, scale: 1, held: true });
+
+  const again = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  again.reset({ ...saved, warm: 600 });
+  assert.equal(run(again, frames, (g) => (g.tier === 0 ? 20 : 5.5)).length, 0, 'a remembered failed try is not repeated');
+});
+
+test('intermittent frame-interval overload (2 of 3 windows at 26 ms) downgrades in GPU-timer mode', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  const frames = [...Array(40).fill({ dtMs: 16.67, gpuMs: 5 })];
+  for (let w = 0; w < 120; w++) {
+    if (w % 3 === 2) frames.push(...Array(15).fill({ dtMs: 16.67, gpuMs: 5 }));
+    else frames.push(...Array(10).fill({ dtMs: 26, gpuMs: 5 }));
+  }
+  const { changes } = simulateTrace(gov, frames);
+  assert.ok(changes.length >= 1, 'expected a downgrade on intermittent overload');
+  assert.ok(changes[0].t <= 40 * 16.67 + 5000, `first downgrade at ${changes[0].t} ms`);
+});
+
+test('the GPU-timer upgrade does not raise the scale while frame intervals are slow', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 1, scale: 0.6, warm: 600 });
+  let maxScale = gov.scale;
+  for (let i = 0; i < 900; i++) {
+    gov.update(33.3, 5);
+    maxScale = Math.max(maxScale, gov.scale);
+  }
+  assert.equal(maxScale, 0.6);
+});
+
+test('ten minutes with a cost step above the scale-squared estimate settle without oscillating', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 1, scale: 1, warm: 600 });
+  const cost = (g) => (g.scale <= 0.8 ? 4 + 9 * g.scale * g.scale : 18);
+  const changes = [];
+  let slowMs = 0;
+  for (let t = 0; t < 600000;) {
+    const gpu = cost(gov);
+    const dtMs = gpu > 16.67 ? 33.33 : 16.67;
+    t += dtMs;
+    if (t > 60000 && dtMs > 17) slowMs += dtMs;
+    if (gov.update(dtMs, gpu)) changes.push({ t: Math.round(t), scale: gov.scale });
+  }
+  assert.ok(changes.length <= 8, `${changes.length} changes: ${JSON.stringify(changes)}`);
+  assert.equal(changes.filter((c) => c.t > 120000).length, 0, `changed after 2 min: ${JSON.stringify(changes)}`);
+  assert.ok(gov.scale <= 0.8, `final scale ${gov.scale}`);
+  assert.equal(slowMs, 0);
+});
+
+test('GPU samples stopping mid-visit hand over to the frame-interval fallback', () => {
+  const slow = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  slow.reset({ tier: 0, scale: 1, warm: 600 });
+  const head = [...Array(36).fill({ dtMs: 16.67, gpuMs: null }), ...Array(300).fill({ dtMs: 16.67, gpuMs: 8 })];
+  const stopAt = head.reduce((a, f) => a + f.dtMs, 0);
+  const { changes } = simulateTrace(slow, [...head, ...Array(120).fill({ dtMs: 30, gpuMs: null })]);
+  assert.equal(slow.gpuTimed, false);
+  assert.ok(changes.length >= 1, 'expected the dt fallback to downgrade once samples stop');
+  assert.ok(changes[0].t > stopAt && changes[0].t <= stopAt + 2000, `downgrade ${(changes[0].t - stopAt).toFixed(0)} ms after the stop`);
+
+  const calm = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  calm.reset({ tier: 0, scale: 1, warm: 600 });
+  const { changes: calmChanges } = simulateTrace(calm, [...head, ...Array(600).fill({ dtMs: 16.67, gpuMs: null })]);
+  assert.equal(calmChanges.length, 0);
+});
+
+test('a tier drop caused by slow frames during a load is undone once the GPU shows headroom', () => {
+  const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
+  gov.reset({ tier: 0, scale: 1, warm: 600 });
+  const changes = [];
+  let t = 0;
+  const loadEnd = 600 + 4500;
+  while (t < 20000) {
+    const dtMs = t > 600 && t < loadEnd ? 30 : 16.67;
+    t += dtMs;
+    const gpu = 4 + (gov.tier === 0 ? 4 : 1.5) * gov.scale * gov.scale;
+    if (gov.update(dtMs, gpu)) changes.push({ t: Math.round(t), tier: gov.tier, scale: gov.scale });
+  }
+  assert.equal(changes[0]?.tier, 1, JSON.stringify(changes));
+  assert.ok(changes[0].t >= 600 + 3000, `dt drop at ${changes[0].t} ms`);
+  const back = changes.find((c) => c.tier === 0 && c.t > loadEnd);
+  assert.ok(back && back.t - loadEnd <= 8000, JSON.stringify(changes));
+  assert.equal(gov.tier, 0);
+  assert.equal(gov.scale, 1);
+  assert.equal(gov.tierHeld, false);
 });

@@ -321,7 +321,7 @@ async function enter(id, push = true) {
   const remembered = loadRoomMode(safeStorage(), id, { min: gov.min, max: gov.max });
   const startTier = TIER_PINNED ? PINNED_TIER : (remembered ? remembered.tier : 0);
   const startScale = PINNED_SCALE != null ? PINNED_SCALE : (remembered ? remembered.scale : gov.max);
-  gov.reset({ tier: startTier, scale: startScale, warm: 600 });
+  gov.reset({ tier: startTier, scale: startScale, warm: 600, held: !TIER_PINNED && !!remembered?.held });
   setTier(gov.tier);
   fillHud(id); post.setExposure(room.exposure); resize(); resetGpuTimer();
   document.body.classList.toggle('bright', !!content.rooms[id].bright);      // a pale room says so (content.json "bright"): the page's words get more behind them (style.css)
@@ -471,11 +471,11 @@ function frame() {
     applyScale();
     resetGpuTimer();
     if (!gov.scalePinned && !TIER_PINNED && room) {
-      saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale }, { min: gov.min, max: gov.max });
+      saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale, held: gov.tierHeld }, { min: gov.min, max: gov.max });
       savedRoom = room.id;
     }
   } else if (!calm && room && savedRoom !== room.id && !gov.scalePinned && !TIER_PINNED && gov.warm <= 0 && gov.settledMs >= 2000) {
-    saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale }, { min: gov.min, max: gov.max });
+    saveRoomMode(safeStorage(), room.id, { tier: gov.tier, scale: gov.scale, held: gov.tierHeld }, { min: gov.min, max: gov.max });
     savedRoom = room.id;
   }
   // The route map. A station that comes into focus some other way (a click, the tour, a link), or is read, has the map turn
