@@ -44,13 +44,22 @@ function parseJob(job) {
   return { name, q, frames: n, action };
 }
 
-let net = { inflight: 0 };
-async function stepFrames(p, count) {
+const STEP_WAIT_MS = 20000, LOAD_WAIT_MS = 60000;
+
+function stuck(net, what, ms) {
+  const open = [...net.open.values()];
+  console.error('[' + net.name + '] ' + what + ': still busy after ' + ms / 1000 + ' s; open requests: ' + (open.length ? open.join(' ') : 'none') + '; page work pending: ' + net.busy);
+  net.over = true;
+  failed = true;
+}
+
+async function stepFrames(p, count, net) {
   for (let i = 0; i < count; i++) {
     await p.clock.runFor(16);
-    for (const t0 = Date.now(); net.inflight > 0 || await p.evaluate(() => window.__busy);) {
-      if (Date.now() - t0 > 20000) { console.log('detsnap: still waiting after 20 s (requests', net.inflight, '); going on'); break; }
+    while (!net.over && (net.open.size > 0 || (net.busy = await p.evaluate(() => window.__busy)) > 0)) {
+      if (net.waited >= STEP_WAIT_MS) { stuck(net, 'frame stepping', STEP_WAIT_MS); break; }
       await new Promise((r) => setTimeout(r, 20));
+      net.waited += 20;
     }
   }
 }
@@ -71,16 +80,20 @@ for (const raw of jobs) {
   p.on('pageerror', (e) => { console.log(`[${name}] pageerror`, e.message); failed = true; });
   p.on('console', (m) => { if (m.type() === 'error') console.log(`[${name}] error`, m.text().slice(0, 300)); });
 
-  net = { inflight: 0 };
+  const net = { name, open: new Map(), busy: 0, waited: 0, over: false };
   let last = Date.now(), settled = false;
   const late = [];
-  p.on('request', (r) => { net.inflight++; last = Date.now(); if (settled) late.push(r.url().replace(/^https?:\/\/[^/]+/, '')); });
-  p.on('requestfinished', () => { net.inflight--; last = Date.now(); });
-  p.on('requestfailed', () => { net.inflight--; });
+  const path = (r) => r.url().replace(/^https?:\/\/[^/]+/, '');
+  p.on('request', (r) => { net.open.set(r, path(r)); last = Date.now(); if (settled) late.push(path(r)); });
+  p.on('requestfinished', (r) => { net.open.delete(r); last = Date.now(); });
+  p.on('requestfailed', (r) => { net.open.delete(r); });
 
   await p.goto(`${origin.replace(/\/$/, '')}/${q.replace(/^\/+/, '')}`);
   for (let i = 0; i < 600 && !(await p.evaluate(() => !!window.__lobby)); i++) await new Promise((r) => setTimeout(r, 100));
-  while (net.inflight > 0 || Date.now() - last < 1500) await new Promise((r) => setTimeout(r, 100));
+  for (const t0 = Date.now(); net.open.size > 0 || Date.now() - last < 1500;) {
+    if (Date.now() - t0 > LOAD_WAIT_MS) { stuck(net, 'loading', LOAD_WAIT_MS); break; }
+    await new Promise((r) => setTimeout(r, 100));
+  }
   await new Promise((r) => setTimeout(r, 1500));                    // image decodes
   settled = true;
 
@@ -94,28 +107,28 @@ for (const raw of jobs) {
       if (!pick) throw new Error('focusCta: no cta pick');
       window.__lobby.setFocus(pick);
     });
-    await stepFrames(p, Math.max(initialFrames, 150));
+    await stepFrames(p, Math.max(initialFrames, 150), net);
   } else if (action.startsWith('chooseBook:')) {
     const [, idxStr = '0', postFramesStr = '300'] = action.split(':');
     const idx = +idxStr, postFrames = +postFramesStr;
-    await stepFrames(p, initialFrames);
+    await stepFrames(p, initialFrames, net);
     await p.evaluate((i) => {
       const term = window.__lobby.picks.find((x) => x.options);
       if (!term || !term.options[i]) throw new Error(`chooseBook: missing option ${i}`);
       term.options[i][1]();
     }, idx);
-    await stepFrames(p, postFrames);
+    await stepFrames(p, postFrames, net);
     const check = await p.evaluate(() => ({ held: window.__lobby.held(), reader: window.__lobby.reader.state() }));
     if (!check.held || check.reader !== 'closed') {
       console.error(`[${name}] chooseBook check failed: ${JSON.stringify(check)}`);
       failed = true;
     }
   } else if (action === 'waitReader') {
-    await stepFrames(p, initialFrames);
+    await stepFrames(p, initialFrames, net);
     for (let extra = 0; extra < 120; extra++) {
       const done = await p.evaluate(() => window.__lobby.reader.state() === 'open' && !window.__lobby.display.state().gliding);
       if (done) break;
-      await stepFrames(p, 1);
+      await stepFrames(p, 1, net);
     }
     const rState = await p.evaluate(() => window.__lobby.reader.state());
     if (rState !== 'open') {
@@ -123,14 +136,14 @@ for (const raw of jobs) {
       failed = true;
     }
   } else {
-    await stepFrames(p, initialFrames);
+    await stepFrames(p, initialFrames, net);
   }
 
   if (hasFocusParam && !action.startsWith('chooseBook:')) {
     for (let extra = 0; extra < 60; extra++) {
       const gliding = await p.evaluate(() => window.__lobby.display.state().gliding);
       if (!gliding) break;
-      await stepFrames(p, 1);
+      await stepFrames(p, 1, net);
     }
   }
 
@@ -144,7 +157,7 @@ for (const raw of jobs) {
       document.head.append(st);
     }
   });
-  await stepFrames(p, 2);
+  await stepFrames(p, 2, net);
   await new Promise((r) => setTimeout(r, 500));
   await p.screenshot({ path: `${out}/${name}.png` });
   console.log(name, JSON.stringify(await p.evaluate(async () => ({
