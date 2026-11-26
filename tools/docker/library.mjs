@@ -5,6 +5,7 @@
 // It never edits anything: a failure is a finding about the site, unless the message says the test could not set up.
 // Screenshots go to /out/lib-<profile>-<step>.png. Exit code 1 if any check failed.
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080', which = process.argv[2] || 'all';
 const results = [];                                              // { profile, item, ok, what, detail }
 let profile = '';
@@ -28,7 +29,7 @@ async function open(ctx, path, P) {
   const p = await ctx.newPage(), errs = P.errs;
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
   p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
-  p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
+  p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
   p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
   await p.goto(`${ORIGIN}${path}${path.includes('?') ? '&' : '?'}shot=hero&rollat=20`);
   await p.waitForFunction(() => window.__lobby?.mode().room === 'writing' && document.querySelector('#loader.done'), null, { timeout: 150000, polling: 250 });

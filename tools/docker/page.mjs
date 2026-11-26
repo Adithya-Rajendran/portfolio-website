@@ -5,6 +5,7 @@
 // its attributes say, and every link it makes to the site must answer 200. Saves /out/page.png (the viewport, as served)
 // and /out/page-article.png (the page's content with #loader and the canvas hidden, after every check has run).
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 const path = process.argv[2] || '/blog/every-construct/';
 const kind = /^\/(blog|portfolio)\/$/.test(path) ? 'list' : /^\/blog\/[^/]+\/$/.test(path) ? 'post' : /^\/portfolio\/[^/]+\/$/.test(path) ? 'project'
   : { '/about/': 'about', '/experience/': 'experience', '/contact/': 'contact' }[path];
@@ -17,7 +18,7 @@ try {
   const p = await ctx.newPage();
   const requests = [];
   p.on('request', r => requests.push(r.url()));
-  p.on('requestfailed', r => fail('request failed', r.url(), r.failure()?.errorText));
+  p.on('requestfailed', r => streamAbort(r) || fail('request failed', r.url(), r.failure()?.errorText));
   p.on('response', r => { if (r.status() >= 400) fail('http', r.status(), r.url()); });
   const res = await p.goto(process.env.ORIGIN + path, { waitUntil: 'load' });
   if (res.status() !== 200) fail('page status', res.status());

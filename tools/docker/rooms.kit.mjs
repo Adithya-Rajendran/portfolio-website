@@ -3,6 +3,7 @@
 // article must pass, and a spy on canvas text (the rooms draw their words on canvases, so the DOM cannot say what a placard says).
 // It never edits anything. docs/v1-contracts.md §8 is what the data looks like; docs/v1-contracts.md §4 the hooks.
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 export const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';
 export const PROFILES = {
   desktop: { viewport: { width: 1280, height: 720 }, phone: false },
@@ -67,7 +68,7 @@ export async function open(ctx, path, id, errs, { pin = true, timeout = 150000 }
   const p = await ctx.newPage();
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
   p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
-  p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
+  p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
   p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
   await p.goto(`${ORIGIN}${path}${pin ? (path.includes('?') ? '&' : '?') + 'shot=hero&rollat=20' : ''}`);
   await inRoom(p, id, timeout);

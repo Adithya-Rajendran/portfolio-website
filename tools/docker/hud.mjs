@@ -9,6 +9,7 @@
 // It never edits anything: a missing hook is a FAIL line, never an exception. Screenshots go to /out/hud-<profile>-<step>.png. Exit code 1 if any check failed.
 // Frames are slow on a shared GPU: no state is waited for with a fixed sleep (only the 1.5 s / 3 s / 1 s of "nothing changes" are measured spans, taken once the display has settled).
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080', which = process.argv[2] || 'all';
 const results = [];                                              // { profile, item, ok, what, detail }
 let profile = '';
@@ -70,7 +71,7 @@ async function open(ctx, path, id, errs) {
   const p = await ctx.newPage();
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
   p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
-  p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
+  p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
   p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
   await p.goto(`${ORIGIN}${path}?shot=hero&rollat=20`);
   await p.waitForFunction((id) => window.__lobby?.mode().room === id && document.querySelector('#loader.done'), id, { timeout: 150000, polling: 250 });

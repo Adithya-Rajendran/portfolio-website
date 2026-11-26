@@ -95,6 +95,9 @@ for (const raw of jobs) {
     await new Promise((r) => setTimeout(r, 100));
   }
   await new Promise((r) => setTimeout(r, 1500));                    // image decodes
+  let streamed = false;
+  for (let i = 0; i < 1200 && !(streamed = await p.evaluate(() => window.__lobby?.scene?.userData?.stream?.settled?.() ?? true)); i++) await new Promise((r) => setTimeout(r, 100));
+  if (!streamed) { console.error(`[${name}] textures still streaming in after 120 s: not pictured`); failed = true; await ctx.close(); continue; }
   settled = true;
 
   // Ensure ?focus= poses settle completely even when called with a smaller default frame count (e.g. run.sh snap 60).

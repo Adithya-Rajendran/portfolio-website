@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Turn a bake (assets-src/<room>/, written by blender/bake.py) into what the site serves (public/assets/<room>/).
   tools/pack.py [room ...]
-Textures -> KTX2: block-compressed on the GPU (a quarter to an eighth of the memory of RGBA8), mipmaps included, and
-the layers of one group (orrery phases _c0.., sky angles _s0..) packed into a single array texture.
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
-import json, os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
@@ -16,6 +14,21 @@ ENV = dict(os.environ, LD_LIBRARY_PATH=f'{OPT}/ktx/lib')
 # are flat colour and only ever seen multiplied by sunlight.
 UASTC = ['--encode', 'uastc', '--uastc-quality', '2', '--zstd', '18']
 ETC1S = ['--encode', 'basis-lz', '--qlevel', '255', '--clevel', '3']
+
+DROP, MIN_TAIL = 2, 64 * 1024
+
+def small_bytes(path, drop=DROP):
+    with open(path, 'rb') as f: head = f.read(80 + 24 * drop)
+    if len(head) < 80 + 24 * drop or head[:12] != b'\xabKTX 20\xbb\r\n\x1a\n': return None
+    if struct.unpack_from('<I', head, 40)[0] <= drop: return None
+    return min(struct.unpack_from('<Q', head, 80 + 24 * i)[0] for i in range(drop))
+
+def split(path, cut):
+    with open(path, 'rb') as f: data = f.read()
+    base = path[:-len('.ktx2')]
+    with open(base + '.head.ktx2', 'wb') as f: f.write(data[:cut])
+    with open(base + '.tail.ktx2', 'wb') as f: f.write(data[cut:])
+    os.remove(path)
 
 def run(*cmd):
     r = subprocess.run(cmd, env=ENV, capture_output=True, text=True)
@@ -68,20 +81,30 @@ def pack(room):
             if os.path.isdir(old): os.rename(old,dst)
             raise
 
+def plan(room, images):
+    jobs, layers = {}, {}
+    for name in sorted(images):
+        m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
+        if m and m[1] != 'probe':
+            layers.setdefault(f'{m[1]}_{m[2]}', []).append(int(m[3])); jobs[name] = ('base', [name])
+        elif m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
+        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])
+    for kind, names in jobs.values():
+        names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
+        if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
+    for group, ks in layers.items():
+        if sorted(ks) != list(range(len(ks))): sys.exit(f'{room}: layers of {group} are {sorted(ks)}, not 0..n-1')
+    return jobs, {g: len(ks) for g, ks in sorted(layers.items())}
+
 def encode(room, src, dst, tmp, needed, rgba, info):
     src_dir = f'{src}/tex'
-    jobs = {}                                                        # output name -> (kind, [source images, in layer order])
+    images = []
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
         if room == 'lobby' and f in {'landmask.png', 'citylights.png'}:
             shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
-        if ext != '.webp' or name not in needed: continue  # stale layers are not part of this room version
-        m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
-        if m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
-        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])   # _f: smooth shader data, ETC1S
-    for kind, names in jobs.values():                                # layer k is image k: 'probe_c10' sorts before 'probe_c2'
-        names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
-        if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
+        if ext == '.webp' and name in needed: images.append(name)
+    jobs, info['tex_layers'] = plan(room, images)
     def one(item):
         out, (kind, names) = item
         pngs = []
@@ -102,10 +125,20 @@ def encode(room, src, dst, tmp, needed, rgba, info):
         run(KTX, 'create', '--format', 'R8G8B8A8_UNORM' if out in rgba else 'R8G8B8_UNORM', '--assign-tf', 'linear', '--generate-mipmap',
             *(['--layers', str(len(pngs))] if kind == 'layers' else []), *(ETC1S if kind == 'albedo' else UASTC), *pngs, f'{dst}/tex/{out}.ktx2')
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
+    layered = {f'{g}{k}' for g, n in info['tex_layers'].items() for k in range(n)}
+    cuts = {}
+    for out, (kind, _) in sorted(jobs.items()):
+        path = f'{dst}/tex/{out}.ktx2'
+        if kind == 'layers' or out in layered: continue
+        cut = small_bytes(path)
+        if cut and os.path.getsize(path) - cut >= MIN_TAIL: cuts[out] = cut
+    for out, cut in cuts.items(): split(f'{dst}/tex/{out}.ktx2', cut)
+    info['tex_split'] = {'drop': DROP, 'cut': cuts}
     # geometry: keep node names, extras and unused attributes (lightmap UVs, vertex colours); lightmap UVs stay floats (quantized ones need a texture transform that our materials do not have)
     with open(f'{dst}/scene.json', 'w') as f: json.dump(info, f, indent=1)   # including the current probe.json
     run(GLTFPACK, '-i', f'{src}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
     size = lambda d: sum(os.path.getsize(os.path.join(p, f)) for p, _, fs in os.walk(d) for f in fs) / 1e6
     print('%-11s %5.1f MB -> %5.1f MB   (%d files -> %d)' % (room, size(src), size(dst), sum(len(f) for *_, f in os.walk(src)), sum(len(f) for *_, f in os.walk(dst))), flush=True)
 
-for room in sys.argv[1:] or sorted(os.listdir(f'{ROOT}/assets-src')): pack(room)
+if __name__ == '__main__':
+    for room in sys.argv[1:] or sorted(os.listdir(f'{ROOT}/assets-src')): pack(room)
