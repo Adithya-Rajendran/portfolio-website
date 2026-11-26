@@ -15,6 +15,7 @@ import { createReader } from './reader.js';
 import { createComms } from './comms.js';
 import { probePars, chartPars, chartParsLive, chartReflection, probeEnvironment, liveSpecPars } from './reflections.js';
 import { windowShadow, receiveWindowSun } from './sunlight.js';
+import { smallKTX2 } from './ktx2small.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 const _m3 = new THREE.Matrix3(), _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion();
@@ -58,19 +59,43 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
   let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];
   const fetchTex = (file, onLoad, onError) => ktx2.load(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, onLoad, undefined, onError);
-  async function loadLayer(file) {
+  const SAVE = !!navigator.connection?.saveData;
+  async function fetchBytes(file) {
     for (let tries = 0; ; tries++) {
       try {
         const r = await fetch(`${base}/tex/${file}.ktx2?v=${info.v || 0}`, { signal: abort.signal });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const buf = await r.arrayBuffer();
         if (disposed) throw new Error('the room was left');
-        return await new Promise((ok, no) => ktx2.parse(buf, ok, no));
+        return buf;
       } catch (e) {
         if (disposed || tries >= 3) throw e;
         await new Promise((ok) => setTimeout(ok, 500 * 2 ** tries));
       }
     }
+  }
+  const parseTex = (buf) => new Promise((ok, no) => ktx2.parse(buf, ok, no));
+  const loadLayer = async (file) => parseTex(await fetchBytes(file));
+  function putTex(entry, t) {
+    if (disposed || entry.dead) return t.dispose();
+    if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
+    t.anisotropy = Math.min(entry.aniso, maxAniso);
+    t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; };
+    const old = entry.u.value; entry.u.value = t;
+    renderer.initTexture(t); old?.dispose();
+  }
+  function requestSplit(name, entry) {
+    entry.split = true;
+    const got = () => onProgress(++arrived / pending.length);
+    pending.push(fetchBytes(`${name}.head`).then(async (head) => {
+      putTex(entry, await parseTex(smallKTX2(head, info.tex_split.drop)));
+      if (!SAVE) { entry.head = head; later.push({ entry, tail: name }); }
+    }).catch((e) => { textureError ??= new Error(`Cannot load ${id}/${name}.head.ktx2: ${e?.message ?? e}`, { cause: e }); }).then(got));
+  }
+  async function loadWhole(entry, name) {
+    const tail = await fetchBytes(`${name}.tail`), head = entry.head, whole = new Uint8Array(head.byteLength + tail.byteLength);
+    whole.set(new Uint8Array(head)); whole.set(new Uint8Array(tail), head.byteLength); entry.head = null;
+    return parseTex(whole.buffer);
   }
   function requestTex(name, aniso = 4, panorama = false) {
     const hit = texCache.get(name);
@@ -91,13 +116,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const entry = { u: { value: null }, aniso, panorama };
     texCache.set(name, entry);
     if (info.tex_layers?.[name]) { requestLayers(name, entry, info.tex_layers[name]); return entry.u; }
+    if (info.tex_split?.cut?.[name]) { requestSplit(name, entry); return entry.u; }
     const got = () => onProgress(++arrived / pending.length);
     pending.push(new Promise((done) => fetchTex(name, (t) => {
-      if (entry.panorama) t.wrapS = THREE.RepeatWrapping;
-      t.anisotropy = Math.min(entry.aniso, maxAniso);
-      t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; };
-      entry.u.value = t;
-      renderer.initTexture(t);
+      putTex(entry, t);
       done();
     }, (e) => {
       textureError ??= new Error(`Cannot load ${id}/${name}.ktx2: ${e?.message ?? e}`, { cause: e });
@@ -119,7 +141,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     (name.endsWith('_s') ? skyLayers : chandLayers).push(entry);
     const [first, rank] = firstLayers(name, n);
     for (let k = 0; k < n; k++) {
-      if (first.includes(k)) needLayer(entry, k); else later.push({ rank: rank(k), entry, k });
+      if (first.includes(k)) needLayer(entry, k); else { const d = rank(k); later.push({ rank: d === 1 ? 1.5 : 2.5 + d, entry, k }); }
     }
   }
   function needLayer(entry, k) {
@@ -165,19 +187,36 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (chHold != null && live.every((e) => e.have.size + e.failed.size === e.n)) { chOff = chHold - uTime.value * CH_SPEED; chHold = null; }
   }
   function streamRest() {
+    viewRanks();
+    for (const job of later) job.rank ??= job.entry.rank ?? 2;
     later.sort((a, b) => a.rank - b.rank);
     const next = () => {
-      while (!disposed && running < 3 && later.length) {
-        const { entry, k } = later.shift();
+      while (!disposed && running < 2 && later.length) {
+        const { entry, k, tail } = later.shift();
         if (entry.dead) continue;
         running++;
-        loadLayer(entry.name + k).then((t) => putLayer(entry, k, t)).catch((e) => {
+        const work = tail ? loadWhole(entry, tail).then((t) => { if (disposed || entry.dead) t.dispose(); else { entry.full = true; putTex(entry, t); } })
+          : loadLayer(entry.name + k).then((t) => putLayer(entry, k, t));
+        work.catch((e) => {
           if (disposed) return;
+          if (tail) { entry.head = null; console.warn(`Cannot load ${id}/${tail}.tail.ktx2, the small levels stay`, e); return; }
           console.warn(`Cannot load ${id}/${entry.name}${k}.ktx2, given up`, e); entry.failed.add(k); if (entry.have.size + entry.failed.size === entry.n) entry.parts = null; settle();
         }).finally(() => { running--; next(); });
       }
     };
     next();
+  }
+  function viewRanks() {
+    const byU = new Map([...texCache.values()].map((e) => [e.u, e])), cam = camera.clone(), m = new THREE.Matrix4(), ball = new THREE.Sphere();
+    const view = (pos, tgt) => { cam.position.copy(pos); cam.lookAt(tgt); cam.updateMatrixWorld(); return new THREE.Frustum().setFromProjectionMatrix(m.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse)); };
+    const views = [view(B(info.close || [0, 17.2, 2.15]), B(info.close_tgt || [0, 26, 2.6])), view(B(info.cam), B(info.tgt))];
+    scene.traverse((o) => {
+      if (!o.isMesh || !o.material?.uniforms) return;
+      if (o.isInstancedMesh) { o.computeBoundingSphere(); ball.copy(o.boundingSphere); } else { o.geometry.boundingSphere ?? o.geometry.computeBoundingSphere(); ball.copy(o.geometry.boundingSphere); }
+      o.updateWorldMatrix(true, false); ball.applyMatrix4(o.matrixWorld);
+      const r = views.findIndex((f) => f.intersectsSphere(ball)), rank = r < 0 ? 2 : r;
+      for (const u of Object.values(o.material.uniforms)) { const e = byU.get(u); if (e) e.rank = Math.min(e.rank ?? 2, rank); }
+    });
   }
   const skyIn = (k) => skyLayers.every((e) => e.dead || e.have.has(k));
   function bakeTex(name, aniso = 4, panorama = false) {
@@ -201,7 +240,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   scene.userData.stream = {
     state: () => ({ layers: Object.fromEntries([...texCache].filter(([, e]) => e.n).map(([n, e]) => [n, { have: [...e.have].sort(), failed: [...e.failed].sort(), rgba: !!e.whole, parts: !!e.parts }])), cover: coverSky,
-      queued: later.length, running, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
+      queued: later.length, running, split: [...texCache.values()].filter((e) => e.split).length, small: [...texCache.values()].filter((e) => e.split && !e.full).length, hold: chHold != null, phases: chIn, sky: uSky.value.toArray(), chand: PHASES.length === 3 ? uChand.value.toArray() : null }),
     settled: () => streaming && !later.length && !running,
   };
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
@@ -844,7 +883,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   if (skyLayers.length) coverSky = { first: firstSky, at: skyAt(uTime.value), rechosen, ok: (([i, j, f]) => skyLayers.every((e) => e.have.has(i) && (!f || e.have.has(j))))(skyAt(uTime.value)) };
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (!DEV && unused.length) {
-    for (const n of unused) { const e = texCache.get(n); if (e) e.dead = true; e?.u.value?.dispose(); }
+    for (const n of unused) { const e = texCache.get(n); if (e) { e.dead = true; e.head = null; e.parts = null; } e?.u.value?.dispose(); }
     settle();
   }
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);

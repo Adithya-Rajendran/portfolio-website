@@ -2,7 +2,7 @@
 """Turn a bake (assets-src/<room>/, written by blender/bake.py) into what the site serves (public/assets/<room>/).
   tools/pack.py [room ...]
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
-import json, os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
@@ -14,6 +14,21 @@ ENV = dict(os.environ, LD_LIBRARY_PATH=f'{OPT}/ktx/lib')
 # are flat colour and only ever seen multiplied by sunlight.
 UASTC = ['--encode', 'uastc', '--uastc-quality', '2', '--zstd', '18']
 ETC1S = ['--encode', 'basis-lz', '--qlevel', '255', '--clevel', '3']
+
+DROP, MIN_TAIL = 2, 64 * 1024
+
+def small_bytes(path, drop=DROP):
+    with open(path, 'rb') as f: head = f.read(80 + 24 * drop)
+    if len(head) < 80 + 24 * drop or head[:12] != b'\xabKTX 20\xbb\r\n\x1a\n': return None
+    if struct.unpack_from('<I', head, 40)[0] <= drop: return None
+    return min(struct.unpack_from('<Q', head, 80 + 24 * i)[0] for i in range(drop))
+
+def split(path, cut):
+    with open(path, 'rb') as f: data = f.read()
+    base = path[:-len('.ktx2')]
+    with open(base + '.head.ktx2', 'wb') as f: f.write(data[:cut])
+    with open(base + '.tail.ktx2', 'wb') as f: f.write(data[cut:])
+    os.remove(path)
 
 def run(*cmd):
     r = subprocess.run(cmd, env=ENV, capture_output=True, text=True)
@@ -110,6 +125,15 @@ def encode(room, src, dst, tmp, needed, rgba, info):
         run(KTX, 'create', '--format', 'R8G8B8A8_UNORM' if out in rgba else 'R8G8B8_UNORM', '--assign-tf', 'linear', '--generate-mipmap',
             *(['--layers', str(len(pngs))] if kind == 'layers' else []), *(ETC1S if kind == 'albedo' else UASTC), *pngs, f'{dst}/tex/{out}.ktx2')
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
+    layered = {f'{g}{k}' for g, n in info['tex_layers'].items() for k in range(n)}
+    cuts = {}
+    for out, (kind, _) in sorted(jobs.items()):
+        path = f'{dst}/tex/{out}.ktx2'
+        if kind == 'layers' or out in layered: continue
+        cut = small_bytes(path)
+        if cut and os.path.getsize(path) - cut >= MIN_TAIL: cuts[out] = cut
+    for out, cut in cuts.items(): split(f'{dst}/tex/{out}.ktx2', cut)
+    info['tex_split'] = {'drop': DROP, 'cut': cuts}
     # geometry: keep node names, extras and unused attributes (lightmap UVs, vertex colours); lightmap UVs stay floats (quantized ones need a texture transform that our materials do not have)
     with open(f'{dst}/scene.json', 'w') as f: json.dump(info, f, indent=1)   # including the current probe.json
     run(GLTFPACK, '-i', f'{src}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
