@@ -1,11 +1,10 @@
-"""Tests for tools/pack.py's plan of what each room's textures become (no encoder needed).
-    python3 -m unittest tools/test_pack.py          (from the repository root)"""
+# Tests for tools/pack.py: what each room's textures are packed into.
 import importlib.util, os, unittest
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location('pack', os.path.join(TOOLS, 'pack.py'))
 pack = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(pack)                                         # packs nothing: only run as a script does it pack
+spec.loader.exec_module(pack)
 
 
 class Plan(unittest.TestCase):
