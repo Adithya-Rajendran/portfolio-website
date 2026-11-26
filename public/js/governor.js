@@ -247,7 +247,7 @@ export class Governor {
     for (const [ms, slow] of this._dtWins) if (slow) slowMs += ms;
 
     const sustainedDtOver = gpuTimed
-      ? spanMs >= this.dtGraceMs && slowMs >= spanMs * this.dtShare
+      ? settled && spanMs >= this.dtGraceMs && slowMs >= spanMs * this.dtShare
       : (hadHitch || settled) ? this._slowDtStreak >= 1.5 : dtAvg > this.slow;
     const gpuLimit = settled ? this.gpuHoldSlow : this.gpuSlow;
     if (gpuMed !== null && gpuMed > gpuLimit) this._slowGpuStreak++;
@@ -344,12 +344,13 @@ export class Governor {
     if (this._fitMs < this.fitMs) return false;
     const g = median(this._fitMeds);
     this._resetFit();
-    if (this.upgradeCool > 0 || g >= this.gpuRoom) {
+    if (this.upgradeCool > 0) {
       this._probeMs = 0;
       return false;
     }
 
     if (!this.scalePinned && this.scale < this.max) {
+      if (g >= this.gpuRoom) return false;
       let limit = this.max;
       if (this.capScale !== null) limit = Math.min(limit, this.capScale * 0.97);
       const fixedMs = this.frameBudget * 0.25;
@@ -373,7 +374,7 @@ export class Governor {
         this._sinceUpgrade = 0;
         return this._changed(this.gpuUpCoolMs);
       }
-    }
+    } else this._probeMs = 0;
     return false;
   }
 }

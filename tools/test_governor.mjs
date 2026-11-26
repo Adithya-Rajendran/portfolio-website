@@ -635,7 +635,7 @@ test('sustained GPU overload downgrades as before (tier first, then scale, settl
   assert.ok(cost(gov) <= 14.33 && cost(gov) >= 9.33, `final GPU ${cost(gov).toFixed(2)} ms at ${gov.scale}`);
 });
 
-test('dt overload with GPU headroom only downgrades once it lasts longer than loading hitches (3 s)', () => {
+test('dt overload with GPU headroom only downgrades once it lasts 3 s and the first seconds after the cover lift have passed', () => {
   const gov = new Governor({ min: 0.5, max: 1, hasGpuTimer: true });
   gov.reset({ tier: 0, scale: 1, warm: 600 });
   const frames = [...Array(40).fill({ dtMs: 16.67, gpuMs: 8 }), ...Array(200).fill({ dtMs: 33.3, gpuMs: 8 })];
@@ -643,7 +643,7 @@ test('dt overload with GPU headroom only downgrades once it lasts longer than lo
   assert.ok(changes.length >= 1, 'expected a downgrade on sustained dt overload');
   const startMs = 40 * 16.67;
   assert.ok(changes[0].t >= startMs + 3000, `dt downgrade after ${changes[0].t - startMs} ms of overload`);
-  assert.ok(changes[0].t <= startMs + 4000, `dt downgrade after ${changes[0].t - startMs} ms of overload`);
+  assert.ok(changes[0].t >= 600 + 4900 && changes[0].t <= 6000, `dt downgrade at ${changes[0].t} ms`);
 });
 
 test('recovery: a room that fits the budget returns to full scale within a few seconds of a GPU spike', () => {
@@ -728,7 +728,7 @@ test('intermittent frame-interval overload (2 of 3 windows at 26 ms) downgrades 
   }
   const { changes } = simulateTrace(gov, frames);
   assert.ok(changes.length >= 1, 'expected a downgrade on intermittent overload');
-  assert.ok(changes[0].t <= 40 * 16.67 + 5000, `first downgrade at ${changes[0].t} ms`);
+  assert.ok(changes[0].t <= 6000, `first downgrade at ${changes[0].t} ms`);
 });
 
 test('the GPU-timer upgrade does not raise the scale while frame intervals are slow', () => {
@@ -782,7 +782,7 @@ test('a tier drop caused by slow frames during a load is undone once the GPU sho
   gov.reset({ tier: 0, scale: 1, warm: 600 });
   const changes = [];
   let t = 0;
-  const loadEnd = 600 + 4500;
+  const loadEnd = 600 + 6500;
   while (t < 20000) {
     const dtMs = t > 600 && t < loadEnd ? 30 : 16.67;
     t += dtMs;
