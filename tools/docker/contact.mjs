@@ -6,6 +6,7 @@
 //      (the build measured 6 or better for the page's words, 8.75 or better for the field's; the owner's complaint was white words on a white background)
 // Other origins are stubbed. "ok" / "FAIL [profile item] what"; exit code 1 if any check failed.
 import { PROFILES, ORIGIN, load, suite, launch, context, inRoom, until } from './rooms.kit.mjs';
+import { streamAbort } from './reqfail.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('contact'), { chk } = S;
 const { profile, content } = await load(), C = content.rooms.comms.comms;
 const b = await launch();
@@ -27,7 +28,7 @@ async function settled(p, tries = 200) {
 async function openPage(ctx, path, errs) {
   const p = await ctx.newPage();
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
-  p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
+  p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()} ${r.failure()?.errorText}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
   await p.goto(`${ORIGIN}${path}`); if (!(await inRoom(p, 'comms', 400000))) throw new Error('the room did not load');
   await p.waitForFunction(() => getComputedStyle(document.querySelector('#hud')).opacity === '1', null, { timeout: 120000, polling: 250 }); return p;
 }

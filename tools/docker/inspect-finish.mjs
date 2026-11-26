@@ -4,12 +4,13 @@ import {chromium} from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { streamAbort } from './reqfail.mjs';
 const [base,out,...selected]=process.argv.slice(2), errors=[];
 await mkdir(out,{recursive:true});
 const b=await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
   const p=await b.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
-  p.on('pageerror',e=>errors.push(e.message));p.on('requestfailed',r=>errors.push(r.url()));
+  p.on('pageerror',e=>errors.push(e.message));p.on('requestfailed',r=>streamAbort(r) || errors.push(r.url()));
   p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});
   for(const room of selected.length?selected:['about','projects','writing']){
     const u=new URL(base);u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({shot:'hero',scale:1,tier:0,lightcheck:1,grain:0,rollat:0,chand:0});await p.goto(u.href);

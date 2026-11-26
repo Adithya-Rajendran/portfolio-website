@@ -5,13 +5,14 @@ import { chromium } from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { streamAbort } from './reqfail.mjs';
 const args = process.argv.slice(2), extra = (args.find((a) => a.startsWith('--q=')) || '--q=').slice(4);
 const [base, out, room, ...specs] = args.filter((a) => !a.startsWith('--'));
 await mkdir(out, { recursive: true });
 const errors = [], b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
-  p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => errors.push(r.url()));
+  p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => streamAbort(r) || errors.push(r.url()));
   p.on('console', (m) => { if (m.type() === 'error' || /shader|program/i.test(m.text())) errors.push(m.text()); });
   p.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
   const u = new URL(base), q = new URLSearchParams(`lightcheck=1&shot=hero&tier=0&scale=1&rollat=0&chand=0&grain=0`);

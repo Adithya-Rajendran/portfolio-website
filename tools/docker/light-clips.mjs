@@ -3,11 +3,12 @@
 import {chromium} from 'playwright';import {spawn} from 'node:child_process';import {once} from 'node:events';
 import { ROOM_PATH } from './roompath.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
+import { streamAbort } from './reqfail.mjs';
 const [base,out,ffmpeg,only]=process.argv.slice(2);await mkdir(out,{recursive:true});
 const browser=await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
   const p=await browser.newPage({viewport:{width:960,height:540},reducedMotion:'no-preference'});const errors=[];
-  p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});p.on('requestfailed',r=>errors.push(r.url()));
+  p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});p.on('requestfailed',r=>streamAbort(r) || errors.push(r.url()));
   for(const [room,name] of [['experience','moving-eye'],['about','moving-sun']]){
     if(only && only!==room)continue;const u=new URL(base);u.pathname=ROOM_PATH[room];u.search=new URLSearchParams({shot:'hero',lightcheck:1,tier:0,scale:1,chand:0,roll:120,grain:0});await p.goto(u.href);
     await p.waitForFunction(r=>window.__lobby?.mode().room===r&&document.querySelector('#loader.done'),room,{timeout:150000});

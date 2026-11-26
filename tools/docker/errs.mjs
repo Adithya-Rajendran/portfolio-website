@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 const origin = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const url = new URL(process.argv[2] || '/', origin), rooms = (await (await fetch(new URL('/content.json', url))).json()).rooms;
 // the room a URL names: by its path (content.json "path"); any other address is the Atrium
@@ -9,7 +10,7 @@ try {
   const error = (...message) => { process.exitCode = 1; console.log(...message); };
   p.on('console', m => { if (m.type() === 'error') error('[console]', m.text()); });
   p.on('pageerror', e => error('[pageerror]', e.message));
-  p.on('requestfailed', r => error('[failed]', r.url(), r.failure()?.errorText));
+  p.on('requestfailed', r => streamAbort(r) || error('[failed]', r.url(), r.failure()?.errorText));
   p.on('response', r => { if (r.status() >= 400) error('[http]', r.status(), r.url()); });
   await p.goto(url.href);
   await p.waitForFunction(id => document.querySelector('#loader')?.dataset.failed ||

@@ -305,20 +305,30 @@ def pack(room):
             if os.path.isdir(old): os.rename(old,dst)
             raise
 
+def plan(room, images):
+    jobs, layers = {}, {}
+    for name in sorted(images):
+        m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
+        if m and m[1] != 'probe':
+            layers.setdefault(f'{m[1]}_{m[2]}', []).append(int(m[3])); jobs[name] = ('base', [name])
+        elif m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
+        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])
+    for kind, names in jobs.values():
+        names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
+        if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
+    for group, ks in layers.items():
+        if sorted(ks) != list(range(len(ks))): sys.exit(f'{room}: layers of {group} are {sorted(ks)}, not 0..n-1')
+    return jobs, {g: len(ks) for g, ks in sorted(layers.items())}
+
 def encode(room, src, dst, tmp, needed, rgba, info):
     src_dir = f'{src}/tex'
-    jobs = {}                                                        # output name -> (kind, [source images, in layer order])
+    images = []
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
         if room == 'lobby' and f in {'landmask.png', 'citylights.png'}:
             shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
-        if ext != '.webp' or name not in needed: continue  # stale layers are not part of this room version
-        m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
-        if m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
-        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])   # _f: smooth shader data, ETC1S
-    for kind, names in jobs.values():                                # layer k is image k: 'probe_c10' sorts before 'probe_c2'
-        names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
-        if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
+        if ext == '.webp' and name in needed: images.append(name)
+    jobs, info['tex_layers'] = plan(room, images)
     def one(item):
         out, (kind, names) = item
         pngs = []

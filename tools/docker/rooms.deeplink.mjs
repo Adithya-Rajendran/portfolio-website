@@ -5,6 +5,7 @@
 //   /about/, /portfolio/, /contact/ and /contact/#availability as rooms (no page first), and an address of a project that does not exist
 // Prints FAIL lines (-v: ok lines too) and a summary; exit 1 on failure.
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, until, snap, frameChecks, leaveAndSnap, inRoom, sleep } from './rooms.kit.mjs';
+import { streamAbort } from './reqfail.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.deeplink'), { chk, note } = S;
 const D = await load(), { projects, profile, content } = D, b = await launch();
 const exhibited = new Set(content.rooms.projects.exhibits), withExhibit = projects.find((q) => exhibited.has(q.slug) && q.slug === 'homelab') ?? projects.find((q) => exhibited.has(q.slug)), without = projects.find((q) => !exhibited.has(q.slug) && q.slug !== 'personal-website') ?? projects.find((q) => !exhibited.has(q.slug));
@@ -15,7 +16,7 @@ async function run(name) {
   const ctx = await context(b, P); await ctx.addInitScript(spy);
   const shot = (p, n) => p.screenshot({ path: `/out/rooms-${name}-deep-${n}.png` }).catch(() => {});
   const page = async () => { const p = await ctx.newPage(); p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
-    p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); }); return p; };
+    p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); }); return p; };
 
   // ---------------------------------------------------------------- a project's own address: a page first, then the room
   for (const [pr, how] of [[withExhibit, 'exhibited'], [without, 'no exhibit']]) for (const scrolled of [false, true]) {

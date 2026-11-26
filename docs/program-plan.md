@@ -809,7 +809,7 @@ Branch `prog/O6d-one-primitive` · after I2 · size S · owns the `gltfpack` lin
   larger; node names and extras survive (the page reads `grp`, `em`, `fx`, `name`).
 
 #### O7 · Stream textures: small levels first, one file per layer
-Branch `prog/O7a-layer-files` then `prog/O7b-small-levels` · after O2 · before F1 (D16, D18) · size L · owns `tools/pack.py`, the texture loading of the room loader, the test server's range support and `public/_headers`
+Branch `prog/O7a-layer-files` then `prog/O7b-small-levels` · after O2 · before F1 (D16, D18) · size L · owns `tools/pack.py`, the texture loading of the room loader, the head/tail split (D19) and `public/_headers`
 
 - **Context.** The cover lifts only when every texture is in: 10 to 38 MB per room. Measured (`tools/docker/visbytes.mjs`,
   branch `prog/R-visbytes`): every texture group is partly in the opening view, so ordering whole files gains almost
@@ -818,16 +818,14 @@ Branch `prog/O7a-layer-files` then `prog/O7b-small-levels` · after O2 · before
   one array file each while the first frame samples one layer. A visit opens on the close shot and pulls back to the hero
   after 1.2 s, so "the opening view" is both.
 - **Goal.** O7a: `pack.py` writes the layered groups as one file per layer; the loader fetches the layer in use first and
-  the others after the cover lifts (the orrery holds its current phase until the next phase's file is in, D18). O7b: the
-  loader fetches each texture's small levels by a range request, lifts the cover on them, then fetches the rest of each file
-  (`Range: bytes=N-`) close-shot textures first, then the hero view, then the rest, and raises each texture's detail in
+  the others after the cover lifts (the orrery holds its current phase until the next phase's file is in, D18). O7b (D19): pack.py
+  splits each texture into a head (its small levels) and a tail; the loader fetches the heads, lifts the cover on them, then fetches the tails, close-shot textures first, then the hero view, then the rest, and raises each texture's detail in
   place (for example allocate full storage and lower the base level as levels arrive) or swaps and frees the small one.
-  Limit transcodes running at once. A visitor who asked to save data stays on the small levels. Servers without range
-  support fall back to whole files. No `.lo.ktx2` files (they would add 17 to 25% to total bytes).
+  Limit transcodes running at once. A visitor who asked to save data stays on the small levels. No range requests and no Worker (D19); no `.lo.ktx2` files (they would add 17 to 25% to total bytes).
 - **Done when.** At 10 Mbit/s the first frame of the Atrium and of the Lounge is 35% sooner than on `prog/int` before
   O7; bytes before the cover lifts are reported per room; once everything has arrived, pictures 0; the worst frame during
   streaming is at most twice the room's median; WebGL memory peaks at most 10% above today; total bytes at most 8% above
-  today; range requests verified against `wrangler dev` as well as the test server.
+  today.
 - **Later (D18).** Repacking atlases by what can be seen (4.8 to 19.3 MB per room is never seen) comes at the end of the
   program, after a checkpoint, with the owner's side-by-side sign-off; a rebake on the remote renderer is allowed if needed.
 

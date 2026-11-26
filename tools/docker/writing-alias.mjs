@@ -1,11 +1,12 @@
 // writing-alias.mjs: /blog/ opens the Library, the room query names nothing (the Atrium opens, the address stays), and the nav and the
 // Back button between the Library and another room agree with the address.
 import { chromium } from 'playwright';
+import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } }), errs = [];
 p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 200)}`); });
-p.on('requestfailed', (r) => errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); });
+p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); });
 let failed = 0;
 const chk = (ok, what, detail = '') => { if (!ok) failed++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail !== '' ? ' — ' + JSON.stringify(detail) : ''}`); };
 const room = (id) => p.waitForFunction((r) => window.__lobby?.mode().room === r && document.querySelector('#loader.done'), id, { timeout: 150000, polling: 250 }).then(() => true, () => false);
