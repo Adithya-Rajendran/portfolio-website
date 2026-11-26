@@ -364,7 +364,8 @@ case "$tier" in
     [ -f "$LIST_FILE" ] || { echo "ci: missing state list: $LIST_FILE" >&2; exit 2; }
     mapfile -t PIC_STATES < <(grep -vE '^\s*(#|$)' "$LIST_FILE")
     [ ${#PIC_STATES[@]} -gt 0 ] || { echo "ci: empty state list: $LIST_FILE" >&2; exit 2; }
-    list_hash="$(sha256sum "$LIST_FILE" | cut -c1-12)"
+    img_id="$(docker image inspect --format '{{.Id}}' "$IMG" 2>/dev/null)" || { echo "ci: cannot inspect image $IMG" >&2; exit 2; }
+    list_hash="$( { cat "$LIST_FILE" "$ROOT/tools/docker/detsnap.mjs"; echo "$IMG $img_id"; declare -f pw_for; } | sha256sum | cut -c1-12)"
 
     cur_sha=""
     repo_git=""

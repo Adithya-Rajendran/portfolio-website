@@ -562,6 +562,7 @@ its own (5.1).
 | U7 | The cover, the offer, failures and the page's three modes | ui | C | U1 | M |
 | U8 | Addresses on the router, and the old shell goes | ui | D | U2 to U7 | L |
 | U9 | An agent can use the rooms (behind a switch) | ui | D | U4 | M |
+| C1 | Comments out | found | B | O7, flicker fix | M |
 | U10 | Styles and leftovers | ui | D | U8 | S |
 | U11 | The plain pages come from Solid at build time | ui | D | F1, U5 | L |
 
@@ -978,6 +979,13 @@ Branch `prog/F7-no-webgl` · after F1 · size S
 - **Goal.** Detect WebGL 2 before the renderer is made; without it the page stays the plain page (it already reads without
   JavaScript), says the station needs WebGL, and throws nothing. A clear message where three.js hides its own.
 - **Done when.** A Playwright check with WebGL disabled: no page error, the plain page and a short notice; pictures 0 elsewhere.
+
+#### C1 · Comments out
+Branch `prog/C1-comments` · after O7 and the flicker fix have merged · size M · owns comments in every file except `public/vendor/`
+
+- **Context.** D22: code carries only a one-line header per file saying what is in it.
+- **Goal.** Remove every other comment in JS, GLSL strings, Python (comments and docstrings), shell, CSS and HTML; add the header where it is missing. Keep shebangs, tool directives and vendored code.
+- **Done when.** A check in `ci static` fails on a comment outside the header (with the allowed exceptions); `suite`, `e2e` pass; pictures 0; the minified size of every page script is unchanged or smaller.
 
 ### Workstream ws-ui
 
