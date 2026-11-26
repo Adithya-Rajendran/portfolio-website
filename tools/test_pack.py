@@ -94,9 +94,24 @@ class SeparateTest(unittest.TestCase):
         self.assertEqual((stats['lifted'], stats['dropped']), (0, 80))
         self.assertEqual(after, before[80:])
 
+    def test_cuts_the_face_beneath_a_surface_on_the_edge_of_a_thing_instead_of_moving_it_past_the_edge(self):
+        side = ([(1, 0, 0), (1, 1, 0), (1, 1, -1), (1, 0, -1)], [0, 2, 1, 0, 3, 2], (1, 0, 0))
+        stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(0.5, 0, 1, 1), side])
+        self.assertEqual((stats['held'], stats['lifted']), (1, 0))
+        self.assertEqual(sorted({round(p[2], 6) for t, _ in after for p in t}), [-1.0, 0.0])
+        front = [t for t, _ in after if all(abs(p[2]) < 1e-9 for p in t)]
+        area = lambda t: abs((t[1][0] - t[0][0]) * (t[2][1] - t[0][1]) - (t[2][0] - t[0][0]) * (t[1][1] - t[0][1])) / 2
+        self.assertAlmostEqual(sum(map(area, front)), 1.0, places=6)
+        uv = [(round(u[0] - p[0] * 0.1, 6), round(u[1] - p[1] * 0.1, 6)) for t, us in after if all(abs(p[2]) < 1e-9 for p in t) for p, u in zip(t, us)]
+        self.assertEqual(sorted(set(uv)), [(0.0, 0.0), (0.06, 0.0)])
+        with tempfile.TemporaryDirectory() as d:
+            build(f'{d}/a.glb', [quad(0, 0, 1, 1), quad(0.5, 0, 1, 1), side])
+            pack.separate(f'{d}/a.glb', f'{d}/b.glb'); again = pack.separate(f'{d}/b.glb', f'{d}/c.glb')
+        self.assertEqual((again['lifted'], again['dropped'], again['held'], again['cut']), (0, 0, 0, 0))
+
     def test_leaves_mere_neighbours_alone(self):
         stats, before, after, js = self.run_on([quad(0, 0, 1, 1), quad(1, 0, 2, 1), quad(0, 1, 1, 2, up=False)])
-        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'levels': 0, 'deepest_mm': 0.0, 'backs': 0, 'loose': 0, 'floor': 0, 'area': 0, 'passes': 1})
+        self.assertEqual(stats, {'lifted': 0, 'dropped': 0, 'surfaces': 0, 'levels': 0, 'deepest_mm': 0.0, 'backs': 0, 'loose': 0, 'floor': 0, 'held': 0, 'cut': 0, 'area': 0, 'passes': 1})
         self.assertEqual(after, before)
 
     def test_drops_the_underside_of_a_thing_standing_on_the_floor_instead_of_moving_it_under_the_floor_mirror(self):

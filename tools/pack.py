@@ -85,9 +85,111 @@ def separate(src, dst, lift=0.003, plane=5e-4, least=1e-6):
     stats, cur, only = None, src, None
     for n in range(1, 6):
         once, only = separate_once(cur, dst, lift, plane, least, only)
-        stats = once if stats is None else dict(stats, lifted=stats['lifted'] + once['lifted'], dropped=stats['dropped'] + once['dropped'], deepest_mm=max(stats['deepest_mm'], once['deepest_mm'])); cur = dst
-        if not once['lifted'] and not once['dropped']: break
+        stats = once if stats is None else dict(stats, lifted=stats['lifted'] + once['lifted'], dropped=stats['dropped'] + once['dropped'], deepest_mm=max(stats['deepest_mm'], once['deepest_mm']), held=stats['held'] + once['held'], cut=stats['cut'] + once['cut']); cur = dst
+        if not once['lifted'] and not once['dropped'] and not once['cut'] and not once['held']: break
     return dict(stats, passes=n)
+
+def blend(name, fmt, raw, wts, loc):
+    if set(fmt.lstrip('<')) != {'f'}: return raw[max(range(3), key=lambda m: wts[m])]
+    vals = [struct.unpack(fmt, r) for r in raw]
+    out = [sum(wts[m] * vals[m][q] for m in range(3)) for q in range(len(vals[0]))]
+    if name == 'POSITION': out = [out[q] + loc[q] for q in range(3)]
+    if name == 'NORMAL':
+        l = dot(out, out) ** 0.5 or 1.0; out = [c / l for c in out]
+    return struct.pack(fmt, *out)
+
+def clip(poly, a, b, keep):
+    side = lambda p: ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])) * keep
+    out = []
+    for m in range(len(poly)):
+        p, q = poly[m], poly[(m + 1) % len(poly)]; sp, sq = side(p), side(q)
+        if sp >= 0: out.append(p)
+        if (sp > 0 and sq < 0) or (sp < 0 and sq > 0):
+            f = sp / (sp - sq); out.append((p[0] + f * (q[0] - p[0]), p[1] + f * (q[1] - p[1])))
+    return out
+
+def area2(poly): return sum(poly[m][0] * poly[(m + 1) % len(poly)][1] - poly[(m + 1) % len(poly)][0] * poly[m][1] for m in range(len(poly))) / 2
+
+def minus(poly, tri):
+    if area2(tri) < 0: tri = tri[::-1]
+    out, rest = [], poly
+    for e in range(3):
+        a, b = tri[e], tri[(e + 1) % 3]
+        o = clip(rest, a, b, -1)
+        if len(o) > 2 and abs(area2(o)) > 1e-10: out.append(o)
+        rest = clip(rest, a, b, 1)
+        if len(rest) < 3 or abs(area2(rest)) < 1e-12: break
+    return out
+
+def hold(tris, find, shift, drop, dup, away, over, kept):
+    """The moved surfaces whose move would open a seam on the edge of the thing they belong to, and the cuts that replace
+    the move: such a surface stays where it is, and what lay under it is cut away from the surface beneath (or, when it
+    lay back to back with a face covering it whole, the surface is removed)."""
+    P4 = lambda p: (round(p[0], 4), round(p[1], 4), round(p[2], 4))
+    gone = lambda i: i in dup or find(i) in drop
+    axes = lambda n: max(range(3), key=lambda q: abs(n[q]))
+    pkey = lambda i: (axes(tris[i][3]), round((1 if tris[i][3][axes(tris[i][3])] > 0 else -1) * tris[i][4] * 1000))
+    edges, flats, members = {}, {}, {}
+    for i, tr in enumerate(tris):
+        if gone(i): continue
+        V = tr[2]
+        for e in range(3): edges.setdefault(tuple(sorted((P4(V[e]), P4(V[(e + 1) % 3])))), []).append((i, V[(e + 2) % 3]))
+        flats.setdefault(pkey(i), []).append(i)
+        if shift.get(find(i), 0.0) > 0: members.setdefault(find(i), []).append(i)
+    def flat(i, uv): return [(p[uv[0]], p[uv[1]]) for p in tris[i][2]]
+    def inside(pt, f):
+        s = [(f[(m + 1) % 3][0] - f[m][0]) * (pt[1] - f[m][1]) - (f[(m + 1) % 3][1] - f[m][1]) * (pt[0] - f[m][0]) for m in range(3)]
+        return min(s) >= -1e-12 or max(s) <= 1e-12
+    def beyond(i, a, b, opp):
+        n = tris[i][3]; out = cross(n, sub(b, a))
+        if dot(out, sub(opp, a)) > 0: out = (-out[0], -out[1], -out[2])
+        l = dot(out, out) ** 0.5; mid = tuple((a[q] + b[q]) / 2 + out[q] / l * 0.004 for q in range(3))
+        ax, key = axes(n), pkey(i); uv = ((ax + 1) % 3, (ax + 2) % 3)
+        return any(find(j) != find(i) and abs(abs(dot(tris[j][3], n)) - 1) < 1e-4 and inside((mid[uv[0]], mid[uv[1]]), flat(j, uv))
+                   for dd in (0, -1, 1) for j in flats.get((key[0], key[1] + dd), ()))
+    still = set()
+    move = lambda i: (0.0, 0.0, 0.0) if gone(i) or find(i) in still else tuple(shift.get(find(i), 0.0) * c for c in tris[i][3])
+    def opens(r):
+        for i in members[r]:
+            V = tris[i][2]
+            for e in range(3):
+                a, b = V[e], V[(e + 1) % 3]
+                for j, opp in edges.get(tuple(sorted((P4(a), P4(b)))), ()):
+                    if find(j) == r or dot(tris[i][3], tris[j][3]) > 0.999: continue
+                    bj = cross(tris[j][3], sub(b, a))
+                    if dot(bj, sub(opp, a)) < 0: bj = (-bj[0], -bj[1], -bj[2])
+                    l = dot(bj, bj) ** 0.5
+                    if l > 1e-12 and dot(sub(move(i), move(j)), bj) / l < -1e-4 and not beyond(i, a, b, V[(e + 2) % 3]): return True
+        return False
+    for _ in range(len(members) + 1):
+        new = {r for r in sorted(members) if r not in still and opens(r)}
+        if not new: break
+        still |= new
+    under = {}
+    for r in sorted(still):
+        if r in away: drop.add(r); continue
+        for q in sorted({kept(q) for q in over.get(r, ())} - {r}): under.setdefault(q, set()).add(r)
+    tops = {r: [i for i in members.get(r, ()) if not gone(i)] for rs in under.values() for r in rs}
+    pieces = {}
+    for i, tr in enumerate(tris):
+        q = find(i)
+        if gone(i) or q not in under: continue
+        ax = axes(tr[3]); uv = ((ax + 1) % 3, (ax + 2) % 3); base = flat(i, uv)
+        lo = [min(p[c] for p in base) for c in range(2)]; hi = [max(p[c] for p in base) for c in range(2)]
+        cur = [base]
+        for r in sorted(under[q]):
+            for j in tops[r]:
+                f = flat(j, uv)
+                if any(min(p[c] for p in f) > hi[c] or max(p[c] for p in f) < lo[c] for c in range(2)): continue
+                cur = [x for poly in cur for x in minus(poly, f)]
+        whole = abs(area2(base))
+        if whole < 1e-14 or whole - sum(abs(area2(x)) for x in cur) < 1e-9: continue
+        (ax_, ay), (bx, by), (cx, cy) = base; den = (by - cy) * (ax_ - cx) + (cx - bx) * (ay - cy)
+        def bary(p):
+            w0 = ((by - cy) * (p[0] - cx) + (cx - bx) * (p[1] - cy)) / den; w1 = ((cy - ay) * (p[0] - cx) + (ax_ - cx) * (p[1] - cy)) / den
+            return (w0, w1, 1 - w0 - w1)
+        pieces[i] = [(bary(poly[0]), bary(poly[m]), bary(poly[m + 1])) for poly in cur for m in range(1, len(poly) - 1) if abs(area2([poly[0], poly[m], poly[m + 1]])) > 1e-12]
+    return still, pieces
 
 def separate_once(src, dst, lift, plane, least, only=None):
     js, bin_ = glb_read(src)
@@ -223,13 +325,15 @@ def separate_once(src, dst, lift, plane, least, only=None):
             lv = 1 + max(level.get(q, 0) for q in bases)
             if abs(s - shift.get(r, 0.0)) > 1e-9 or lv != level.get(r): shift[r], level[r], changed = s, lv, True
         if not changed: break
+    still, pieces = hold(tris, find, shift, drop, dup, away, over, kept)
     moved = {}
     for i, (k, t, V, n, d, A) in enumerate(tris):
         r = find(i)
         if r in drop or i in dup: moved.setdefault(k, {})[t] = None
-        elif shift.get(r, 0.0) > 0: moved.setdefault(k, {})[t] = (r, tuple(shift[r] * c for c in n))
-    stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
-             'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': len(sunk), 'area': round(sum(overlap.values()), 3)}
+        elif i in pieces: moved.setdefault(k, {})[t] = ('cut', pieces[i], tuple(shift.get(r, 0.0) * c for c in n) if r not in still else (0.0, 0.0, 0.0))
+        elif shift.get(r, 0.0) > 0 and r not in still: moved.setdefault(k, {})[t] = (r, tuple(shift[r] * c for c in n))
+    stats = {'lifted': sum(1 for m in moved.values() for x in m.values() if x and x[0] != 'cut'), 'dropped': sum(1 for m in moved.values() for x in m.values() if x is None),
+             'surfaces': len(level), 'levels': max(level.values(), default=0), 'deepest_mm': round(1000 * max(shift.values(), default=0.0), 2), 'backs': len(away - drop), 'loose': len(cover) - len(away), 'floor': len(sunk), 'held': len(still), 'cut': len(pieces), 'area': round(sum(overlap.values()), 3)}
     for k, change in moved.items():
         pr = prims[k]; p, M, P, I = pr['p'], pr['M'], pr['P'], pr['I']
         A3 = [[M[r][c] for c in range(3)] for r in range(3)]
@@ -238,14 +342,22 @@ def separate_once(src, dst, lift, plane, least, only=None):
         attrs = {name: accessor(js, bin_, i) for name, i in p['attributes'].items()}
         rows = {name: list(raw) for name, (fmt, raw) in attrs.items()}
         fresh, idx = {}, []
+        local = lambda w: [sum(inv[q][c] * w[c] for c in range(3)) for q in range(3)]
         for t in range(len(I) // 3):
             if t in change and change[t] is None: continue
+            if t in change and change[t][0] == 'cut':
+                _, parts, w = change[t]; loc, vs = local(w), I[3 * t:3 * t + 3]
+                for part in parts:
+                    for wts in part:
+                        idx.append(len(rows['POSITION'])); fresh[('cut', t, len(idx))] = idx[-1]
+                        for name, (fmt, raw) in attrs.items(): rows[name].append(blend(name, fmt, [raw[v] for v in vs], wts, loc))
+                continue
             for v in I[3 * t:3 * t + 3]:
                 if t not in change: idx.append(v); continue
                 r, w = change[t]
                 if (v, r) not in fresh:
                     fresh[(v, r)] = len(rows['POSITION'])
-                    loc = [sum(inv[q][c] * w[c] for c in range(3)) for q in range(3)]
+                    loc = local(w)
                     for name, (fmt, raw) in attrs.items(): rows[name].append(struct.pack(fmt, *[P[v][q] + loc[q] for q in range(3)]) if name == 'POSITION' else raw[v])
                 idx.append(fresh[(v, r)])
         if fresh:
@@ -255,9 +367,12 @@ def separate_once(src, dst, lift, plane, least, only=None):
         like['componentType'] = ct
         p['indices'] = append(js, bin_, [struct.pack('<' + COMP[ct], x) for x in idx], '<' + COMP[ct], like, 34963)
     glb_write(dst, js, bin_)
-    near = {(sg * a + x, sg * b + y, sg * c + z, sg * e + w) for i, (k, t, V, n, d, A) in enumerate(tris) if shift.get(find(i), 0.0) > 0 and find(i) not in drop
+    near = {(sg * a + x, sg * b + y, sg * c + z, sg * e + w) for i, (k, t, V, n, d, A) in enumerate(tris) if shift.get(find(i), 0.0) > 0 and find(i) not in drop and find(i) not in still
             for a, b, c, e in [(round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round((d + shift[find(i)]) * 1000))]
             for sg in (1, -1) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1) for w in (-1, 0, 1)}
+    near |= {(sg * a + x, sg * b + y, sg * c + z, sg * e + w) for i, (k, t, V, n, d, A) in enumerate(tris) if i in pieces or find(i) in still
+              for a, b, c, e in [(round(n[0] * 1000), round(n[1] * 1000), round(n[2] * 1000), round((d + (0.0 if find(i) in still else shift.get(find(i), 0.0))) * 1000))]
+              for sg in (1, -1) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1) for w in (-1, 0, 1)}
     return stats, near
 
 def run(*cmd):
