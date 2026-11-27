@@ -162,6 +162,9 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     _m.makeScale(1 / px.w, -1 / px.h, 1).setPosition(-0.5, 0.5, 0).premultiply(panel.matrixWorld).premultiply(camera.matrixWorldInverse).premultiply(camera.projectionMatrix)
       .premultiply(_n.set(W / 2, 0, 0, W / 2, 0, -H / 2, 0, H / 2, 0, 0, 1, 0, 0, 0, 0, 1));
     const e = _m.elements, w = e[15]; e[2] = e[6] = e[14] = 0; e[10] = 1;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, flat = false;
+    for (const [x, y] of [[0, 0], [px.w, 0], [0, px.h], [px.w, px.h]]) { const q = e[3] * x + e[7] * y + e[15], sx = (e[0] * x + e[4] * y + e[12]) / q, sy = (e[1] * x + e[5] * y + e[13]) / q; if (!(q > 0)) flat = true; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
+    host.style.visibility = flat || (x1 - x0) * (y1 - y0) > 4 * W * H ? 'hidden' : '';
     const rest = Math.abs(e[0] / w - 1) < 2e-3 && Math.abs(e[5] / w - 1) < 2e-3 && Math.abs(e[1]) + Math.abs(e[4]) + Math.abs(e[3]) + Math.abs(e[7]) < 2e-5 * w;
     host.style.transform = rest ? `translate(${Math.round(e[12] / w)}px, ${Math.round(e[13] / w)}px)` : `matrix3d(${Array.from(e, (x) => +x.toFixed(6)).join(',')})`;
   }

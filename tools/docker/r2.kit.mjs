@@ -46,6 +46,14 @@ export const gate = {
   open: (p) => p.evaluate(() => { window.__gate.open = true; }),
   step: async (p, n) => { await p.evaluate((n) => { window.__gate.n = n; }, n); await p.waitForFunction(() => window.__gate.n <= 0, null, { timeout: 120000, polling: 40 }); await sleep(250); },
 };
+export const CLOCK = () => {
+  const raf = window.requestAnimationFrame.bind(window), c = window.__clock = { frames: 0, sim: 0, last: null };
+  window.requestAnimationFrame = (cb) => raf((t) => { if (t !== c.last) { if (c.last !== null) c.sim += Math.min(t - c.last, 50); c.last = t; c.frames++; } return cb(t); });
+};
+export async function settle(p, seconds = 2.5, timeout = 120000) {
+  const from = await p.evaluate(() => window.__clock.sim);
+  return p.waitForFunction((end) => window.__clock.sim >= end, from + seconds * 1000, { timeout, polling: 100 }).then(() => true, () => false);
+}
 export async function camStill(p, timeout = 90000) {
   const eye = () => p.evaluate(() => [...window.__lobby.camera.position.toArray(), window.__lobby.display.state().gliding]);
   let a = await eye(), calm = 0; const end = Date.now() + timeout;

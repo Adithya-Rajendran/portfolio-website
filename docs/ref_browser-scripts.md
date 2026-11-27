@@ -35,7 +35,7 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `rooms.read.mjs` | Each room at its path. |
 | `rooms.others.mjs` | The things that the visitor reads in Fabrication, Navigation and the Lounge, from the profile. |
 | `rooms.cross.mjs` | The links from one article in `#reader` to a different article. |
-| `rooms.deeplink.mjs` | The address of a project and of a timeline entry. |
+| `rooms.deeplink.mjs` | The address of a project and of a timeline entry, and the size of the reader while it moves. |
 | `library.mjs` | The Library. |
 | `history.mjs` | The address and Back. |
 | `deeplink.mjs` | The address of an article, and the offer `#stepin`. |
@@ -51,4 +51,5 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `writing-alias.mjs` | `/blog/`, a room query that names no room, and Back and Forward. |
 
 - `rooms.kit.mjs` and `r2.kit.mjs` hold what these scripts share: the profiles, a recorder of the meshes of the reader, and a gate on the frames of the page.
+- `r2.kit.mjs` also holds a clock that adds the time of the frames of the page.
 - [The lighting checks](ref_lighting-checks.md) are also scripts in `tools/docker/`.
