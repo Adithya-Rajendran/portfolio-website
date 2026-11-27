@@ -1,3 +1,4 @@
+// Playwright configuration for the end-to-end specs
 import { defineConfig, devices } from '@playwright/test';
 import path from 'node:path';
 

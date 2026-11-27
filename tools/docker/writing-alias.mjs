@@ -1,5 +1,4 @@
-// writing-alias.mjs: /blog/ opens the Library, the room query names nothing (the Atrium opens, the address stays), and the nav and the
-// Back button between the Library and another room agree with the address.
+// Check of the /blog/ address of the Library, the room query and the Back button
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';

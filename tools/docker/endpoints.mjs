@@ -1,10 +1,4 @@
-// The static endpoints, fetched through the test server:  tools/dtest.sh endpoints.mjs
-// Generate them first (python3 tools/site.py). Each endpoint must answer 200 with the right content type; then every <loc>
-// in the sitemap, every <link> and <guid> in the feed and every site URL inside the feed's articles (links, images) must
-// answer 200 too. The URLs are written on the canonical origin, so the origin is swapped for the test server's.
-// portfolio/index.json and profile.json (docs/v1-contracts.md §8) must have exactly the contract's keys and types, and
-// every url in them must answer 200 (a #fragment: an id of that page).
-// The test server does not apply public/_redirects or public/_headers (Cloudflare does): neither is exercised here.
+// Check of the static endpoints through the test server
 import { request } from 'playwright';
 const SITE = process.env.SITE || 'https://adithya-rajendran.com';
 const api = await request.newContext({ baseURL: process.env.ORIGIN });
@@ -32,7 +26,6 @@ if (!feed.startsWith('<?xml') || !feed.includes('<rss version="2.0"')) fail('fee
 if (!sitemap.includes('<urlset')) fail('sitemap.xml has no urlset');
 if (!robots.includes(`Sitemap: ${SITE}/sitemap.xml`)) fail('robots.txt does not name the sitemap');
 
-// The résumé: the link llms.txt gives, served as a PDF.
 const cv = llms.match(/\]\((\S+\/resume\/[^)\s]+)\)/)?.[1];
 if (!cv) fail('llms.txt has no résumé link');
 else { const r = await get(local(cv), /^application\/pdf/, 'résumé'); if (r && !(await r.body()).subarray(0, 5).toString().startsWith('%PDF-')) fail('résumé is not a PDF'); }
@@ -48,8 +41,6 @@ for (const [what, list] of [['sitemap', locs], ['feed', links], ['feed article',
     const type = what === 'feed article' && /\.webp$/.test(u) ? /^image\/webp/ : /\/$|\?/.test(u) && !/\.\w+$/.test(u) ? /^text\/html/ : null;
     await get(local(u), type, `${what}: ${u}`);
   }
-// The JSON the rooms read: every key and its type, in the contract's order. A shape is a type name ('string', 'string?'
-// for one that may be null, 'number?', 'boolean', 'null'), [shape] for a list, or a record of shapes.
 const json = async (path) => { const r = await get(path, /^application\/json/); try { return r ? await r.json() : null; } catch { fail(path, 'is not JSON'); return null; } };
 function shape(v, sh, where) {
   if (Array.isArray(sh)) { if (!Array.isArray(v)) return fail(where, 'is not a list'); v.forEach((x, i) => shape(x, sh[0], `${where}[${i}]`)); return; }
@@ -78,7 +69,7 @@ const urls = [...(portfolio?.projects ?? []).map(p => p.url), ...(profile?.curio
   ...(profile?.timeline ?? []).map(e => e.url), ...(profile?.links ?? []).map(l => l.url), ...(profile?.contact?.links ?? []).map(l => l.url), ...(profile?.resume ? [profile.resume] : [])];
 const seen = new Map();
 for (const u of urls) {
-  if (/^https?:\/\//.test(u)) continue;                  // the social links: not fetched (no network in the test)
+  if (/^https?:\/\//.test(u)) continue;
   if (!u.startsWith('/') || u.startsWith('//')) { fail('json url is neither a site path nor http(s):', u); continue; }
   const [path, frag] = u.split('#');
   if (!seen.has(path)) { const r = await get(path, null, `json url: ${u}`); seen.set(path, r && path.endsWith('/') ? await r.text() : ''); }
@@ -86,7 +77,6 @@ for (const u of urls) {
 }
 console.log(`${portfolio?.projects.length} projects, ${profile?.timeline.length} timeline entries, ${seen.size} site paths in the JSON`);
 
-// The pages that the sitemap lists are the pages that the feed carries, plus /, /blog/, the rooms' pages and the projects.
 const posts = links.filter(u => /\/blog\/[^/]+\/$/.test(u));
 const rooms = ['/', '/blog/', '/about/', '/portfolio/', '/experience/', '/contact/'].map(p => SITE + p);
 const projects = (portfolio?.projects ?? []).map(p => SITE + p.url);

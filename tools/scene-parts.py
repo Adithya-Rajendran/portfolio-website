@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Build the as-authored parts inspector from five complete blender/audit_assets.py traces.
-  python3 tools/scene-parts.py /path/to/traces
-Emits an entirely static HTML page plus an exact, compressed object table per room.
-Counts end-of-build scene objects, not helper calls, tiny materials, triangles or three.js nodes.
-"""
+# Builder of the as-authored parts inspector from five blender/audit_assets.py traces
 from collections import Counter, defaultdict
 import csv
 import gzip
@@ -26,7 +22,6 @@ def key(name):
 
 
 def pattern(name):
-    # Display shorthand, NOT a model ID. Retain the full object names in the download.
     stem = re.sub(r'\.\d{3,}$', '', name)
     return re.sub(r'-?\d+(?:\.\d+)?', '#', stem)
 

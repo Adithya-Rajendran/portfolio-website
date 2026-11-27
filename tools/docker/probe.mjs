@@ -1,3 +1,4 @@
+// WebKit probe of the render options
 import { webkit } from 'playwright';
 const base = process.argv[2];
 for (const q of ['?msaa=0', '?msaa=0&grade=0', '?msaa=0&nobloom=1', '?msaa=0&nobloom=1&grade=0']) {

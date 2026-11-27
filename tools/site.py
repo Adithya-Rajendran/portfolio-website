@@ -1,64 +1,39 @@
 #!/usr/bin/env python3
-"""Turn the content in data/ (read by tools/content.py) into pages, as docs/v1-contracts.md §3 and §8 specify:
-    python3 tools/site.py [--posts data/posts] [--projects data/projects] [--profile data/profile.json] [--out public]
-writes, under --out: blog/index.json, blog/index.html, blog/<slug>/index.html, blog/media/* and blog/files/* from the
-posts; portfolio/index.json, portfolio/index.html, portfolio/<slug>/index.html, about/, experience/ and contact/
-index.html, profile.json and media/* from the projects and the profile; and, through tools/site_extras.py, the feed,
-the sitemap, llms.txt, the résumé and _redirects. Every page is public/index.html (the shell) with its <title>,
-<!--site:head--> and <!--site:page--> replaced. Everything is rendered (and every image encoded) before a single file
-is written, so a mistake anywhere leaves the output as it was; files whose content is unchanged are not touched; what
-an earlier run wrote and this one does not make is removed (RECORD lists it), and so is anything else under blog/.
-Images need cwebp and dwebp (libwebp) under ~/.local/opt/webp (tools/get-pack-tools.sh).
---posts, --projects and --profile exist for the tests, which read fixtures (tools/testdata/).
-
-The functions are meant to be imported (render_markdown, render_inline, escape, human_date, page): the feed, the sitemap
-and llms.txt are built from the same pieces. `import site` gives Python's own startup module, so load this file by path:
-    spec = importlib.util.spec_from_file_location('sitegen', 'tools/site.py')
-    sitegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(sitegen)"""
+# Page builder that turns the content in data/ into pages
 import argparse, bisect, copy, hashlib, html, json, os, re, shutil, subprocess, sys, tempfile
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content import ContentError, DATA, ROOT, SITE, image_file, load_posts, load_profile, load_projects
-import site_extras                                         # feed, sitemap, llms.txt, résumé, _redirects
+import site_extras
 
 SHELL = os.path.join(ROOT, 'public', 'index.html')
 WEBP = os.path.expanduser('~/.local/opt/webp/bin')
-MAX_SIDE = 1600                                            # longest side of an image in a post body
-# Bump the version when the encoding below changes: it is part of every media file's name, so caches never go stale.
+MAX_SIDE = 1600
 ENCODING = 'v1: photos -q 82; PNG the smaller of -lossless and -q 85; EXIF orientation applied; -metadata none'
 LANGS = ('bash', 'yaml', 'python', 'text')
 MONTHS = ('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
           'November', 'December')
 ESCAPABLE = '*_\\`[]'
-# Ids the page's scripts give elements they add at run time, so a heading must not take them either (the shell's own
-# ids are read from public/index.html): the hologram's article host in public/js/reader.js, the offer to step into
-# the Library in public/main.js, the Comms field's own controls in public/js/comms.js, the display's cue in public/js/hud.js.
 RUNTIME_IDS = ('reader', 'stepin', 'enter', 'comms', 'cue')
-KEEP = object()                                            # an output whose file on disk is already current
+KEEP = object()
 
 
 def escape(s):
-    """Text and attribute values: & < > " ' all become references."""
     return html.escape(str(s), quote=True)
 
 
 def human_date(iso):
-    """2026-03-30 -> '30 March 2026' (no locale: the site is in English wherever it is built)."""
     y, m, d = (int(x) for x in iso.split('-'))
     return f'{d} {MONTHS[m - 1]} {y}'
 
 
 def json_ld(data):
-    """A JSON-LD <script>. '<' is written as \\u003c, so no text can close the element or open a comment."""
     text = json.dumps(data, ensure_ascii=False, indent=1).replace('<', '\\u003c')
     return f'<script type="application/ld+json">\n{text}\n</script>'
 
 
-# ---------------------------------------------------------------- images and files
-
 def image_info(path):
-    """(width, height, EXIF orientation) as stored in a PNG, JPEG or WebP file, read from its header."""
     with open(path, 'rb') as f:
         d = f.read()
     if d[:8] == b'\x89PNG\r\n\x1a\n':
@@ -99,7 +74,6 @@ def _exif_orientation(t):
 
 
 def display_size(path):
-    """The size an image is seen at (EXIF orientation applied) and the size it is written at in /blog/media/."""
     w, h, o = image_info(path)
     if o >= 5:
         w, h = h, w
@@ -108,7 +82,6 @@ def display_size(path):
 
 
 def media_name(path):
-    """`<source name>.<8 hex>.webp`: the hash covers the source's bytes and ENCODING, so a name never changes meaning."""
     with open(path, 'rb') as f:
         key = hashlib.sha1(f.read() + ENCODING.encode()).hexdigest()[:8]
     return f'{os.path.splitext(os.path.basename(path))[0]}.{key}.webp'
@@ -121,8 +94,6 @@ def run(*cmd):
 
 
 def orient_ppm(path, o):
-    """Apply EXIF orientation o to a binary PPM in place (cwebp ignores the tag, so phone photos would lie on their
-    side). Each colour plane is transposed and flipped with byte slices, which takes well under a second."""
     with open(path, 'rb') as f:
         d = f.read()
     m = re.match(rb'P6\s+(\d+)\s+(\d+)\s+255\s', d)
@@ -144,10 +115,9 @@ def orient_ppm(path, o):
 
 
 def encode(src, size, tmp):
-    """Encode one body image to WebP at `size` (its longest side at most MAX_SIDE), without metadata. Returns bytes."""
     (w, h), (ow, oh), o = display_size(src)
     out, args = os.path.join(tmp, 'out.webp'), ['-quiet', '-metadata', 'none']
-    if o != 1:                                             # scale losslessly, turn the pixels, then encode once
+    if o != 1:
         sw, sh = (oh, ow) if o >= 5 else (ow, oh)
         run(f'{WEBP}/cwebp', *args, '-lossless', '-z', '0', '-resize', sw, sh, src, '-o', f'{tmp}/scaled.webp')
         run(f'{WEBP}/dwebp', '-quiet', '-ppm', f'{tmp}/scaled.webp', '-o', f'{tmp}/turned.ppm')
@@ -155,7 +125,7 @@ def encode(src, size, tmp):
         src = f'{tmp}/turned.ppm'
     elif (ow, oh) != (w, h):
         args += ['-resize', ow, oh]
-    if src.endswith('.png'):                               # screenshots and diagrams: lossless is often the smaller
+    if src.endswith('.png'):
         run(f'{WEBP}/cwebp', *args, '-lossless', src, '-o', f'{tmp}/lossless.webp')
         run(f'{WEBP}/cwebp', *args, '-q', 85, src, '-o', out)
         if os.path.getsize(f'{tmp}/lossless.webp') <= os.path.getsize(out):
@@ -169,19 +139,11 @@ def encode(src, size, tmp):
 
 
 def file_names():
-    """data/assets/files/<asset>.<ext> -> the name it was uploaded under (data/assets/files.json)."""
     with open(os.path.join(DATA, 'assets', 'files.json'), encoding='utf-8') as f:
         return {f"{a['assetId']}.{a['extension']}": a['originalFilename'] for a in json.load(f)}
 
 
-# ---------------------------------------------------------------- Markdown
-
 class Doc:
-    """What rendering one page collects: ids in use, sections (h2, h3), the images and files it needs, warnings.
-    `taken` are ids already in the page around the article (the shell's), which headings must not repeat. `slugs` and
-    `projects` are the posts and projects that exist (None: not checked, or data/projects/ for projects).
-    A post's images go to /blog/media/; the pages of §8 (projects and the profile) set media='/media'. A link to a
-    project is that project's page everywhere."""
     def __init__(self, name='post', first_line=1, taken=(), slugs=None, media='/blog/media', projects=None):
         self.name, self.first_line, self.ids, self.slugs = name, first_line, set(taken), slugs
         self.media_url, self.projects = media, projects
@@ -189,8 +151,6 @@ class Doc:
         self._files = None
 
     def part(self, what):
-        """The same page, for one field of its header: messages name the field; ids, images, files and warnings are
-        the page's own (shared, not copied)."""
         d = copy.copy(self)
         d.name, d.first_line = f'{self.name}, {what}', None
         return d
@@ -211,26 +171,22 @@ class Doc:
         return new
 
     def image(self, file, line):
-        """An image -> (URL, (width, height)) of its WebP in the page's media folder (/blog/media/ or /media/)."""
         src = image_file(file)
         if not src:
             self.error(line, f'image {file} is not in data/assets/images/')
         size = display_size(src)[1]
         url = f'{self.media_url}/{media_name(src)}'
-        self.media[url[1:]] = (src, size)                 # keyed by the path it is written to under --out
+        self.media[url[1:]] = (src, size)
         return url, size
 
     def link(self, url, line, check_only=False):
-        """The link policy: (href, external), or None when the link is refused and only its text is written.
-        check_only: raise as it would, but record no warning and no file (the parser asks before it knows the link
-        will be written)."""
         warn = (lambda w: None) if check_only else self.warnings.append
         low = url.lower()
         if low.startswith(('http://', 'https://')):
             return url, True
         if low.startswith('mailto:'):
             return url, False
-        if url.startswith('/') and not url.startswith('//') and '\\' not in url:   # '/\host' is '//host' to a browser
+        if url.startswith('/') and not url.startswith('//') and '\\' not in url:
             m = re.match(r'^/portfolio(?:/([a-z0-9-]+))?/?$', url)
             if m:
                 if m[1] and not (m[1] in self.projects if self.projects is not None
@@ -258,29 +214,16 @@ class Doc:
 
 
 class Inline:
-    """The inline subset: `code`, **strong**, *emphasis*, [text](url), and \\ before * _ \\ ` [ ].
-    Parsed to nodes, written as HTML or as plain text (for ids, section titles and the feed).
-    Outside the subset, as plain text: a * or ` with no partner (as in CommonMark), _ (no underscore emphasis: it is
-    in file and variable names), raw HTML and entities (`<b>` and `&amp;` are shown as typed), autolinks, ~~, hard
-    line breaks, and a backslash before any other character. An error: an image that is not alone in its paragraph,
-    a link with a title.
 
-    The text is read left to right. A `*` that can open emphasis looks ahead for its closer and is text if there is
-    none; read literally, that look-ahead reads the rest of the paragraph again for every unclosed `*`, which doubles
-    the time with each one. But where a look-ahead from a position ends depends only on that position and on the
-    closer it looks for ('*' or '**'), so `_ends` first works out that answer for every position, from the end of the
-    text backwards, and the text is then read once. Linear, apart from a link's label, which is read again on its
-    own; no recursion. tools/test_site.py compares it with the earlier recursive parser on random text."""
     def __init__(self, text, doc, line=None):
         self.s, self.doc, self.line = text, doc, line
         self.star, self.tick = _runs(text, '*'), _runs(text, '`')
-        self.exact = {}                                    # n -> where the runs of exactly n backticks start
+        self.exact = {}
         for m in re.finditer('`+', text):
             self.exact.setdefault(len(m[0]), []).append(m.start())
         self._nl, self._close, self._links = None, None, {}
 
     def parse(self):
-        """-> the nodes. Raises ContentError, naming the line, where the text leaves the subset."""
         return self._read(0, len(self.s), True)
 
     def at(self, i):
@@ -297,10 +240,9 @@ class Inline:
             return e
 
     def _read(self, start, end, links):
-        """The nodes of s[start:end]: the look-ahead answers first, then one pass that follows them."""
         ends, at_once = self._ends(start, end, links)
         step = lambda i, closer: self._step(i, closer, end, links, ends, at_once, start)
-        stack, i = [(None, [], [])], start                 # (closer, nodes, text not yet in nodes): one per open emphasis
+        stack, i = [(None, [], [])], start
         while i < end:
             closer, nodes, buf = stack[-1]
             what, j, x = step(i, closer)
@@ -331,14 +273,11 @@ class Inline:
         return nodes
 
     def _ends(self, start, end, links):
-        """For each closer and each position p in start..end, where a look-ahead for that closer started at p ends:
-        the index after its closer, None if it reaches the end unclosed, or the ContentError it meets first.
-        at_once: it closes at p itself, so the emphasis would be empty (and is text). Lists indexed p - start."""
         size = end - start + 1
         ends, at_once = {'*': [None] * size, '**': [None] * size}, {'*': [False] * size, '**': [False] * size}
-        later = end                                        # the next position that is not plain text
+        later = end
         for i in reversed([start - 1] + [m.start() for m in SPECIAL.finditer(self.s, start, end)]):
-            for d in ends:                                 # plain text: the look-ahead goes on to the next special
+            for d in ends:
                 ends[d][i + 1 - start:later - start] = [ends[d][later - start]] * (later - i - 1)
             if i < start:
                 break
@@ -350,22 +289,19 @@ class Inline:
                     ends[d][i - start], at_once[d][i - start] = j, True
                 elif what == 'error':
                     ends[d][i - start] = x
-                elif what == 'open':                       # an emphasis that closes, then on from after it
+                elif what == 'open':
                     ends[d][i - start] = ends[d][ends[x][j - start] - start]
                 else:
                     ends[d][i - start] = ends[d][j - start]
         return ends, at_once
 
     def _step(self, i, closer, end, links, ends, at_once, base):
-        """What reading at i does while looking for `closer` (None, '*' or '**') -> (what, next index, detail):
-        'text' (the text), 'code' (where its content starts and ends), 'link' (url, label nodes), 'open' (an emphasis
-        that closes later: its closer), 'close', or 'error' (the ContentError). Only a '*' depends on the closer."""
         s, c = self.s, self.s[i]
         if c == '\\' and i + 1 < end and s[i + 1] in ESCAPABLE:
             return 'text', i + 2, s[i + 1]
         if c == '`':
             k = min(self.tick[i], end - i)
-            runs = self.exact.get(k, ())                   # the closing run has exactly as many backticks
+            runs = self.exact.get(k, ())
             t = bisect.bisect_left(runs, i + k)
             if t < len(runs) and runs[t] + k <= end:
                 return 'code', runs[t] + k, (i + k, runs[t])
@@ -381,7 +317,7 @@ class Inline:
                 r = ends[d][i + len(d) - base]
                 if isinstance(r, ContentError):
                     return 'error', i, r
-                if r is None and closer == '*' and can_close:   # `*a**` : this run closes the outer emphasis
+                if r is None and closer == '*' and can_close:
                     return 'close', i + 1, None
                 if r is not None and not at_once[d][i + len(d) - base]:
                     return 'open', i + len(d), d
@@ -399,16 +335,13 @@ class Inline:
         return 'text', i + 1, c
 
     def _link(self, i):
-        """[text](url) starting at i -> (index after, url, label nodes), None when it is not a link (then '[' is
-        text), or the ContentError that reading it raises. The link policy is only asked here (Doc.link with
-        check_only): whether the URL is refused or an error; the pass that builds the nodes asks again for real."""
         s, n = self.s, len(self.s)
         if self._close is None:
             self._tables()
-        j = self._close[i]                                 # the matching ']', skipping escapes and code spans
+        j = self._close[i]
         if j is None or not s.startswith('](', j):
             return None
-        ts = self._depth_at.get(self._depth[j + 2] - 1, ())   # the destination: no spaces, parentheses balanced
+        ts = self._depth_at.get(self._depth[j + 2] - 1, ())
         t = bisect.bisect_right(ts, j + 2)
         k = min(ts[t] - 1 if t < len(ts) else n, self._space[j + 2])
         url = s[j + 2:k]
@@ -426,14 +359,12 @@ class Inline:
         return k + 1, url, label
 
     def _tables(self):
-        """What _link needs, for the whole text at once: for each '[' its matching ']' (None if none), the
-        parenthesis depth before each position, where each depth is reached, and the next (non-)space."""
         s, n = self.s, len(self.s)
-        longer = {}                                        # n -> where the runs of n or more backticks start
+        longer = {}
         for m in re.finditer('`+', s):
             for k in range(1, len(m[0]) + 1):
                 longer.setdefault(k, []).append(m.start())
-        bracket = [n] * (n + 2)                            # the first [ or ] the bracket scan meets from here on
+        bracket = [n] * (n + 2)
         for x in range(n - 1, -1, -1):
             c = s[x]
             if c in '[]':
@@ -441,7 +372,7 @@ class Inline:
                 continue
             if c == '\\':
                 y = x + 2
-            elif c == '`':                                 # a code span: skip to after the first run as long
+            elif c == '`':
                 k = self.tick[x]
                 runs = longer[k]
                 t = bisect.bisect_left(runs, x + k)
@@ -450,7 +381,7 @@ class Inline:
                 y = x + 1
             bracket[x] = bracket[min(y, n)]
         self._close = close = {}
-        for x in range(n - 1, -1, -1):                     # from the end, so the brackets inside are matched already
+        for x in range(n - 1, -1, -1):
             if s[x] == '[':
                 z = bracket[x + 1]
                 while z < n and s[z] == '[':
@@ -468,11 +399,10 @@ class Inline:
             self._solid[x] = self._solid[x + 1] if sp else x
 
 
-SPECIAL = re.compile(r'[\\`*!\[]')                         # the characters Inline._step does more than copy
+SPECIAL = re.compile(r'[\\`*!\[]')
 
 
 def _runs(s, ch):
-    """For each position of s, how many `ch` follow from there on (0 where there is none)."""
     run = [0] * (len(s) + 1)
     for m in re.finditer(re.escape(ch) + '+', s):
         a, b = m.span()
@@ -481,7 +411,7 @@ def _runs(s, ch):
 
 
 def to_html(nodes):
-    out, stack = [], [(iter(nodes), '')]                  # a stack, not recursion: emphasis may nest deeply
+    out, stack = [], [(iter(nodes), '')]
     while stack:
         n = next(stack[-1][0], None)
         if n is None:
@@ -493,7 +423,7 @@ def to_html(nodes):
         elif n[0] in ('strong', 'em'):
             out.append(f'<{n[0]}>')
             stack.append((iter(n[1]), f'</{n[0]}>'))
-        elif n[1] is None:                                 # a refused link: its text only
+        elif n[1] is None:
             stack.append((iter(n[2]), ''))
         else:
             href, external = n[1]
@@ -516,29 +446,21 @@ def to_text(nodes):
 
 
 def render_inline(text, doc=None, line=None):
-    """Inline Markdown -> HTML (used for paragraphs, headings, list items, captions, takeaways and notes)."""
     return to_html(Inline(text, doc or Doc(), line).parse())
 
 
 def inline_text(text, doc=None):
-    """Inline Markdown -> the plain text a reader sees."""
     return to_text(Inline(text, doc or Doc()).parse())
 
 
 FENCE = re.compile(r'^```([^`\s]*)[ \t]*$')
 HEADING = re.compile(r'^(#{1,6})(?:[ \t]+(.*?))?[ \t]*$')
 ITEM = re.compile(r'^( *)(-|\d{1,9}\.)(?:[ \t]+(.*))?$')
-RULE = re.compile(r'^ {0,3}(?:([-*_])[ \t]*(?:\1[ \t]*)+|=+[ \t]*)$')   # ---, ***, ___, ===, - : rules, setext underlines
+RULE = re.compile(r'^ {0,3}(?:([-*_])[ \t]*(?:\1[ \t]*)+|=+[ \t]*)$')
 IMAGE = re.compile(r'^!\[((?:[^\]\\]|\\.)*)\]\(([^\s)]+)(?:[ \t]+"((?:[^"\\]|\\.)*)")?\)[ \t]*$')
 
 
 def render_markdown(md, name='post', first_line=1, doc=None):
-    """A post's body -> (HTML of its blocks, the Doc with its sections, images, files and warnings).
-    Blocks: ## and ### headings, paragraphs, - and 1. lists (one nested level, 4 spaces), > quotations of paragraphs,
-    ``` fences with a language, and an image alone in its paragraph. Anything else that Markdown would turn into a
-    block (other headings, rules and underlined headings, tables, indented code, * and + bullets, 1) lists, reference
-    definitions, ~~~ fences) is an error naming the line, so the page never differs silently from the GitHub preview.
-    Raw HTML is text: `<div>` is shown as typed."""
     doc = doc or Doc(name, first_line)
     lines, out, i = md.replace('\r\n', '\n').split('\n'), [], 0
     ln = lambda k: doc.first_line + k
@@ -600,7 +522,6 @@ def render_markdown(md, name='post', first_line=1, doc=None):
 
 
 def _interrupts(line):
-    """Does this line end a paragraph (CommonMark: a fence, heading, rule, quotation, bullet or a list from 1)?"""
     m = ITEM.match(line)
     return (line.startswith(('```', '~~~', '>')) or bool(HEADING.match(line)) or bool(RULE.match(line))
             or bool(m and not m[1] and m[3] and m[2] in ('-', '1.')))
@@ -620,7 +541,6 @@ def _figure(para, doc, line):
 
 
 def _quote(lines, i, doc, out):
-    """> lines: paragraphs only (a line holding just > separates them)."""
     paras, cur, start = [], [], i
     while i < len(lines) and lines[i].startswith('>'):
         text = lines[i][2:] if lines[i].startswith('> ') else lines[i][1:]
@@ -643,14 +563,12 @@ def _quote(lines, i, doc, out):
 
 
 def _list(lines, i, doc, out):
-    """- and 1. lists with one nested level, indented 4 spaces. Each item is one paragraph; lines that follow it
-    without a marker continue it. Blank lines between items are allowed and change nothing (no loose lists)."""
     def kind(m):
         return 'ul' if m[2] == '-' else 'ol'
-    top, n = [], len(lines)                               # top: [line, text, [nested lists]]; a list: (kind, start, items)
+    top, n = [], len(lines)
     first = ITEM.match(lines[i])
     tkind, start = kind(first), first[2]
-    last = None                                            # the item that continuation lines belong to
+    last = None
     while i < n:
         line = lines[i]
         if not line.strip():
@@ -698,10 +616,7 @@ def _list(lines, i, doc, out):
     return i
 
 
-# ---------------------------------------------------------------- pages
-
 def page(shell, title, head, main):
-    """The shell with exactly three changes: the <title> text, <!--site:head--> and <!--site:page-->."""
     for mark in ('<title>', '<!--site:head-->', '<!--site:page-->'):
         if shell.count(mark) != 1:
             sys.exit(f'public/index.html must contain {mark} exactly once')
@@ -795,7 +710,6 @@ def list_page(shell, entries, profile):
 
 
 def body_start(path):
-    """The file line where the body starts (content.py strips the blank lines after the header)."""
     with open(path, encoding='utf-8') as f:
         lines = f.read().replace('\r\n', '\n').split('\n')
     k = lines.index('---', 1) + 1
@@ -804,25 +718,18 @@ def body_start(path):
     return k + 1
 
 
-# ---------------------------------------------------------------- projects and the profile (docs/v1-contracts.md §8)
-# Labels and date wording as the previous site printed them (lib/project-content.ts, lib/cv.ts, lib/dates.ts), except
-# that an open-ended period reads "– now" (the contract's word) where it read "– present".
-
 SHORT_MONTHS = tuple(m[:3] for m in MONTHS)
 STATUS = {'active': 'Active', 'completed': 'Complete'}
 TYPES = {'software': 'Software', 'infrastructure': 'Infrastructure', 'research': 'Research', 'hardware': 'Hardware'}
-SELECTED = 3                                               # the flagship and the next two: the previous site's tiers
-PERSON_ID = f'{SITE}/#person'                              # one Person node, named by every page's JSON-LD
+SELECTED = 3
+PERSON_ID = f'{SITE}/#person'
 
 
 def month_year(iso, precision):
-    """2024-05-01 -> 'May 2024'; with precision 'year' only the year, so a month is never invented."""
     return iso[:4] if precision == 'year' else f'{SHORT_MONTHS[int(iso[5:7]) - 1]} {iso[:4]}'
 
 
 def period(start, end, start_precision, end_precision, now=False, approximate=False):
-    """How a span of dates reads: 'Dec 2022 – Oct 2026', '2026' (both ends the same), '2022 – now', 'c. 2024 – 2025';
-    None without a start."""
     if not start:
         return None
     a, b = month_year(start, start_precision), end and month_year(end, end_precision)
@@ -840,9 +747,6 @@ def entry_period(e):
 
 
 def listing(projects):
-    """The projects as /portfolio/ lists them -> (selected, more), as the previous site did (lib/missions.ts): the
-    featured first by rank, then the rest by `order`; the flagship (featured 1, else the first) and the next two that are
-    not quiet are the selected ones, and the rest keep that order. A quiet project is never selected, unless all are."""
     ranked = sorted(projects, key=lambda p: (p['featured'] or float('inf'), p['order']))
     loud = [p for p in ranked if not p['quiet']] or ranked
     first = next((p for p in loud if p['featured'] == 1), loud[0]) if loud else None
@@ -851,13 +755,10 @@ def listing(projects):
 
 
 def page_doc(name, site):
-    """A Doc for one of the §8 pages: images to /media/, a project linked as its page."""
     return Doc(name, None, site['taken'], set(site['posts']), media='/media', projects=set(site['projects']))
 
 
 def reserve(doc, ids, what):
-    """Ids the data fixes (a timeline entry's, a contact route's): they are the addresses of those parts, so they are
-    used as they are, and nothing else on the page may take them."""
     for i in ids:
         if i in doc.ids:
             raise ContentError(f'{doc.name}: {what} id {i} is already an id of the page (the shell\'s, or another {what})')
@@ -869,7 +770,6 @@ def person(profile, **more):
 
 
 def page_head(profile, title, description, path, ld, og_type='website', og_title=None, image=None):
-    """The head tags of a §8 page, in the order a post's are written. image: (absolute URL, width, height, alt)."""
     url = SITE + path
     head = [meta('description', description, 'name'), f'<link rel="canonical" href="{escape(url)}">', meta('og:type', og_type),
             meta('og:site_name', profile['name']), meta('og:title', og_title or title), meta('og:description', description),
@@ -883,7 +783,6 @@ def page_head(profile, title, description, path, ld, og_type='website', og_title
 
 
 def anchor(doc, address, text_html, *, new_tab=False):
-    """A link through the link policy (§3): its text alone when the address is refused."""
     to = doc.link(address, None)
     if to is None:
         return text_html
@@ -891,13 +790,11 @@ def anchor(doc, address, text_html, *, new_tab=False):
 
 
 def link_address(link):
-    """A link record (§6) -> the address the link policy is asked about: a file is copied to /blog/files/."""
     return (link['url'] or (link['post'] and f'/blog/{link["post"]}/') or (link['project'] and f'/portfolio/{link["project"]}/')
             or f'../assets/files/{link["file"]}')
 
 
 def links_list(doc, items, indent='    ', *, new_tab=False, first_note=None):
-    """ul.post-links from (address, label, kind or None)."""
     lis = []
     for i, (a, t, k) in enumerate(items):
         note = f' <span class="post-note">{escape(first_note)}</span>' if i == 0 and first_note else ''
@@ -915,15 +812,12 @@ def img(src, size, alt, cls, lazy=True):
 
 
 def project_meta(p):
-    """'<span class="post-status">Active</span> · 2022 – now · Infrastructure': status, period, types."""
     per = project_period(p)
     return ' · '.join([f'<span class="post-status">{STATUS[p["status"]]}</span>'] + ([escape(per)] if per else [])
                       + [escape(', '.join(TYPES[t] for t in p['types']))])
 
 
 def project_page(shell, p, doc, profile, site, next_project):
-    """/portfolio/<slug>/: article.post.project. The header, the cover, then the file's parts in div.post-body, each
-    under an h2: the brief, the body, highlights, results, parameters, lessons, next steps, links, related writing."""
     related = [q for q in site['posts'].values() if p['slug'] in q['projects']]
     fixed = [(k, t) for k, t, have in (
         ('problem', 'Problem', p['problem']), ('approach', 'Approach', p['approach']), ('outcome', 'Outcome', p['outcome']),
@@ -931,7 +825,7 @@ def project_page(shell, p, doc, profile, site, next_project):
         ('parameters', 'Parameters', p['parameters']), ('lessons', 'Lessons', p['lessons']),
         ('next-steps', 'Next steps', p['next_steps']), ('links', 'Links', p['links']),
         ('related-writing', 'Related writing', related)) if have]
-    ids = {k: doc.unique_id(k) for k, _ in fixed}         # first, so a body heading with the same words gets the -2
+    ids = {k: doc.unique_id(k) for k, _ in fixed}
     body, doc = render_markdown(p['body'], doc=doc)
     sec = lambda k, html: f'    <h2 id="{ids[k]}">{escape(dict(fixed)[k])}</h2>\n    {html}'
     inline = lambda k: '<ul>' + ''.join(f'<li>{render_inline(t, doc.part(f"`{k}[{i}]`"))}</li>' for i, t in enumerate(p[k])) + '</ul>'
@@ -998,7 +892,6 @@ def project_page(shell, p, doc, profile, site, next_project):
 
 
 def portfolio_page(shell, profile, site):
-    """/portfolio/: section.post-list, the projects in the previous site's two groups."""
     doc = page_doc('/portfolio/', site)
     selected, more = listing(site['projects'].values())
     title = f'Projects — {profile["name"]}'
@@ -1018,7 +911,6 @@ def portfolio_page(shell, profile, site):
 
 
 def contact_links(profile):
-    """The social links chosen for Contact (ordered), or all social_links when contact_links is absent."""
     if not profile['contact_links']:
         return profile['social_links']
     by_label = {l['label']: l for l in profile['social_links']}
@@ -1026,20 +918,18 @@ def contact_links(profile):
 
 
 def availability(doc, profile, here=False):
-    """The availability: its status, what is sought, and the call to action, which leads to the contact page."""
     a = profile['availability']
     when = f' · updated <time datetime="{a["updated_at"]}">{human_date(a["updated_at"])}</time>' if a['updated_at'] else ''
     out = [h2(doc, 'Availability', 'availability'),
            f'    <p class="post-availability" data-status="{escape(a["status"])}"><b>{escape(a["status"].capitalize())}</b>{when}</p>']
     if a['seeking']:
         out.append('    <ul>' + ''.join(f'<li>{escape(s)}</li>' for s in a['seeking']) + '</ul>')
-    if not here:                                          # on the contact page itself the call to action would lead to where the reader is
+    if not here:
         out.append(f'    <p class="post-cta"><a href="/contact/">{escape(a["cta"])}</a></p>')
     return out
 
 
 def elsewhere(doc, profile, site, *, links=None, new_tab=False, first_note=None):
-    """The social links and the résumé."""
     items = [(l['url'], l['label'], None) for l in (links if links is not None else profile['social_links'])]
     if site['resume']:
         items.append((site['resume'], 'Résumé (PDF)', None))
@@ -1053,8 +943,6 @@ def article_page(shell, slug, title, header, body, head):
 
 
 def about_page(shell, profile, site):
-    """/about/: who (name, tagline, headline, place), the introduction and the story, focus, curiosities, availability,
-    the featured post, the links and the résumé."""
     doc, name = page_doc('data/profile.json', site), profile['name']
     header = [f'    <p class="post-meta">{escape(profile["headline"])} · {escape(profile["location"])}</p>',
               f'    <h1>{escape(name)}</h1>', f'    <p class="post-lede">{escape(profile["tagline"])}</p>']
@@ -1117,7 +1005,6 @@ def credential_ld(c):
 
 
 def employment(e):
-    """'Full-time', 'Internship'; None when there is none or the title says it already ('Internship' beside '… Intern')."""
     if not e['employment']:
         return None
     label = e['employment'][:1].upper() + e['employment'][1:]
@@ -1125,8 +1012,6 @@ def employment(e):
 
 
 def experience_page(shell, profile, site):
-    """/experience/: the work summary, the timeline newest first (a section.entry per stop, its id the data's), skills,
-    credentials, talks and papers, the résumé."""
     doc = page_doc('data/profile.json', site)
     reserve(doc, [e['id'] for e in profile['timeline']], 'timeline')
     body = []
@@ -1158,7 +1043,7 @@ def experience_page(shell, profile, site):
                     if c['verification_url'] else escape(c['title']))
             issued = month_year(c['issued_on'], 'month')
             dates = f'{issued} – {month_year(c["expires_on"], "month")}' if c['expires_on'] and not c['lifetime'] else issued
-            said = c['issuer'].lower() in c['title'].lower()      # 'AWS Certified …' from AWS: the issuer once
+            said = c['issuer'].lower() in c['title'].lower()
             lis.append(f'<li>{badge}{name} <span class="post-meta">' + ' · '.join(([] if said else [escape(c['issuer'])]) + [dates]) + '</span></li>')
         body += [h2(doc, 'Credentials', 'credentials'), '    <ul class="post-credentials">' + ''.join(lis) + '</ul>']
     if profile['talks_and_papers']:
@@ -1188,8 +1073,6 @@ def experience_page(shell, profile, site):
 
 
 def contact_page(shell, profile, site):
-    """/contact/: the invitation, Contact's ordered links (first marked as the way to write, plus résumé, each opening
-    in a new tab), and the availability. There is no form, and no address (§7)."""
     doc = page_doc('data/profile.json', site)
     header = ['    <h1>Contact</h1>', f'    <p class="post-lede">{escape(profile["contact_intro"])}</p>']
     body = [f'    <p>{escape(profile["contact_invitation"])}</p>']
@@ -1203,7 +1086,6 @@ def contact_page(shell, profile, site):
 
 
 def portfolio_json(projects):
-    """public/portfolio/index.json (§8), in the projects' own order."""
     return [{'slug': p['slug'], 'url': f'/portfolio/{p["slug"]}/', 'name': p['name'], 'title': p['title'], 'summary': p['summary'],
              'status': p['status'], 'status_label': STATUS[p['status']], 'period': project_period(p),
              'year': p['started'] and p['started'][:4], 'types': p['types'], 'role': p['role'], 'technologies': p['technologies'],
@@ -1211,8 +1093,6 @@ def portfolio_json(projects):
 
 
 def profile_json(profile, resume_url):
-    """public/profile.json (§8): what the rooms show, as plain text. A curiosity's kind is 'question' when its title
-    asks one; the profile has no field for it (§7)."""
     a = profile['availability']
     return {
         'name': profile['name'], 'headline': profile['headline'], 'tagline': profile['tagline'], 'location': profile['location'],
@@ -1232,14 +1112,12 @@ def profile_json(profile, resume_url):
 
 
 def versioned(key, value):
-    """{'v': 8 hex of the content, key: value} as written, for a JSON file the rooms fetch."""
     v = hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:8]
     body = {'v': v, key: value} if key else {'v': v, **value}
     return (json.dumps(body, ensure_ascii=False, indent=1) + '\n').encode()
 
 
 def add_files(outputs, doc):
-    """The files a page links (data/assets/files/), copied to /blog/files/ under their original names (§3)."""
     for name, src in doc.files.items():
         with open(src, 'rb') as f:
             data = f.read()
@@ -1249,8 +1127,6 @@ def add_files(outputs, doc):
 
 
 def build(posts_dir, out, projects_dir=None, profile_path=None):
-    """Render everything into memory: {path under out: bytes, or KEEP when the file there is already right}.
-    Raises ContentError (or exits) before anything is written."""
     with open(SHELL, encoding='utf-8') as f:
         shell = f.read()
     taken = set(re.findall(r'\bid="([^"]+)"', shell)) | {'page', *RUNTIME_IDS}
@@ -1264,7 +1140,7 @@ def build(posts_dir, out, projects_dir=None, profile_path=None):
         body, doc = render_markdown(p['body'], doc=doc)
         outputs[f'blog/{p["slug"]}/index.html'] = post_page(shell, p, doc, body, profile, by_slug).encode()
         if p['image']:
-            with open(image_file(p['image']), 'rb') as f:  # content.py has checked it: 1200x630, PNG or JPEG, no EXIF
+            with open(image_file(p['image']), 'rb') as f:
                 outputs[f'blog/media/{p["image"]}'] = f.read()
         add_files(outputs, doc)
         media.update(doc.media)
@@ -1276,7 +1152,6 @@ def build(posts_dir, out, projects_dir=None, profile_path=None):
     outputs['blog/index.json'] = (json.dumps({'v': v, 'posts': entries}, ensure_ascii=False, indent=1) + '\n').encode()
     outputs['blog/index.html'] = list_page(shell, entries, profile).encode()
 
-    # §8: the projects and the profile. A project's "next" is the one after it on /portfolio/, the last leading to the first.
     cv = site_extras.resume(profile)
     site = {'taken': taken, 'posts': by_slug, 'projects': by_project, 'resume': cv and f'/resume/{quote(cv[0])}'}
     order = sum(listing(projects), [])
@@ -1298,8 +1173,8 @@ def build(posts_dir, out, projects_dir=None, profile_path=None):
     outputs['portfolio/index.json'] = versioned('projects', portfolio_json(projects))
     outputs['profile.json'] = versioned(None, profile_json(profile, site['resume']))
 
-    with tempfile.TemporaryDirectory(prefix='site-') as tmp:  # images last: they are slow, and named by content
-        for rel, (src, size) in sorted(media.items()):     # rel: blog/media/<name> (a post's) or media/<name>
+    with tempfile.TemporaryDirectory(prefix='site-') as tmp:
+        for rel, (src, size) in sorted(media.items()):
             have = os.path.join(out, rel)
             if os.path.isfile(have) and image_info(have)[:2] == size:
                 outputs[rel] = KEEP
@@ -1310,8 +1185,6 @@ def build(posts_dir, out, projects_dir=None, profile_path=None):
 
 
 def out_path(out, rel):
-    """out/rel with links and '..' resolved, or ContentError when that is not inside out. Every file this tool
-    writes, copies or removes goes through here: a name taken from the data can never put a file elsewhere."""
     root = os.path.realpath(out)
     path = os.path.realpath(os.path.join(root, rel))
     if path == root or os.path.commonpath([root, path]) != root:
@@ -1319,17 +1192,11 @@ def out_path(out, rel):
     return path
 
 
-# What the last run wrote, one path a line, so that the next run removes what it no longer makes. public/ also holds
-# files nobody generates (the shell, the scripts, the stylesheets), so nothing is removed for not being made: only what
-# this record lists, and only under the paths this tool writes (OWNED), whatever the record says.
 RECORD = '.generated-files'
 OWNED = ('blog/', 'portfolio/', 'about/', 'experience/', 'contact/', 'media/', 'profile.json')
 
 
 def write_outputs(out, outputs, prune=('blog',)):
-    """Write what changed; leave identical files alone; remove what the previous run's RECORD lists and this run did not
-    make; under each `prune` folder (wholly this tool's), remove anything this run did not make. Every path is checked
-    before the first file is written."""
     written = unchanged = removed = 0
     outputs = dict(outputs)
     outputs[RECORD] = ('# Written by tools/site.py: the files of its last run, which the next removes if it no longer makes them.\n'
@@ -1343,8 +1210,6 @@ def write_outputs(out, outputs, prune=('blog',)):
         earlier = []
     root = os.path.realpath(out)
     for rel in sorted(set(earlier) - set(outputs)):
-        # The record is a file anyone can edit: a line is honoured only if, once resolved, it still names a file under
-        # a path this tool owns ('blog/../index.html' resolves to the shell, which it does not).
         if '\\' in rel or '..' in rel.split('/') or rel.startswith('/'):
             continue
         try:
@@ -1397,8 +1262,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         outputs, posts, projects, profile, warnings = build(a.posts, a.out, a.projects, a.profile)
-        extras = site_extras.build(posts, profile, projects)   # before anything is written, like the pages
-        for rel in extras:                                 # site_extras.write writes them: checked here, before anything
+        extras = site_extras.build(posts, profile, projects)
+        for rel in extras:
             out_path(a.out, rel)
         for rel in outputs:
             out_path(a.out, rel)

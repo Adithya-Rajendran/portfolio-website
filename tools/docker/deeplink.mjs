@@ -1,4 +1,4 @@
-// deeplink.mjs <slug> [w] [h]: an article's own URL. It is a readable page at once; the Library then takes over (or offers to).
+// Check of the URL of one article at a given size
 import { chromium } from 'playwright';
 const [slug, W = '1280', H = '720'] = process.argv.slice(2), ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });

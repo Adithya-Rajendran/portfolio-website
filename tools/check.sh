@@ -1,8 +1,5 @@
 #!/bin/bash
-# Everything for the content and its reading in the rooms, in one command; exit 1 if any step failed (every step is run, then listed).
-#   tools/check.sh          env: OUT (host folder for screenshots, default /tmp/dtest), ASSETS (baked rooms; see tools/dtest.sh), CHECK_JOBS (parallel browser workers, default 8)
-#   Each browser step keeps its log and what it wrote in $OUT/steps/NN-<name>/ (log.txt, screenshots); see tools/ci/README.md.
-# The browser steps need Docker (tools/dtest.sh serves public/ inside a container). The posts' pages are regenerated first.
+# All checks of the content and its reading in the rooms, in one command
 cd "$(dirname "$0")/.." || exit 1
 
 SUITE_T0=$(date +%s)
@@ -24,17 +21,12 @@ STEP_OUT=""
 STEP_LOG=""
 declare -A PID_NAME=() PID_LOG=() PID_T0=()
 
-# Job control: every background step is a process group of its own (its pid is the group id), so an interrupt can stop the
-# step together with the dtest.sh, the docker client and the grep under it. Each container carries the label below, so
-# one that outlives its client (a killed client does not stop it) is found and removed by the label.
 set -m
 CHECK_RUN="check-$$-$SUITE_T0"
 export CHECK_RUN
 
 stop_steps() {
   local pid i alive ids killed=0 quiet=0
-  # PID_NAME stays full until the containers are gone: a second signal that arrives while the docker calls run starts this over
-  # (its trap runs when the docker call returns), and must still find the steps and do the label cleanup itself.
   if [ "${#PID_NAME[@]}" -gt 0 ]; then
     killed=1
     for pid in "${!PID_NAME[@]}"; do kill -TERM -- "-$pid" 2>/dev/null || true; done
@@ -48,8 +40,6 @@ stop_steps() {
     for pid in "${!PID_NAME[@]}"; do wait "$pid" 2>/dev/null || true; done
   fi
   if [ "$STEP_IDX" -gt 0 ] && command -v docker >/dev/null 2>&1; then
-    # A docker run killed while it is still creating its container leaves the daemon to finish creating it afterwards (state Created, which --rm never
-    # removes): after steps were killed, ask again until nothing has turned up for a second (at most 15 rounds); otherwise once is enough.
     for i in $(seq 1 15); do
       ids=$(docker ps -aq --filter "label=arcadia.check=$CHECK_RUN" 2>/dev/null)
       if [ -n "$ids" ]; then quiet=0; docker rm -f $ids >/dev/null 2>&1 || true; else quiet=$((quiet + 1)); fi
@@ -67,8 +57,6 @@ trap 'cleanup; exit 130' INT
 trap 'cleanup; exit 143' TERM
 trap 'cleanup; exit 129' HUP
 
-# step <name> <command...>: runs it in its own process group, in the background, and waits for it (a signal reaches the
-# trap at once, which a foreground command would delay until it ended). With STEP_LOG set, its output is also kept there.
 step() {
   local name="$1"; shift
   local t0 dur rc pid log="$STEP_LOG"
@@ -95,9 +83,6 @@ step() {
   fi
 }
 
-# Sets STEP_OUT (and bumps STEP_IDX) in the calling shell: never call it in $(...), or every step gets the same number.
-# Each browser step has its own folder, $OUT/steps/NN-<name>/ (NN in the order the steps start): its log.txt and whatever
-# the script writes to /out.
 next_step_out() {
   local name="$1" safe_name
   STEP_IDX=$((STEP_IDX + 1))
@@ -158,7 +143,6 @@ run_parallel() {
       wait -n -p done_pid
       rc=$?
       if [ -z "$done_pid" ]; then
-        # wait gave no finished step: do not guess. Stop what runs, and fail every step that has not reported: the running and the queued.
         echo
         echo "check.sh: wait returned no finished step (exit $rc); stopping the steps still running and failing every step that has not reported"
         for pid in "${!PID_NAME[@]}"; do
@@ -191,10 +175,8 @@ run_parallel() {
   done
 }
 
-# CHECK_SOURCE_ONLY=1 source tools/check.sh defines the functions and stops (tools/check-selftest.sh drives them with stub steps).
 [ -z "${CHECK_SOURCE_ONLY:-}" ] || return 0 2>/dev/null || exit 0
 
-# Phase 1: static preflight (serial)
 step "content.py" python3 tools/content.py
 for t in tools/test_*.py; do step "unittest $t" python3 -m unittest "$t"; done
 step "site.py" python3 tools/site.py
@@ -209,36 +191,34 @@ else
   SLUGS=$(basename -a data/posts/*.md | sed 's/\.md$//'); FIRST=$(echo "$SLUGS" | head -1)
   PROJECTS=$(basename -a data/projects/*.md | sed 's/\.md$//')
 
-  # Phase 2: independent browser steps, longest first (seconds each took on the CI host with 8 workers, 2026-11-25),
-  # so the long ones start at once and the short ones fill the gaps at the end.
-  queue "rooms.cross.mjs (desktop)" rooms.cross.mjs desktop                    # 300
-  queue "rooms.read.mjs (desktop)" rooms.read.mjs desktop                      # 290
-  queue "rooms.cross.mjs (phone)" rooms.cross.mjs phone                        # 290
-  queue "rooms.read.mjs (phone)" rooms.read.mjs phone                          # 290
-  queue "rooms.read.mjs (reduced)" rooms.read.mjs reduced                      # 135
-  queue "plainpage.mjs (no JavaScript, no WebGL, 404)" plainpage.mjs           # 105
-  queue "library.mjs (desktop)" library.mjs desktop                            # 105
-  queue "library.mjs (phone)" library.mjs phone                                # 90
-  queue "history.mjs (the address, Back and the reader)" history.mjs           # 85
-  queue "opening.mjs (desktop)" opening.mjs desktop                            # 85
-  queue "contact.mjs (desktop; legibility)" contact.mjs desktop                # 85
-  queue "rooms.text.mjs (desktop)" rooms.text.mjs desktop                      # 80
-  queue "rooms.deeplink.mjs (phone)" rooms.deeplink.mjs phone                  # 80 (once 230)
-  queue "rooms.deeplink.mjs (desktop)" rooms.deeplink.mjs desktop              # 80
-  queue "opening.mjs (phone)" opening.mjs phone                                # 65
-  queue "rooms.others.mjs (desktop)" rooms.others.mjs desktop                  # 65
-  queue "hostile.mjs (the rooms against hostile and thin data)" hostile.mjs    # 60
-  queue "rooms.others.mjs (phone)" rooms.others.mjs phone                      # 60
-  queue "contact.mjs (phone)" contact.mjs phone                                # 60
-  queue "opening.mjs (reduced)" opening.mjs reduced                            # 60
-  queue "rooms.text.mjs (phone)" rooms.text.mjs phone                          # 30
-  queue "contact.mjs (reduced)" contact.mjs reduced                            # 20
-  queue "deeplink.mjs $FIRST (desktop)" deeplink.mjs "$FIRST"                  # 20
-  queue "deeplink.mjs $FIRST (phone)" deeplink.mjs "$FIRST" 390 844            # 15
-  queue "library.mjs (reduced)" library.mjs reduced                            # 15
-  queue "writing-alias.mjs" writing-alias.mjs                                  # 10
+  queue "rooms.cross.mjs (desktop)" rooms.cross.mjs desktop
+  queue "rooms.read.mjs (desktop)" rooms.read.mjs desktop
+  queue "rooms.cross.mjs (phone)" rooms.cross.mjs phone
+  queue "rooms.read.mjs (phone)" rooms.read.mjs phone
+  queue "rooms.read.mjs (reduced)" rooms.read.mjs reduced
+  queue "plainpage.mjs (no JavaScript, no WebGL, 404)" plainpage.mjs
+  queue "library.mjs (desktop)" library.mjs desktop
+  queue "library.mjs (phone)" library.mjs phone
+  queue "history.mjs (the address, Back and the reader)" history.mjs
+  queue "opening.mjs (desktop)" opening.mjs desktop
+  queue "contact.mjs (desktop; legibility)" contact.mjs desktop
+  queue "rooms.text.mjs (desktop)" rooms.text.mjs desktop
+  queue "rooms.deeplink.mjs (phone)" rooms.deeplink.mjs phone
+  queue "rooms.deeplink.mjs (desktop)" rooms.deeplink.mjs desktop
+  queue "opening.mjs (phone)" opening.mjs phone
+  queue "rooms.others.mjs (desktop)" rooms.others.mjs desktop
+  queue "hostile.mjs (the rooms against hostile and thin data)" hostile.mjs
+  queue "rooms.others.mjs (phone)" rooms.others.mjs phone
+  queue "contact.mjs (phone)" contact.mjs phone
+  queue "opening.mjs (reduced)" opening.mjs reduced
+  queue "rooms.text.mjs (phone)" rooms.text.mjs phone
+  queue "contact.mjs (reduced)" contact.mjs reduced
+  queue "deeplink.mjs $FIRST (desktop)" deeplink.mjs "$FIRST"
+  queue "deeplink.mjs $FIRST (phone)" deeplink.mjs "$FIRST" 390 844
+  queue "library.mjs (reduced)" library.mjs reduced
+  queue "writing-alias.mjs" writing-alias.mjs
   queue "layers.mjs (the streamed sky and orrery layers)" layers.mjs
-  queue "devgate.mjs (the URL switches off a public host)" devgate.mjs         # 10
+  queue "devgate.mjs (the URL switches off a public host)" devgate.mjs
   for u in "/" "/about/" "/portfolio/" "/experience/" "/contact/" "/blog/"; do
     queue "errs.mjs $u" errs.mjs "http://127.0.0.1:8080$u"
   done
@@ -252,11 +232,8 @@ else
   echo "=== phase 2: running ${#Q_NAME[@]} browser steps ($JOBS workers) [+$(( $(date +%s) - SUITE_T0 ))s]"
   run_parallel
 
-  # Phase 3: motion/stillness-sensitive steps (serial, alone on GPU)
   echo
   echo "=== phase 3: serial motion and stillness checks [+$(( $(date +%s) - SUITE_T0 ))s]"
-  # They time or sample frames (stillness, the lock's transition, the map's turn, the cue's place and the drone's
-  # errand), so each runs alone with nothing else on the GPU.
   dt_serial "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" hud.mjs all
   dt_serial "turn.mjs (Navigation's map turns; its hint)" turn.mjs all
   dt_serial "cue.mjs (the Library's cue; the drone's errand)" cue.mjs all

@@ -1,5 +1,4 @@
-// Capture actual bookshelf/table interaction poses in the packed site, without the HTML overlay.
-// node inspect-finish.mjs URL output-directory [about projects writing ...]
+// Captures of bookshelf and table interaction poses in the packed site, without the HTML overlay
 import {chromium} from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -24,7 +23,7 @@ try {
     }
     const result=await p.evaluate(r=>{const l=window.__lobby,pose=window.__reviewPick.pose(),t=18,save=eye=>{l.lightFrame(eye.toArray(),pose.tgt.toArray(),t);return l.renderer.domElement.toDataURL('image/png').split(',')[1];};
       const captures={[r+'-inspect']:save(pose.pos)};
-      if(r==='about')captures['about-detail']=save(pose.pos.clone().lerp(pose.tgt,.48)); // optical detail, not the default inspection framing
+      if(r==='about')captures['about-detail']=save(pose.pos.clone().lerp(pose.tgt,.48));
       return captures;},room);
     for(const [name,buffer] of Object.entries(result)){await writeFile(`${out}/${name}.png`,Buffer.from(buffer,'base64'));console.log('captured',name);}
   }

@@ -1,10 +1,4 @@
-"""Fabrication exhibit assets, using the shared kit and the room's material palette.
-
-Coordinates are in metres. M places the plinth at floor level and the plinth
-exhibits at plinth-top level. The bay assemblies document their own datums.
-Indexed builders take i as the suffix for their part names.
-"""
-
+# Fabrication Bay exhibit builders that use the shared kit and the room's material palette
 def a_rover(M=I4):
     g = 'props'
     def part(name, size, xyz, mat_, bevel=0):
@@ -19,7 +13,6 @@ def a_rover(M=I4):
             part('pv_cell', (.222, .194, .009), ((col-2.5)*.235, (row-1.5)*.206, .802), 'solar', .003)
     for side in (-1, 1):
         y = side*.515
-        # Main rocker carries the forward axle and a pivoting bogie for the rear pair.
         pivot = (.07, y, .60); bogie = (-.32, y, .415)
         link('cross_shaft', (.07, side*.36, .60), pivot, .052, 'steel')
         for a, b in ((pivot, (.62,y,.24)), (pivot,bogie), (bogie,(-.62,y,.24)), (bogie,(0,y,.24))):
@@ -35,7 +28,6 @@ def a_rover(M=I4):
             for k in range(5):
                 A = W @ Matrix.Rotation(k*2*pi/5, 4, 'Z')
                 lathe('rv_lug', [(0,.071),(.012,.071),(.012,.063),(0,.063)], 'chrome', g, segs=6, M=A @ T((.077,0,0)))
-    # Bearing, mast, pan head and recessed binocular optics (glass, not headlights).
     B = M @ T((.49,0,.803))
     lathe('rv_mast', [(0,0),(.095,0),(.095,.055),(.044,.073),(.031,.59),(.073,.6),(.073,.65),(0,.65)], 'steel', g, segs=20, M=B)
     part('sensor_head', (.18,.37,.14), (.49,0,1.507), 't_light', .021)
@@ -62,7 +54,6 @@ def a_manipulator(M=I4):
     for k,(a,b) in enumerate(zip(J,J[1:])):
         axis=b-a; B=M @ Matrix.Translation(a) @ axis.to_track_quat('Z','Y').to_matrix().to_4x4(); L=axis.length
         r=(.165,.138,.093)[k]
-        # Cast link narrows between its bearing bosses; recessed service cover on its flank.
         lathe('ar_casting', [(0,.025),(r*.78,.025),(r,.15),(r*.83,.23),(r*.65,L-.18),(r*.77,L-.11),(r*.69,L-.025),(0,L-.025)], 'yellow',g,segs=12,M=B)
         rbox('ar_cover', (.055,.014,L*.43), B @ T((0,r*.73,L*.49)), 'steel',g,bevel=.006)
     for k,j in enumerate(J):
@@ -71,7 +62,6 @@ def a_manipulator(M=I4):
         for n in range(6):
             A=B @ Matrix.Rotation(n*pi/3,4,'Z') @ T((.61*r,0,1.11*r))
             lathe('ar_bolt', [(0,.008),(.011,.008),(.011,0),(0,0)],'chrome',g,segs=6,M=A)
-    # Flexible loom follows the non-drive side; leave a service loop at the elbow.
     pts=[(0,.15,.42),(.09,.20,.70),(.26,.18,1.21),(.30,.20,1.40),(.40,.20,1.47),(.52,.16,1.45),(1.02,.13,1.64),(1.12,.14,1.70),(1.22,.12,1.62),(1.45,.08,1.33)]
     for a,b in zip(pts,pts[1:]): rod('ar_loom',a,b,.019,'t_rubber',g,M=M)
     x,_,z=J[-1]; rbox('ar_slide',(.13,.23,.08),M @ T((x,0,z-.10)),'t_steel',g,bevel=.012)
@@ -82,7 +72,6 @@ def a_manipulator(M=I4):
 
 
 def a_plinth(M=I4, i=0):
-    """Build the lit plinth and return its top centre in world coordinates."""
     lathe(f'plinth{i}', [(0, 0.42), (1.35, 0.42), (1.35, 0.34), (1.22, 0.34), (1.22, 0)], 'white', 'props', segs=64, closed=False, M=M)
     lathe(f'plinth_led{i}', [(1.24, 0.32), (1.33, 0.32), (1.33, 0.33), (1.24, 0.33)], em='step', segs=64, M=M)
     lathe(f'plinth_top{i}', [(0, 0.42), (1.2, 0.42), (1.2, 0.425), (0, 0.425)], 'dark', 'props', segs=48, closed=False, M=M)
@@ -92,13 +81,13 @@ def a_plinth(M=I4, i=0):
 def a_engine(M=I4, i=0):
     lathe(f'en_bell{i}', [(0.2, 1.05), (0.26, 0.9), (0.42, 0.6), (0.6, 0.3), (0.68, 0.12), (0.66, 0.12), (0.58, 0.3), (0.4, 0.6), (0.24, 0.9), (0.18, 1.05)], 'copper', 'props', segs=64, M=M)
     lathe(f'en_chamber{i}', [(0, 1.5), (0.2, 1.5), (0.28, 1.4), (0.28, 1.15), (0.2, 1.04), (0, 1.04)], 'chrome', 'props', segs=32, closed=False, M=M)
-    for k in range(10):                                                       # stiffening hoops on the bell
+    for k in range(10):
         z = 0.2 + k * 0.08; r = 0.67 - (z - 0.12) * 0.52
         lathe(f'en_hoop{i}{k}', [(r, z), (r + 0.018, z), (r + 0.018, z + 0.02), (r, z + 0.02)], 'steel', 'props', segs=48, M=M)
     for a in (0.6, 2.7, 4.4):
         lathe(f'en_pump{i}', [(0, 0.34), (0.11, 0.34), (0.13, 0.3), (0.13, 0.04), (0.11, 0), (0, 0)], 'wall2', 'props', segs=20, closed=False, M=M @ T((0.36 * math.cos(a), 0.36 * math.sin(a), 1.22)))
         rbox(f'en_line{i}', (0.035, 0.035, 0.62), M @ T((0.5 * math.cos(a), 0.5 * math.sin(a), 0.95), (0.42 * math.sin(a), -0.42 * math.cos(a), 0)), 'brass', 'props')
-    for a in range(3):                                                        # test stand
+    for a in range(3):
         ang = a * 2 * pi / 3 + 0.5
         rbox(f'en_leg{i}', (0.06, 0.06, 1.25), M @ T((0.78 * math.cos(ang), 0.78 * math.sin(ang), 0.6), (0.2 * math.sin(ang), -0.2 * math.cos(ang), 0)), 'yellow', 'props')
     lathe(f'en_ring{i}', [(0.64, 1.16), (0.72, 1.16), (0.72, 1.22), (0.64, 1.22)], 'yellow', 'props', segs=48, M=M)
@@ -122,7 +111,6 @@ def a_lattice(M=I4, i=0):
 
 
 def a_cargo_bulkhead(M=I4):
-    """Static closed cargo bulkhead and two leaves; M is at floor level on the rear wall."""
     DW, DH = 5.2, 5.2
     box('doorframe_l', -DW - 0.5, -DW, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
     box('doorframe_r', DW, DW + 0.5, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
@@ -146,17 +134,14 @@ def a_cargo_bulkhead(M=I4):
 
 
 def a_gantry(M=I4):
-    """Static bridge, trolley and hoist; M is below the hook at floor level. Return the world sling anchor."""
     g = 'center'
 
     def block(name, x0, x1, y0, y1, z0, z1, m, bevel=0):
         return box('gantry_' + name, x0, x1, y0, y1, z0, z1, m, g, bevel=bevel, M=M)
 
     def y_axis(x, y, z):
-        return M @ T((x, y, z), (-pi / 2, 0, 0))  # revolution axis along +Y
+        return M @ T((x, y, z), (-pi / 2, 0, 0))
 
-    # Twin built-up girders leave a slot for the captive trolley. Its wheels
-    # ride the inboard faces of the lower flanges; ties sit above the wheel path.
     for s in (-1, 1):
         y = s * .65
         block('top_flange', -6.47, 6.47, y-.20, y+.20, 6.92, 6.98, 'yellow', .012)
@@ -167,8 +152,6 @@ def a_gantry(M=I4):
     for x in (-4.85, -2.7, 2.7, 4.85):
         block('bridge_tie', x-.075, x+.075, -.62, .62, 6.86, 6.94, 'steel')
 
-    # The runway heads in the bay are at x=±6.45, z=6.36. The high carriage
-    # spine clears the room haunch at y=0; the wheel forks straddle it fore/aft.
     for d in (-1, 1):
         x = d * 6.45
         block('truck_spine', x-.14, x+.14, -1.35, 1.35, 6.845, 6.963, 'steel', .013)
@@ -180,7 +163,6 @@ def a_gantry(M=I4):
                 prism('gantry_truck_cheek', fork, 'X', x+k*.11, x+k*.19, 'steel', g, M=M, bevel=.01)
                 lathe('gantry_truck_bearing', [(0, 0), (.09, 0), (.09, .021), (.065, .036), (0, .036)],
                       't_light', g, segs=16, closed=False, M=M @ T((x+k*.185, y, 6.515), (0, k*pi/2, 0)))
-            # Wheel flanges clear both sides of the runway cap.
             lathe('gantry_runway_wheel', [(0, -.113), (.172, -.113), (.174, -.091), (.155, -.075),
                                         (.155, .075), (.174, .091), (.172, .113), (0, .113)],
                   't_steel', g, segs=24, closed=False, M=M @ T((x, y, 6.515), (0, pi/2, 0)))
@@ -196,8 +178,6 @@ def a_gantry(M=I4):
                   't_steel', g, segs=20, closed=False, M=y_axis(x, s*(.521 + PROUD), 6.765))
             rod('gantry_trolley_axle', (x, s*.33, 6.765), (x, s*.562, 6.765), .044, 't_light', g, M=M, n=12)
 
-    # The parked hoist is shown in section-like silhouette: drum, dead-end
-    # socket and travelling return sheave, all in the same reeving plane.
     drum_x, drum_z, drum_pitch = -.41, 6.07, .18
     sheave_z, pitch, rope = 5.04, .23, .016
     for s in (-1, 1):
@@ -221,10 +201,8 @@ def a_gantry(M=I4):
               'Y', s*.10, s*.148, 'yellow', g, M=M, bevel=.014)
     rod('gantry_sheave_pin', (0, -.177, sheave_z), (0, .177, sheave_z), .077, 't_light', g, M=M, n=20)
 
-    # One taut rope: drum wrap, tangent leg, 180° return, tangent leg to socket.
-    # Store the in-plane radial vector as well as the cable centre at each ring.
     def arc_section(cx, cz, r, start, end, steps):
-        hand = 1 if end > start else -1  # keep the cross-section aligned at both tangents
+        hand = 1 if end > start else -1
         for i in range(steps + 1):
             angle = start + (end - start) * i / steps
             nx, nz = math.cos(angle), math.sin(angle)
@@ -248,12 +226,9 @@ def a_gantry(M=I4):
         prev = ring
     bm.faces.new(prev)
     finish('gantry_reeved_rope', bm, 't_light', g, M=M)
-    # Capture the rope tail within the drum, rather than leaving a visible loose end.
     x, z, nx, nz = path[0]
     rod('gantry_drum_rope_clamp', (x+.038*nx, 0, z+.038*nz), (x-.02*nx, 0, z-.02*nz), .035, 't_steel', g, M=M)
 
-    # The swivel and forged hook carry a separate master link. Its lower bar
-    # encloses the unchanged room sling apex at (0, 0, 4.45).
     block('hook_crosshead', -.077, .077, -.149 + PROUD, .149 - PROUD, 4.731, 4.775, 'steel', .008)
     lathe('gantry_hook_swivel', [(0, 4.721), (.068, 4.721), (.076, 4.731), (.076, 4.766), (0, 4.766)],
           't_light', g, segs=20, closed=False, M=M)
@@ -272,14 +247,11 @@ def a_gantry(M=I4):
 
 
 def a_solar_wing(M=I4, *, d=1):
-    """One deployed wing with static drive and hinges; M is the bus frame, d selects the ±X side."""
     g = 'center'
 
     def part(name, size, xyz, mat_, bevel=0):
         return rbox('array_' + name, size, M @ T(xyz), mat_, g, bevel=bevel)
 
-    # Keep the rear structure on +Y on both wings. The drive is seated on the
-    # bus facet; a fork spreads loads out into the first panel's back spars.
     part('root_foot', (.087, .39, .43), (d*.768, 0, 0), 't_light', .016)
     W = M @ T((d*.802, 0, 0), (0, d*pi/2, 0))
     lathe('array_drive', [(0, 0), (.164, 0), (.164, .125), (.144, .147), (.118, .147),
@@ -297,7 +269,6 @@ def a_solar_wing(M=I4, *, d=1):
             part('edge_rail', (.026, .069 + 2 * PROUD, 1.54), (cx+s*.507, .010, 0), 't_light', .003)
             part('edge_rail', (.99, .069 + PROUD, .023), (cx, .010, s*.758), 't_light', .003)
             part('rear_spar', (1.03, .033, .076), (cx, .045, s*.52), 't_steel', .006)
-        # The diagonal and hinge spars read as a lightweight panel, not a solid slab.
         a = d * (-1)**i
         prism('array_diagonal', [(cx-.46, -(.50+PROUD)*a), (cx-.46, -(.44+PROUD)*a), (cx+.46, (.50+PROUD)*a),
                                  (cx+.46, (.44+PROUD)*a)], 'Y', .030, .054, 't_light', g, M=M)
@@ -310,7 +281,6 @@ def a_solar_wing(M=I4, *, d=1):
     for joint in range(2):
         seam = d * (2.26 + joint*1.08)
         for z in (-.52, .52):
-            # Outer knuckles belong to one leaf; the other leaf owns the centre barrel.
             for side, offsets in ((-1, (-.057, .057)), (1, (0,))):
                 for dz in offsets:
                     part('hinge_leaf', (.139, .043, .048), (seam+side*.068, .062, z+dz), 't_light')
@@ -320,7 +290,6 @@ def a_solar_wing(M=I4, *, d=1):
 
 
 def a_satellite(M=I4):
-    """Static payload with both deployed wings; M is at the bus centre, without rigging."""
     def ngon(name, n, r, h, M, m, grp):
         bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=n, radius1=r, radius2=r, depth=h)
         return finish(name, bm, m, grp, M=M @ Matrix.Rotation(pi / n, 4, 'Z'))
@@ -330,9 +299,7 @@ def a_satellite(M=I4):
     for z in (.89, -.89):
         ngon('sat_deck', 8, .84, .08, M @ T((0, 0, z)), 'steel', g)
 
-    # Shallow, separately wrapped thermal blankets. Tuck the perimeters into
-    # the core so the dark seams stay legible without adding seam geometry.
-    FR = .8 * math.cos(pi / 8)  # octagonal facet apothem
+    FR = .8 * math.cos(pi / 8)
     us = (-1, -.90, -.62, -.31, 0, .31, .62, .90, 1)
     vs = (-1, -.93, -.72, -.46, -.16, .12, .40, .66, .90, 1)
     for facet in range(8):
@@ -351,8 +318,6 @@ def a_satellite(M=I4):
             rows.append(row)
         finish('sat_thermal_blanket', bm, 'foil', g, M=M @ Matrix.Rotation(facet*pi/4, 4, 'Z'), keep_normals=True)
 
-    # A low collar doesn't cut across the sling lines. In the bay, the 24° bus
-    # heading puts these four recessed lift pins under the unchanged 45° picks.
     lathe('sat_lift_collar', [(.25, .922), (.457, .922), (.457, .948), (.367, .961),
                              (.33, 1.012), (.285, 1.012), (.285, .964), (.25, .964)],
           't_light', g, segs=32, M=M)
@@ -398,18 +363,17 @@ def a_satellite(M=I4):
             for dz in (-.42, -.16):
                 lathe('sat_tracker', [(0, 0), (.074, 0), (.102, .21), (.091, .21), (.061, .06), (0, .06)],
                       't_black', g, segs=16, closed=False, M=Mf @ T((FR, 0, dz), (0, pi/2-.48, 0)))
-    for a in (45, 135, 225, 315):  # thruster quads on the lower deck
+    for a in (45, 135, 225, 315):
         Mq = M @ Matrix.Rotation(math.radians(a), 4, 'Z') @ T((0.86, 0, -0.8))
         rbox('sat_quad', (0.12, 0.12, 0.12), Mq, 'dark', 'center', bevel=0.01)
         for rx, ry in ((pi / 2, 0), (-pi / 2, 0), (0, pi / 2)):
             lathe('sat_thr', [(0, 0), (0.02, 0), (0.045, 0.1), (0.04, 0.1), (0.015, 0.01), (0, 0.01)], 'chrome', 'center', segs=10, closed=False, M=Mq @ T((0, 0, 0), (rx, ry, 0)) @ T((0, 0, 0.06)))
-    A = M @ T((.04, .62, .923))  # antenna foot outboard of the lifting bridle
+    A = M @ T((.04, .62, .923))
     lathe('sat_mast', [(0, 0), (.069, 0), (.069, .036), (.035, .065), (.018, .66), (0, .66)],
           'chrome', g, segs=16, closed=False, M=A)
     lathe('sat_omni', [(0, 0), (.057, .019), (.057, .10), (0, .142)],
           'white', g, segs=16, closed=False, M=A @ T((0, 0, .655)))
     lathe('sat_dish', [(0, 0.0), (0.25, 0.03), (0.5, 0.12), (0.72, 0.28), (0.74, 0.28), (0.5, 0.1), (0.25, 0.01), (0, -0.02)], 'white', 'center', segs=48, closed=False, M=M @ T((0, 0, -1.28), (pi, 0, 0)))
-    # Rear dish is carried on a trussed spacer between the bus and reflector.
     for leg in range(3):
         a = leg*2*pi/3
         rod('dish_stay',(.36*math.cos(a),.36*math.sin(a),-.925),(.15*math.cos(a),.15*math.sin(a),-1.29),.018,'steel','center',M=M)

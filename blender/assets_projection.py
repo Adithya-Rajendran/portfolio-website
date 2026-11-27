@@ -1,12 +1,5 @@
-"""Atrium and Navigation assets, executed after the shared mesh/material kit.
-
-Navigation supplies leather, EM_core and EM_riblight before building or benching
-its assets. The orrery uses the shared chandelier palette; its motion is external.
-"""
-
-
+# Atrium and Navigation asset builders for the shared mesh and material kit
 def _projection_materials():
-    # Lazy registration: both rooms and their isolated benches have the shared mat() kit.
     for name, rgb, rough, metal, coat in (
         ('projection_cast', (.32, .37, .43), .34, .52, 0),
         ('projection_baffle', (.012, .015, .020), .67, .04, 0),
@@ -17,7 +10,6 @@ def _projection_materials():
 
 
 def _projection_frame(M, a, r=0, z=0):
-    """Local X points radially out, Y is tangential, Z is up."""
     return M @ Matrix.Rotation(a, 4, 'Z') @ T((r, 0, z))
 
 
@@ -29,13 +21,11 @@ def _projection_hex(name, M, grp, r=.018, h=.012):
 
 
 def _projection_optics(M, grp, *, z, bore, outer, bezel, lens, em, keepers):
-    """Lift-out optical cartridge. Mouth at z, with two knife-edge stops ahead of a seated objective."""
     A = M @ T((0, 0, z))
     rim = lathe(bezel, [(bore - .003, -.012), (bore + .012, 0), (outer - .053, 0),
                        (outer - .041, -.018), (outer - .041, -.028), (outer - .009, -.028),
                        (outer, -.038), (outer, -.066), (bore + .032, -.066), (bore + .032, -.016)],
                 'projection_cast', grp, segs=64, M=A)
-    # The stop faces rake away from their apertures. The outer wall is continuous and opaque.
     barrel = lathe(f'{lens}_barrel', [(bore + .042, -.016), (bore, -.016), (bore * .97, -.032),
                                     (bore * .97, -.050), (bore * .85, -.060), (bore * .85, -.065),
                                     (bore * .96, -.081), (bore * .96, -.094), (bore * .72, -.105),
@@ -44,11 +34,9 @@ def _projection_optics(M, grp, *, z, bore, outer, bezel, lens, em, keepers):
                    'projection_baffle', grp, segs=48, M=A)
     for part in (rim, barrel):
         part.data.set_sharp_from_angle(angle=math.radians(38))
-    # Blind rear cell supports the objective and closes the underside of the cartridge.
     lathe(f'{lens}_cell', [(0, -.197), (bore * .66, -.197), (bore * .68, -.178), (bore * .68, -.167),
                           (bore * .39, -.167), (bore * .39, -.141), (0, -.141)],
           'projection_baffle', grp, segs=32, closed=False, M=A)
-    # Curved objective around the working emitter; nothing opaque sits across the pupil.
     lathe(f'{lens}_objective', [(bore * q, d) for q, d in ((.412, -.135), (.51, -.136), (.69, -.142),
                                                            (.89, -.152), (.89, -.159), (.41, -.159))],
           'projection_optic', grp, segs=48, M=A)
@@ -61,14 +49,12 @@ def _projection_optics(M, grp, *, z, bore, outer, bezel, lens, em, keepers):
 
 
 def a_reception_desk(M=I4, grp='center', *, a0=math.radians(-56), a1=math.radians(56), index=0):
-    """One curved counter, with angles in radians about the dais axis and its foot at local z=.14."""
     _projection_materials()
     lathe(f'desk{index}', [(2.27, .14), (2.28, .22), (2.59, .90), (2.67, 1.04), (2.75, 1.12),
                           (1.98, 1.12), (1.98, 1.0), (2.06, .14)],
           'wall2', grp, segs=48, a0=a0, a1=a1, M=M)
     lathe(f'desk_toe{index}', [(2.23, .14), (2.30, .14), (2.32, .20), (2.28, .22), (2.22, .22)],
           'projection_cast', grp, segs=48, a0=a0 + PROUD / 2.2, a1=a1 - PROUD / 2.2, M=M)
-    # Four removable fascia panels stand off from the carcass; the arc ends read as folded returns.
     pitch = (a1 - a0) / 4
     for i in range(4):
         lathe(f'desk_fascia{index}', [(2.273, .254), (2.324, .246), (2.36, .284), (2.65, .849),
@@ -85,13 +71,11 @@ def a_reception_desk(M=I4, grp='center', *, a0=math.radians(-56), a1=math.radian
 
 
 def a_projector(M=I4, grp='center'):
-    """Atrium's projector pedestal, from the dais at z=.14 to the barrel mouth at z=.54."""
     _projection_materials()
     lathe('holo_base', [(.27, .14), (.63, .14), (.63, .192), (.55, .393), (.57, .477), (.48, .477),
                        (.48, .31), (.27, .31)], 'dark', grp, segs=64, M=M)
     lathe('holo_foot', [(.61, .14), (.70, .14), (.70, .166), (.68, .186), (.61, .186)],
           'projection_cast', grp, segs=64, M=M)
-    # Clear gaps between the cast skins and under the crown, with captive panel screws on the slopes.
     for i in range(8):
         a = i * pi / 4
         lathe('holo_skin', [(.617, .203), (.663, .203), (.673, .223), (.615, .372), (.580, .426),
@@ -105,7 +89,6 @@ def a_projector(M=I4, grp='center'):
 
 
 def a_gimbal_ring(M=I4, grp='chandA', *, radius=3.3, index=0, a0=0.0, lit_arc=math.radians(205)):
-    """One gimbal in its local XY plane, with an inner and underside light arc (radians)."""
     rr = radius; a1 = a0 + lit_arc
     lathe(f'chand{index}', [(rr - 0.045, -0.09), (rr + 0.045, -0.09), (rr + 0.045, 0.09), (rr - 0.045, 0.09)],
           'chrome', grp, segs=192, M=M)
@@ -116,9 +99,7 @@ def a_gimbal_ring(M=I4, grp='chandA', *, radius=3.3, index=0, a0=0.0, lit_arc=ma
 
 
 def a_orrery(M=I4, grp='archC', *, stem_rise=4.2):
-    """The Atrium chandelier, with M at the hub and stem_rise measured to the ceiling."""
     _projection_materials()
-    # Fixed suspension: ceiling flange, draw tube and the rotary feedthrough above the hub.
     lathe('chand_canopy', [(0, -.34), (.10, -.34), (.15, -.30), (.238, -.116), (.30, -.116), (.30, 0), (0, 0)],
           'projection_cast', grp, segs=32, closed=False, M=M @ T((0, 0, stem_rise)))
     for i in range(4):
@@ -130,7 +111,6 @@ def a_orrery(M=I4, grp='archC', *, stem_rise=4.2):
                        (.111, .102), (.111, .132), (0, .132)], 'brass', grp, segs=32, closed=False, M=M)
     lathe('chand_feedthrough', [(.062, .117), (.13, .117), (.15, .157), (.15, .24), (.113, .28),
                                (.113, .48), (.085, .52), (.062, .52)], 'projection_cast', grp, segs=24, M=M)
-    # Moving rings keep their original frames and A/B tags.
     rings = ((3.3, 20, 22, 'chandA', 205), (2.6, 100, -34, 'chandB', 215), (1.9, 200, 48, 'chandA', 230))
     for i, (rr, az, tilt, tag, arc) in enumerate(rings):
         axis = Vector((math.cos(math.radians(az)), math.sin(math.radians(az)), 0))
@@ -139,24 +119,21 @@ def a_orrery(M=I4, grp='archC', *, stem_rise=4.2):
 
 
 def a_wall_seat(M=I4, grp='props', *, index=0):
-    """Navigation's built-in seat and base; M is the bay frame with +X toward the wall."""
     rbox(f'seat{index}', (0.55, 2.6, 0.1), M @ T((-0.34, 0, 0.5)), 'leather', grp, bevel=0.03, seg=3)
     rbox(f'seatbase{index}', (0.5, 2.5, 0.42), M @ T((-0.32, 0, 0.24)), 'wall2', grp)
 
 
 def a_dome_rib(M=I4, grp='archR', *, azimuth=0.0, radius=9.0, wall_h=3.6, apex=8.4, oculus=1.7, index=0):
-    """Navigation's floor-to-oculus rib and light strip, about the drum axis at azimuth (radians)."""
     def rib_path(off):
         pts = [(radius - off, 0.0), (radius - off, wall_h)]
         for t in range(1, 25):
             a = t * pi / 2 / 24
             r0 = oculus + (radius - oculus) * math.cos(a); z0 = wall_h + (apex - wall_h) * math.sin(a)
             nx, nz = math.cos(a) * (apex - wall_h), math.sin(a) * (radius - oculus)
-            n = math.hypot(nx, nz)  # ellipse normal
+            n = math.hypot(nx, nz)
             pts.append((r0 - off * nx / n, z0 - off * nz / n))
         return pts
 
-    # Keep azimuth in the lathe angles, not a post-rotation, to reproduce the original vertex coordinates and order.
     M = None if M is I4 else M
     lathe(f'rib{index}', rib_path(-0.02) + list(reversed(rib_path(0.32))), 'rib', grp,
           segs=2, a0=azimuth - 0.03, a1=azimuth + 0.03, M=M)
@@ -165,7 +142,6 @@ def a_dome_rib(M=I4, grp='archR', *, azimuth=0.0, radius=9.0, wall_h=3.6, apex=8
 
 
 def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
-    """Navigation's table; preserve the chart datum and build the barrel down into the deck."""
     _projection_materials()
     R, Ht = radius, height
     D = M @ T((0, 0, Ht))
@@ -176,14 +152,12 @@ def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
                          (R - .52, Ht * .123), (R - .57, Ht * .123)], 'plat', grp, segs=96, M=M)
     for i in range(12):
         a = (i + .5) * pi / 6
-        # Coarse cover facets, chamfered ends and open seams against the dark structural skirt.
         lathe('table_skirt_panel', [(R + dr, Ht * f) for dr, f in ((-.510, .159), (-.450, .159),
               (-.405, .230), (-.243, .611), (-.208, .717), (-.272, .717), (-.323, .609), (-.511, .223))],
               'projection_cast', grp, segs=4, a0=a - .248, a1=a + .248, M=M, bevel=.006, seg=1)
         B = _projection_frame(M, a, R - .235, Ht * .644) @ T((0, 0, 0), (0, math.radians(62), 0))
         _projection_hex('table_panel_screw', B, grp, r=.023, h=.013)
 
-    # Cast deck and undercut: the existing light washes down from inside the eave.
     lathe('table_deck', [(.619, -.090), (R - .225, -.090), (R - .183, -.120), (R - .070, -.120),
                          (R - .015, -.095), (R, -.067), (R, -.013), (R - .059, -.013),
                          (R - .059, -.026), (R - .249, -.026), (R - .249, -.012), (.619, -.012)],
@@ -196,7 +170,6 @@ def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
         lathe(f'table_ring{r}', [(r, .006), (r + .02, .006)], 'brass', grp, segs=96, closed=False, M=D)
     _projection_optics(M, grp, z=Ht + .05, bore=.510, outer=.655, bezel='lens_ring', lens='lens', em='core', keepers=4)
 
-    # Scale ring in a machined channel. Its fixed outer race has pockets for four retainer shoes.
     lathe('table_glass_bezel', [(R - .277, -.014), (R - .241, -.014), (R - .241, .009),
                                (R - .251, .016), (R - .275, .016)], 'brass', grp, segs=128, M=D)
     lathe('azimuth_dial', [(R - .233, -.025), (R - .064, -.025), (R - .064, -.001),
@@ -215,7 +188,7 @@ def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
         rbox('azimuth_retainer', (.079, .150, .045), B @ T((-.024, 0, .005)),
              'projection_cast', grp, bevel=.006, seg=1)
         _projection_hex('azimuth_retainer_bolt', B @ T((-.018, 0, .026)), grp, h=.011)
-        if i == 3:  # Fixed witness at the approach side, projecting over (not touching) the scale.
+        if i == 3:
             prism('azimuth_index', [(-.147, 0), (-.058, -.035), (-.058, .035)], 'Y', -.007, .007,
                   'brass', grp, M=B @ T((0, 0, .020), (pi / 2, 0, 0)))
 

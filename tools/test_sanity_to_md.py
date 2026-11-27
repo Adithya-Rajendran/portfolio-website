@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Tests that the Markdown and JSON content files keep what the Sanity documents held.
+# Tests that the hand-edited files say what the Sanity documents said
 import collections, copy, glob, json, os, re, shutil, sys, tempfile, unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +19,6 @@ def read(path, mode='r'):
 def jload(path):
     with open(path, encoding='utf-8') as f:
         return json.load(f)
-
 
 
 def inl(s, link=None):
@@ -113,7 +112,6 @@ def md_blocks(body):
             para.append(ln)
     flush()
     return out
-
 
 
 def expected_target(h):
@@ -280,7 +278,6 @@ class Faithful(unittest.TestCase):
             self.assertEqual(p['projects'], [proj[r['_ref']] for r in doc['projects']], slug)
             self.assertEqual(set(head), {'title', 'description', 'published', 'revised', 'tags', 'image', 'image_alt',
                                          'takeaways', 'changelog', 'next', 'next_reason', 'projects'}, slug)
-
 
 
 def span(text, *marks):
@@ -538,7 +535,6 @@ class Overwrite(unittest.TestCase):
             self.assertEqual(read(path, 'rb'), good, rel)
 
 
-
 PROJECT_CARRIED = {'title', 'name', 'summary', 'status', 'statusNote', 'myRole', 'startDate', 'endDate', 'datePrecision', 'datesApproximate',
                    'featured', 'quiet', 'designation', 'types', 'technologies', 'highlights', 'lessons', 'next', 'brief', 'cover',
                    'parameters', 'results', 'links', 'body', 'slug'}
@@ -741,7 +737,6 @@ class ProjectsMutations(unittest.TestCase):
         self.mutated(body(lambda b: re.sub(r'\]\(/(blog|portfolio)/[^)]*\)', '](https://example.org/)', b, count=1)))
         self.mutated(body(lambda b: b + '\nExtra words.\n'))
         self.mutated(body(lambda b: re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', b, count=1)))
-
 
 
 def snake_name(k):

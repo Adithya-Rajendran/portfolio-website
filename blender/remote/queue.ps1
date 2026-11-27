@@ -1,5 +1,4 @@
-# queue.ps1 [about lobby writing ...] — build, path-trace and export, one room at a time.
-# Keep the canonical probe/lighting runner shared with isolated staging jobs.
+# Room build, path trace and export queue, one room at a time, on the bake machine
 $rooms = if ($args.Count) { $args } else { 'about', 'lobby' }
 $runner = Join-Path $PSScriptRoot 'realism.ps1'
 foreach ($room in $rooms) {

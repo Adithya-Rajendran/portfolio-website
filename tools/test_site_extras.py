@@ -1,4 +1,4 @@
-# Tests for the feed, the sitemap, llms.txt, the résumé, the redirects and the headers that site_extras.py writes.
+# Tests for the static endpoints of tools/site_extras.py
 import contextlib, importlib.util, io, json, os, re, shutil, tempfile, unittest
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
@@ -82,7 +82,6 @@ class Extras(unittest.TestCase):
     def feed(self, out):
         return ET.fromstring(read(out, 'feed.xml', 'rb')).find('channel')
 
-
     def test_feed_items_in_order(self):
         ch = self.feed(self.two)
         self.assertEqual([i.findtext('title') for i in ch.findall('item')], [NASTY_TITLE, self.all_posts['every-construct']['title']])
@@ -146,7 +145,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(x.esc('a\x00b\x0bc\x1fd￾e'), 'abcde')
         self.assertEqual(x.esc('<&>"\''), '&lt;&amp;&gt;&quot;&#x27;')
 
-
     def sitemap(self, out):
         return [(u.findtext('sm:loc', namespaces=NS), u.findtext('sm:lastmod', namespaces=NS))
                 for u in ET.fromstring(read(out, 'sitemap.xml', 'rb')).findall('sm:url', NS)]
@@ -170,7 +168,6 @@ class Extras(unittest.TestCase):
             locs = [loc for loc, _ in self.sitemap(out)]
             self.assertEqual(sorted(locs), sorted(SITE + p for p in pages))
             self.assertEqual(len(locs), len(set(locs)))
-
 
     def test_llms_txt(self):
         text = read(self.two, 'llms.txt')
@@ -200,7 +197,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(rules, ['User-agent: *', 'Allow: /', f'Sitemap: {SITE}/sitemap.xml'])
         self.assertEqual(re.findall(r'https?://\S+', text), [f'{SITE}/llms.txt', f'{SITE}/sitemap.xml'])
 
-
     def test_resume_is_the_file_the_profile_points_to(self):
         m = re.fullmatch(r'([0-9a-f]{40})\.pdf', self.profile['resume'])
         name = s.file_names()[f'{m[1]}.pdf']
@@ -222,7 +218,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(sorted(files), ['_redirects', 'feed.xml', 'llms.txt', 'sitemap.xml'])
         self.assertNotIn(b'/resume', files['_redirects'])
         self.assertNotIn('Résumé', files['llms.txt'].decode())
-
 
     @staticmethod
     def old(source):
@@ -254,7 +249,6 @@ class Extras(unittest.TestCase):
                                            else os.path.join(self.one, path.lstrip('/'))), target)
         self.assertEqual(dict((a, b) for a, b, _ in self.rules())['/resume/view'], '/resume/' + os.listdir(os.path.join(self.one, 'resume'))[0])
 
-
     def test_every_url_is_absolute(self):
         for out in (self.one, self.two):
             root = ET.fromstring(read(out, 'feed.xml', 'rb'))
@@ -264,7 +258,6 @@ class Extras(unittest.TestCase):
             self.assertGreater(len(urls), 10)
             for u in urls:
                 self.assertTrue(u.startswith(SITE + '/'), u)
-
 
     def header_rules(self):
         rules, cur = [], None
@@ -308,7 +301,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(self.cache('/assets/lobby/scene.glb'), ['public, max-age=31536000, immutable'])
         for path in ('/blog/media/x.1234abcd.webp', '/blog/media/'):
             self.assertLessEqual(len(self.cache(path)), 1, path)
-
 
     def test_second_run_writes_nothing(self):
         out = self.fresh()

@@ -1,4 +1,4 @@
-// Room switching without a page load: nav link, Back button, a door, and a leak check over repeated visits.
+// Check of room switching without a page load
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { streamAbort } from './reqfail.mjs';
@@ -17,7 +17,6 @@ console.log('start        ', JSON.stringify(await state()));
 await p.click('nav a[data-room="projects"]'); await arrive('projects'); console.log('nav link     ', JSON.stringify(await state()));
 await p.goBack(); await arrive('lobby'); console.log('back button  ', JSON.stringify(await state()));
 await p.goForward(); await arrive('projects'); console.log('forward      ', JSON.stringify(await state()));
-// through doors: the Atrium's Lounge door, then the Lounge's door back (the camera follows the pointer, so home in on each first)
 async function throughDoor(label, to) {
   let x, y; const i = await p.evaluate((l) => window.__lobby.picks.findIndex((q) => q.door?.label === l), label);
   for (let n = 0; n < 4; n++) {

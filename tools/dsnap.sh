@@ -1,5 +1,5 @@
 #!/bin/bash
-# Regression snapshots on the Intel GPU.   [ORIGIN=http://host:port] [OUT=/dir] tools/dsnap.sh <prefix> name=url [...]   -> $OUT/<prefix>_<name>.png (+ screen canvases)
+# Regression snapshots on the Intel GPU
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 P="${1:?usage: tools/dsnap.sh <prefix> name=url [...]}"; shift
 OUT="${OUT:-/tmp/snap}"

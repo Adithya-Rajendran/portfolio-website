@@ -1,7 +1,4 @@
-// rooms.cross.mjs [desktop|phone|all]: links inside a hologram that lead to another room or another thing (item 7).
-//   a project's links to posts; /about/'s links to a project, to the featured post and to /contact/; a project's link to the next project (same room);
-//   a link to a file (a new tab, the station stays). After each: the station is where the link leads, the address, tab title and reader agree, and Back returns.
-// The links are read from the generated pages (what the visitor sees), not assumed. Prints FAIL lines (-v: ok lines too) and a summary; exit 1 on failure.
+// Check of travel between rooms on desktop and phone
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, open, inRoom, until, poke, snap, sources, readPick, sleep } from './rooms.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.cross'), { chk, note } = S;
 const D = await load(), { projects, posts, profile, content } = D, P_ = new Map(projects.map((p) => [p.url, p])), B_ = new Map(posts.map((p) => [p.url, p]));
@@ -15,11 +12,9 @@ async function run(name) {
   const ctx = await context(b, P), requests = []; await ctx.addInitScript(spy); ctx.on('request', (q) => requests.push(q.url()));
   const shot = (p, n) => p.screenshot({ path: `/out/rooms-${name}-cross-${n}.png` }).catch(() => {});
   const roomOf = (url) => ({ '/blog/': 'writing', '/portfolio/': 'projects', '/about/': 'about', '/experience/': 'experience', '/contact/': 'comms' })[`/${url.split('/')[1]}/`];
-  /** The state the visitor should see when `url` is being read: the room, the reader open on it, the address, the tab title, the article shown. */
   const reading = (s, url) => { const [path, hash] = url.split('#'), w = what(url), h1 = w?.title ?? ({ '/about/': profile.name, '/contact/': 'Contact', '/experience/': 'Experience', '/portfolio/': 'Projects' })[path];
     return [s.room === roomOf(url) && s.state === 'open' && s.url === url && s.path === path && s.hash === (hash ? `#${hash}` : '') && s.h1 === h1 && s.readerShown, `room ${s.room}, ${s.state}, url ${s.url}, address ${s.path}${s.hash}, title "${s.title}", h1 "${s.h1}"`]; };
   const settle = async (p, test, ms = 150000) => { let n = 0, s, t = Date.now(); for (; Date.now() - t < ms && n < 4; await sleep(400)) { s = await snap(p).catch(() => s); n = s && test(s)[0] ? n + 1 : 0; } return [s, Date.now() - t, n >= 4]; };
-  /** Open a project in Fabrication the way a visitor does (its placard or exhibit), return the page at that point. */
   async function openProject(url) {
     const p = await open(ctx, '/portfolio/', 'projects', errs), src = await sources(p), q = src.find((x) => x.url === url);
     if (!q) throw new Error(`no place offers ${url}`);
@@ -28,7 +23,6 @@ async function run(name) {
   }
   async function openAbout() { const p = await open(ctx, '/about/', 'about', errs); await poke(p, '.hero .cta', phone); await until(p, () => window.__lobby.reader.state() === 'open', null, 60000); await p.waitForTimeout(1500); return p; }
   const link = async (p, href) => { await p.evaluate((h) => document.querySelector(`#reader a[href="${h}"]`)?.scrollIntoView({ block: 'center' }), href); await p.waitForTimeout(500); return poke(p, `#reader a[href="${href}"]`, phone); };
-  /** Follow href from the open reader and check where it leads; then Back, and Forward. `origin` is the url being read first. */
   async function follow(p, tag, origin, href, { backTo = origin, backOpen = true } = {}) {
     const t0 = Date.now(), got = await link(p, href); chk(7, got === true, `${tag}: the link ${href} can be pressed`, got === true ? '' : got); if (got !== true) return;
     const [s, ms, ok] = await settle(p, (x) => reading(x, href)); await p.waitForTimeout(800);
@@ -38,7 +32,6 @@ async function run(name) {
     if (ok && href.includes('#')) { const id = href.split('#')[1], t = await p.evaluate((id) => { const e = document.querySelector(`#reader [id="${id}"]`), sc = document.querySelector('.reader-scroll'); return e ? [Math.round(e.getBoundingClientRect().top - sc.getBoundingClientRect().top), Math.round(sc.scrollTop), Math.round(sc.scrollHeight - sc.clientHeight)] : null; }, id);
       chk(7, !!t && (t[0] >= -2 && t[0] <= 120 || t[1] >= t[2] - 2), `${tag}: the page is scrolled to #${id}`, t); }
     await shot(p, `${tag.replace(/\W+/g, '-')}-opened`);
-    // Back: where the visitor was
     await p.goBack(); const test = backOpen ? (x) => reading(x, backTo) : (x) => [x.room === roomOf(backTo) && x.path === backTo.split('#')[0] && (x.state === 'closed' ? !x.readerShown : x.state === 'open' && x.readerShown && x.url === backTo), `room ${x.room}, ${x.state}, address ${x.path}${x.hash}`];
     const [b1, ms2, ok2] = await settle(p, test); await p.waitForTimeout(500);
     chk(7, ok2, `${tag}: Back returns to ${backTo}: the room, the reader and the address agree (${ms2} ms)`, ok2 ? '' : test(b1)[1]);
@@ -48,7 +41,6 @@ async function run(name) {
     chk(7, ok3, `${tag}: Forward leads to ${href} again, in agreement (${ms3} ms)`, ok3 ? '' : reading(f1, href)[1]);
   }
 
-  // a project's links to posts (homelab has four) and to other projects
   const homelab = projects.find((q) => q.slug === 'homelab'), hl = await linksOf(homelab.url);
   for (const href of hl.filter((h) => h.startsWith('/blog/') && !h.startsWith('/blog/files/'))) {
     const p = await openProject(homelab.url); await follow(p, `homelab -> ${href.split('/')[2]}`, homelab.url, href); await p.close();
@@ -56,7 +48,6 @@ async function run(name) {
   for (const [from, href] of [['gb10-memory-guard', '/portfolio/juju-agent-mcps/'], ['homelab', '/portfolio/kubernetes-cluster/']]) {
     const p = await openProject(`/portfolio/${from}/`); await follow(p, `${from} -> ${href.split('/')[2]} (same room)`, `/portfolio/${from}/`, href); await p.close();
   }
-  // /about/: a project, the featured post, the CTA to /contact/
   const al = await linksOf('/about/'), feat = `/blog/${profile.featured_post ?? 'my-homelab'}/`;
   chk(7, al.includes(feat) && al.some((h) => h.startsWith('/portfolio/')) && al.includes('/contact/'), '/about/ links to a project, the featured post and /contact/', al);
   for (const href of al.filter((h) => h.startsWith('/portfolio/') || h === feat)) {
@@ -75,14 +66,12 @@ async function run(name) {
     }
     await p.close();
   }
-  // the experience page: a project
   const xl = (await linksOf('/experience/')).filter((h) => h.startsWith('/portfolio/'));
   for (const href of xl.slice(0, 1)) {
     const p = await open(ctx, '/experience/', 'experience', errs), src = await sources(p), q = src.find((x) => x.kind === 'sphere');
     await readPick(p, phone, q.i, 'button'); await p.waitForTimeout(1500); const from = (await snap(p)).url;
     await follow(p, `experience (${from}) -> ${href}`, from, href); await p.close();
   }
-  // a file: a new tab; the station stays where it is
   {
     const url = '/blog/files/Driving-Detection-Course-Report.pdf', pr = projects.find((q) => q.slug === 'driving-detection-evaluation');
     const p = await openProject(pr.url), s0 = await snap(p), r0 = requests.length;

@@ -1,8 +1,5 @@
-"""Reading furniture builders, loaded into the room's shared-kit namespace after materials."""
-
-
+# Library reading furniture builders for the room's shared kit namespace
 def a_ladder(M=I4, grp='props', h=3.4):
-    """A rolling library ladder leaning in -x from its feet at the origin: two rails, round rungs, wheels, hooks at the top."""
     lean = 0.2; top = Vector((-h * math.sin(lean), 0, h * math.cos(lean)))
     for d in (-1, 1):
         s = Vector((0, d * 0.22, 0)); rod('ladder_rail', s, top + s, 0.022, 'wood_l', grp, M=M)
@@ -15,8 +12,6 @@ def a_ladder(M=I4, grp='props', h=3.4):
 
 
 def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6, ends=(False, False)):
-    """One bookcase bay, L between upright centres with `rows` shelves, built against the plane x = 0 and reaching s * -x into the room.
-    Uprights with a fluted face and a capital, six shelves with brass label rails and hidden lights, books, a frieze and cornice."""
     X = lambda a: -s * a; z0 = 0.14 if tier == 0 else 0.12; top = z0 + (rows - 1) * 0.62 + 0.2
     def bx(n, a, b, y0, y1, zz0, zz1, m, **kw): box(n, X(a), X(b), y0, y1, zz0, zz1, m, grp, M=M, **kw)
     out = lambda k: (-k * PROUD * ends[0], L + k * PROUD * ends[1])
@@ -31,7 +26,7 @@ def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6, ends=(Fal
             for j in range(int(L / 0.7)): bx('bay_label', 0.439, 0.441, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
             if k % 2: box('shelflight', X(0.36), X(0.4), 0.25, L - 0.25, z + 0.57, z + 0.58, em='shelf', M=M)
             _books(M, grp, s, 0.13, L - 0.13, z + 0.04)
-    for y in (0, L):                                                                    # half an upright at each end: neighbours complete it
+    for y in (0, L):
         y0, y1 = (y, y + 0.11) if y == 0 else (y - 0.11, y)
         bx('bay_upright', 0, 0.5, y0, y1, z0, top, 'wood')
         for f in range(2):
@@ -46,12 +41,7 @@ def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6, ends=(Fal
 
 def a_shelf_volume(M=I4, grp='props', *, s=1, depth=0.27, thickness=0.05, height=0.45,
                    material='book0', bands=True):
-    """Distant binding: shaped back, headcap, paper head/fore edge, two optional tooled bands.
 
-    One six-sided footprint, not the near-field board/spine assembly multiplied 4,738 times.
-    The closed covers remain the outer sides. A book-local attribute marks their thin edges
-    on the paper faces; Generated coordinates would stretch across the joined wall atlas.
-    """
     tag = 'shelf_edges_' + material
     if tag not in MAT:
         cover = MAT[material].node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value[:]
@@ -70,8 +60,8 @@ def a_shelf_volume(M=I4, grp='props', *, s=1, depth=0.27, thickness=0.05, height
         for u,y in outline:
             v=bm.verts.new((-s*u,t*y,height*h)); v[attr]=(u/D,y,h); row.append(v)
         rows.append(row)
-        bm.faces.new([row[i] for i in (0,1,4,5)]).material_index=1  # head and tail of the page block
-        bm.faces.new(row[1:5])                                       # leather headcap across the spine
+        bm.faces.new([row[i] for i in (0,1,4,5)]).material_index=1
+        bm.faces.new(row[1:5])
     for i in range(6):
         j=(i+1)%6; f=bm.faces.new((rows[0][i],rows[0][j],rows[1][j],rows[1][i])); f.material_index=int(i==5)
     ob=finish('book',bm,material,grp,M=M); ob.data.materials.append(MAT[tag])
@@ -89,13 +79,11 @@ def a_shelf_volume(M=I4, grp='props', *, s=1, depth=0.27, thickness=0.05, height
 
 
 def a_bookend(M=I4, grp='props', *, s=1):
-    """Brass bookend from its lower back corner: a vertical side and a foot extending in +y."""
     box('bookend', 0, -s * 0.18, 0, 0.012, 0, 0.2, 'brass', grp, M=M)
     box('bookend_f', -s * PROUD, -s * (0.18 - PROUD), PROUD, 0.1, 0, 0.008, 'brass', grp, M=M)
 
 
 def _books(M, grp, s, y0, y1, z, deep=0.3):
-    """Fill a shelf: runs of standing books (some with gilt bands), a few lying flat, bookends, the odd keepsake."""
     X = lambda a: -s * a; y = y0 + 0.02
     while y < y1 - 0.1:
         r = random.random()
@@ -104,7 +92,6 @@ def _books(M, grp, s, y0, y1, z, deep=0.3):
             for b in range(n):
                 t = t0 if set_ else random.uniform(0.026, 0.07); hh = h0 if set_ else random.uniform(0.32, 0.5); d = random.uniform(0.2, deep)
                 if y + t > y1 - 0.03: break
-                # Keep the fit check and the short-circuited draws in the shelf layout.
                 material = c0 if set_ else random.choice(BOOKS)
                 bands = set_ or random.random() < 0.3
                 a_shelf_volume(M @ T((X(0.05), y, z)), grp, s=s, depth=d, thickness=t, height=hh,
@@ -123,7 +110,6 @@ def _books(M, grp, s, y0, y1, z, deep=0.3):
 
 
 def _reading_loft(bm, sections, *, smooth=False, material_index=0, gilt_sections=()):
-    """Join like-sized closed outlines, leaving the two caps flat."""
     rings = [[bm.verts.new(p) for p in section] for section in sections]
     bm.faces.new(list(reversed(rings[0]))).material_index = material_index
     bm.faces.new(rings[-1]).material_index = material_index
@@ -142,7 +128,6 @@ def _clipped_rect(x0, x1, y0, y1, cut, z):
 
 def a_closed_book(M=I4, grp='props', *, size=(0.2, 0.27, 0.04), material='book0',
                   cover_name='book_cover', bevel=0.003, pages_name='book_pages'):
-    """Centred hardback, spine on -X. With no page name use a plain binding and integral paper insert."""
     w, l, t = size
     half, head, fore = t / 2, l / 2, w / 2
     board, roll = min(0.0048, t * 0.14), min(t * 0.55, w * 0.16)
@@ -152,8 +137,6 @@ def a_closed_book(M=I4, grp='props', *, size=(0.2, 0.27, 0.04), material='book0'
     detail = pages_name is not None
     cover = bmesh.new()
 
-    # The hollow back wraps over the shoulders and turns under the two boards.
-    # The short sloping returns leave a visible groove at each board hinge.
     arc = [(shoulder - roll * math.cos(a), (half - board * 0.18) * math.sin(a))
            for a in (pi * (i / 12 - 0.5) for i in range(13))]
     arc = [(shoulder + 2 * joint, -half + board * 0.62), *arc,
@@ -162,14 +145,12 @@ def a_closed_book(M=I4, grp='props', *, size=(0.2, 0.27, 0.04), material='book0'
     inner = [(x + skin, z * (1 - skin / half)) for x, z in reversed(arc)]
     fillets = [q * l for q in (-0.334, -0.303, 0.303, 0.334)] if detail else []
     ys = [-head, *(v for y in fillets for v in (y - 0.00065, y + 0.00065)), head]
-    # Smooth the leather around the curved back without rounding over the cut ends.
     _reading_loft(cover, [[(x, y, z) for x, z in arc + inner] for y in ys],
                   smooth=True, gilt_sections=range(1, len(ys) - 1, 2))
 
     for d in (-1, 1):
         heel = shoulder + joint
         chamfer = min(bevel, board * 0.22)
-        # Small clipped board corners and a real board edge, not a bevel on the whole book.
         def outline(z, pad=0.0, cut=0.0024):
             return _clipped_rect(heel + pad, fore - pad, -head + pad, head - pad, cut, d * z)
         rings = [outline(half - board, chamfer)]
@@ -182,8 +163,6 @@ def a_closed_book(M=I4, grp='props', *, size=(0.2, 0.27, 0.04), material='book0'
             rings += [outline(half, 0.009, 0.005), outline(half, 0.0103, 0.0045)]
         _reading_loft(cover, rings, gilt_sections=rule)
 
-    # A slightly hollow fore edge with a few shallow, irregular gathering lines.
-    # The head and tail are inset as well, so the squares read on all three sides.
     leaves = bmesh.new() if detail else cover
     edge = half - board * 0.91
     gathers = [(-1.0, 0.0)]
@@ -209,7 +188,6 @@ def a_closed_book(M=I4, grp='props', *, size=(0.2, 0.27, 0.04), material='book0'
 
 
 def _wing_welt(points, M, grp):
-    """Self-welt on the leading seam of the wing; thin enough not to read as trim."""
     rings = []
     for i, p in enumerate(points):
         axis = (points[min(i + 1, len(points) - 1)] - points[max(i - 1, 0)]).normalized()
@@ -224,7 +202,6 @@ def _wing_welt(points, M, grp):
 
 
 def a_armchair(M=I4, grp='props'):
-    """Wing chair facing +Y with rolled leather arms, a hardwood seat frame and a side table."""
     boxed_cushion('arm_seat', M @ T((0, 0.03, 0.4)), .70, .66, .20, 'leather', grp)
     rbox('arm_base', (0.755, 0.715, 0.107), M @ T((0, 0, 0.268)), 'leather', grp, bevel=0.022)
     frame = bmesh.new()
@@ -236,13 +213,11 @@ def a_armchair(M=I4, grp='props'):
     boxed_cushion('arm_back', back, .76, .85, .16, 'leather', grp)
 
     angles = [k * 2 * pi / 16 for k in range(16)]
-    # Along the arm: narrow lower side, full upper roll, dipped elbow and turned-down nose.
     arms = ((-.35, .382, .063, .235, .696), (-.27, .388, .079, .232, .696),
             (-.15, .391, .078, .232, .686), (-.02, .398, .075, .233, .661),
             (.12, .397, .074, .236, .645), (.226, .394, .085, .238, .653),
             (.293, .391, .093, .245, .679), (.325, .390, .083, .267, .670),
             (.343, .389, .057, .319, .640), (.350, .387, .019, .407, .597))
-    # Up the wing: a canted front lip sweeps out of the arm and returns into the back at the crown.
     wings = ((.631, .388, .047, -.400, -.161), (.698, .387, .071, -.432, -.119),
              (.781, .380, .076, -.453, -.086), (.887, .373, .072, -.467, -.071),
              (.994, .365, .068, -.480, -.067), (1.082, .354, .063, -.487, -.088),
@@ -284,7 +259,6 @@ def a_armchair(M=I4, grp='props'):
 
 
 def a_stack(M=I4, grp='props', n=5):
-    """A stack of closed books, each slightly askew."""
     z = 0
     for b in range(n):
         t = random.uniform(0.028, 0.05); w = random.uniform(0.17, 0.22); l = random.uniform(0.24, 0.3); R = T((random.uniform(-0.015, 0.015), random.uniform(-0.015, 0.015), z + t / 2), (0, 0, random.uniform(-0.3, 0.3)))
@@ -303,7 +277,6 @@ def _reading_patch(bm, points, *, smooth=True, accent_cols=()):
 
 
 def _folio_paper():
-    """Own illustration, ink on paper. A mesh attribute survives the lightmap UV unwrap."""
     if 'folio_paper' not in MAT:
         m = mat('folio_paper', (.82,.76,.65), .86)
         nt = m.node_tree; coord = nt.nodes.new('ShaderNodeAttribute'); coord.attribute_name = 'folio_xy'
@@ -314,9 +287,8 @@ def _folio_paper():
 
 
 def a_openbook(M=I4, grp='props'):
-    """An illustrated field atlas lying on its boards, with leaves rising out of the sewn gutter."""
     material = random.choice(BOOKS)
-    random.choice(BOOKS)  # Preserve the rooms' seeded layout; the two boards now belong to one case.
+    random.choice(BOOKS)
     for d in (-1, 1):
         box('open_cover', d * .007, d * .202, -.14, .14, 0, .006, material, grp,
             bevel=.001, M=M)
@@ -328,7 +300,6 @@ def a_openbook(M=I4, grp='props'):
     finish('open_spine', spine, material, grp, M=M)
 
     def leaf(d, u, v, f, recess=0.0):
-        # u runs from the gutter to the fore edge, v from tail to head, f through the pile.
         x = d * (.0011 + u * (.191 - .0026 * v * v) + (.0018 * f**3 - recess) * u**5)
         y = v * (.1315 - .003 * u * (1 - u) + .0012 * f * f - recess)
         bottom = .006 + .003 * (1 - u)**2
@@ -338,14 +309,11 @@ def a_openbook(M=I4, grp='props'):
 
     us = (0, .035, .085, .15, .23, .34, .47, .61, .75, .88, 1)
     vs = (-1, -.52, 0, .52, 1)
-    # The page edges have only a few subtle gathering lines and a slightly free upper leaf.
     rim = ((0, 0), (.24, 0), (.28, .00035), (.33, 0), (.52, 0), (.57, .00046),
            (.62, 0), (.78, 0), (.83, .00036), (.89, 0), (.95, .00075), (1, 0))
     for d in (-1, 1):
         pages = bmesh.new()
         _reading_patch(pages, [[leaf(d, u, v, 0) for v in vs] for u in us])
-        # Give the printed faces their own atlas; at the book inspect distance a whole spread
-        # must not be reduced to a few dozen texels in a roomful of furniture.
         sheet = bmesh.new(); coords = sheet.verts.layers.float_vector.new('folio_xy'); grid = []
         for u in us:
             row = []
@@ -362,7 +330,6 @@ def a_openbook(M=I4, grp='props'):
             _reading_patch(pages, [[leaf(d, u, v, f, r) for v in vs] for f, r in rim], smooth=False)
         finish('open_pages', pages, 'paper', grp, M=M)
 
-    # Bookmark follows the right leaf before it rounds the tail and lies on the table.
     ribbon = bmesh.new()
     path = []
     for i in range(12):

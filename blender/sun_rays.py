@@ -1,14 +1,11 @@
-"""Which objects block the sun at given points? Ray-casts the built scene toward the authored sun direction.
-  blender -b lobby.blend -P sun_rays.py -- x0 x1 y0 y1 z nx ny      (Blender metres; a grid of nx*ny points at height z)
-Prints a character map (. lit, letter = first blocking object) and the legend. Ignores objects hidden from render.
-"""
+# List of the objects that block the sun at given points
 import bpy, sys
 from mathutils import Vector
 a = sys.argv[sys.argv.index('--') + 1:]
 x0, x1, y0, y1, z = map(float, a[:5]); nx, ny = int(a[5]), int(a[6])
 s = bpy.context.scene; deps = bpy.context.evaluated_depsgraph_get()
 sun = next(o for o in s.objects if o.type == 'LIGHT' and o.data.type == 'SUN')
-d = (sun.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized()   # toward the sun
+d = (sun.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized()
 print('SUN direction', tuple(round(c, 4) for c in d), 'elevation %.2f deg' % (__import__('math').degrees(__import__('math').asin(d.z))))
 names, rows = {}, []
 for j in range(ny):

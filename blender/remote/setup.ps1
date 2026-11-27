@@ -1,3 +1,4 @@
+# Blender download and setup on the bake machine
 $ErrorActionPreference = 'Stop'
 $root = "$HOME\lobby-bake"
 New-Item -ItemType Directory -Force -Path $root | Out-Null

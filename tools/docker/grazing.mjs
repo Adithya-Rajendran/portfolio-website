@@ -1,5 +1,4 @@
-// Photograph the same lit tabletop in two REAL releases. No lighting uniforms are overridden.
-// node grazing.mjs BEFORE_ORIGIN AFTER_ORIGIN shots/diagnostics
+// Photographs of the same lit tabletop in two releases
 import {chromium} from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';

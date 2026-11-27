@@ -1,4 +1,4 @@
-// What a visitor on this GPU gets: nothing pinned, the browser's own vsync.  node unpinned.mjs <url> [secs] [w] [h] [dpr]
+// Visit with nothing pinned and the vsync of the browser, on this GPU
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

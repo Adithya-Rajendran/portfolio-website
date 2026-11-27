@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Static server for public/ that makes browsers revalidate every file (plain http.server lets them keep stale
-textures and scripts for days).   tools/serve.py <bind address> <port>"""
+# Static server for public/ that makes browsers revalidate every file
 import http.server, os, sys
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header('Cache-Control', 'no-cache')      # cached copies are reused only after a 304 from here
+        self.send_header('Cache-Control', 'no-cache')
         super().end_headers()
     def log_message(self, *a): pass
 

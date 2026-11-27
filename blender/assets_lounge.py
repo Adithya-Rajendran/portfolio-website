@@ -1,10 +1,6 @@
-"""Lounge furniture builders, loaded into the room's shared-kit namespace."""
-
-
+# Observation Lounge furniture builders for the room's shared kit namespace
 def a_coffee_table(M=I4, grp='props'):
-    """Walnut top, rails and turned legs, with the origin at the floor centre."""
     box('table_top', -0.75, 0.75, -0.85, 0.85, 0.34, 0.38, 'wood_l', grp, bevel=0.012, M=M)
-    # Mortised aprons meet the four turned legs instead of a solid box underneath.
     for x in (-0.68, 0.68):
         box('table_apron', x - 0.016, x + 0.016, -0.78, 0.78, 0.261, 0.34, 'wood', grp, bevel=0.004, M=M)
     for y in (-0.78, 0.78):
@@ -15,7 +11,6 @@ def a_coffee_table(M=I4, grp='props'):
 
 
 def a_sideboard(M=I4, grp='props'):
-    """Cabinet including pulls and feet; origin on the wall at floor level, facing -x."""
     box('sideboard', -0.6, -0.02, -2.2, 2.2, 0.12, 0.85, 'wood', grp, bevel=0.012, M=M)
     box('sideboard_top', -0.63, -0.02, -2.25, 2.25, 0.85, 0.89, 'wood_l', grp, bevel=0.008, M=M)
     for k in range(4):
@@ -32,10 +27,7 @@ def a_sideboard(M=I4, grp='props'):
 
 
 def a_sofa_body(M=I4, grp='props', *, name='sofaL', L=2.8, face=1):
-    """Low sofa along y, facing face * x, with its origin at the floor centre.
 
-    The original feet belong to the body; the additional trim is placed separately.
-    """
     y0, y1 = -L / 2, L / 2
     b = -face * 0.5
     box(name + 'base', -0.5, 0.5, y0, y1, 0.08, 0.22, 'wood', grp, M=M)
@@ -57,10 +49,7 @@ def a_sofa_body(M=I4, grp='props', *, name='sofaL', L=2.8, face=1):
 
 
 def a_telescope(M=I4, grp='props', target=(-5.6, 8.1, 4.6)):
-    """Brass telescope with the tripod centred at the local floor origin.
 
-    Target is a point in the asset's local coordinates, sighted from the tripod head.
-    """
     head = Vector((0, 0, 1.45))
     for a in range(3):
         ang = a * 2 * pi / 3 + 0.3

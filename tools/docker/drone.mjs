@@ -1,9 +1,8 @@
-// Library end to end: the two actual requested volumes open, then Escape sends the empty drone home.
-// node drone.mjs ['http://HOST/blog/' [/out]]   (tools/dtest.sh drone.mjs: the defaults are this checkout's Library and /out)
+// Library drone check from end to end
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { streamAbort } from './reqfail.mjs';
-const [url_, out_] = process.argv.slice(2), url = url_ || `${process.env.ORIGIN || 'http://127.0.0.1:8080'}/blog/`, out = out_ || '/out';      // (dtest.sh passes an empty argument when there is none)
+const [url_, out_] = process.argv.slice(2), url = url_ || `${process.env.ORIGIN || 'http://127.0.0.1:8080'}/blog/`, out = out_ || '/out';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
 const p = await b.newPage({ viewport: { width: 1600, height: 900 } }), errors=[];
@@ -20,7 +19,7 @@ await p.evaluate(()=>{const root=window.__lobby.scene.getObjectByName('Catalogue
 const delivered=k=>p.waitForFunction(which=>{const s=window.__volumeState();return s.volume===which&&s.count===1&&s.pages===2;},k,{timeout:90000});
 await p.waitForTimeout(2500); await p.screenshot({ path: `${out}/drone0.png` });
 await p.click('#ways button[data-option="1"]');
-const now = () => p.evaluate(async () => (await import('/js/kit.js')).uTime.value);      // the station's own clock: frames are capped, so a slow machine still sees the same flight
+const now = () => p.evaluate(async () => (await import('/js/kit.js')).uTime.value);
 const t0 = await now();
 for (const [k, s] of [[1, 1.0], [2, 2.0]]) { await p.waitForFunction(async ([t0, s]) => (await import('/js/kit.js')).uTime.value - t0 >= s, [t0, s], { timeout: 90000, polling: 100 }); await p.screenshot({path:`${out}/drone${k}.png`}); }
 await delivered(1); console.log('Presented 02', ((await now()) - t0).toFixed(2), 's of the station (screenshots included; cue.mjs times the errand without them)',await p.evaluate(()=>window.__volumeState())); await p.screenshot({path:`${out}/drone3.png`});

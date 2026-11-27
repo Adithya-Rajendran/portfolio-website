@@ -1,12 +1,9 @@
-"""Tests for tools/site.py's posts, on the fixture tools/testdata/posts/every-construct.md, written into temporary
-folders beside the pages of the real projects and profile (tools/test_site_pages.py tests those, on their fixtures).
-    python3 -m unittest tools/test_site.py          (from the repository root; -v lists each test)
-Needs cwebp under ~/.local/opt/webp like site.py itself; the images are encoded once and copied between runs."""
+# Tests for the posts that tools/site.py writes
 import contextlib, importlib.util, io, json, os, random, re, shutil, tempfile, time, unittest
 from html.parser import HTMLParser
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
-spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))   # `import site` is Python's
+spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))
 s = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s)
 FIXTURE = os.path.join(TOOLS, 'testdata', 'posts')
@@ -39,7 +36,6 @@ class Node:
 
 
 class Tree(HTMLParser):
-    """A DOM from html.parser that records every unbalanced tag and every id."""
     def __init__(self, text):
         super().__init__(convert_charrefs=True)
         self.root = self.cur = Node('#root', {})
@@ -72,7 +68,6 @@ class Tree(HTMLParser):
 
 
 def generate(posts, out):
-    """Run site.py's main(); return what it printed."""
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
         s.main(['--posts', posts, '--out', out])
@@ -105,7 +100,6 @@ class Site(unittest.TestCase):
         shutil.rmtree(cls.tmp)
 
     def fresh_out(self):
-        """A copy of the generated output (encoded images included, so runs into it do not re-encode)."""
         out = tempfile.mkdtemp(dir=self.tmp)
         shutil.copytree(self.out, out, dirs_exist_ok=True)
         return out
@@ -117,8 +111,6 @@ class Site(unittest.TestCase):
             with open(os.path.join(d, f'{slug}.md'), 'w', encoding='utf-8') as f:
                 f.write(text)
         return d
-
-    # ------------------------------------------------------------ the fixture's page
 
     def test_every_construct(self):
         main = self.html[self.html.index('<main id="page">'):self.html.index('</main>') + 7]
@@ -159,7 +151,7 @@ class Site(unittest.TestCase):
             with open(os.path.join(self.out, 'blog', page), encoding='utf-8') as f:
                 m = pattern.fullmatch(f.read())
             self.assertTrue(m, page)
-            self.assertNotIn('<', m[1])                     # the title is text
+            self.assertNotIn('<', m[1])
             self.assertTrue(m[3].startswith('<main id="page">') and m[3].endswith('</main>'))
 
     def test_well_formed_and_unique_ids(self):
@@ -170,7 +162,7 @@ class Site(unittest.TestCase):
                         t = Tree(fh.read())
                     self.assertEqual(t.errors, [], f)
                     self.assertEqual(len(t.ids), len(set(t.ids)), f)
-                    scripts = [n.attrs.get('type') or '' for n in t.root.all('script')]   # the shell's three (one is its untyped mode switch), and JSON-LD
+                    scripts = [n.attrs.get('type') or '' for n in t.root.all('script')]
                     self.assertEqual(sorted(scripts), ['', 'application/ld+json', 'importmap', 'module'], f)
 
     def test_heading_ids(self):
@@ -183,7 +175,6 @@ class Site(unittest.TestCase):
         self.assertEqual(doc.sections[-1], {'id': 'its-a-b-c', 'title': "It's a B: C!", 'level': 2})
 
     def test_heading_ids_avoid_the_pages_ids(self):
-        """Not the shell's ids, the article's (page), nor those the scripts add at run time (RUNTIME_IDS)."""
         post = ('---\ntitle: "Ids"\ndescription: "Headings named like parts of the page."\npublished: 2026-03-01\n---\n\n'
                 '## Reader\n\n## Step in\n\n## Stepin\n\n## Page\n\n## Reader\n')
         out = self.fresh_out()
@@ -195,12 +186,12 @@ class Site(unittest.TestCase):
             t = Tree(f.read())
         self.assertEqual(len(t.ids), len(set(t.ids)))
         self.assertFalse(set(t.ids) & set(s.RUNTIME_IDS))
-        made = set()                                       # the ids the scripts give the elements they create
+        made = set()
         for js in [os.path.join(s.ROOT, 'public', 'main.js')] + [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(s.ROOT, 'public', 'js'))
                                                                 for f in fs if f.endswith('.js') and 'vendor' not in d]:
             with open(js, encoding='utf-8') as f:
                 js_text = f.read()
-                made |= set(re.findall(r"(?:createElement|cloneNode)\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))   # ... or write as markup
+                made |= set(re.findall(r"(?:createElement|cloneNode)\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))
         self.assertEqual(made, set(s.RUNTIME_IDS))
 
     def test_nested_lists(self):
@@ -230,12 +221,10 @@ class Site(unittest.TestCase):
             self.assertEqual((img.attrs['width'], img.attrs['height']), (str(w), str(h)))
             self.assertLessEqual(max(w, h), 1600)
             self.assertTrue(img.attrs['src'].endswith('.webp'))
-        self.assertEqual((imgs[0].attrs['width'], imgs[0].attrs['height']), ('1200', '1600'))   # EXIF orientation applied
+        self.assertEqual((imgs[0].attrs['width'], imgs[0].attrs['height']), ('1200', '1600'))
         rack = os.path.join(self.out, 'blog', 'media', imgs[0].attrs['src'].rsplit('/', 1)[1])
         with open(rack, 'rb') as f:
             self.assertNotIn(b'EXIF', f.read())
-        # The right size is not enough: the photo is stored on its side. Compare a thumbnail of the output with the
-        # source turned upright, and with the source merely squeezed into the same box.
         def pixels(*cmd):
             ppm = os.path.join(self.tmp, 'thumb.ppm')
             s.run(f'{s.WEBP}/dwebp', '-quiet', '-ppm', *cmd, '-o', ppm)
@@ -254,10 +243,10 @@ class Site(unittest.TestCase):
         diff = lambda a, b: sum(abs(x - y) for x, y in zip(a, b)) / len(a)
         self.assertLess(diff(out, via(40, 30, True)) * 3, diff(out, via(30, 40, False)))
         with open(os.path.join(s.DATA, 'assets', 'images', CARD), 'rb') as a, open(os.path.join(self.out, 'blog', 'media', CARD), 'rb') as b:
-            self.assertEqual(a.read(), b.read())                # the social card is copied unchanged
+            self.assertEqual(a.read(), b.read())
 
     def test_orient(self):
-        ppm = os.path.join(self.tmp, 'o.ppm')                   # 3x2: pixel values 1..6, read left to right, top down
+        ppm = os.path.join(self.tmp, 'o.ppm')
         for o, want in {1: (3, 2, [1, 2, 3, 4, 5, 6]), 6: (2, 3, [4, 1, 5, 2, 6, 3]), 8: (2, 3, [3, 6, 2, 5, 1, 4]),
                         3: (3, 2, [6, 5, 4, 3, 2, 1]), 2: (3, 2, [3, 2, 1, 6, 5, 4]), 4: (3, 2, [4, 5, 6, 1, 2, 3]),
                         5: (2, 3, [1, 4, 2, 5, 3, 6]), 7: (2, 3, [6, 3, 5, 2, 4, 1])}.items():
@@ -268,8 +257,6 @@ class Site(unittest.TestCase):
                 d = f.read()
             head = f'P6\n{want[0]} {want[1]}\n255\n'.encode()
             self.assertEqual(d, head + bytes(v for i in want[2] for v in (i, i, i)), o)
-
-    # ------------------------------------------------------------ escaping and links
 
     def test_escaping(self):
         self.assertEqual(s.escape('< > & " \''), '&lt; &gt; &amp; &quot; &#x27;')
@@ -307,7 +294,7 @@ class Site(unittest.TestCase):
         with open(os.path.join(s.DATA, 'assets', 'files', '8b46b93f83223a11d762796f2775bb697b0a94ce.yaml'), 'rb') as a, \
              open(os.path.join(self.out, 'blog', 'files', 'gui-lxd-profile.yaml'), 'rb') as b:
             self.assertEqual(a.read(), b.read())
-        self.assertNotIn('javascript:', self.html.lower())           # the scheme, anywhere (the shell's own text may say the word)
+        self.assertNotIn('javascript:', self.html.lower())
 
     def test_errors_name_post_and_line(self):
         for md, line, words in [('para\n\n# One', 3, 'only h1'), ('#### Four', 1, '## and ###'), ('```js\nx\n```', 1, 'unknown code language'),
@@ -323,8 +310,6 @@ class Site(unittest.TestCase):
     def test_human_date(self):
         self.assertEqual([s.human_date(d) for d in ('2026-03-30', '2026-02-01', '2025-12-09')],
                          ['30 March 2026', '1 February 2026', '9 December 2025'])
-
-    # ------------------------------------------------------------ the list and index.json
 
     def test_index_json_and_list(self):
         with open(os.path.join(self.out, 'blog', 'index.json'), encoding='utf-8') as f:
@@ -347,17 +332,15 @@ class Site(unittest.TestCase):
 
     def test_no_posts(self):
         empty, out = tempfile.mkdtemp(dir=self.tmp), tempfile.mkdtemp(dir=self.tmp)
-        generate(empty, out)                               # blog/files/ holds what the projects link (§8)
+        generate(empty, out)
         self.assertEqual(sorted(set(os.listdir(os.path.join(out, 'blog'))) - {'files'}), ['index.html', 'index.json'])
         with open(os.path.join(out, 'blog', 'index.json'), encoding='utf-8') as f:
             self.assertEqual(json.load(f)['posts'], [])
 
-    # ------------------------------------------------------------ writing
-
     def test_second_run_writes_nothing(self):
-        n = len(re.findall(r'^wrote (?!feed|sitemap|llms|_redirects|resume/)', self.log, re.M))   # site.py's, not site_extras'
+        n = len(re.findall(r'^wrote (?!feed|sitemap|llms|_redirects|resume/)', self.log, re.M))
         self.assertIn(f'{n} written, 0 unchanged, 0 removed', self.log)
-        self.assertGreater(n, 7)                           # the post's 7, the record, and the projects' and profile's
+        self.assertGreater(n, 7)
         out = self.fresh_out()
         before = snapshot(out)
         log = generate(FIXTURE, out)
@@ -365,14 +348,14 @@ class Site(unittest.TestCase):
         self.assertEqual(snapshot(out), before)
 
     def test_removed_post_is_removed(self):
-        other = ('---\ntitle: "Other"\ndescription: "Another post."\npublished: 2026-02-10\n---\n'   # an image and a file no project uses
+        other = ('---\ntitle: "Other"\ndescription: "Another post."\npublished: 2026-02-10\n---\n'
                  '![A photo.](../assets/images/b70060c0abca9a0239f186395795e2e8fb2538cb-3000x4000.jpg)\n\n'
                  'A [CV](../assets/files/e70b01e95fdcf9f4e5d8ad06a0e32b28f62060c2.pdf).\n')
         posts, out = self.posts_dir(other=other), self.fresh_out()
         generate(posts, out)
         made = snapshot(out)
         mine = [p for p in made if p not in snapshot(self.out)]
-        self.assertEqual(len(mine), 3, mine)                   # the page, its image and its file
+        self.assertEqual(len(mine), 3, mine)
         self.assertIn(os.path.join('blog', 'other', 'index.html'), mine)
         with open(os.path.join(out, 'blog', 'index.json'), encoding='utf-8') as f:
             self.assertEqual([p['slug'] for p in json.load(f)['posts']], ['other', 'every-construct'])
@@ -385,7 +368,6 @@ class Site(unittest.TestCase):
         self.assertEqual(set(snapshot(out)), set(snapshot(self.out)))
 
     def test_writes_only_inside_out(self):
-        """A name from the data cannot put a file outside --out: content.py refuses it, and out_path would too."""
         base = tempfile.mkdtemp(dir=self.tmp)
         out = os.path.join(base, 'x', 'out')
         bad = ('---\ntitle: "Bad"\ndescription: "Escapes."\npublished: 2026-03-01\n'
@@ -402,7 +384,7 @@ class Site(unittest.TestCase):
         self.assertEqual(s.out_path(out, 'blog/media/a.png'), os.path.join(os.path.realpath(out), 'blog', 'media', 'a.png'))
         with self.assertRaises(s.ContentError):
             s.write_outputs(out, {'blog/index.json': b'{}', 'blog/../../escaped': b'x'})
-        self.assertEqual(os.listdir(out), ['up'])               # checked before the first write
+        self.assertEqual(os.listdir(out), ['up'])
 
     def test_bad_post_writes_nothing(self):
         bad = '---\ntitle: "Bad"\ndescription: "Broken."\npublished: 2026-03-01\n---\n\nFine.\n\n#### Too deep\n'
@@ -417,14 +399,13 @@ class Site(unittest.TestCase):
 
 
 class InlineParser(unittest.TestCase):
-    """The inline parser takes linear time and renders what the earlier, recursive one did (OldInline, below)."""
 
     def fast(self, text, want, limit=1.0):
         t = time.perf_counter()
         got = s.render_inline(text, s.Doc('t.md', 1), 1)
         took = time.perf_counter() - t
         self.assertLess(took, limit, f'{text[:30]!r}... took {took:.2f} s')
-        if got != want:                                            # (assertEqual's diff of such strings takes minutes)
+        if got != want:
             at = next((i for i, (a, b) in enumerate(zip(got, want)) if a != b), min(len(got), len(want)))
             self.fail(f'{text[:30]!r}...: differs at {at}: {got[at - 20:at + 40]!r} instead of {want[at - 20:at + 40]!r}')
 
@@ -434,27 +415,26 @@ class InlineParser(unittest.TestCase):
             self.fast(text, s.escape(text))
 
     def test_long_runs(self):
-        ticks = ''.join('`' * k + 'a' for k in range(1, 100))      # every run a different length: no code span
+        ticks = ''.join('`' * k + 'a' for k in range(1, 100))
         for text in ('`' * 5000, ticks, '[' * 5000, ']' * 5000, '[]' * 2500, '[' * 2500 + ']' * 2500, '[a](' * 2000,
                      '[a](b ' * 2000, '((' * 2500 + '[a](' + '(' * 5000):
             self.fast(text, s.escape(text))
-        self.fast('\\\\' * 2500 + '\\', '\\' * 2501)               # each pair is one escaped backslash
+        self.fast('\\\\' * 2500 + '\\', '\\' * 2501)
         self.fast('\\[' * 2000 + '](x' * 2000, '[' * 2000 + '](x' * 2000)
         self.fast('\\*' * 2500, '*' * 2500)
-        self.fast('` ' * 2500, '<code> </code> ' * 1250)                 # a space between each pair of backticks
+        self.fast('` ' * 2500, '<code> </code> ' * 1250)
         self.fast('[a](/b)' * 2000, '<a href="/b">a</a>' * 2000)
 
     def test_emphasis_at_scale(self):
         self.fast('**a *b* c** ' * 2000, '<strong>a <em>b</em> c</strong> ' * 2000)
         self.fast('a*' * 5000, 'a<em>a</em>' * 2500)
         text, want = 'x', 'x'
-        for k in range(1000):                                      # *a **a *a ... x ... b* b** b*, 1000 deep
+        for k in range(1000):
             d, tag = ('**', 'strong') if k % 2 else ('*', 'em')
             text, want = f'{d}a {text} b{d}', f'<{tag}>a {want} b</{tag}>'
         self.fast(text, want)
 
     def test_same_as_the_recursive_parser(self):
-        """Short random strings, where the old parser is fast: the same HTML, the same error, the same warnings."""
         def render(make, text):
             doc = s.Doc('t.md', 1)
             try:
@@ -472,13 +452,6 @@ class InlineParser(unittest.TestCase):
 
 ESCAPABLE = s.ESCAPABLE
 class OldInline:
-    """tools/site.py's inline parser before it was made linear (exponential in unclosed `*`), kept as the oracle.
-    The inline subset: `code`, **strong**, *emphasis*, [text](url), and \\ before * _ \\ ` [ ].
-    Parsed to nodes, written as HTML or as plain text (for ids, section titles and the feed).
-    Outside the subset, as plain text: a * or ` with no partner (as in CommonMark), _ (no underscore emphasis: it is
-    in file and variable names), raw HTML and entities (`<b>` and `&amp;` are shown as typed), autolinks, ~~, hard
-    line breaks, and a backslash before any other character. An error: an image that is not alone in its paragraph,
-    a link with a title."""
     def __init__(self, text, doc, line=None, links=True):
         self.s, self.doc, self.line, self.links = text, doc, line, links
 
@@ -486,7 +459,6 @@ class OldInline:
         return self.line + self.s.count('\n', 0, i) if self.line else None
 
     def parse(self, i=0, closer=None, end=None):
-        """-> (nodes, index after, closed). Stops at `closer` ('*' or '**') when one can close here."""
         s, end = self.s, len(self.s) if end is None else end
         nodes, buf = [], []
         def flush():
@@ -500,7 +472,7 @@ class OldInline:
             elif c == '`':
                 k = self._run(i, '`', end)
                 j = i + k
-                while True:                                # the closing run has exactly as many backticks
+                while True:
                     j = s.find('`', j, end)
                     if j < 0 or self._run(j, '`', end) == k:
                         break
@@ -522,7 +494,7 @@ class OldInline:
                 if can_open:
                     d = '**' if k >= 2 else '*'
                     inner, j, closed = self.parse(i + len(d), d, end)
-                    if not closed and closer == '*' and can_close:   # `*a**` : this run closes the outer emphasis
+                    if not closed and closer == '*' and can_close:
                         flush()
                         return nodes, i + 1, True
                     if closed and inner:
@@ -545,9 +517,8 @@ class OldInline:
         return j - i
 
     def _link(self, i, end):
-        """[text](url) starting at i -> (node, index after), or None when it is not a link (then '[' is text)."""
         s, depth, j = self.s, 0, i
-        while j < end:                                     # the matching ']', skipping escapes and code spans
+        while j < end:
             c = s[j]
             if c == '\\':
                 j += 2; continue
@@ -562,7 +533,7 @@ class OldInline:
             j += 1
         if j >= end or not s.startswith('](', j):
             return None
-        k, depth = j + 2, 0                                # the destination: no spaces, parentheses balanced
+        k, depth = j + 2, 0
         while k < end and not s[k].isspace():
             depth += (s[k] == '(') - (s[k] == ')')
             if depth < 0:

@@ -1,6 +1,4 @@
-// Photograph exact camera poses through the site's real render path (?lightcheck: room.update, sun prepass, live
-// reflection capture, mirror, post). node poses.mjs URL out-dir room 'name:ex,ey,ez:tx,ty,tz' ... [--q=extra&params]
-// Coordinates are three.js world metres (Blender x, z, -y). Fails on any page error or failed request.
+// Photographs of exact camera poses through the real render path of the site
 import { chromium } from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';
@@ -17,7 +15,7 @@ try {
   p.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
   const u = new URL(base), q = new URLSearchParams(`lightcheck=1&shot=hero&tier=0&scale=1&rollat=0&chand=0&grain=0`);
   u.pathname = ROOM_PATH[room];
-  for (const [k, v] of new URLSearchParams(extra)) q.set(k, v);                // extras override the defaults
+  for (const [k, v] of new URLSearchParams(extra)) q.set(k, v);
   u.search = `${q}`;
   await p.goto(u.href); await p.waitForFunction((r) => window.__lobby?.mode().room === r && document.querySelector('#loader.done'), room, { timeout: 180000 });
   for (const spec of specs) {

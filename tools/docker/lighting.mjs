@@ -1,5 +1,4 @@
-// Check actual packed lighting, not just different screenshots of different views.
-// node lighting.mjs URL [output-directory] [spec|shadow|caster|all]
+// Check of the packed lighting from the same physical points in each camera
 import { chromium } from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import assert from 'node:assert/strict';
@@ -33,7 +32,6 @@ try {
             if(wantImages&&on)images[`${prefix}-${j}`]=l.renderer.domElement.toDataURL();return px;};
           const a=read(1),c=read(0);for(const u of group)u.value=1;
           const s=[];for(let iz=0;iz<13;iz++)for(let ix=0;ix<19;ix++){
-            // Project the SAME physical points on the flat glass chart / floor into each camera.
             const v=new Vector3(patch[0]+ix*patch[1]/18,patch[2],patch[3]+iz*patch[4]/12).project(l.camera);
             if(Math.abs(v.x)>.98||Math.abs(v.y)>.98){s.push(null);continue;}
             const i=4*(Math.floor((v.y+1)*H/2)*W+Math.floor((v.x+1)*W/2));s.push([0,1,2].map(k=>a[i+k]-c[i+k]));
@@ -45,8 +43,6 @@ try {
       }
       const polished=measure('uSpecGain',[[-1.1,1.34,4.2],[1.45,1.66,3.8]],[0,.624,2.14],[-.8,1.6,.624,1.55,1.0],'dial');
       const planar=measure('uFloorRefl',[[-1.8,1.55,6.9],[1.55,1.58,7.0]],[0,0,4.8],[-1.05,2.1,.002,4.30,1.0],'floor');
-      // A lamp visible ONLY in the reflection should land at the projection of its virtual
-      // image across the plane. Brightness differences alone cannot detect a reversed mirror.
       function landmark(plane,pos,eyes,target,onChart){
         const mat=new T.ShaderMaterial({uniforms:{uMirror},vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`uniform float uMirror;void main(){${onChart?'':'if(uMirror<.5)discard;'}gl_FragColor=vec4(8.,0.,0.,1.);}`});
         const o=new T.Mesh(new T.SphereGeometry(.042,16,10),mat);o.position.fromArray(pos);if(onChart)o.layers.set(2);l.scene.add(o);
@@ -79,8 +75,6 @@ try {
       const images={},snap=(eye,at,t,name)=>{l.lightFrame(eye,at,t);if(wantImages)images[name]=R.domElement.toDataURL();return {map:read(0),floor:read(1),vp:u.uSunVP.value.toArray()};};
       const a=snap([0,1.55,3.9],[0,1.05,-3],0,'sun-rest'),v=snap([-1.6,1.85,2.8],[0,.8,-2.5],0,'sun-other-eye'),z=snap([0,1.55,3.9],[0,1.05,-3],18,'sun-rotated');
       const delta=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1])n++;return n;};
-      // Separate a true contact shadow from self-shadowing stripes at grazing incidence.
-      // Only this known flat coupon casts into the real window map; no geometry can shadow it.
       const saved=[];l.scene.traverse(o=>{if(o.isMesh&&(o.layers.mask&2)){saved.push(o);o.layers.disable(1);}});
       const cardMat=new T.MeshBasicMaterial(),coupon=new T.Mesh(new T.PlaneGeometry(4,4).rotateX(-Math.PI/2),cardMat),block=new T.Mesh(new T.BoxGeometry(.24,.25,.24),cardMat);
       coupon.position.set(0,.85,-2);block.position.set(0,.975,-2);coupon.layers.set(1);block.layers.set(1);l.scene.add(coupon);
@@ -107,15 +101,12 @@ try {
       function depths(){const a=new Uint8Array(S*S*4);R.setRenderTarget(rt);R.render(sc,cam);R.readRenderTargetPixels(rt,0,0,S,S,a);R.setRenderTarget(null);return a;}
       function caster(t){root.visible=true;frame(t);const a=depths();root.visible=false;frame(t);const b=depths();root.visible=true;
         const mask=new Uint8Array(S*S);for(let i=0;i<mask.length;i++)mask[i]=+(a[i*4]*256+a[i*4+1]<b[i*4]*256+b[i*4+1]);return mask;}
-      // A/B only the directional term on the actual PBR meshes, with the SAME depth map and PMREM.
       root.traverse(o=>{if(o.material?.isMeshStandardMaterial){o.layers.enable(3);if(!o.material.transparent)o.layers.enable(4);}});
       const received=t=>{const trg=root.position.clone(),eye=trg.clone().add(new T.Vector3(.55,.6,-1.15));l.lightFrame(eye.toArray(),trg.toArray(),t);
         const rt2=new T.WebGLRenderTarget(256,256),E=u.uSunE.value.clone(),bg=l.scene.background;l.camera.layers.set(3);l.scene.background=new T.Color(0);
         const read=()=>{const a=new Uint8Array(256*256*4);R.setRenderTarget(rt2);R.render(l.scene,l.camera);R.readRenderTargetPixels(rt2,0,0,256,256,a);return a;};const a=read();u.uSunE.value.setScalar(0);const b=read();u.uSunE.value.copy(E);R.setRenderTarget(null);rt2.dispose();l.scene.background=bg;l.camera.layers.set(0);
         let n=0;for(let i=0;i<a.length;i+=4)if(a[i]-b[i]>2||a[i+1]-b[i+1]>2||a[i+2]-b[i+2]>2)n++;return n;};
       const a=caster(0),atRest=received(0);
-      // The planar floor reads distance from reflection alpha to blur a distant object
-      // more than a contact. Check the actual opaque PBR material against ray/mesh hits.
       const probeRT=new T.WebGLRenderTarget(192,192,{type:T.HalfFloatType}),rc=new T.Raycaster(),distErrors=[];
       const oldBg=l.scene.background;l.scene.background=new T.Color(0);l.camera.layers.set(4);rc.layers.set(4);uMirror.value=1;R.setRenderTarget(probeRT);R.render(l.scene,l.camera);
       for(const x of [85,91,96,101,107])for(const y of [85,91,96,101,107]){

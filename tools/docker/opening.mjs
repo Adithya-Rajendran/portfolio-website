@@ -1,13 +1,4 @@
-// opening.mjs [desktop|phone|reduced|all]: the reader's ways of opening (js/reader.js, js/opening/): each asked for in the room where it applies, and what shows while it works.
-//   F  Fabrication: an exhibit is scanned flat (READ, then SCANNING: ScanFan and ScanSheet); no wall card is a source; "ALL n PROJECTS" is RECEIVED: no READ glyph at any time, no
-//      ScanFan, ScanSheet or ReadBeam, ReadFlow shows while it arrives (not with reduced motion); after CLOSE nothing is offered (the READ pick is not live), and the button opens it
-//      again; a project with no exhibit, read by address, is received the same way
-//   L  the Lounge: the books are scanned as things with a shape: two ScanBody and a ScanFan to each, no ScanSheet; the glyph never says SCANNING; the pick's bounds() are the books'
-//      corners (scene.json focus[0].boxes); the display's lock lies round the books, with the pointer anywhere on them while the view sways (desktop); a press on each book reaches it
-//   N  Navigation: READ is offered under a station; asked, the glyph shuts saying READ (never SCANNING), no ScanFan, ScanSheet or ScanBody at any time, ReadPrint shows, the station's
-//      sheet is dark while its print is carried and while it is read, the words come; CLOSE part-way folds the frame where it is, and every sheet has its light back
-//   reduced motion, in each: the page of words is in its place from the first moment it shows (the recorder's astray: never outside the viewport)
-// "ok" / "FAIL [profile item] what"; exit code 1 if any check failed. Frames are slow here: everything waits on a condition.
+// Opening sequence check on desktop, phone and reduced motion
 import { PROFILES, ORIGIN, load, json, suite, launch, context, spy, open, until, snap, sources, rayHits, readNow, frameChecks, leave, focus } from './rooms.kit.mjs';
 import { sleep, WAYS, GATE, gate, look, camStill, boxCorners, dstate, sampled } from './r2.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('opening'), { chk, note } = S;
@@ -26,13 +17,11 @@ async function run(name) {
   const ctx = await context(b, P), external = []; await ctx.addInitScript(spy); await ctx.addInitScript(WAYS); await ctx.addInitScript(GATE);
   await ctx.route((u) => u.origin !== new URL(ORIGIN).origin, (r) => { external.push(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: '<title>external</title>' }); });
 
-  // ================================================================ F. Fabrication
   {
     const p = await open(ctx, '/portfolio/', 'projects', errs); await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
     const src = await sources(p);
     chk('F', src.length > 0 && src.every((q) => q.kind === 'sphere'), 'every source of Fabrication is an exhibit (a sphere): no wall card is a source', src.map((q) => [q.kind, q.url]));
     chk('F', await p.evaluate(() => window.__lobby.picks.every((q) => q.mesh.userData?.screen === undefined)), 'and no wall screen is a pick');
-    // scan, flat: an exhibit
     const ex = src[0]; await focus(p, ex.i); await camStill(p); await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000);
     let l = await look(p); chk('F', l.live && l.glyph, 'an exhibit in focus: READ is offered (the glyph is shown)', l);
     await p.evaluate(() => window.__w.mark()); let r = await readNow(p, phone, 'glyph'); await sleep(300); let rec = await p.evaluate(() => window.__w.mark());
@@ -44,7 +33,6 @@ async function run(name) {
       chk('F', rec.word > 0.5, 'and the glyph says SCANNING under it (uWord rises)', rec.word);
     } else chk('F', !rec.max.ScanFan && !rec.max.ScanSheet, 'reduced motion: no ScanFan or ScanSheet is ever shown', rec.max);
     await closed(p, phone);
-    // the list: received
     for (const via of ['button', 'address']) {
       const nonEx = projects.find((q) => !content.rooms.projects.exhibits.includes(q.slug)), url = nonEx?.url ?? projects[0].url, tag = via === 'button' ? 'the list ("ALL n PROJECTS")' : `a project with no exhibit (${url})`;
       await p.evaluate(() => { window.__lobby.setFocus(null); }); await rest(p); await p.waitForTimeout(800);
@@ -54,7 +42,7 @@ async function run(name) {
       const ok = await until(p, () => window.__lobby.reader.state() === 'open', null, 120000); await sleep(300); rec = await p.evaluate(() => window.__w.mark());
       sampled(S, 'F', rec, tag); chk('F', ok, `${tag}: it opens`);
       if (still) chk('F', rec.astray < 1, `${tag}: reduced motion: the page of words is in its place from the first moment it shows (never outside the viewport)`, rec.astray);
-      chk('F', (still || rec.states.includes('scanning')) && none(rec, ['ReadGlyph', 'ScanFan', 'ScanSheet', 'ScanBody', 'ReadBeam']).length === 0 && !rec.live,      // (reduced motion: a cut, the state between may last less than a look)
+      chk('F', (still || rec.states.includes('scanning')) && none(rec, ['ReadGlyph', 'ScanFan', 'ScanSheet', 'ScanBody', 'ReadBeam']).length === 0 && !rec.live,
         `${tag}: no READ glyph at any time, no ScanFan, ScanSheet, ScanBody or ReadBeam, and the READ pick is never live`, { max: rec.max, live: rec.live, states: rec.states });
       if (!still) chk('F', (rec.byState.scanning?.ReadFlow || 0) >= 1, `${tag}: ReadFlow shows while it arrives`, rec.byState); else chk('F', !rec.max.ReadFlow, `${tag}: reduced motion: it is a cut (no ReadFlow)`, rec.max);
       if (ok) {
@@ -72,7 +60,6 @@ async function run(name) {
     await p.close();
   }
 
-  // ================================================================ L. the Lounge
   {
     errs.length = 0;
     const p = await open(ctx, '/about/', 'about', errs); await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
@@ -81,10 +68,8 @@ async function run(name) {
     if (bk < 0) { await p.close(); } else {
       const bodies = await p.evaluate((i) => window.__lobby.picks[i].source().bodies.length, bk);
       chk('L', bodies === books.length && bodies >= 2, `it has ${books.length} bodies, the books of scene.json focus[0].boxes`, bodies);
-      // bounds(): the books' corners
       const bnd = await p.evaluate((i) => window.__lobby.picks[i].bounds().map((v) => v.toArray()), bk), near = (a) => bnd.some((q) => Math.hypot(q[0] - a[0], q[1] - a[1], q[2] - a[2]) < 0.004);
       chk('L', bnd.length === 8 * books.length && bookCorners.flat().every(near), "the pick's bounds() are the corners of the books (all 8 of each, within 4 mm)", { n: bnd.length, missing: bookCorners.flat().filter((c) => !near(c)).length });
-      // the projected corners, and the lock, read in one go
       const rectOf = (p) => p.evaluate(async ({ pts, all }) => {
         const THREE = await import('three'), l = window.__lobby; l.camera.updateMatrixWorld(true);
         const proj = (set) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true; for (const c of set) { const v = new THREE.Vector3(...c).project(l.camera); if (v.z > 1) ok = false; const x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return { l: x0, t: y0, r: x1, b: y1, ok }; };
@@ -92,12 +77,9 @@ async function run(name) {
       }, { pts: bookCorners, all: bookCorners.flat() });
       const rx = await rectOf(p), small = (rx.all.r - rx.all.l) * (rx.all.b - rx.all.t) / (W * H);
       note(`the books on the screen from the room's view: ${Math.round(rx.all.r - rx.all.l)} x ${Math.round(rx.all.b - rx.all.t)} px (${(small * 100).toFixed(1)}% of the window)`);
-      // a press on each book reaches the pick
       for (const [k, e] of rx.each.entries()) { const x = (e.l + e.r) / 2, y = (e.t + e.b) / 2, hits = await rayHits(p, x, y); chk('L', e.ok && x > 0 && x < W && y > 0 && y < H && hits[0]?.[0] === bk, `a ${phone ? 'tap' : 'click'} at the middle of book ${k + 1} (${Math.round(x)}, ${Math.round(y)}) reaches the pick`, { hits: hits.slice(0, 3), pick: bk }); }
       if (!phone) {
-        // the lock lies on the books, with the pointer on them and the view swaying under it
-        let ptr = [0, 0];                                         // where the pointer was put last, for the detail of a FAIL
-        // what lies under the pointer now (one ray, no retry), the books' rectangles, and the display's state: said when the lock is not where it should be
+        let ptr = [0, 0];
         const under = (p) => p.evaluate(async ({ pts, x, y }) => {
           const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live()); l.camera.updateMatrixWorld(true);
           for (const q of live) q.mesh.updateWorldMatrix(true, false); ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
@@ -108,7 +90,6 @@ async function run(name) {
         const onBooks = async (target) => {
           for (let i = 0; i < 10; i++) {
             const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); await sleep(700);
-            // the view follows the pointer: settled once the lock is on and the target has stayed under the pointer, across and up and down
             const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - ptr[0]) < 8 && Math.abs((f.t + f.b) / 2 - ptr[1]) < 8) return true;
           }
           return false;
@@ -123,7 +104,6 @@ async function run(name) {
         }
         await p.mouse.move(W - 4, 4); await until(p, () => !window.__lobby.display.state().lock, null, 15000);
       }
-      // READ: the books are scanned
       await focus(p, bk); await camStill(p); await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000);
       const l = await look(p); chk('L', l.live && l.glyph, 'the books in focus: READ is offered', l);
       await p.evaluate(() => window.__w.mark()); const r = await readNow(p, phone, 'glyph'); await sleep(300); const rec = await p.evaluate(() => window.__w.mark());
@@ -145,7 +125,6 @@ async function run(name) {
     }
   }
 
-  // ================================================================ N. Navigation: a station unfolds
   {
     errs.length = 0;
     const p = await open(ctx, '/experience/', 'experience', errs); await until(p, () => window.__lobby.ready() >= 1 && !!window.__lobby.turn && window.__lobby.picks.length > 0, null, 60000);
@@ -170,7 +149,6 @@ async function run(name) {
     await closed(p, phone);
     const sh2 = await sheets(p); chk('N', sh2.every((o) => o === 1), 'after CLOSE all four sheets have their light back (opacity 1)', sh2);
     const after = await look(p); chk('N', !after.ReadPrint && !after.ReadFrame, 'and ReadPrint and ReadFrame are not shown', after);
-    // CLOSE part-way folds the frame where it is
     if (!phone && !still) {
       await p.evaluate((i) => window.__lobby.setFocus(window.__lobby.picks[i]), st[2].i); await camStill(p); await until(p, () => window.__lobby.turn.settled(), null, 60000);
       await until(p, () => window.__lobby.picks.find((q) => q.reads).live(), null, 30000); await sleep(1500);

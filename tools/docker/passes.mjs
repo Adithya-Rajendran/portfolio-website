@@ -1,4 +1,4 @@
-// GPU ms, JS ms, draw calls and triangles of each render pass, per frame.  node passes.mjs <url> [secs] [w] [h]
+// GPU ms, JS ms, draw calls and triangles of each render pass, per frame
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

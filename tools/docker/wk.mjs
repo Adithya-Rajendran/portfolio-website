@@ -1,3 +1,4 @@
+// WebKit load check that counts lost WebGL contexts
 import { webkit } from 'playwright';
 const [url, w = 1280, h = 720] = process.argv.slice(2);
 const b = await webkit.launch(); const p = await b.newPage({ viewport: { width: +w, height: +h } });

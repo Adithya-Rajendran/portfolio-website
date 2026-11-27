@@ -1,3 +1,4 @@
+// End-to-end spec that loads each route and collects errors
 import { attachErrorCollector, expect, test } from '../fixtures/site.ts';
 
 const ROUTES = ['/', '/about/', '/portfolio/', '/experience/', '/contact/', '/blog/'];
