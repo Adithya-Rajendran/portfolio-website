@@ -33,6 +33,7 @@ The reader gives READ under a thing that requests it: `picks.find(p => p.reads).
 
 - For the books of the Lounge, the display lock goes around the books, and the pick mesh is the box that holds them.
 - With reduced motion, the receive way is a cut, with no `ReadFlow`.
+- While the camera moves, the page hides `#reader` on a frame where its box on the screen is more than four times the screen.
 - A CLOSE during the unfold folds the reader panel where it is. After it, each sheet has `material.opacity` 1.
 - A wall screen, which is a mesh with `userData.screen`, is a pick only where `rooms.<id>.screens.inspect` is not `false`.
 
