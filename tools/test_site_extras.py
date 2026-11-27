@@ -237,7 +237,7 @@ class Extras(unittest.TestCase):
             self.assertIn(self.old(r[0]), OLD, r)
         self.assertEqual({self.old(r[0]) for r in rules}, OLD)
         self.assertFalse({r[0] for r in rules} & PAGES)
-        contract = read(s.ROOT, 'docs/v1-contracts.md')
+        contract = read(s.ROOT, 'docs/ref_urls.md')
         for old in OLD:
             self.assertIn(f'`{old}`', contract)
 

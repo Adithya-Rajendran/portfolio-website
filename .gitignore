@@ -27,7 +27,7 @@ public/feed.xml
 public/sitemap.xml
 public/llms.txt
 public/_redirects
-# in the Sanity dataset, but nothing refers to them: two superseded CVs and an unused figure (data/README.md)
+# in the Sanity dataset, but nothing refers to them: two superseded CVs and an unused figure
 data/assets/files/9f26da0ff24b3aadfb1e16403460d502678d493b.pdf
 data/assets/files/fd293e1c85ac1a51c1bf504285d8071ef3e75ccc.pdf
 data/assets/images/c3487a6e0f78730cd24f3380685f45a39391012b-1425x1193.png

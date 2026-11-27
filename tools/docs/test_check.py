@@ -197,6 +197,14 @@ class DocsCheckTest(unittest.TestCase):
         files = base_files(**{"docs/con_other.md": fm("concept", "Other") + "The other room has a path.\n"})
         self.assertProblem(files, "docs/con_other.md", "no link path")
 
+    def test_readme_is_the_entry_assembly(self):
+        readme = fm("assembly", "Arcadia Station", "docs/assembly_index.md") + "This assembly gives the start of the documentation.\n\n- [Index](docs/assembly_index.md)\n"
+        results, _ = self.check(base_files(**{"README.md": readme}))
+        self.assertEqual({p: v for p, v in results.items() if v}, {})
+        self.assertProblem(base_files(**{"README.md": readme.replace("type: assembly", "type: concept")}), "README.md", "README.md is an assembly")
+        alone = fm("assembly", "Arcadia Station", "glossary.md") + "This assembly gives the start of the documentation.\n\n- [Glossary](glossary.md)\n"
+        self.assertProblem(base_files(**{"README.md": alone}), "README.md", "links to the docs index")
+
     def test_missing_index_fails(self):
         files = base_files()
         del files["docs/assembly_index.md"]
@@ -326,6 +334,8 @@ class DocsCheckTest(unittest.TestCase):
         self.assertProblem(base_files(**{"glossary.md": bad}), "glossary.md", "alphabetical")
         bad = GLOSSARY.replace("| room | name |", "| room | thing |")
         self.assertProblem(base_files(**{"glossary.md": bad}), "glossary.md", "the kind of")
+        accented = GLOSSARY.replace("| room | name |", "| résumé | name | - | The PDF of the work history. |\n| room | name |")
+        self.assertEqual(self.problems(base_files(**{"glossary.md": accented}), "glossary.md"), [])
         bad = GLOSSARY + "| station | name | - | The site. |\n"
         self.assertProblem(base_files(**{"glossary.md": bad}), "glossary.md", "two times")
 
@@ -389,6 +399,16 @@ class ValeTest(unittest.TestCase):
         long = " ".join(["The station has six rooms"] + ["and the room has a path"] * 5) + ".\n"
         got = self.problems(CONCEPT + "\n" + long)
         self.assertTrue(any("more than 25 words" in p for p in got), got)
+
+    def test_accented_glossary_word_passes(self):
+        glossary = GLOSSARY.replace("| room | name |", "| résumé | name | - | The PDF of the work history. |\n| room | name |")
+        t = Tree(base_files(**{"glossary.md": glossary, "docs/con_station.md": CONCEPT + "\nThe station has a résumé.\n"}), vale_style=True)
+        try:
+            results, _ = t.run(vale=VALE)
+        finally:
+            t.close()
+        self.assertEqual(results["docs/con_station.md"], [])
+        self.assertFalse([p for p in results["glossary.md"] if "sumé" in p or "alphabetical" in p])
 
     def test_non_glossary_word_fails(self):
         got = self.problems(CONCEPT + "\nThe station has a spaceport.\n")
