@@ -128,6 +128,10 @@ html:not(.station) #page { display: block; max-width: 760px; margin: 0 auto; pad
 html:not(.station) #scene, html:not(.station) #hud, html:not(.station) #inspectbar { visibility: hidden; pointer-events: none; }
 html:not(.station):not(.reading) #loader { display: none; }
 body:has(> #page) > noscript { display: none; }
+#nogl { max-width: 760px; margin: clamp(112px, 14vh, 140px) auto 0; padding: 0 22px; font: 17px/1.7 var(--text); color: #b9d2df; }
+#nogl a { color: var(--cy); text-underline-offset: 3px; }
+html:not(.station) body:not(:has(> #page)) { display: flow-root; min-height: 100vh; }
+#page > #nogl { margin: 0 0 34px; padding: 10px 0 10px 20px; border-left: 2px solid var(--am); font-size: 15px; }
 #pagenav { display: none; }
 html:not(.station) #pagenav { display: flex; flex-wrap: wrap; gap: 12px 26px; position: absolute; left: 0; right: 0; top: 0; max-width: 760px; margin: 0 auto; padding: 26px 22px 0;
   font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; }
