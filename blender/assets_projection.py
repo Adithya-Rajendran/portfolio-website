@@ -49,7 +49,7 @@ def _projection_optics(M, grp, *, z, bore, outer, bezel, lens, em, keepers):
                           (bore * .39, -.167), (bore * .39, -.141), (0, -.141)],
           'projection_baffle', grp, segs=32, closed=False, M=A)
     # Curved objective around the working emitter; nothing opaque sits across the pupil.
-    lathe(f'{lens}_objective', [(bore * q, d) for q, d in ((.41, -.135), (.51, -.136), (.69, -.142),
+    lathe(f'{lens}_objective', [(bore * q, d) for q, d in ((.412, -.135), (.51, -.136), (.69, -.142),
                                                            (.89, -.152), (.89, -.159), (.41, -.159))],
           'projection_optic', grp, segs=48, M=A)
     lathe(lens, [(0, -.132), (bore * .23, -.133), (bore * .412, -.135), (bore * .412, -.143), (0, -.143)],
@@ -67,7 +67,7 @@ def a_reception_desk(M=I4, grp='center', *, a0=math.radians(-56), a1=math.radian
                           (1.98, 1.12), (1.98, 1.0), (2.06, .14)],
           'wall2', grp, segs=48, a0=a0, a1=a1, M=M)
     lathe(f'desk_toe{index}', [(2.23, .14), (2.30, .14), (2.32, .20), (2.28, .22), (2.22, .22)],
-          'projection_cast', grp, segs=48, a0=a0, a1=a1, M=M)
+          'projection_cast', grp, segs=48, a0=a0 + PROUD / 2.2, a1=a1 - PROUD / 2.2, M=M)
     # Four removable fascia panels stand off from the carcass; the arc ends read as folded returns.
     pitch = (a1 - a0) / 4
     for i in range(4):
@@ -77,7 +77,7 @@ def a_reception_desk(M=I4, grp='center', *, a0=math.radians(-56), a1=math.radian
               M=M, bevel=.008, seg=1)
     lathe(f'desk_header{index}', [(2.615, .984), (2.724, .984), (2.764, 1.006), (2.78, 1.063),
                                   (2.78, 1.12), (2.674, 1.12)],
-          'projection_cast', grp, segs=64, a0=a0, a1=a1, M=M)
+          'projection_cast', grp, segs=64, a0=a0 + PROUD / 2.6, a1=a1 - PROUD / 2.6, M=M)
     lathe(f'desk_top{index}', [(1.94, 1.12), (2.82, 1.12), (2.82, 1.16), (1.94, 1.16)],
           'glasstop', grp, segs=64, a0=a0 - 0.012, a1=a1 + 0.012, M=M)
     lathe(f'desk_led{index}', [(2.677, .978), (2.713, .978), (2.713, .986), (2.677, .986)],

@@ -46,7 +46,7 @@ def a_pallet(M=I4, grp='props'):
     for y in (-0.5, 0, 0.5): box('pallet_run', -0.6, 0.6, y - 0.05, y + 0.05, 0, 0.1, 'crate_w', grp, M=M)
     for x in (-0.5, -0.25, 0, 0.25, 0.5): box('pallet_board', x - 0.06, x + 0.06, -0.6, 0.6, 0.1, 0.125, 'crate_w', grp, M=M)
     box('pallet_crate', -0.55, 0.05, -0.55, 0.15, 0.125, 0.85, 't_light', grp, bevel=0.02, M=M); box('pallet_crate2', -0.5, 0.0, -0.5, 0.1, 0.85, 1.35, 't_orange', grp, bevel=0.02, M=M)
-    for y in (-0.4, 0.0): box('pallet_strap', -0.56, 0.06, y - 0.02, y + 0.02, 0.12, 1.36, 't_black', grp, M=M)
+    for y in (-0.4, 0.0): box('pallet_strap', -0.56 - PROUD, 0.06 + PROUD, y - 0.02, y + 0.02, 0.12, 1.36, 't_black', grp, M=M)
     a_drum(M @ T((0.3, 0.3, 0.125)), grp, 't_yellow'); box('pallet_label', 0.05, 0.053, -0.4, -0.1, 0.4, 0.6, 't_label', grp, M=M)
 
 def a_extinguisher(M=I4, grp='props'):
@@ -55,9 +55,9 @@ def a_extinguisher(M=I4, grp='props'):
     lathe('ext_valve', [(0, 0.08), (0.02, 0.08), (0.025, 0), (0, 0)], 't_chrome', grp, segs=10, closed=False, M=M @ T((0.1, 0, 1.0))); rod('ext_hose', (0.1, 0.03, 1.04), (0.14, 0.09, 0.7), 0.01, 't_black', grp, M=M)
     rbox('ext_lever', (0.1, 0.025, 0.012), M @ T((0.13, 0, 1.09), (0, -0.3, 0)), 't_black', grp); box('ext_bracket', 0, 0.03, -0.09, 0.09, 0.55, 0.62, 't_steel', grp, M=M); box('ext_sign', 0, 0.006, -0.11, 0.11, 1.35, 1.6, 't_red', grp, M=M); box('ext_sign2', 0.006, 0.008, -0.06, 0.06, 1.4, 1.55, 't_label', grp, M=M)
 
-def a_stanchion(M=I4, grp='props', L=2.0):
+def a_stanchion(M=I4, grp='props', L=2.0, posts=None):
     """Two barrier posts and the belt between them (along y)."""
-    for y in (0, L):
+    for y in (0, L) if posts is None else posts:
         lathe('post', [(0, 0.96), (0.03, 0.96), (0.035, 0.9), (0.025, 0.88), (0.025, 0.04), (0.16, 0.02), (0.17, 0), (0, 0)], 't_chrome', grp, segs=20, closed=False, M=M @ T((0, y, 0)))
     box('belt', -0.003, 0.003, 0.03, L - 0.03, 0.84, 0.9, 't_seat', grp, M=M)
 
@@ -65,7 +65,7 @@ def a_grille(M=I4, grp='props', w=1.2, h=0.6):
     """A ventilation grille on a wall at x = 0: frame, louvres, four fixings."""
     box('grille_frame', 0, 0.03, -w / 2, w / 2, -h / 2, h / 2, 't_steel', grp, bevel=0.006, M=M); box('grille_dark', 0.03, 0.032, -w / 2 + 0.05, w / 2 - 0.05, -h / 2 + 0.05, h / 2 - 0.05, 't_black', grp, M=M)
     n = int(h / 0.06)
-    for k in range(n): rbox('grille_slat', (0.03, w - 0.1, 0.008), M @ T((0.04, 0, -h / 2 + 0.07 + k * (h - 0.14) / max(1, n - 1)), (0, 0.6, 0)), 't_paint', grp)
+    for k in range(n): rbox('grille_slat', (0.03, w - 0.1 - 2 * PROUD, 0.008), M @ T((0.04, 0, -h / 2 + 0.07 + k * (h - 0.14) / max(1, n - 1)), (0, 0.6, 0)), 't_paint', grp)
     _bolts(M, grp, [(0.03, sy * (w / 2 - 0.025), sz * (h / 2 - 0.025)) for sy in (-1, 1) for sz in (-1, 1)])
 
 def a_duct(M=I4, grp='archC', L=6.0):
@@ -75,7 +75,7 @@ def a_duct(M=I4, grp='archC', L=6.0):
     for k in range(n + 1):
         y = k * L / n; box('duct_flange', -0.33, 0.33, y - 0.02, y + 0.02, -0.43, 0.03, 't_steel', grp, M=M)
         for x in (-0.36, 0.36): rod('duct_hanger', (x, y, -0.43), (x, y, 0.5), 0.006, 't_steel', grp, M=M)
-        if k % 2 and k < n: lathe('duct_diffuser', [(0, -0.06), (0.1, -0.06), (0.2, -0.02), (0.24, 0), (0, 0)], 't_paint', grp, segs=24, closed=False, M=M @ T((0, y + L / n / 2, -0.4)))
+        if k % 2 and k < n: lathe('duct_diffuser', [(0, -0.06), (0.1, -0.06), (0.2, -0.02), (0.24, 0), (0, 0)], 't_paint', grp, segs=24, closed=False, M=M @ T((0, y + L / n / 2, -0.4 + PROUD)))
 
 def a_console(M=I4, grp='props', w=1.6):
     """An operator's console facing +x: pedestal, a sloped desk of key rows and switches, two lit status strips, a hooded display."""
@@ -142,7 +142,7 @@ def a_pegboard(M=I4, grp='props', w=2.0):
     """A tool board on a wall at x = 0: outlines filled with spanners, a saw, a square, reels of wire."""
     box('peg', 0, 0.02, -w / 2, w / 2, 0, 1.0, 't_light', grp, M=M)
     for k in range(7): rod('peg_spanner', (0.03, -w / 2 + 0.15 + k * 0.11, 0.55), (0.03, -w / 2 + 0.15 + k * 0.11, 0.55 + 0.16 + k * 0.03), 0.008, 't_chrome', grp, M=M)
-    box('peg_square', 0.02, 0.028, 0.1, 0.5, 0.15, 0.19, 't_steel', grp, M=M); box('peg_square2', 0.02, 0.028, 0.1, 0.14, 0.15, 0.6, 't_steel', grp, M=M)
+    box('peg_square', 0.02, 0.028, 0.1, 0.5, 0.15, 0.19, 't_steel', grp, M=M); box('peg_square2', 0.02 - PROUD, 0.028 + PROUD, 0.1 - PROUD, 0.14, 0.15 - PROUD, 0.6, 't_steel', grp, M=M)
     for k in range(3): torus('peg_reel', 0.07, 0.025, M @ T((0.05, w / 2 - 0.2 - k * 0.22, 0.75), (0, pi / 2, 0)), ('t_orange', 't_red', 't_black')[k], grp, segs=20)
     rbox('peg_drill', (0.07, 0.22, 0.07), M @ T((0.06, w / 2 - 0.45, 0.3)), 't_orange', grp, bevel=0.02); rbox('peg_drillgrip', (0.05, 0.05, 0.14), M @ T((0.06, w / 2 - 0.38, 0.2)), 't_black', grp, bevel=0.015)
 

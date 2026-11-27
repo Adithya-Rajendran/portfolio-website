@@ -14,12 +14,13 @@ def a_ladder(M=I4, grp='props', h=3.4):
         p = top * (k / n); rod('ladder_rung', p + Vector((0, -0.22, 0)), p + Vector((0, 0.22, 0)), 0.014, 'wood_l', grp, M=M)
 
 
-def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6):
+def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6, ends=(False, False)):
     """One bookcase bay, L between upright centres with `rows` shelves, built against the plane x = 0 and reaching s * -x into the room.
     Uprights with a fluted face and a capital, six shelves with brass label rails and hidden lights, books, a frieze and cornice."""
     X = lambda a: -s * a; z0 = 0.14 if tier == 0 else 0.12; top = z0 + (rows - 1) * 0.62 + 0.2
     def bx(n, a, b, y0, y1, zz0, zz1, m, **kw): box(n, X(a), X(b), y0, y1, zz0, zz1, m, grp, M=M, **kw)
-    if tier == 0: bx('bay_plinth', 0, 0.5, 0, L, 0, 0.14, 'wood'); bx('bay_plinth_cap', 0, 0.53, 0, L, 0.12, 0.15, 'wood_l', bevel=0.006)
+    out = lambda k: (-k * PROUD * ends[0], L + k * PROUD * ends[1])
+    if tier == 0: bx('bay_plinth', 0, 0.5, *out(1), 0, 0.14, 'wood'); bx('bay_plinth_cap', 0, 0.53, *out(2), 0.12, 0.15, 'wood_l', bevel=0.006)
     if shelves:
         bx('bay_back', 0, 0.04, 0.1, L - 0.1, z0, top, 'wood_d')
         for k in range(rows):
@@ -27,7 +28,7 @@ def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6):
             bx('bay_shelf', 0, 0.42, 0.1, L - 0.1, z, z + 0.04, 'wood'); bx('bay_nosing', 0.42, 0.435, 0.1, L - 0.1, z + 0.004, z + 0.036, 'wood_l')
             if k == rows - 1: break
             bx('bay_labelrail', 0.435, 0.439, 0.2, L - 0.2, z + 0.012, z + 0.03, 'brass')
-            for j in range(int(L / 0.7)): bx('bay_label', 0.439, 0.4395, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
+            for j in range(int(L / 0.7)): bx('bay_label', 0.439, 0.441, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
             if k % 2: box('shelflight', X(0.36), X(0.4), 0.25, L - 0.25, z + 0.57, z + 0.58, em='shelf', M=M)
             _books(M, grp, s, 0.13, L - 0.13, z + 0.04)
     for y in (0, L):                                                                    # half an upright at each end: neighbours complete it
@@ -36,9 +37,10 @@ def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6):
         for f in range(2):
             yy = y0 + 0.03 + f * 0.05 if y == 0 else y1 - 0.03 - f * 0.05
             bx('bay_flute', 0.5, 0.506, yy - 0.012, yy + 0.012, z0 + 0.25, top - 0.3, 'wood_d')
-        bx('bay_capital', 0, 0.55, y0, y1, top - 0.2, top - 0.12, 'wood_l', bevel=0.008); bx('bay_base', 0, 0.54, y0, y1, z0, z0 + 0.16, 'wood_l', bevel=0.008)
-    bx('bay_frieze', 0, 0.46, 0, L, top - 0.12, top + 0.06, 'wood'); bx('bay_plaque', 0.46, 0.466, L / 2 - 0.3, L / 2 + 0.3, top - 0.09, top + 0.02, 'brass', bevel=0.003)
-    moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], 0, L, 'wood', grp, M=M)
+        c0, c1 = (y0 - PROUD * ends[0], y1 + PROUD) if y == 0 else (y0 - PROUD, y1 + PROUD * ends[1])
+        bx('bay_capital', 0, 0.55, c0, c1, top - 0.2, top - 0.12, 'wood_l', bevel=0.008); bx('bay_base', 0, 0.54, c0, c1, z0, z0 + 0.16, 'wood_l', bevel=0.008)
+    bx('bay_frieze', 0, 0.46, *out(1), top - 0.12, top + 0.06, 'wood'); bx('bay_plaque', 0.46, 0.466, L / 2 - 0.3, L / 2 + 0.3, top - 0.09, top + 0.02, 'brass', bevel=0.003)
+    moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], *out(2), 'wood', grp, M=M)
     for k in range(int(L / 0.25)): bx('bay_dentil', 0.46, 0.5, 0.06 + k * 0.25, 0.19 + k * 0.25, top + 0.0, top + 0.055, 'wood_l')
 
 
@@ -77,16 +79,19 @@ def a_shelf_volume(M=I4, grp='props', *, s=1, depth=0.27, thickness=0.05, height
         for z in (.07,height-.09):
             bm=bmesh.new(); bandsides=[]
             for zz in (z,z+.007):
-                bandsides.append([bm.verts.new((-s*(u+.00075),y*t,zz)) for u,y in outline[1:5]])
-            a,b=bandsides
-            for i in range(3): bm.faces.new((a[i],a[i+1],b[i+1],b[i]))
+                bandsides.append([bm.verts.new((-s*(u+.0025),y*t,zz)) for u,y in outline[1:5]])
+                bandsides.append([bm.verts.new((-s*u,y*t,zz)) for u,y in outline[1:5]])
+            a,ia,b,ib=bandsides
+            for i in range(3):
+                for f in ((a[i],a[i+1],b[i+1],b[i]),(a[i],a[i+1],ia[i+1],ia[i]),(b[i],b[i+1],ib[i+1],ib[i])): bm.faces.new(f)
+            for k in (0,3): bm.faces.new((a[k],b[k],ib[k],ia[k]))
             finish('book_band',bm,'gilt',grp,M=M)
 
 
 def a_bookend(M=I4, grp='props', *, s=1):
     """Brass bookend from its lower back corner: a vertical side and a foot extending in +y."""
     box('bookend', 0, -s * 0.18, 0, 0.012, 0, 0.2, 'brass', grp, M=M)
-    box('bookend_f', 0, -s * 0.18, 0, 0.1, 0, 0.008, 'brass', grp, M=M)
+    box('bookend_f', -s * PROUD, -s * (0.18 - PROUD), PROUD, 0.1, 0, 0.008, 'brass', grp, M=M)
 
 
 def _books(M, grp, s, y0, y1, z, deep=0.3):
@@ -319,7 +324,7 @@ def a_openbook(M=I4, grp='props'):
     profile = [(-.015, .0018), (-.008, .0006), (0, .0002), (.008, .0006), (.015, .0018),
                (.015, .004), (.010, .006), (.004, .009), (0, .0095), (-.004, .009),
                (-.010, .006), (-.015, .004)]
-    _reading_loft(spine, [[(x, y, z) for x, z in profile] for y in (-.14, .14)], smooth=True)
+    _reading_loft(spine, [[(x, y, z) for x, z in profile] for y in (-.14 + PROUD, .14 - PROUD)], smooth=True)
     finish('open_spine', spine, material, grp, M=M)
 
     def leaf(d, u, v, f, recess=0.0):
