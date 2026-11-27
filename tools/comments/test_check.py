@@ -68,6 +68,30 @@ class StrayCommentTest(unittest.TestCase):
         src = "// Links.\nconst f = " + BT + "see http://example.org/a" + BT + ";\n"
         self.assertEqual(problems("a.js", src), [])
 
+    def test_glsl_after_a_template_expression(self):
+        src = ("// Shaders.\nconst f = " + BT + "\nuniform float t;\nvec4 a = $" "{ k };\n"
+               "vec4 fin = texture2D(tFin, vUv); // roughness\n" + BT + ";\n")
+        self.assertEqual(problems("a.js", src), ["line 5: comment // roughness"])
+
+    def test_glsl_without_the_old_markers(self):
+        src = "// Shaders.\nconst f = 'vec4 fin = texture2D(tFin, vUv); // roughness';\n"
+        self.assertEqual(problems("a.js", src), ["line 2: comment // roughness"])
+        src = "// Shaders.\nconst f = " + BT + "$" "{ a }\nfloat k = 1.0; // gain\n" + BT + ";\n"
+        self.assertEqual(problems("a.js", src), ["line 3: comment // gain"])
+
+    def test_jsx_text_with_a_url(self):
+        src = "// Page.\nexport const P = () => <p>http://x.y</p>;\n"
+        self.assertEqual(problems("a.tsx", src), [])
+
+    def test_strict_directives(self):
+        self.assertEqual(problems("a.py", "# Generator.\nx = 1  # type: ignore[attr-defined]\ny = 2  # type: Dict[str, int]\n"), [])
+        self.assertEqual(len(problems("a.py", "# Generator.\nx = 1  # type: ignore because reasons\n")), 1)
+        self.assertEqual(problems("a.ps1", "#Requires -Version 7\n# Runner.\n"), ["line 1: the file must start with one header comment line", "line 2: comment # Runner."])
+        self.assertEqual(len(problems("a.ps1", "# Runner.\n#Requires -Version 7 because new\n")), 1)
+        self.assertEqual(len(problems("a.html", "<!-- Shell. -->\n<!--site:anything-->\n")), 1)
+        self.assertEqual(problems("a.js", "// Loader.\n// eslint-disable-next-line no-console, @typescript-eslint/no-unused-vars, eqeqeq\nx();\n"), [])
+        self.assertEqual(len(problems("a.js", "// Loader.\n// eslint-disable no-console,because,why\nx();\n")), 1)
+
     def test_js_directives(self):
         src = ("// Loader.\n// eslint-disable-next-line no-console\nconsole.log(1);\n// @ts-expect-error\nx();\n"
                "import(/* @vite-ignore */ u);\n/// <reference types=\"vite/client\" />\n")
@@ -81,6 +105,10 @@ class StrayCommentTest(unittest.TestCase):
         src = '# Generator.\n"""Module doc."""\nimport os  # noqa: F401\nx = "# not a comment"\n\n\ndef f():\n    """Doc."""\n    return 1  # why\n'
         self.assertEqual(problems("a.py", src), ["line 2: docstring", "line 8: docstring", "line 9: comment # why"])
 
+    def test_python_bare_string_is_a_comment(self):
+        src = '# Generator.\nx = 1\n"this explains x"\n\n\ndef f():\n    return 1\n    "after"\n'
+        self.assertEqual(problems("a.py", src), ["line 3: a string used as a comment", "line 8: a string used as a comment"])
+
     def test_python_directives(self):
         src = "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n# Generator.\nx = 1  # type: int\ny = 2  # pragma: no cover\n"
         self.assertEqual(problems("a.py", src), [])
@@ -90,6 +118,10 @@ class StrayCommentTest(unittest.TestCase):
                "cat <<'EOF'\n# inside a heredoc\nEOF\necho hi # why\n# shellcheck disable=SC2086\n")
         self.assertEqual(problems("a.sh", src), ["line 8: comment # why"])
 
+    def test_shell_arithmetic_shift_is_not_a_heredoc(self):
+        src = "#!/bin/bash\n# Runner.\necho $((1<<n))\n# real comment\n"
+        self.assertEqual(problems("a.sh", src), ["line 4: comment # real comment"])
+
     def test_css(self):
         src = "/* Styles. */\na { content: \"/* no */\"; }\n/* stray */\n"
         self.assertEqual(problems("a.css", src), ["line 3: comment /* stray */"])
@@ -98,6 +130,15 @@ class StrayCommentTest(unittest.TestCase):
         src = ("<!doctype html>\n<!-- Shell. -->\n<!--site:head-->\n<!-- stray -->\n<style>/* css */</style>\n"
                "<script>// js\n</script>\n<script type=\"importmap\">{\"a\": \"//b\"}</script>\n")
         self.assertEqual(problems("a.html", src), ["line 4: comment <!-- stray -->", "line 5: comment /* css */", "line 6: comment // js"])
+
+    def test_html_non_script_types_and_attributes(self):
+        src = ("<!doctype html>\n<!-- Shell. -->\n<script type=\"text/plain\">// not code</script>\n"
+               "<a title=\"<!-- x -->\" href=\"y\">z</a>\n<script type=\"module\">// js\n</script>\n")
+        self.assertEqual(problems("a.html", src), ["line 5: comment // js"])
+
+    def test_dockerfile_heredoc(self):
+        src = "# Image.\nFROM ubuntu\nRUN <<EOF\n#!/bin/sh\n# inside\nEOF\n# stray\n"
+        self.assertEqual(problems("Dockerfile", src), ["line 7: comment # stray"])
 
     def test_powershell(self):
         src = "# Runner.\n$a = 'x # y'\n<# block #>\nWrite-Host a # why\n"
@@ -165,6 +206,17 @@ class LegacyTest(unittest.TestCase):
         r = self.run_check("--base-legacy", base)
         self.assertEqual(r.returncode, 1)
         self.assertIn("must not grow", r.stdout)
+
+    def test_a_line_may_only_be_removed(self):
+        self.seed()
+        base = os.path.join(self.root, "base.txt")
+        shutil.copy(os.path.join(self.root, "tools/ci/legacy.txt"), base)
+        self.assertEqual(self.run_check("--base-legacy", base).returncode, 0)
+        self.write("bad.js", "export const a = 1; // why\n// a brand new explanation comment\n")
+        self.seed()
+        r = self.run_check("--base-legacy", base)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("may only be removed", r.stdout)
 
     def test_removed_file_must_leave_the_list(self):
         self.seed()

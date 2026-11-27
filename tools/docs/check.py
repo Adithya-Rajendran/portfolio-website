@@ -20,7 +20,7 @@ INDEX = "docs/assembly_index.md"
 GLOSSARY = "glossary.md"
 EXCLUDED = ("data/posts/", "data/projects/", "tools/testdata/", "public/vendor/", "node_modules/", "dist/", ".agent-chat/")
 KEYS = ("type", "title", "depends")
-PROCEDURE_SECTIONS = ["Prerequisites", "Procedure", "Verification"]
+PROCEDURE_SECTIONS = ["Prerequisites", "Procedure", "Verification", "Troubleshooting", "Next steps", "Additional resources"]
 GLOSSARY_HEADER = ["Term", "Kind", "Forms", "Meaning"]
 GLOSSARY_KINDS = ("name", "verb")
 MIN_SENTENCE_WORDS = 6
@@ -29,12 +29,16 @@ NEAR_SENTENCE = 0.85
 MIN_PARAGRAPH_WORDS = 15
 NEAR_PARAGRAPH = 0.6
 LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+REF_DEF = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*<?([^\s>]+)>?(?:\s+[\"'(].*)?$")
+HTML_LINK = re.compile(r"<a\s[^>]*?\bhref\s*=\s*[\"']([^\"']+)[\"']", re.IGNORECASE)
+REF_USE = re.compile(r"\[([^\]]+)\]\[[^\]]*\]")
 FENCE = re.compile(r"^\s*(" + BT * 3 + r"|~~~)")
 INLINE_CODE = re.compile(BT + r"+[^" + BT + r"]*" + BT + r"+")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\[(\"'" + BT + r"])")
 NUMBERED = re.compile(r"^\s*\d+[.)]\s+")
 BULLET = re.compile(r"^\s*[-*+]\s+")
-MULTI_ACTION = re.compile(r"\band then\b|;|,\s*then\b|\bthen\s+(?:run|open|make|write|add|remove|push|go)\b", re.IGNORECASE)
+MULTI_ACTION = re.compile(r";")
+JOINED = re.compile(r"\b(?:and|then)\s+(?:then\s+)?([A-Za-z]+)", re.IGNORECASE)
 
 
 class Doc:
@@ -119,13 +123,22 @@ def parse_body(doc, start):
         if FENCE.match(line):
             if not in_fence:
                 current = None
-                doc.blocks.append({"kind": "code", "line": n + 1, "text": ""})
+                doc.blocks.append({"kind": "code", "line": n + 1, "text": "", "indent": len(line) - len(line.lstrip())})
             in_fence = not in_fence
             continue
         if in_fence:
             continue
-        for m in LINK.finditer(INLINE_CODE.sub(lambda x: " " * len(x.group(0)), line)):
+        spaced = INLINE_CODE.sub(lambda x: " " * len(x.group(0)), line)
+        d = REF_DEF.match(spaced)
+        if d:
+            doc.links.append((n + 1, d.group(2)))
+            current = None
+            doc.blocks.append({"kind": "linkdef", "line": n + 1, "text": ""})
+            continue
+        for m in LINK.finditer(spaced):
             doc.links.append((n + 1, m.group(3)))
+        for m in HTML_LINK.finditer(spaced):
+            doc.links.append((n + 1, m.group(1)))
         if "<!--" in INLINE_CODE.sub("", line):
             doc.problems.append("line %d: a module must not contain comments" % (n + 1))
         if not line.strip():
@@ -159,8 +172,21 @@ def parse_body(doc, start):
 
 
 def sentences(text):
-    plain = strip_code(LINK.sub(lambda m: m.group(2), text)).strip()
+    plain = strip_code(REF_USE.sub(lambda m: m.group(1), LINK.sub(lambda m: m.group(2), text))).strip()
     return [s.strip() for s in SENTENCE_END.split(plain) if s.strip()] if plain else []
+
+
+def heading_slugs(headings):
+    out, seen = set(), {}
+    for x in headings:
+        s = slug(x)
+        if s in seen:
+            seen[s] += 1
+            out.add("%s-%d" % (s, seen[s]))
+        else:
+            seen[s] = 0
+            out.add(s)
+    return out
 
 
 def slug(heading):
@@ -191,7 +217,7 @@ def check_type(doc, verbs):
     body = [b for b in blocks if b not in h1]
     if t == "assembly":
         paras = [b for b in body if b["kind"] == "paragraph"]
-        others = [b for b in body if b["kind"] not in ("paragraph", "item")]
+        others = [b for b in body if b["kind"] not in ("paragraph", "item", "linkdef")]
         if len(paras) != 1 or len(sentences(paras[0]["text"])) != 1:
             doc.problems.append("line %d: an assembly has one paragraph of one sentence (its purpose)" % (paras[1]["line"] if len(paras) > 1 else doc.meta_end + 1))
         for b in others:
@@ -200,32 +226,40 @@ def check_type(doc, verbs):
         if not items:
             doc.problems.append("line %d: an assembly must have a list of links" % (doc.meta_end + 1))
         for b in items:
-            if not re.fullmatch(r"\[[^\]]+\]\([^)\s]+\.md(#[^)]*)?\)", b["text"]):
+            if not re.fullmatch(r"\[[^\]]+\](?:\([^)\s]+\.md(#[^)]*)?\)|\[[^\]]*\])", b["text"]):
                 doc.problems.append("line %d: each item of an assembly is one link to a module, and nothing else" % b["line"])
         if paras and body and body.index(paras[0]) != 0:
             doc.problems.append("line %d: the purpose comes before the links" % paras[0]["line"])
     elif t == "procedure":
         h2 = [b for b in body if b["kind"] == "heading" and b["level"] == 2]
         names = [b["text"] for b in h2]
-        if names != PROCEDURE_SECTIONS:
-            doc.problems.append("line %d: a procedure has the sections %s, in this sequence (found %s)" % (h2[0]["line"] if h2 else doc.meta_end + 1, ", ".join(PROCEDURE_SECTIONS), ", ".join(names) or "none"))
+        order = [PROCEDURE_SECTIONS.index(x) if x in PROCEDURE_SECTIONS else -1 for x in names]
+        if "Procedure" not in names or -1 in order or order != sorted(set(order)):
+            doc.problems.append("line %d: a procedure has a Procedure section, and only these sections in this sequence: %s (found %s)" % (h2[0]["line"] if h2 else doc.meta_end + 1, ", ".join(PROCEDURE_SECTIONS), ", ".join(names) or "none"))
         if "Procedure" in names:
-            i = body.index(h2[names.index("Procedure")])
-            j = body.index(h2[names.index("Procedure") + 1]) if names.index("Procedure") + 1 < len(h2) else len(body)
+            k = names.index("Procedure")
+            i = body.index(h2[k])
+            j = body.index(h2[k + 1]) if k + 1 < len(h2) else len(body)
             section = body[i + 1:j]
             steps = [b for b in section if b["kind"] == "item" and b["numbered"]]
             if not steps:
                 doc.problems.append("line %d: the Procedure section must have a numbered list of steps" % body[i]["line"])
+            last = None
             for b in section:
-                if b not in steps:
-                    doc.problems.append("line %d: the Procedure section contains only numbered steps" % b["line"])
+                if b in steps:
+                    last = "step"
+                    continue
+                if b["kind"] == "code" and b["indent"] >= 2 and last in ("step", "code"):
+                    last = "code"
+                    continue
+                doc.problems.append("line %d: the Procedure section contains only numbered steps, with code blocks indented under a step" % b["line"])
             for b in steps:
-                ss = sentences(b["text"])
-                if len(ss) != 1:
+                text = strip_code(LINK.sub(lambda m: m.group(2), b["text"]))
+                if len(sentences(b["text"])) != 1:
                     doc.problems.append("line %d: a step is one sentence" % b["line"])
-                if MULTI_ACTION.search(strip_code(b["text"])):
+                if MULTI_ACTION.search(text) or any(m.group(1).lower() in verbs for m in JOINED.finditer(text)):
                     doc.problems.append("line %d: a step has one action" % b["line"])
-                words = re.findall(r"[A-Za-z][\w-]*", strip_code(LINK.sub(lambda m: m.group(2), b["text"])))
+                words = re.findall(r"[A-Za-z][\w-]*", text)
                 if not words or words[0].lower() not in verbs:
                     doc.problems.append("line %d: a step starts with an approved verb in the imperative (found %r)" % (b["line"], words[0] if words else ""))
     elif t == "concept":
@@ -297,7 +331,7 @@ def shingles(ws, k=3):
     return {tuple(ws[i:i + k]) for i in range(max(0, len(ws) - k + 1))}
 
 
-def duplicates(docs):
+def duplicates(docs, report):
     found = []
     sents, paras = [], []
     for d in docs:
@@ -309,26 +343,39 @@ def duplicates(docs):
             ws = words(text)
             if kind == "paragraph" and len(ws) >= MIN_PARAGRAPH_WORDS:
                 paras.append((d, line, shingles(ws)))
+
+    def pick(a, b):
+        if b[0].path in report:
+            return b, a
+        if a[0].path in report:
+            return a, b
+        return None, None
+
     seen = {}
-    for d, line, norm, _, _ in sents:
-        if norm in seen and seen[norm][0] is not d:
-            other = seen[norm]
-            found.append((d, "line %d: the same sentence is in %s line %d" % (line, other[0].path, other[1])))
-        seen.setdefault(norm, (d, line))
-    for i in range(len(sents)):
-        for j in range(i + 1, len(sents)):
-            a, b = sents[i], sents[j]
-            if a[0] is b[0] or a[2] == b[2] or min(a[4], b[4]) < NEAR_SENTENCE_WORDS:
+    for item in sents:
+        norm = item[2]
+        if norm in seen and seen[norm][0] is not item[0]:
+            mine, other = pick(seen[norm], item)
+            if mine:
+                found.append((mine[0], "line %d: the same sentence is in %s line %d" % (mine[1], other[0].path, other[1])))
+        seen.setdefault(norm, item)
+    near = [s for s in sents if s[4] >= NEAR_SENTENCE_WORDS]
+    for i, a in enumerate(near):
+        if a[0].path not in report:
+            continue
+        for j, b in enumerate(near):
+            if a[0] is b[0] or a[2] == b[2] or (b[0].path in report and j < i):
                 continue
             if jaccard(a[3], b[3]) >= NEAR_SENTENCE:
-                found.append((b[0], "line %d: a sentence is almost the same as %s line %d" % (b[1], a[0].path, a[1])))
-    for i in range(len(paras)):
-        for j in range(i + 1, len(paras)):
-            a, b = paras[i], paras[j]
-            if a[0] is b[0]:
+                found.append((a[0], "line %d: a sentence is almost the same as %s line %d" % (a[1], b[0].path, b[1])))
+    for i, a in enumerate(paras):
+        if a[0].path not in report:
+            continue
+        for j, b in enumerate(paras):
+            if a[0] is b[0] or (b[0].path in report and j < i):
                 continue
             if jaccard(a[2], b[2]) >= NEAR_PARAGRAPH:
-                found.append((b[0], "line %d: a paragraph is almost the same as %s line %d" % (b[1], a[0].path, a[1])))
+                found.append((a[0], "line %d: a paragraph is almost the same as %s line %d" % (a[1], b[0].path, b[1])))
     return found
 
 
@@ -349,14 +396,14 @@ def check_links(doc, root, docs_by_path, exists):
                 linked.add(path)
             if anchor:
                 other = docs_by_path.get(path)
-                heads = other.headings if other else []
                 if other is None:
                     try:
                         with open(os.path.join(root, path), encoding="utf-8") as f:
-                            heads = [m.group(1) for m in re.finditer(r"^#{1,6}\s+(.*?)\s*$", f.read(), re.MULTILINE)]
+                            other = Doc(path, f.read())
+                        parse_body(other, 0)
                     except OSError:
-                        heads = []
-                if anchor not in {slug(x) for x in heads}:
+                        other = Doc(path, "")
+                if anchor not in heading_slugs(other.headings):
                     doc.problems.append("line %d: the link %r goes to a heading that does not exist" % (line, target))
     return linked
 
@@ -508,7 +555,7 @@ def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/
             for p in sorted(modules):
                 if p not in reach:
                     docs[p].problems.append("no link path from %s goes to this module" % INDEX)
-    for d, msg in duplicates([d for p, d in active.items()]):
+    for d, msg in duplicates(list(docs.values()), set(active)):
         d.problems.append(msg)
     if vale:
         for p, alerts in run_vale(vale, root, paths, terms).items():

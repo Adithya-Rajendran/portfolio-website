@@ -59,6 +59,8 @@ def apply(results, digests, legacy, base, legacy_name):
             errors.append("%s: %s is not a checked file: remove its line" % (legacy_name, path))
         if base is not None and path not in base:
             errors.append("%s: %s is not on the base list: the list must not grow" % (legacy_name, path))
+        elif base is not None and legacy[path] != base[path]:
+            errors.append("%s: the line of %s is not the same as on the base list: a line may only be removed" % (legacy_name, path))
     return errors
 
 

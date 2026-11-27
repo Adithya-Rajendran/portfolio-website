@@ -32,13 +32,14 @@ The rule applies to these files:
 These items are not comments for the rule:
 
 - A shebang on line 1, and `<!doctype html>` before the header.
+- Text in a string that is not GLSL, and text in HTML attributes.
 - The marks that `tools/site.py` replaces: `<!--site:head-->` and `<!--site:page-->`.
 - These tool directives, with only rule names after them:
   `eslint-disable`, `eslint-disable-line`, `eslint-disable-next-line`, `eslint-enable`,
   `@ts-expect-error`, `@ts-nocheck`, `@ts-check`, `@vite-ignore`, `@__PURE__`, `#__PURE__`,
   `/// <reference ... />`, `prettier-ignore`, `stylelint-disable`, `stylelint-enable`,
-  `# noqa`, `# type:`, `# pragma: no cover`, `# -*- coding: ... -*-`, `# fmt: off`, `# fmt: on`, `# fmt: skip`,
-  `# shellcheck disable=`, `#Requires`, and the Dockerfile directives `# syntax=`, `# escape=` and `# check=`.
+  `# noqa`, `# type:` with a type or `ignore`, `# pragma: no cover`, `# -*- coding: ... -*-`, `# fmt: off`, `# fmt: on`, `# fmt: skip`,
+  `# shellcheck disable=`, `#Requires` with `-Version`, `-Modules`, `-RunAsAdministrator` or `-PSEdition`, and the Dockerfile directives `# syntax=`, `# escape=` and `# check=`.
 
 The rule does not apply to these files:
 
@@ -65,8 +66,8 @@ The modules follow the Red Hat modular documentation guide.
 4. Start each module with a front matter block. Use only the keys `type`, `title` and `depends`.
 5. Use one first-level heading, at the start. Make it the same as the title.
 6. In a concept, tell what a thing is and how it works. Do not write steps in a concept.
-7. In a procedure, use the sections "Prerequisites", "Procedure" and "Verification", in this sequence.
-8. In the "Procedure" section, write only a numbered list of steps. Write one action in each step, in one sentence.
+7. In a procedure, write the section "Procedure". You can also write these sections, in this sequence: "Prerequisites" before it, and "Verification", "Troubleshooting", "Next steps" and "Additional resources" after it.
+8. In the "Procedure" section, write only a numbered list of steps. You can put a code block under a step. Write one action in each step, in one sentence. Do not put "and" or "then" between two actions.
 9. In a reference, give the facts in tables or lists. Use only one sentence in a paragraph.
 10. In an assembly, write the title, one sentence that tells the purpose, and a list of links to modules. Do not add other text.
 11. Do not write comments in a module.
@@ -130,6 +131,6 @@ This table shows the rules that a tool checks and the rules that a review checks
 The file `tools/ci/legacy.txt` lists the files that do not obey these rules yet.
 The checks do not examine a file on the list while its hash agrees with the hash on the list.
 
-1. Do not add a line to the list.
+1. Do not add a line to the list, and do not change a line.
 2. When you change a file on the list, make the file obey the rules, and remove its line.
 3. When a file on the list obeys the rules, remove its line. If you do not remove the line, the check fails.

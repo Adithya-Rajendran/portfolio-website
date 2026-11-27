@@ -13,6 +13,7 @@ This table gives the approved technical names and technical verbs of the project
 | ASD-STE100 | name | ASD, STE100 | The standard for Simplified Technical English. |
 | assembly | name | assemblies | A module that gives a sequence of links to other modules, with a title and a purpose. |
 | Atrium | name | - | The room at the path `/`, where a visitor starts. |
+| attribute | name | attributes | A name and a value that HTML gives to a part of a page. |
 | bake | verb | bakes, baked | To calculate the light of a room in Blender and keep it in textures. |
 | Blender | name | - | The program that makes the models of the rooms and bakes their light. |
 | branch | name | branches | A line of commits in the repository. |
@@ -91,6 +92,7 @@ This table gives the approved technical names and technical verbs of the project
 | reference | name | references | A module that gives facts in tables or lists. |
 | render | verb | renders | To draw an image of a scene. |
 | repository | name | - | The Git copy of the files of the site, with their history. |
+| resource | name | resources | A file or a page that gives more information. |
 | room | name | rooms | One of the six areas of the station that a visitor can go to. |
 | script | name | scripts | A file of code that a program runs, for example a shell script. |
 | shader | name | shaders | A program that runs on the GPU and calculates the color of points. |
@@ -111,6 +113,7 @@ This table gives the approved technical names and technical verbs of the project
 | three.js | name | - | The library that the engine uses to draw the rooms. |
 | tier | name | tiers | A set of checks with a name, for example `static`, that `ci` runs. |
 | token | name | tokens | A text that gives access to a service. |
+| troubleshooting | name | - | The section of a procedure that tells how to correct a problem. |
 | TypeScript | name | - | The language with types that the build changes into JavaScript. |
 | Vale | name | - | The tool that checks the language of the documentation. |
 | verification | name | - | The last section of a procedure, which tells how to make sure that the steps have the correct result. |

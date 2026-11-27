@@ -15,7 +15,7 @@ This reference gives the commands, the files and the output of the checks for [t
 | `python3 tools/docs/check.py --vale "$(tools/docs/vale.sh)"` | The module check, the dependency graph check and the language check. |
 | `python3 tools/docs/check.py --no-vale` | The module check and the dependency graph check, without the language check. |
 | `--seed` | A legacy line for each file that does not obey the rules. |
-| `--base-legacy <file>` | A failure if the legacy list has a path that is not in the base list. |
+| `--base-legacy <file>` | A failure if the legacy list has a path that is not in the base list, or a hash that is different from the base list. |
 
 ## Files
 
@@ -27,7 +27,7 @@ This reference gives the commands, the files and the output of the checks for [t
 | `.vale/styles/Arcadia/` | The Vale rules of the project. |
 | `.vale/styles/config/dictionaries/ste.dic` | The approved general words. |
 | `.vale/verbs.txt` | The approved general verbs for the first word of a step. |
-| `tools/docs/vale.sh` | The script that copies Vale 3.29.0 from GitHub, checks its hash, keeps it in the cache and shows its path. |
+| [`tools/docs/vale.sh`](../tools/docs/vale.sh) | The script that copies Vale from GitHub, checks its hash, keeps it in the cache and shows its path. The script holds the Vale version. |
 
 ## Output
 

@@ -11,6 +11,7 @@ SPEC = importlib.util.spec_from_file_location("docs_check", os.path.join(HERE, "
 dc = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(dc)
 VALE = os.environ.get("VALE")
+BT = chr(96)
 
 GLOSSARY = """---
 type: reference
@@ -135,8 +136,25 @@ class DocsCheckTest(unittest.TestCase):
         index = INDEX.replace("depends: [glossary.md, docs/con_station.md]", "depends: [glossary.md, docs/con_station.md, docs/proc_bake.md]") + "- [Bake a room](proc_bake.md)\n"
         results, _ = self.check(base_files(**{"docs/proc_bake.md": good, "docs/assembly_index.md": index}))
         self.assertEqual(results["docs/proc_bake.md"], [])
-        bad = good.replace("## Verification\n\n- The room has textures.\n", "")
-        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "sections")
+        optional = good.replace("## Verification\n\n- The room has textures.\n", "").replace("## Prerequisites\n\n- The room has a model.\n\n", "")
+        self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": optional, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
+        more = good + "\n## Troubleshooting\n\n- Bake the room again.\n\n## Next steps\n\n- Pack the room.\n\n## Additional resources\n\n- The glossary.\n"
+        self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": more, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
+        bad = good.replace("## Procedure", "## Steps")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "sections in this sequence")
+        bad = good.replace("## Prerequisites\n\n- The room has a model.\n\n", "") + "\n## Prerequisites\n\n- The room has a model.\n"
+        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "sections in this sequence")
+        bad = good.replace("## Verification", "## Notes")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "sections in this sequence")
+        fence = BT * 3
+        code = good.replace("1. Bake the room.\n", "1. Bake the room.\n\n   " + fence + "sh\n   python3 tools/pack.py\n   " + fence + "\n\n")
+        self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": code, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
+        loose = good.replace("1. Bake the room.\n", "1. Bake the room.\n\n" + fence + "sh\npython3 tools/pack.py\n" + fence + "\n\n")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": loose, "docs/assembly_index.md": index}), "docs/proc_bake.md", "indented under a step")
+        bad = good.replace("2. Check the textures.", "2. Open the file and run the check.")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "one action")
+        fine = good.replace("2. Check the textures.", "2. Compare the old and new textures.")
+        self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": fine, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
         bad = good.replace("2. Check the textures.", "2. The textures are good.")
         self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "approved verb")
         bad = good.replace("2. Check the textures.", "2. Check the textures. Bake the room.")
@@ -184,6 +202,49 @@ class DocsCheckTest(unittest.TestCase):
         self.assertProblem(files, "docs/con_station.md", "heading that does not exist")
         files = base_files(**{"docs/con_station.md": CONCEPT.replace("depends: []", "depends: [glossary.md]") + "\nSee [the glossary](../glossary.md#glossary).\n"})
         self.assertEqual(self.problems(files, "docs/con_station.md"), [])
+
+    def test_reference_style_and_html_links_count(self):
+        ref = fm("concept", "Alpha", "docs/con_b.md") + "Alpha uses [beta][b].\n\n[b]: con_b.md\n"
+        b = fm("concept", "Beta") + "Beta has a path.\n"
+        index = INDEX.replace("depends: [glossary.md, docs/con_station.md]", "depends: [glossary.md, docs/con_station.md, docs/con_a.md]") + "- [Alpha](con_a.md)\n"
+        results, _ = self.check(base_files(**{"docs/con_a.md": ref, "docs/con_b.md": b, "docs/assembly_index.md": index}))
+        self.assertEqual(results["docs/con_a.md"], [])
+        self.assertEqual(results["docs/con_b.md"], [])
+        html = fm("concept", "Alpha", "docs/con_b.md") + 'Alpha uses <a href="con_b.md">beta</a>.\n'
+        results, _ = self.check(base_files(**{"docs/con_a.md": html, "docs/con_b.md": b, "docs/assembly_index.md": index}))
+        self.assertEqual(results["docs/con_a.md"], [])
+        hidden = fm("concept", "Alpha") + "Alpha uses [beta][b].\n\n[b]: con_none.md\n"
+        got = self.problems(base_files(**{"docs/con_a.md": hidden, "docs/assembly_index.md": index}), "docs/con_a.md")
+        self.assertTrue(any("does not exist" in p for p in got), got)
+        a = fm("concept", "Alpha", "docs/con_b.md") + 'Alpha uses <a href="con_b.md">beta</a>.\n'
+        cyc = fm("concept", "Beta", "docs/con_a.md") + "Beta uses [alpha][a].\n\n[a]: con_a.md\n"
+        results, _ = self.check(base_files(**{"docs/con_a.md": a, "docs/con_b.md": cyc, "docs/assembly_index.md": index}))
+        self.assertTrue(any("cycle" in p for p in results["docs/con_a.md"] + results["docs/con_b.md"]))
+
+    def test_repeated_heading_anchors(self):
+        target = fm("concept", "Beta") + "## Use\n\nBeta has a path.\n\n## Use\n\nBeta has a name.\n"
+        a = fm("concept", "Alpha", "docs/con_b.md") + "See [the second use](con_b.md#use-1).\n"
+        index = INDEX.replace("depends: [glossary.md, docs/con_station.md]", "depends: [glossary.md, docs/con_station.md, docs/con_a.md]") + "- [Alpha](con_a.md)\n"
+        results, _ = self.check(base_files(**{"docs/con_a.md": a, "docs/con_b.md": target, "docs/assembly_index.md": index}))
+        self.assertEqual(results["docs/con_a.md"], [])
+
+    def test_headings_in_code_of_unchecked_files_are_not_anchors(self):
+        fence = BT * 3
+        other = "# Old\n\n" + fence + "\n# not a heading\n" + fence + "\n"
+        files = base_files(**{"data/posts/old.md": other, "docs/con_station.md": CONCEPT.replace("depends: []", "depends: [data/posts/old.md]") + "\nSee [old](../data/posts/old.md#not-a-heading).\n"})
+        self.assertProblem(files, "docs/con_station.md", "heading that does not exist")
+
+    def test_duplicates_of_legacy_files_fail_on_the_new_module(self):
+        para = "The engine draws each room with the light that the bake keeps in its textures, and the governor keeps the frame time in its limit."
+        old = "# Old notes\n\n" + para + "\n"
+        t = Tree(base_files(**{"docs/old.md": old, "docs/con_station.md": CONCEPT + "\n" + para + "\n"}))
+        try:
+            _, digests = t.run()
+            results, _ = t.run(legacy={"docs/old.md": digests["docs/old.md"]})
+            self.assertTrue(any("docs/old.md" in p for p in results["docs/con_station.md"]), results["docs/con_station.md"])
+            self.assertFalse(any("same" in p for p in results["docs/old.md"]))
+        finally:
+            t.close()
 
     def test_comment_in_module_fails(self):
         files = base_files(**{"docs/con_station.md": CONCEPT + "\n<!-- more -->\n"})
@@ -275,6 +336,12 @@ class ValeTest(unittest.TestCase):
 
     def test_passive_fails(self):
         got = self.problems(CONCEPT + "\nThe room is baked.\n")
+        self.assertTrue(any("passive" in p for p in got), got)
+
+    def test_passive_with_an_adverb_or_get_fails(self):
+        got = self.problems(CONCEPT + "\nThe room was then baked.\n")
+        self.assertTrue(any("passive" in p for p in got), got)
+        got = self.problems(CONCEPT + "\nThe room gets baked.\n")
         self.assertTrue(any("passive" in p for p in got), got)
 
     def test_banned_phrase_fails(self):
