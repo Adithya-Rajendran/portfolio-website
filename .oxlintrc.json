@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["eslint-plugin-solid"],
+  "categories": { "correctness": "error" },
+  "env": { "browser": true, "es2024": true },
+  "rules": {
+    "solid/jsx-no-undef": "error",
+    "solid/no-destructure": "error",
+    "solid/reactivity": "error"
+  },
+  "ignorePatterns": ["dist/**", "public/vendor/**", "public/asset-catalogue/**", "node_modules/**"]
+}

@@ -16,6 +16,7 @@ Each job writes to `$CI_JOB/`, which is `$CI_HOME/jobs/<timestamp>-<sha8>-<tier>
 | `result.json` | `{ "ref", "sha", "tier", "status", "seconds", "job" }` |
 | `log.txt` | The output of `tools/ci/run.sh`, with its errors. |
 | `pack.log`, `site.log` | The logs of the pack tool, and of `pnpm install` and `pnpm build`. |
+| `pnpm-static.log` | The log of `pnpm install` in the `static` tier. |
 | `out/` | The screenshots and the output of the scripts (`$OUT`). The `pictures` tier writes `$OUT/current/` and `$OUT/heat/`. |
 
 The last line of a job is `ci <tier> <sha8> PASS|FAIL <seconds>s <job directory>`.

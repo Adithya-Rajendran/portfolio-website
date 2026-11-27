@@ -45,7 +45,7 @@ After the visitor selects a thing for the first time, the general hint goes away
 
 ## The turn of the route map
 
-The route map of Navigation turns about the axis of the table, with `TURN` in `src/engine/routemap.js` and `turning()` in `src/main.js`.
+The route map of Navigation turns about the axis of the table, with `TURN` and `createTurn()` in `src/engine/turn.js`, and the pointer and wheel events in `src/main.js`.
 
 - A drag across the room with a mouse, a pen or a finger turns the map. A wheel that goes left and right (`deltaX`), or Shift with a vertical wheel, also turns it.
 - A drag must be more than 6 px, and its part from left to right must be equal to or more than its vertical part.
