@@ -308,7 +308,7 @@ export class StationPage {
   async planePoint(pickIndex: number, cw: number, ch: number, x: number, y: number): Promise<{ x: number; y: number; z: number }> {
     return this.page.evaluate(
       async ({ i, cw, ch, x, y }) => {
-        const THREE = await import('three');
+        const THREE = window.__modules.THREE;
         const l = (window as any).__lobby;
         const m = l.picks[i].mesh;
         l.camera.updateMatrixWorld(true);
@@ -323,7 +323,7 @@ export class StationPage {
 
   async readBox(): Promise<ReadBox> {
     return this.page.evaluate(async () => {
-      const THREE = await import('three');
+      const THREE = window.__modules.THREE;
       const l = (window as any).__lobby;
       const pick = l.picks.find((q: any) => q.reads);
       const m = pick.mesh;
@@ -381,7 +381,7 @@ export class StationPage {
       if (n) await this.page.waitForTimeout(400);
       hits = await this.page.evaluate(
         async ({ x, y }) => {
-          const THREE = await import('three');
+          const THREE = window.__modules.THREE;
           const l = (window as any).__lobby;
           const ray = new THREE.Raycaster();
           const live = l.picks.filter((q: any) => !q.live || q.live());
@@ -469,7 +469,7 @@ export class StationPage {
 
   async pickPoint(i: number): Promise<{ x: number; y: number; inside: boolean; reaches: boolean; top: string | null }> {
     return this.page.evaluate(async (idx) => {
-      const THREE = await import('three');
+      const THREE = window.__modules.THREE;
       const l = (window as any).__lobby;
       const m = l.picks[idx].mesh;
       const ray = new THREE.Raycaster();

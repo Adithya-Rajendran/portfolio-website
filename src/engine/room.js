@@ -41,7 +41,7 @@ function predictTextures(info, live) {
 
 export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, clearance, want, words, display: D }) {
   const base = `assets/${id}`; let info, arrived = 0;
-  ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
+  ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/basis/').setWorkerLimit(Math.max(2, Math.min(8, (navigator.hardwareConcurrency || 4) - 1))).detectSupport(renderer); ktx2.init();
   const pending = [], texCache = new Map(), predicted = new Set(), used = new Set(); let textureError;
   const later = [], skyLayers = [], chandLayers = [], abort = new AbortController();
   let firstSky = null, coverSky = null, rechosen = 0, disposed = false, streaming = false, updates = 0, uploads = 0, running = 0, chOff = 0, chHold = null, chIn = [true, true, true];

@@ -71,7 +71,7 @@ async function run(name) {
       const bnd = await p.evaluate((i) => window.__lobby.picks[i].bounds().map((v) => v.toArray()), bk), near = (a) => bnd.some((q) => Math.hypot(q[0] - a[0], q[1] - a[1], q[2] - a[2]) < 0.004);
       chk('L', bnd.length === 8 * books.length && bookCorners.flat().every(near), "the pick's bounds() are the corners of the books (all 8 of each, within 4 mm)", { n: bnd.length, missing: bookCorners.flat().filter((c) => !near(c)).length });
       const rectOf = (p) => p.evaluate(async ({ pts, all }) => {
-        const THREE = await import('three'), l = window.__lobby; l.camera.updateMatrixWorld(true);
+        const THREE = window.__modules.THREE, l = window.__lobby; l.camera.updateMatrixWorld(true);
         const proj = (set) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true; for (const c of set) { const v = new THREE.Vector3(...c).project(l.camera); if (v.z > 1) ok = false; const x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return { l: x0, t: y0, r: x1, b: y1, ok }; };
         return { lock: l.display.state().lock, all: proj(all), each: pts.map(proj), eye: l.camera.position.toArray() };
       }, { pts: bookCorners, all: bookCorners.flat() });
@@ -81,7 +81,7 @@ async function run(name) {
       if (!phone) {
         let ptr = [0, 0];
         const under = (p) => p.evaluate(async ({ pts, x, y }) => {
-          const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live()); l.camera.updateMatrixWorld(true);
+          const THREE = window.__modules.THREE, l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live()); l.camera.updateMatrixWorld(true);
           for (const q of live) q.mesh.updateWorldMatrix(true, false); ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
           const proj = (set) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const c of set) { const v = new THREE.Vector3(...c).project(l.camera), px = (v.x * 0.5 + 0.5) * innerWidth, py = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); } return [x0, y0, x1, y1].map(Math.round); };
           const d = l.display.state();

@@ -115,14 +115,31 @@ assets() {
   export ASSETS
 }
 
+pnpm_cmd() {
+  if command -v pnpm >/dev/null 2>&1; then pnpm "$@"; else npx --yes pnpm@12.23.0 "$@"; fi
+}
+
+site_dir_for() {
+  local src="${1:-$ROOT}"
+  if [ -f "$src/vite.config.ts" ]; then echo "$src/dist"; else echo "$src/public"; fi
+}
+
 site_for() {
   local src="${1:-$ROOT}"
   local log_name="${2:-site.log}"
   local log_dir="${CI_JOB:-$OUT}"
   mkdir -p "$log_dir"
-  if ! ( cd "$src" && python3 tools/site.py ) > "$log_dir/$log_name" 2>&1; then
-    echo "ci: site.py failed" >&2
-    tail -10 "$log_dir/$log_name" >&2 || true
+  if [ ! -f "$src/vite.config.ts" ]; then
+    if ! ( cd "$src" && python3 tools/site.py ) > "$log_dir/$log_name" 2>&1; then
+      echo "ci: site.py failed" >&2
+      tail -10 "$log_dir/$log_name" >&2 || true
+      return 1
+    fi
+    return 0
+  fi
+  if ! ( cd "$src" && pnpm_cmd install --frozen-lockfile --ignore-scripts && pnpm_cmd build && mkdir -p dist/assets ) > "$log_dir/$log_name" 2>&1; then
+    echo "ci: pnpm build failed" >&2
+    tail -20 "$log_dir/$log_name" >&2 || true
     return 1
   fi
 }
@@ -157,7 +174,7 @@ pw_for() {
   docker run --rm ${CI_CONTAINER_NAME:+--name "$CI_CONTAINER_NAME"} --ipc=host "${dev[@]}" \
     -e ORIGIN=http://127.0.0.1:8080 -e SETUP -e UNTIL \
     -v "$ROOT/tools/docker":/work:ro \
-    -v "$site_src/public":/site:ro \
+    -v "$(site_dir_for "$site_src")":/site:ro \
     "${assets_mount[@]}" \
     -v "$out_dir":/out \
     -v lobby_pw_modules:/w:ro \
@@ -200,14 +217,14 @@ run_e2e() {
   [ -d /dev/dri ] && dev=(--device /dev/dri)
   local assets_mount=()
   if [ "$ASSETS" != "$ROOT/public/assets" ]; then
-    assets_mount=(-v "$ASSETS":/repo/public/assets:ro)
+    assets_mount=(-v "$ASSETS":/repo/dist/assets:ro)
   fi
   docker run --rm --init --ipc=host "${dev[@]}" \
     -e CI=1 \
     -e PLAYWRIGHT_OUTPUT_DIR=/out/test-results \
     -e PLAYWRIGHT_HTML_REPORT=/out/playwright-report \
-    -e SITE_DIR=/repo/public \
-    -e ASSETS=/repo/public/assets \
+    -e SITE_DIR=/repo/dist \
+    -e ASSETS=/repo/dist/assets \
     -v "$ROOT":/repo:ro \
     "${assets_mount[@]}" \
     -v "$OUT":/out \

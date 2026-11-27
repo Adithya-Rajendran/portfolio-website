@@ -130,7 +130,7 @@ const HDR = ([x, y, w, h]) => {
     scene: read(post.scene, x, sy, w, h), bloom0: read(post.bloom[0], x >> 1, sy >> 1, w >> 1, h >> 1) };
 };
 const IDPASS = async ([x, y, w, h, f]) => {
-  const THREE = await import('three'), L = window.__lobby, r = L.renderer, cam = L.camera, W0 = L.post.scene.width, H0 = L.post.scene.height;
+  const THREE = window.__modules.THREE, L = window.__lobby, r = L.renderer, cam = L.camera, W0 = L.post.scene.width, H0 = L.post.scene.height;
   const st = (window.__idp ??= { list: [], pairs: new Map(), frames: 0 });
   if (!st.scene) {
     st.scene = new THREE.Scene(); st.rt = new THREE.WebGLRenderTarget(W0, H0, { depthBuffer: true });

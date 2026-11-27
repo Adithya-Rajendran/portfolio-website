@@ -54,10 +54,11 @@ else
   resolve_assets
   SERVE=1
   TARGET_ORIGIN="http://127.0.0.1:8080"
-  if [ ! -e "$ROOT/public/assets" ] && [ ! -L "$ROOT/public/assets" ]; then
-    mkdir -p "$ROOT/public/assets"
+  [ -f "$ROOT/dist/index.html" ] || { echo "detsnap.sh: no built site in dist/; run pnpm build" >&2; exit 1; }
+  if [ ! -e "$ROOT/dist/assets" ] && [ ! -L "$ROOT/dist/assets" ]; then
+    mkdir -p "$ROOT/dist/assets"
   fi
-  SITE_MOUNTS=(-v "$ROOT/public":/site:ro)
+  SITE_MOUNTS=(-v "$ROOT/dist":/site:ro)
   if [ "$ASSETS" != "$ROOT/public/assets" ]; then
     SITE_MOUNTS+=(-v "$ASSETS":/site/assets:ro)
   fi

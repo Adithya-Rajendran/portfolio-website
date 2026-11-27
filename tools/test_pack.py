@@ -102,7 +102,7 @@ console.log(JSON.stringify(out));
     def test_rewrite(self):
         import json, shutil, subprocess
         if not shutil.which('node'): self.skipTest('no node')
-        js = os.path.join(TOOLS, '..', 'public', 'js', 'ktx2small.js')
+        js = os.path.join(TOOLS, '..', 'src', 'engine', 'ktx2small.js')
         r = subprocess.run(['node', '--input-type=module', '-e', self.JS.replace('FILE', 'file://' + os.path.abspath(js))], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         zstd, basis = json.loads(r.stdout)
@@ -119,7 +119,7 @@ class SmallKTX2RealFiles(unittest.TestCase):
         root = os.path.abspath(os.path.join(TOOLS, '..'))
         fix = os.path.join(TOOLS, 'testdata', 'ktx2')
         cuts = [[n, pack.small_bytes(os.path.join(fix, n))] for n in ('uastc.ktx2', 'uastc-zstd.ktx2', 'etc1s.ktx2')]
-        js = self.JS.replace('@SMALL@', 'file://' + os.path.join(root, 'public', 'js', 'ktx2small.js')).replace('@BASIS@', os.path.join(root, 'public', 'vendor', 'jsm', 'libs', 'basis')).replace('@FIX@', fix)
+        js = self.JS.replace('@SMALL@', 'file://' + os.path.join(root, 'src', 'engine', 'ktx2small.js')).replace('@BASIS@', os.path.join(root, 'public', 'vendor', 'basis')).replace('@FIX@', fix)
         r = subprocess.run(['node', '--input-type=module', '-e', js, json.dumps(cuts)], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr[-2000:])
         out = json.loads(r.stdout)

@@ -6,7 +6,7 @@ const { content } = await load(), D = content.display, CUE = content.rooms.writi
 const b = await launch();
 
 const cueNow = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, s = l.display.state(), q = l.picks.find((x) => x.options), m = q.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+  const THREE = window.__modules.THREE, l = window.__lobby, s = l.display.state(), q = l.picks.find((x) => x.options), m = q.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); const { min, max } = m.geometry.boundingBox; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (let i = 0; i < 8; i++) { const v = new THREE.Vector3(i & 1 ? max.x : min.x, i & 2 ? max.y : min.y, i & 4 ? max.z : min.z).applyMatrix4(m.matrixWorld).project(l.camera), x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   const e = document.querySelector('#cue'), t = e?.querySelector('.lock-tag').getBoundingClientRect(), r = s.cue?.rect, rg = document.createRange(), zones = [];
@@ -59,7 +59,7 @@ async function run(name) {
 
   if (!phone && !still) {
     const far = await p.evaluate(() => window.__lobby.volumes().length - 1), slug = await p.evaluate((i) => window.__lobby.volumes()[i].slug, far);
-    const now = () => p.evaluate(async () => (await import('/js/kit.js')).uTime.value), t0 = await now();
+    const now = () => p.evaluate(async () => (window.__modules.kit).uTime.value), t0 = await now();
     chk('D', (await poke(p, `#ways [data-option="${far}"]`, false)) === true, `the farthest title (${slug}) is pressed`);
     const got = await until(p, (s) => window.__lobby.held() === s, slug, 150000), took = (await now()) - t0;
     chk('D', got && took <= 5.5, `from the press to the book held: ${took.toFixed(2)} station seconds (at most 5.5; it was 7.0 to 9.6)`, took);

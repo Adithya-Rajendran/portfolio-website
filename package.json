@@ -4,9 +4,16 @@
   "type": "module",
   "packageManager": "pnpm@12.23.0",
   "scripts": {
+    "dev": "python3 tools/site.py --shell index.html --out public && vite",
+    "build": "vite build && vite build --mode review && python3 tools/site.py --shell dist/index.html --out dist",
+    "preview": "vite preview",
     "test:e2e": "node tests/e2e/run.mjs"
   },
+  "dependencies": {
+    "three": "0.181.2"
+  },
   "devDependencies": {
-    "@playwright/test": "1.65.1"
+    "@playwright/test": "1.65.1",
+    "vite": "8.3.8"
   }
 }

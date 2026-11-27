@@ -2,7 +2,7 @@
 .generated-files
 
 # developer and review pages: the previews and the test server serve them, the deployed site never does
-# (docs/ref_review-pages.md). The built dist/ after F1 must leave them out the same way.
+# (docs/ref_review-pages.md). The build puts their scripts under /app/review/.
 /blueprint.html
 /blueprint/
 /asset.html
@@ -11,5 +11,4 @@
 /exhibit-review.png
 /material-chair-review.png
 /room-realism-review.png
-/js/blueprint.js
-/js/asset.js
+/app/review/

@@ -179,13 +179,17 @@ run_parallel() {
 
 step "content.py" python3 tools/content.py
 for t in tools/test_*.py; do step "unittest $t" python3 -m unittest "$t"; done
-step "site.py" python3 tools/site.py
+pnpm_cmd() {
+  if command -v pnpm >/dev/null 2>&1; then pnpm "$@"; else npx --yes pnpm@12.23.0 "$@"; fi
+}
+step "pnpm install" pnpm_cmd install --frozen-lockfile --ignore-scripts
+step "pnpm build" pnpm_cmd build
 
-if [[ " ${FAILED[*]} " == *" site.py "* ]]; then
-  echo; echo "site.py failed: there are no pages to test in a browser"
+if [[ " ${FAILED[*]} " == *" pnpm install "* || " ${FAILED[*]} " == *" pnpm build "* ]]; then
+  echo; echo "the build failed: there are no pages to test in a browser"
 else
-  if [ ! -e "public/assets" ] && [ ! -L "public/assets" ]; then
-    mkdir -p "public/assets"
+  if [ ! -e "dist/assets" ] && [ ! -L "dist/assets" ]; then
+    mkdir -p "dist/assets"
   fi
 
   SLUGS=$(basename -a data/posts/*.md | sed 's/\.md$//'); FIRST=$(echo "$SLUGS" | head -1)

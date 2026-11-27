@@ -157,7 +157,7 @@ for (const raw of jobs) {
   await p.screenshot({ path: `${out}/${name}.png` });
   console.log(name, JSON.stringify(await p.evaluate(async () => ({
     ...window.__lobby.mode(),
-    uTime: (await import('./js/kit.js')).uTime.value,
+    uTime: (window.__modules?.kit ?? await import('./js/kit.js')).uTime.value,
     now: performance.now(),
   }))));
   console.log(name, 'probe', JSON.stringify(await p.evaluate(() => {

@@ -1,9 +1,9 @@
-// Tests for the DEV host and parameter rules of public/js/dev.js
+// Tests for the DEV host and parameter rules of src/engine/dev.js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
-import { isDevHost, paramsFor, PUBLIC_KEYS } from '../public/js/dev.js';
+import { isDevHost, paramsFor, PUBLIC_KEYS } from '../src/engine/dev.js';
 
 test('a public host name, a look-alike of one, or an address outside the private ranges is not DEV', () => {
   for (const h of ['www.example.com', 'example.com', 'www.example.com.example.net', 'localhost.www.example.com', '127.0.0.1.www.example.com', 'sub.workers.dev',
@@ -35,9 +35,9 @@ function* walk(dir) {
     if (s.isDirectory()) yield* walk(p); else if (TEXT.test(name) && p !== SELF) yield p;
   }
 }
-test('?room= is not read, built or linked anywhere in public/, tools/ or tests/', () => {
+test('?room= is not read, built or linked anywhere in src/, public/, tools/ or tests/', () => {
   const found = [];
-  for (const top of ['public', 'tools', 'tests'])
+  for (const top of ['src', 'public', 'tools', 'tests'])
     for (const f of walk(join(ROOT, top))) readFileSync(f, 'utf8').split('\n').forEach((l, i) => { if (BAD.test(l)) found.push(relative(ROOT, f).split(sep).join('/') + ':' + (i + 1)); });
   assert.deepEqual(found, []);
 });

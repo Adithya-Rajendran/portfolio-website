@@ -1,10 +1,13 @@
 # Cloudflare static assets. Everything under /assets/ is requested with ?v=<bake version> (from scene.json, which is
-# always re-checked), so it can be cached for good. The vendored three.js never changes within a release.
+# always re-checked), so it can be cached for good. The build names each file under /app/ by the hash of its content,
+# so it can be cached for good too. The Basis transcoder under /vendor/ never changes within a release.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 /assets/*/scene.json
   ! Cache-Control
   Cache-Control: no-cache
+/app/*
+  Cache-Control: public, max-age=31536000, immutable
 /vendor/*
   Cache-Control: public, max-age=2592000
 

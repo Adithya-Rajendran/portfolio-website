@@ -57,7 +57,7 @@ export async function camStill(p, timeout = 90000) {
   return false;
 }
 export const pickPoint = (p, i) => p.evaluate(async (i) => {
-  const THREE = await import('three'), l = window.__lobby, m = l.picks[i].mesh, ray = new THREE.Raycaster(); l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+  const THREE = window.__modules.THREE, l = window.__lobby, m = l.picks[i].mesh, ray = new THREE.Raycaster(); l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   m.geometry.computeBoundingSphere(); const v = m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld).project(l.camera), x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight;
   const live = l.picks.filter((q) => !q.live || q.live()); ray.setFromCamera(new THREE.Vector2(v.x, v.y), l.camera);
   const hit = ray.intersectObjects(live.map((q) => q.mesh), false)[0];

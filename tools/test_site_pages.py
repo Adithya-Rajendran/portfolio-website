@@ -180,7 +180,7 @@ class Pages(unittest.TestCase):
                 main_ids = [n.attrs['id'] for n in t.root.one('main').all() if 'id' in n.attrs]
                 self.assertFalse(set(main_ids) & (shell_ids | set(s.RUNTIME_IDS)), rel)
                 scripts = sorted(n.attrs.get('type') or '' for n in t.root.all('script'))
-                self.assertEqual(scripts, ['', 'application/ld+json', 'importmap', 'module'], rel)
+                self.assertEqual(scripts, ['', 'application/ld+json', 'module'], rel)
                 self.assertFalse(list(t.root.one('main').all('script')), rel)
                 for tag in ('form', 'input', 'textarea', 'button', 'iframe', 'style'):
                     self.assertFalse(list(t.root.one('main').all(tag)), (rel, tag))

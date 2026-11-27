@@ -12,7 +12,7 @@ console.log(JSON.stringify(await p.evaluate(() => { const L = window.__lobby, gl
   const errs = []; for (let i = 0; i < 6; i++) { const e = gl.getError(); if (!e) break; errs.push(e); }
   return { lost: window.__lost, isLost: gl.isContextLost(), errs, mem: L.renderer.info.memory, maxTex: gl.getParameter(gl.MAX_TEXTURE_SIZE), frame: L.renderer.info.render.frame, mode: L.mode() }; })));
 console.log(JSON.stringify(await p.evaluate(async () => {
-  const THREE = await import('three'); const L = window.__lobby, r = L.renderer, out = [];
+  const THREE = window.__modules.THREE; const L = window.__lobby, r = L.renderer, out = [];
   const S = +(new URLSearchParams(location.search).get('rt') || 4);
   const rt = new THREE.WebGLRenderTarget(S, S), cam = new THREE.Camera(), px = new Uint8Array(64);
   L.scene.traverse((o) => { const m = o.material?.uniforms?.map?.value; if (!o.isMesh || !m || out.length > 4) return;

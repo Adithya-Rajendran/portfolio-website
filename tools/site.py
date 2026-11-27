@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content import ContentError, DATA, ROOT, SITE, image_file, load_posts, load_profile, load_projects
 import site_extras
 
-SHELL = os.path.join(ROOT, 'public', 'index.html')
+SHELL = os.path.join(ROOT, 'index.html')
 WEBP = os.path.expanduser('~/.local/opt/webp/bin')
 MAX_SIDE = 1600
 ENCODING = 'v1: photos -q 82; PNG the smaller of -lossless and -q 85; EXIF orientation applied; -metadata none'
@@ -619,7 +619,7 @@ def _list(lines, i, doc, out):
 def page(shell, title, head, main):
     for mark in ('<title>', '<!--site:head-->', '<!--site:page-->'):
         if shell.count(mark) != 1:
-            sys.exit(f'public/index.html must contain {mark} exactly once')
+            sys.exit(f'the shell must contain {mark} exactly once')
     a = shell.index('<title>') + len('<title>')
     b = shell.index('</title>', a)
     shell = shell[:a] + escape(title) + shell[b:]
@@ -1126,8 +1126,8 @@ def add_files(outputs, doc):
         outputs[f'blog/files/{name}'] = data
 
 
-def build(posts_dir, out, projects_dir=None, profile_path=None):
-    with open(SHELL, encoding='utf-8') as f:
+def build(posts_dir, out, projects_dir=None, profile_path=None, shell_path=SHELL):
+    with open(shell_path, encoding='utf-8') as f:
         shell = f.read()
     taken = set(re.findall(r'\bid="([^"]+)"', shell)) | {'page', *RUNTIME_IDS}
     projects_dir = projects_dir or os.path.join(DATA, 'projects')
@@ -1254,14 +1254,15 @@ def write_outputs(out, outputs, prune=('blog',)):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description='Write the pages of public/ from data/: the posts, the projects and the profile.')
+    ap = argparse.ArgumentParser(description='Write the pages of the site from data/: the posts, the projects and the profile.')
     ap.add_argument('--posts', default=os.path.join(DATA, 'posts'), help='folder of <slug>.md posts (default data/posts)')
     ap.add_argument('--projects', default=os.path.join(DATA, 'projects'), help='folder of <slug>.md projects (default data/projects)')
     ap.add_argument('--profile', default=os.path.join(DATA, 'profile.json'), help='the profile (default data/profile.json)')
     ap.add_argument('--out', default=os.path.join(ROOT, 'public'), help='site folder to write into (default public)')
+    ap.add_argument('--shell', default=SHELL, help='page that each page is made from (default index.html; dist/index.html after vite build)')
     a = ap.parse_args(argv)
     try:
-        outputs, posts, projects, profile, warnings = build(a.posts, a.out, a.projects, a.profile)
+        outputs, posts, projects, profile, warnings = build(a.posts, a.out, a.projects, a.profile, a.shell)
         extras = site_extras.build(posts, profile, projects)
         for rel in extras:
             out_path(a.out, rel)
