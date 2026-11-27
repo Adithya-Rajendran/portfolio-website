@@ -2,18 +2,18 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "strict": true,
-    "checkJs": false,
+    "checkJs": true,
     "types": [
-      "vite/client",
-      "node"
-    ],
-    "allowImportingTsExtensions": true
+      "vite/client"
+    ]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/app/**/*",
-    "tests/**/*.ts",
-    "*.ts"
+    "src/app/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
   ]
 }

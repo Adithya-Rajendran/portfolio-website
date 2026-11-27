@@ -17,4 +17,4 @@ This reference gives the unit tests that the `static` tier runs.
 | `python3 -m unittest tools/test_geomcheck.py` | The geometry check, `tools/geomcheck.py`. |
 | `python3 -m unittest tools/test_pack.py` | The pack tool, `tools/pack.py`. |
 | `VALE=<vale> python3 -m unittest tools/comments/test_check.py tools/docs/test_check.py` | The comment check and the documentation check. `tools/docs/vale.sh` gives the path of Vale. |
-| `node --test tools/test_*.mjs` | The governor, the DEV switch and the scan for the `room` query of the first version. |
+| `node --test tools/test_*.mjs` | The governor, the DEV switch, the scan for the `room` query of the first version and the baseline rules of `tools/ci/ratchet.mjs`. |

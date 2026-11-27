@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "checkJs": false,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "*.ts",
+    "tests/**/*.ts",
+    "src/**/*.test.ts",
+    "src/globals.d.ts"
+  ],
+  "exclude": []
+}

@@ -12,8 +12,6 @@ src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Obje
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
-src/engine/hud.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
-src/engine/hud.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
 src/engine/hud.js	TS2345	Argument of type '[any, any, ...number[]]' is not assignable to parameter of type '[any, any, any, any]'.
 src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
 src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
@@ -81,8 +79,6 @@ src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Obje
 src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'number | ArrayBuffer | ArrayLike<number> | Iterable<number>'.
 src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'string'.
 src/engine/routemap.js	TS2363	The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-src/main.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
-src/main.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
 src/main.js	TS2339	Property 'closest' does not exist on type 'EventTarget'.
 src/main.js	TS2339	Property 'connection' does not exist on type 'Navigator'.
 src/main.js	TS2339	Property 'dataset' does not exist on type 'Element'.

@@ -317,13 +317,15 @@ tier="${1:?usage: tools/ci/run.sh <tier> [args...]}"; shift
 case "$tier" in
   static)
     (
-      cd "$ROOT" &&
-      python3 tools/content.py &&
-      for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done &&
-      node --test tools/test_*.mjs &&
-      docs_rules &&
-      js_checks &&
-      python3 tools/site.py > /dev/null
+      cd "$ROOT" || exit 1
+      rc=0
+      python3 tools/content.py || rc=1
+      for t in tools/test_*.py; do python3 -m unittest -q "$t" || rc=1; done
+      node --test tools/test_*.mjs || rc=1
+      docs_rules || rc=1
+      js_checks || rc=1
+      python3 tools/site.py > /dev/null || rc=1
+      exit "$rc"
     )
     ;;
   smoke)
