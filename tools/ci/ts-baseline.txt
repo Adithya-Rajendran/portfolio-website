@@ -1,0 +1,114 @@
+src/engine/comms.js	TS2322	Type 'string' is not assignable to type 'CanvasTextAlign'.
+src/engine/comms.js	TS2339	Property 'blur' does not exist on type 'Element'.
+src/engine/comms.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/drone.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/drone.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/drone.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/drone.js	TS2363	The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/engine/governor.js	TS2339	Property 'bake' does not exist on type '{ max?: number; min?: number; now?: number; }'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/hud.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
+src/engine/hud.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
+src/engine/hud.js	TS2345	Argument of type '[any, any, ...number[]]' is not assignable to parameter of type '[any, any, any, any]'.
+src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
+src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
+src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
+src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
+src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
+src/engine/kit.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/post.js	TS2339	Property 'bloom' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'contrast' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'exposure' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'grain' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'saturation' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'threshold' does not exist on type '{}'.
+src/engine/post.js	TS2339	Property 'vignette' does not exist on type '{}'.
+src/engine/reader.js	TS2339	Property 'blur' does not exist on type 'Element'.
+src/engine/reader.js	TS2339	Property 'closest' does not exist on type 'EventTarget'.
+src/engine/reader.js	TS2339	Property 'focus' does not exist on type 'Element'.
+src/engine/reader.js	TS2339	Property 'offsetHeight' does not exist on type 'Element'.
+src/engine/reader.js	TS2339	Property 'removeAttribute' does not exist on type 'ChildNode'.
+src/engine/reader.js	TS2339	Property 'setAttribute' does not exist on type 'ChildNode'.
+src/engine/reader.js	TS2339	Property 'style' does not exist on type 'Element'.
+src/engine/reader.js	TS2345	Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+src/engine/reader.js	TS2345	Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+src/engine/reader.js	TS2345	Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+src/engine/reader.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/reader.js	TS2561	Object literal may only specify known properties, but 't' does not exist in type '{ T: any; on: any; }'. Did you mean to write 'T'?
+src/engine/room.js	TS2339	Property 'boundingSphere' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'computeBoundingSphere' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'connection' does not exist on type 'Navigator'.
+src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'isInstancedMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'isMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'isMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'isMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2339	Property 'material' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/room.js	TS2353	Object literal may only specify known properties, and 'window' does not exist in type '{ center: any; facing: any; scene: any; text: any; }'.
+src/engine/room.js	TS2363	The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/engine/room.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/room.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/room.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/engine/room.js	TS2810	Expected 1 argument, but got 0. 'new Promise()' needs a JSDoc hint to produce a 'resolve' that can be called without arguments.
+src/engine/room.js	TS2810	Expected 1 argument, but got 0. 'new Promise()' needs a JSDoc hint to produce a 'resolve' that can be called without arguments.
+src/engine/routemap.js	TS2339	Property 'isLine' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'isMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'isPoints' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'isSprite' does not exist on type 'Object3D<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'rotation' does not exist on type 'number | Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'seed' does not exist on type 'Points<BufferGeometry<NormalBufferAttributes, BufferGeometryEventMap>, any, Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Object3DEventMap>'.
+src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'number | ArrayBuffer | ArrayLike<number> | Iterable<number>'.
+src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'string'.
+src/engine/routemap.js	TS2363	The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/main.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
+src/main.js	TS2322	Type 'Timeout' is not assignable to type 'number'.
+src/main.js	TS2339	Property 'closest' does not exist on type 'EventTarget'.
+src/main.js	TS2339	Property 'connection' does not exist on type 'Navigator'.
+src/main.js	TS2339	Property 'dataset' does not exist on type 'Element'.
+src/main.js	TS2353	Object literal may only specify known properties, and 'bake' does not exist in type '{ max?: number; min?: number; now?: number; }'.
+src/main.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/main.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/main.js	TS2739	Type 'URL' is missing the following properties from type 'Location': ancestorOrigins, assign, reload, replace
+src/main.js	TS2810	Expected 1 argument, but got 0. 'new Promise()' needs a JSDoc hint to produce a 'resolve' that can be called without arguments.
+src/pages/blueprint.js	TS2339	Property 'classList' does not exist on type 'EventTarget'.
+src/pages/blueprint.js	TS2339	Property 'dataset' does not exist on type 'Element'.
+src/pages/blueprint.js	TS2339	Property 'dataset' does not exist on type 'Element'.
+src/pages/blueprint.js	TS2339	Property 'dataset' does not exist on type 'Element'.
+src/pages/blueprint.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
+src/pages/blueprint.js	TS2339	Property 'isMesh' does not exist on type 'Object3D<Object3DEventMap>'.
+src/pages/blueprint.js	TS2339	Property 'tagName' does not exist on type 'EventTarget'.
+src/pages/blueprint.js	TS2339	Property 'textContent' does not exist on type 'EventTarget'.
+src/pages/blueprint.js	TS2345	Argument of type 'string | number | boolean' is not assignable to parameter of type 'number'.
+src/pages/blueprint.js	TS2345	Argument of type 'string | number' is not assignable to parameter of type 'number'.
+src/pages/blueprint.js	TS2345	Argument of type 'string | number' is not assignable to parameter of type 'number'.
+src/pages/blueprint.js	TS2365	Operator '+' cannot be applied to types 'string | number | boolean' and 'number'.
+src/pages/blueprint.js	TS2365	Operator '+' cannot be applied to types 'string | number | boolean' and 'number'.
+src/pages/blueprint.js	TS2365	Operator '+' cannot be applied to types 'string | number | boolean' and 'number'.
+src/pages/blueprint.js	TS2365	Operator '<' cannot be applied to types 'string | number' and 'number'.
+src/pages/blueprint.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/pages/blueprint.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/pages/blueprint.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+src/pages/blueprint.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
+tests/e2e/fixtures/site.ts	TS2322	Type '(...a: unknown[]) => GPUCanvasContext | null' is not assignable to type '{ (contextId: "2d", options?: CanvasRenderingContext2DSettings | undefined): CanvasRenderingContext2D | null; (contextId: "bitmaprenderer", options?: ImageBitmapRenderingContextSettings | undefined): ImageBitmapRenderingContext | null; (contextId: "webgl", options?: WebGLContextAttributes | undefined): WebGLRenderin...'.
+tests/e2e/pages/station.ts	TS2769	No overload matches this call.

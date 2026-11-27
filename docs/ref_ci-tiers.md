@@ -1,7 +1,7 @@
 ---
 type: reference
 title: The check tiers
-depends: [docs/con_suite.md, docs/ref_doc-checks.md, docs/ref_ci-jobs.md, docs/ref_e2e-files.md]
+depends: [docs/con_suite.md, docs/ref_doc-checks.md, docs/ref_js-checks.md, docs/ref_ci-jobs.md, docs/ref_e2e-files.md]
 ---
 # The check tiers
 
@@ -11,7 +11,7 @@ Each tier that serves the site first runs `pnpm install` and `pnpm build`, and t
 
 | Tier | Arguments | What it runs | Locks |
 |---|---|---|---|
-| `static` | None | `tools/content.py`, `tools/test_*.py`, `node --test tools/test_*.mjs`, [the documentation and comment checks](ref_doc-checks.md) and `tools/site.py` | `quiet.lock`, shared |
+| `static` | None | `tools/content.py`, `tools/test_*.py`, `node --test tools/test_*.mjs`, `pnpm install` with [the type check, the lint check and the unit tests](ref_js-checks.md), [the documentation and comment checks](ref_doc-checks.md) and `tools/site.py` | `quiet.lock`, shared |
 | `smoke` | None | `errs.mjs` on `/`, `/about/`, `/portfolio/`, `/experience/`, `/contact/` and `/blog/` | `quiet.lock`, shared, and `gpu.lock` |
 | `script` | `<name.mjs> [args...]` | One script `tools/docker/<name.mjs>`, through `tools/dtest.sh` | `quiet.lock`, shared, and `gpu.lock` |
 | `suite` | None | `tools/check.sh`. See [the suite](con_suite.md). | `quiet.lock`, shared, and `gpu.lock` |
