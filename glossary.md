@@ -388,6 +388,7 @@ This table gives the approved technical names and technical verbs of the project
 | None | name | - | The Python value for no value. |
 | normal | name | - | The direction at right angles to a surface. |
 | note | name | notes | A short text in the field `note` of a record. |
+| notice | name | notices | The short text `#nogl` that a page shows when the browser has no WebGL2. |
 | noun | name | nouns | A word that is the name of a thing. |
 | NVIDIA | name | - | A company that makes GPUs. |
 | object | name | objects | A value in code that has fields and functions. |
