@@ -78,7 +78,7 @@ This reference gives the `<main>` element of the pages that the page generator w
 - `header`: `p.post-meta` (`headline` · `location`), `h1` (name) and `p.post-lede` (tagline).
 - `div.post-body` starts with a `<p>` with the introduction.
 - `h2#story` `The story so far`, with a `<p>` for each paragraph of `bio`.
-- `h2#focus` `Current focus`, with a `<ul>` of the focus areas.
+- `h2#focus` `Current focus`, with a `<ul>` of the items of `focus` in the profile.
 - `h2#curiosities` `Curiosities`, with `<p class="post-meta">Updated <time>…</time></p>` from `curiosities_updated_at`, and `<ul class="post-curiosities"><li><strong>title</strong> <p>note</p> <p class="post-meta">Project: <a href="/portfolio/<slug>/">project name</a></p></li></ul>`.
 - The availability, as below.
 - `h2#featured-writing` `Featured writing`, with `<p class="post-featured"><a href="/blog/<slug>/">title</a> description</p>`.

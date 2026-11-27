@@ -5,7 +5,7 @@ depends: [docs/ref_ci-tiers.md]
 ---
 # The HD 630 runner
 
-This reference gives how `tools/ci/hd630.sh` runs measurements on a local Intel HD 630 from a clean copy of a commit.
+This reference tells how `tools/ci/hd630.sh` runs measurements on a local Intel HD 630 from a clean copy of a commit.
 
 It does not serve a worktree with changes.
 
@@ -38,6 +38,6 @@ A run that waits does not prepare while a different run measures, because the co
 
 - `hd630.sh` reads `/proc/loadavg` before and after the measurement, inside the lock.
 - It writes `$JOB/log.txt` and `$JOB/result.json` under `${HD630_JOBS:-${XDG_STATE_HOME:-$HOME/.local/state}/arcadia/hd630-jobs}`.
-- If `load1_before` or `load1_after` is more than `HD630_MAX_LOAD`, the run is not usable: `"usable": false, "unusable": true`, and `UNUSABLE` in the summary line. The default limit is `$(nproc) / 2`, which is 4 on the i7-7700HQ with 8 threads.
+- If `load1_before` or `load1_after` is more than `HD630_MAX_LOAD`, the run is not usable: `"usable": false, "unusable": true`, and `UNUSABLE` in the last line of the output. The default limit is `$(nproc) / 2`, which is 4 on the i7-7700HQ with 8 threads.
 - A run that is not usable keeps its logs and returns the exit code of the measurement.
 - [The perf tier](ref_ci-tiers.md) gives the subcommands.

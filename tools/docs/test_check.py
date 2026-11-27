@@ -201,7 +201,7 @@ class DocsCheckTest(unittest.TestCase):
         readme = fm("assembly", "Arcadia Station", "docs/assembly_index.md") + "This assembly gives the start of the documentation.\n\n- [Index](docs/assembly_index.md)\n"
         results, _ = self.check(base_files(**{"README.md": readme}))
         self.assertEqual({p: v for p, v in results.items() if v}, {})
-        self.assertProblem(base_files(**{"README.md": readme.replace("type: assembly", "type: concept")}), "README.md", "README.md is a assembly")
+        self.assertProblem(base_files(**{"README.md": readme.replace("type: assembly", "type: concept")}), "README.md", "README.md is an assembly")
         alone = fm("assembly", "Arcadia Station", "glossary.md") + "This assembly gives the start of the documentation.\n\n- [Glossary](glossary.md)\n"
         self.assertProblem(base_files(**{"README.md": alone}), "README.md", "links to the docs index")
 

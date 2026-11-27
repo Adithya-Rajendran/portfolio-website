@@ -7,8 +7,6 @@ depends: []
 
 This reference gives the format of a post, `data/posts/<slug>.md`.
 
-Only `tools/content.py` reads this file.
-
 ## Front matter
 
 The front matter is between two `---` lines, in a strict subset of YAML, so GitHub shows it as a table.
@@ -46,7 +44,7 @@ projects: [homelab]
 
 - Write a string value as a JSON string (`"…"`), except a date or one word that has the form of a slug.
 - A field that is not in the table is an error.
-- The reader checks the type of each field.
+- The parser checks the type of each field.
 - The site copies `image` without a change, so it must be a PNG or a JPEG of 1200 × 630 px with no EXIF data.
 
 ## Body

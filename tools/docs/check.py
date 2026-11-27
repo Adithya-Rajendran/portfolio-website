@@ -589,7 +589,7 @@ def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/
             want = FIXED.get(p)
             if want:
                 if t != want:
-                    d.problems.append("line 1: %s is a %s" % (p, want))
+                    d.problems.append("line 1: %s is %s %s" % (p, "an" if want[0] in "aeiou" else "a", want))
             elif t in TYPES and not base_name.startswith(TYPES[t]):
                 d.problems.append("line 1: the file name of a %s starts with %r" % (t, TYPES[t]))
             elif not any(base_name.startswith(x) for x in TYPES.values()):

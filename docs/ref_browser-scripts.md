@@ -11,7 +11,7 @@ This reference gives the Playwright scripts in `tools/docker/` that check the si
 
 | Tool | Use |
 |---|---|
-| `tools/dtest.sh <script.mjs> [args]` | Runs a script from `tools/docker/` on the checkout that holds it. It serves `public/` inside the container at `http://127.0.0.1:8080` (`ORIGIN`), and the host opens no port. The screenshots go to `/out`, which is `$OUT` on the host, by default `/tmp/dtest`. |
+| `tools/dtest.sh <script.mjs> [args]` | Runs a script from `tools/docker/` on the checkout that holds it. It serves `public/` inside the container at the loopback address of the container, port 8080 (`ORIGIN`), and the host opens no port. The screenshots go to `/out`, which is `$OUT` on the host, by default `/tmp/dtest`. |
 | `tools/dshot.sh` | Screenshots. |
 | `tools/dperf.sh` | Frame times. |
 | `tools/dsnap.sh` | Screenshots before and after a change. |
@@ -26,9 +26,9 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 
 | Script | Tests |
 |---|---|
-| `hud.mjs`, with `desktop`, `phone`, `reduced` or `all` | [The display of the visitor](con_display.md): the lock, the names, the caption of the bar and the hint. The READ glyph and the scan do not move until the visitor requests READ. |
+| `hud.mjs`, with `desktop`, `phone`, `reduced` or `all` | [The display of the visitor](con_display.md): the display lock, the names, the caption of the bar and the hint. The READ glyph and the scan do not move until the visitor requests READ. |
 | `rooms.text.mjs` | The words of the page (`sub`), and the wall screens that are not picks. |
-| `opening.mjs` | The ways that a thing opens for [the reader](con_reading.md): Fabrication (scan, receive), the books of the Lounge and a station that unfolds. |
+| `opening.mjs` | The ways that a thing opens for [the reader](con_reading.md): Fabrication (scan, receive), the books of the Lounge and a route stop that unfolds. |
 | `turn.mjs` | The turn of the route map with a mouse, a pen, touch and a wheel, the tour and the hint of Navigation. |
 | `cue.mjs` | The cue of the Library and the errand of the drone. |
 | `contact.mjs` | The three links of Comms: LinkedIn as the way to write, GitHub and the résumé. Also the keyboard, the new tabs and the contrast of the text. |
@@ -43,6 +43,12 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `rooms.mjs` | The moves from room to room without a new load of the page: a nav link, Back and a door. Also a check for leaks over many visits. |
 | `page.mjs <path>` | A page that the generator wrote, with JavaScript off, for example `dtest.sh page.mjs /blog/<slug>/`. |
 | `errs.mjs <url>` | The errors of the console, of the page, of the requests and of HTTP, and the load of the room. |
+| `endpoints.mjs` | The feeds, the sitemap, `llms.txt`, the résumé PDF and the JSON files. |
+| `plainpage.mjs` | The pages with no JavaScript (`desktop`, `phone`), with no WebGL, and the 404 pages. |
+| `plaincheck-selftest.mjs` | 9 failures that the script makes, to test the checks of `plaincheck.mjs`. |
+| `view.mjs` | A WebGL smoke test in `chromium`, `firefox` and `webkit`. |
+| `ringline.mjs`, `door.mjs`, `tour.mjs` | The tour, the doors and the bar of the Ring Line. |
+| `writing-alias.mjs` | `/blog/`, a room query that names no room, and Back and Forward. |
 
 - `rooms.kit.mjs` and `r2.kit.mjs` hold what these scripts share: the profiles, a recorder of the meshes of the reader, and a gate on the frames of the page.
 - [The lighting checks](ref_lighting-checks.md) are also scripts in `tools/docker/`.

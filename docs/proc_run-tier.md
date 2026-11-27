@@ -10,7 +10,7 @@ Use this procedure to run one of [the check tiers](ref_ci-tiers.md) on a commit.
 ## Prerequisites
 
 - Your clone has the Git `ci` remote, which is the repository on the CI host.
-- You can connect to the CI host with `ssh arcadia-ci`.
+- You can connect to the CI host with `ssh`.
 
 ## Procedure
 
@@ -20,7 +20,7 @@ Use this procedure to run one of [the check tiers](ref_ci-tiers.md) on a commit.
    ```
 2. Run the tier.
    ```sh
-   ssh arcadia-ci 'ci <branch> <tier> [args]'
+   ssh <CI host> 'ci <branch> <tier> [args]'
    ```
 
 ## Verification

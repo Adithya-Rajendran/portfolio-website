@@ -32,7 +32,7 @@ Use this procedure to run [the Playwright tests](ref_e2e-files.md) on a local ma
 
 ## Troubleshooting
 
-- To run one pass of the tests, use Playwright without `run.mjs`:
+- To run the tests one time, use Playwright without `run.mjs`:
   ```sh
   pnpm exec playwright test -c tests/e2e/playwright.config.ts --grep-invert @timing
   pnpm exec playwright test -c tests/e2e/playwright.config.ts --grep @timing --workers=1

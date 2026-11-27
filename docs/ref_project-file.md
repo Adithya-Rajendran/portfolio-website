@@ -7,8 +7,6 @@ depends: [docs/ref_post-file.md]
 
 This reference gives the format of a project, `data/projects/<slug>.md`.
 
-Only `content.load_projects()` reads this file.
-
 The slug is the file name, in lower case words with hyphens between them.
 
 The file has front matter between two `---` lines and a body, as in [the post file](ref_post-file.md).
@@ -48,7 +46,7 @@ links:
 - Write a list as `[a, b]`, as `["a b", "c"]`, or as `key:` with `  - ` lines under it.
 - Write a record as a `  - key: value` line with `    key: value` lines under it.
 - Write numbers, `true` and `false` without quotes.
-- The reader refuses a project with a field that the table does not give, and it checks the types of all fields.
+- The parser refuses a project with a field that the table does not give, and it checks the types of all fields.
 - Each string is one line, is not empty, and has no space at its start or at its end.
 - `load_projects()` returns `None` for a field that is not in the file, and `[]` for a list that is not in the file.
 
@@ -59,7 +57,7 @@ links:
 | `summary` | string | Necessary | One or two sentences. |
 | `order` | integer, 1 or more | Necessary. No two projects have the same value. | The position in lists, from low to high. The page does not show it, and it is not an identifier. |
 | `status` | `active` or `completed` | Necessary | The status of the work. |
-| `status_note` | string | Not necessary | The state of the work, for a reader. |
+| `status_note` | string | Not necessary | The state of the work, for a visitor. |
 | `types` | list of `software`, `infrastructure`, `research`, `hardware` | Necessary, not empty | The types of work. |
 | `technologies` | list of strings | Not necessary | The tools and the languages of the work. |
 | `role` | string | Not necessary | The part of the owner in the work. |

@@ -21,7 +21,7 @@ The words of the 3D rooms are in [the content file of the rooms](ref_content-jso
 
 ## How the tools read the content
 
-`tools/content.py` is the only reader of the content files, so the format has one definition.
+`tools/content.py` is the only parser of the content files, so the format has one definition.
 Its functions are `load_posts()`, `load_projects()` and `load_profile()`, and its constants are `SITE` and `DATA`.
 The file name of a post or a project is its slug.
 A mistake in a file is a `ContentError` that names the file and the field.
@@ -30,5 +30,4 @@ A mistake in a file is a `ContentError` that names the file and the field.
 ## The archive
 
 The files `data/posts/<slug>.json`, `data/projects/<slug>.json` and `data/profile/profile.json` are an archive from Sanity.
-The tools that make the site do not read them.
 See [the Sanity archive](ref_sanity-archive.md).

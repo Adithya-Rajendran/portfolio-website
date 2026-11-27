@@ -24,7 +24,7 @@ This reference gives the files of the Playwright tests in `tests/e2e/`, which us
 | File | Contents |
 |---|---|
 | `tests/e2e/playwright.config.ts` | The projects. |
-| `tests/e2e/serve.mjs` | A static HTTP server for `SITE_DIR` (by default `public/`) on `127.0.0.1:${PORT:-8080}`. For `/assets/*`, it uses `ASSETS`, then `<site_dir>/assets`, then the main checkout from `git rev-parse --git-common-dir`. |
+| `tests/e2e/serve.mjs` | A static HTTP server for `SITE_DIR` (by default `public/`) on the loopback address, port `${PORT:-8080}`. For `/assets/*`, it uses `ASSETS`, then `<site_dir>/assets`, then the main checkout from `git rev-parse --git-common-dir`. |
 | `tests/e2e/run.mjs` | Runs the specs without `@timing` in parallel (`--grep-invert @timing`), then the `@timing` specs one at a time (`--grep @timing --workers=1`). |
 | `tests/e2e/fixtures/site.ts` | The loaders of the data of the site (`/portfolio/index.json`, `/profile.json`, `/content.json`, `/blog/index.json`), the profile fixture, the error collector, and the `addInitScript` helpers `canvasSpyInitScript`, `waysRecorderInitScript` and `frameGateInitScript`. |
 | `tests/e2e/pages/station.ts` | `StationPage` and `ReaderPage`, around the `window.__lobby` hooks, with raycasts, the boxes of the glyph after it settles, frame checks, the frame gate and pen pointer helpers. |
@@ -35,9 +35,9 @@ This reference gives the files of the Playwright tests in `tests/e2e/`, which us
 
 | Variable | Use |
 |---|---|
-| `TMPDIR` | Chromium profiles and Playwright artifacts go to `TMPDIR`, by default `/tmp`. If `/tmp` is a small `tmpfs`, set `TMPDIR` to a file system with more free space, not under `/tmp`. |
+| `TMPDIR` | Chromium profiles and Playwright artifacts go to `TMPDIR`, by default `/tmp`. If `/tmp` is a small `tmpfs`, set `TMPDIR` to a file system with more free bytes, not under `/tmp`. |
 | `ASSETS` | The packed rooms. `tests/e2e/serve.mjs` uses the `public/assets` of the main checkout without it. |
-| `ORIGIN` | A server that runs. With `ORIGIN=http://127.0.0.1:8080`, Playwright does not start its `webServer`. |
+| `ORIGIN` | A server that runs. With `ORIGIN=http://<host>:<port>`, Playwright does not start its `webServer`. |
 | `PORT` | The port of `tests/e2e/serve.mjs`. The default is 8080. |
 | `DISPLAY` | With `DISPLAY`, `smoke-firefox` runs with a window (`xvfb-run` in the Docker image of CI), so Firefox on Linux can start WebGL2. |
 | `PLAYWRIGHT_OUTPUT_DIR`, `PLAYWRIGHT_HTML_REPORT` | The output paths, for a `/repo` mount that does not permit writes in the Docker image of CI. |

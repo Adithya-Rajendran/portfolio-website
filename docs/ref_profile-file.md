@@ -10,7 +10,7 @@ This reference gives the format of the profile, `data/profile.json`.
 ## The file
 
 - The profile is one JSON file, because it has nested lists of records, which front matter cannot hold.
-- Only `content.load_profile()` reads the file. It returns a dict with all fields of the tables. A field that is not in the file is `None`, and a list that is not in the file is `[]`.
+- `content.load_profile()` returns a dict with all fields of the tables. A field that is not in the file is `None`, and a list that is not in the file is `[]`.
 - The names are `snake_case`. The dates are `YYYY-MM-DD` strings. Integers and booleans are JSON numbers and booleans.
 - The file has no Sanity keys (`_key`, `_type`), no duplicate keys and no `NaN`.
 - All text is plain text, and the page shows it as it is, with no Markdown.
@@ -64,11 +64,9 @@ This reference gives the format of the profile, `data/profile.json`.
 
 The entry with the last `start_date` is first.
 
-No two entries have the same `id`.
-
 | Field | Type | Rule |
 |---|---|---|
-| `id` | HTML id: lower case letters, digits and hyphens, with a letter first | Necessary. No two entries have the same id, and the id does not change. It is the address of the entry for links, for example `#sjsu-2026`. It comes from the short name of the organization and the start year, and it does not change when the entry changes. |
+| `id` | HTML id: lower case letters, digits and hyphens, with a letter first | Necessary. No two entries have the same id. It is the address of the entry for links, for example `#sjsu-2026`. It comes from the short name of the organization and the start year, and it does not change when the entry changes. |
 | `kind` | `work` or `education` | Necessary |
 | `organization`, `org_short`, `title` | string | Necessary |
 | `employment` | string, for example `full-time` or `internship` | Not necessary |

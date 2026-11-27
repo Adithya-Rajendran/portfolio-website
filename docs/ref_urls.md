@@ -34,9 +34,9 @@ This reference gives the paths that the site serves and the paths of the first v
 | First path | New path |
 |---|---|
 | `/blog/tags/*` | `/blog/` |
-| `/resume` | `/resume/<file>.pdf` |
-| `/resume/view` | `/resume/<file>.pdf` |
-| `/resume/download` | `/resume/<file>.pdf` |
+| `/resume`, `/resume/` | `/resume/<file>.pdf` |
+| `/resume/view`, `/resume/view/` | `/resume/<file>.pdf` |
+| `/resume/download`, `/resume/download/` | `/resume/<file>.pdf` |
 
 - `/about`, `/contact` and `/portfolio/*` are pages, so `_redirects` has no rule for them.
 - The site does not serve `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog`.

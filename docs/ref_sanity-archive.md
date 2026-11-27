@@ -18,11 +18,10 @@ This reference gives the contents of the archive in `data/` that comes from Sani
 | Path | Contents |
 |---|---|
 | `data/profile/profile.json` | The `profile` singleton: name, headline, introduction, timeline, credentials, skills, contact routes and links. |
-| `data/posts/<slug>.json` | One `post` in each file (4): title, description, takeaways, Portable Text `body`, changelog and tags. |
+| `data/posts/<slug>.json` | One `post` in each file (4): title, description, takeaways, Portable Text `body`, changelog and `tags`. |
 | `data/projects/<slug>.json` | One `project` in each file (10): designation, title, summary, Portable Text `body`, role, technologies and links. |
 | `data/assets/images/`, `data/assets/images.json` | 20 images and their Sanity asset documents: original file name, alt text, dimensions, palette and LQIP. |
 | `data/assets/files/`, `data/assets/files.json` | 5 files, four PDFs and one YAML file, and their asset documents. |
-| `data/assets/cdn-copies.json` | The images that are not the original bytes, with the original and the saved hashes and sizes. |
 
 ## References
 
@@ -41,7 +40,5 @@ This reference gives the contents of the archive in `data/` that comes from Sani
 
 ## The images as uploaded
 
-- All files and 8 of the 20 images are the same bytes as the uploads. The export checks their SHA-1.
-- Sanity gives the original bytes of an image only to a request with a token.
-- Without a token, the image CDN of Sanity gives the other 12 images encoded again, at full resolution but with different bytes.
-- `assets/cdn-copies.json` lists these 12 images. See [the procedure](proc_refresh-export.md) to replace them.
+- All files and all images are the same bytes as the uploads. The export checks their SHA-1.
+- Sanity gives the original bytes of an image only to a request with a token. See [the procedure](proc_refresh-export.md).

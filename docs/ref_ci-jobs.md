@@ -31,6 +31,6 @@ The last line of a job is `ci <tier> <sha8> PASS|FAIL <seconds>s <job directory>
 - The golden pictures are in `$CI_HOME/cache/pictures/<commit_sha>_<list_hash>/`.
 - `list_hash` is the first 12 hex characters of a SHA-256. The hash is of `tools/ci/pictures.txt`, `tools/docker/detsnap.mjs`, the name and ID of the Playwright image, and the function `pw_for`.
 - The tier does not use a golden picture that a different version of these files rendered.
-- The hash does not include the contents of the Docker volume `lobby_pw_modules`, which holds the Playwright package of the scripts. After a change to that volume, clear `$CI_HOME/cache/pictures/`.
+- The hash does not include the contents of `lobby_pw_modules`, the Docker storage that holds the Playwright package of the scripts. After a change to that Docker storage, clear `$CI_HOME/cache/pictures/`.
 - The tier always renders the current commit again into `$OUT/current/`.
 - When the cache has no golden pictures of `<base>`, the tier copies `<base>` with `git archive` and uses its rooms from the room cache or packs them. Then it renders `<base>` with the current `tools/docker/detsnap.mjs`.

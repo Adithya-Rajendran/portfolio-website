@@ -31,15 +31,15 @@ The Blender scripts make the `.blend` files.
 | File | Contents |
 |---|---|
 | `public/index.html` | The shell of the site. [The page generator](con_page-generator.md) makes each page from it. |
-| `public/content.json` | All words of the rooms: the text of the pages, the wall screens, the hologram labels and the stations of the route map. Change the words of the rooms in this file. |
+| `public/content.json` | All words of the rooms: the text of the pages, the wall screens, the hologram labels and the route stops. Change the words of the rooms in this file. |
 | `public/main.js` | The renderer, the camera, the controls and the moves from room to room. |
 | `public/js/room.js` | The loader that makes a room from its packed files. |
 | `public/js/screens.js`, `public/js/hologram.js`, `public/js/routemap.js` | The wall screens, the hologram and the route map. |
 | `public/js/post.js` | The image passes after the render. |
-| `public/js/hud.js` | The display of the visitor: the lock, the cue, the caption of the bar and the hint. |
+| `public/js/hud.js` | The display of the visitor: the display lock, the cue, the caption of the bar and the hint. |
 | `public/js/comms.js` | The links of Comms. |
 | `public/js/kit.js` | The functions that the other scripts share. |
-| `public/js/site.js` | The function that fills the rooms from the data: the placards, the stations of the route map and the shelves of the Library. |
+| `public/js/site.js` | The function that fills the rooms from the data: the placards, the route stops and the shelves of the Library. |
 | `public/js/reader.js` | The reader, which shows the article of a page as a hologram. |
 | `public/js/opening/scan.js`, `receive.js`, `unfold.js` | The three ways that a thing opens for the reader. |
 | `public/post.css` | The styles of the pages that a visitor reads without the station. |

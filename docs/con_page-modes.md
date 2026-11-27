@@ -11,8 +11,8 @@ A script of one line in the head of the shell sets the class.
 
 | Class | When | What the page shows |
 |---|---|---|
-| None | JavaScript is off, or WebGL failed. | `#page` as a standard document that scrolls, with `#pagenav`. |
-| `reading` | The address of an article, from the first paint. | The same document, while the Library loads under it. Then the page goes into the station, or it shows the offer `#stepin` if the visitor scrolled or the browser tells the page to save data. |
+| None | JavaScript is off, or WebGL failed. | `#page` as a standard page that scrolls, with `#pagenav`. |
+| `reading` | The address of an article, from the first paint. | The same page, while the Library loads under it. Then the page goes into the station, or it shows the offer `#stepin` if the visitor scrolled or the browser tells the page to save data. |
 | `station` | All other addresses, and after the page goes into the station. | The 3D site. The page removes `#page` from view. |
 
 An article page, `/blog/<slug>/` or `/portfolio/<slug>/`, starts in the `reading` mode.

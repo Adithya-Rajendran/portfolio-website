@@ -5,8 +5,8 @@ depends: []
 ---
 # Download the original images from Sanity
 
-Use this procedure to replace the images that the CDN encoded again with the original images.
-The export checks each original against its SHA-1.
+Use this procedure to download the original images from Sanity again.
+Without a token, the CDN of Sanity gives images that it encoded again.
 
 ## Prerequisites
 
@@ -21,4 +21,5 @@ The export checks each original against its SHA-1.
 
 ## Verification
 
-- The export deletes `data/assets/cdn-copies.json` when no copies from the CDN are in the archive.
+- The output of the export does not list images that the CDN encoded again.
+- `data/assets/cdn-copies.json` is not there. The export writes this file only when it keeps a copy from the CDN.

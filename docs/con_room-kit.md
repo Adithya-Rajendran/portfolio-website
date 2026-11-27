@@ -1,7 +1,7 @@
 ---
 type: concept
 title: The shared kit of the rooms
-depends: [docs/ref_review-pages.md]
+depends: [docs/ref_review-pages.md, docs/proc_add-builder.md]
 ---
 # The shared kit of the rooms
 
@@ -32,9 +32,10 @@ The kit does not make instances at run time, and it does not decrease the downlo
 
 - The first argument of each builder is a Blender placement matrix `M`.
 - Before the room loads the module, it supplies its `MAT` and `EM` palette. For example, the kit of the Lounge and the Library uses `BOOKS` and the keys of its materials. `map_table` uses `EM_core` of Navigation.
-- Give the local dimensions and the direction where they change.
-- Keep the fixed positions of the room, the labels on the walls and the data of the picks in the script of the room.
-- The canonical studio of a builder is the material environment that the builder can use. A builder cannot run in a room that does not prepare it.
-- The six stations of the route map are in `public/js/routemap.js`, not in the mesh of the table.
+- A builder uses only local dimensions. The script of the room keeps the fixed positions of the room, the labels on the walls and the data of the picks.
+- The canonical studio of a builder is the set of materials that the builder can use.
+- `blender/build_scene.py`, `room_about.py`, `room_writing.py` and `room_comms.py` set `PEOPLE = False`, so these scripts place no models of persons.
+- The six route stops are in `public/js/routemap.js`, not in the mesh of the table.
 
 [The review pages](ref_review-pages.md) show the builders, their studios and where the rooms use them.
+See [the procedure](proc_add-builder.md) to add a builder.

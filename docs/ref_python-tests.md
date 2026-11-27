@@ -12,7 +12,7 @@ This reference gives the unit tests that the `static` tier runs.
 | `python3 -m unittest tools/test_site.py` | The page generator, `tools/site.py`. |
 | `python3 -m unittest tools/test_site_pages.py` | The pages of the projects and of the profile. |
 | `python3 -m unittest tools/test_site_extras.py` | The endpoints of `tools/site_extras.py`. |
-| `python3 -m unittest tools/test_content.py` | The content reader, `tools/content.py`. |
+| `python3 -m unittest tools/test_content.py` | The content parser, `tools/content.py`. |
 | `python3 -m unittest tools/test_sanity_to_md.py` | The conversion from Sanity. |
 | `python3 -m unittest tools/test_geomcheck.py` | The geometry check, `tools/geomcheck.py`. |
 | `python3 -m unittest tools/test_pack.py` | The pack tool, `tools/pack.py`. |

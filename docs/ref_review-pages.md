@@ -30,5 +30,5 @@ The gallery is not evidence of the texture resolution or the shading in the brow
 | `docs/scene-parts.tsv` | The totals of the objects of each room. | `tools/scene-parts.py` |
 | `docs/asset-placements.tsv` | Each builder and the rooms that call it. | `tools/asset-inventory.py` |
 | `docs/room-motion.json` | The parts that move, from the source code: shader effects and assemblies that only three.js makes. | Review of the source |
-| `docs/motion-sample.jsonl` | A sample of the nodes that move in the packed rooms. | `tools/docker/motion-audit.mjs` |
+| `docs/motion-sample.jsonl` | A record of the nodes that move in the packed rooms. | `tools/docker/motion-audit.mjs` |
 | `docs/finish-evidence.json` | The measured results of the lighting checks, with the p95 values and the draw counts. | None. A person records the results of [the lighting checks](ref_lighting-checks.md). |

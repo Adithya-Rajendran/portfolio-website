@@ -11,13 +11,13 @@ This table gives the approved technical names and technical verbs of the project
 |---|---|---|---|
 | 2D | name | - | Only in "2D canvas": a canvas that draws flat shapes and text. |
 | 3D | name | - | With three dimensions: width, height and depth. |
-| accessibility | name | - | The property of a page that each person can use, also with a screen reader or with only a keyboard. |
+| accessibility | name | - | The property of a page that each person can use, also with only a keyboard. |
 | adaptive | name | - | Only in "adaptive threshold" and "adaptive quality": a value that the program changes while it runs. |
-| agency | name | - | Only in "space agency": an organization that sends things into space. |
+| agency | name | - | An organization, for example NASA. |
 | agent | name | agents | A program that does a task in the repository for the owner. |
 | alt | name | - | Only in "alt text": the text that tells what an image shows, for a person who cannot see it. |
 | angle | name | angles | The difference in direction between two lines. |
-| angular | name | - | Only in "angular pass": a bake pass for one angle of the sky or one phase of the orrery. |
+| angular | name | - | Only in "angular pass": a bake pass for one angle of the sky or one position of the orrery. |
 | antispinward | name | - | In the direction against the spin of a ring. |
 | API | name | APIs | A set of functions that a program gives to other programs. |
 | approximate | name | - | Only in "approximate date": a date that is not accurate, but near to the true date. |
@@ -40,7 +40,7 @@ This table gives the approved technical names and technical verbs of the project
 | background | name | - | Only in "background job": a job that runs while the shell accepts other commands. |
 | backtick | name | backticks | The mark "`" that starts and ends code in Markdown. |
 | badge | name | badges | The image of a credential. |
-| baffle | name | baffles | A ring in a barrel that stops light that does not go along the barrel. |
+| baffle | name | baffles | A circle in a barrel that stops light that does not go along the barrel. |
 | bake | verb | bakes, baked, baking | To calculate the light of a room in Blender and keep it in textures. |
 | balcony | name | - | A floor along the wall of the Atrium, above the deck. |
 | ballast | name | - | Water that gives weight to a ring. |
@@ -49,7 +49,7 @@ This table gives the approved technical names and technical verbs of the project
 | barrel | name | - | The tube that holds the optics of the Oculus. |
 | batch | name | batches | A group of meshes that the engine draws with one draw call. |
 | Bay | name | - | Only in "Fabrication Bay 02": the full name of Fabrication. |
-| beam | name | - | The light from a thing to the frame of the reader. |
+| beam | name | - | The light from a thing to the reader panel. |
 | behavior | name | - | What a program does in a condition. |
 | belt | name | belts | A band of material between two posts of a stanchion. |
 | bias | name | - | A small distance that the shadow calculation adds, so that a surface does not cast a shadow on the same surface. |
@@ -66,7 +66,7 @@ This table gives the approved technical names and technical verbs of the project
 | brief | name | - | Only in a project: the fields `problem`, `approach` and `outcome`. |
 | browser | name | browsers | The program that shows the site to a visitor. |
 | buffer | name | - | Only in "frame buffer": the memory that holds the image of a frame. |
-| build | name | builds | The step that makes the files of a room or of the site. |
+| build | name | builds | A run of the Blender script of a room that makes its `.blend` file. |
 | builder | name | builders | A Python function that makes one family of objects in a Blender scene. |
 | bulkhead | name | bulkheads | A wall that closes a compartment and holds the pressure. |
 | button | name | buttons | A part of a page that a visitor clicks to do an action. |
@@ -125,7 +125,7 @@ This table gives the approved technical names and technical verbs of the project
 | convert | verb | converts, converted | To change data from one format to a different format. |
 | corner | name | corners | A point where two lines of a shape touch. |
 | count | verb | counts, counted | To find the number of items. |
-| credential | name | credentials | A document in the profile that shows a skill of the owner. |
+| credential | name | credentials | An item of the profile that shows a skill of the owner. |
 | cross | name | - | Only in "cross section": the shape that a plane cuts through a thing. |
 | CSS | name | - | The language of the styles of the pages. |
 | Ctrl-C | name | - | The keys that send SIGINT to the foreground program of a terminal. |
@@ -138,6 +138,7 @@ This table gives the approved technical names and technical verbs of the project
 | deck | name | decks | The floor of a ring. |
 | decorative | name | - | Only in "decorative image": an image that gives no information, with `alt=""`. |
 | definition | name | definitions | Only in "link definition": a line that gives the target of a link with a label. |
+| delivery | name | - | Only in "delivery pose": a pose of the drone when it gives a book to the visitor. |
 | dependency | name | dependencies | A link from one module to a module that it uses. |
 | depends | name | - | The front matter key that lists the Markdown files that a module links to. |
 | deploy | verb | deploys, deployed | To publish the site to Cloudflare. |
@@ -154,12 +155,14 @@ This table gives the approved technical names and technical verbs of the project
 | dimension | name | dimensions | A size along one axis. |
 | directional | name | - | Only in "directional highlight": a highlight that comes from one direction. |
 | directive | name | directives | A comment that a tool reads as an instruction, for example `eslint-disable`. |
-| display | name | - | The parts that the page shows on the rooms for the visitor: the lock, the cue, the bar and the hint. |
+| display | name | - | The parts that the page shows on the rooms for the visitor: the display lock, the cue, the bar and the hint. |
+| display lock | name | - | The marks that the display draws around the pick under the pointer. |
+| dock | name | - | The place in the Library where the drone stops. |
 | Docker | name | - | The program that runs the browser checks in containers. |
 | Dockerfile | name | Dockerfiles | A file that tells Docker how to make a container image. |
 | docking | name | - | Only in "docking port": the part that holds a ship next to the station. |
 | docstring | name | docstrings | A string at the start of a Python module, class or function. |
-| document | name | documents | A record in Sanity, or the page that a browser shows. |
+| document | name | documents | A record in Sanity. |
 | documentation | name | - | The Markdown files that tell how the product works and how to use it. |
 | DOM | name | - | The structure of the elements of a page in a browser. |
 | domain | name | - | Only in "public domain": free for each person to use. |
@@ -180,10 +183,10 @@ This table gives the approved technical names and technical verbs of the project
 | employment | name | - | The type of a job, for example full time. |
 | encode | verb | encodes, encoded | To write data in a format, for example an image as WebP. |
 | endpoint | name | endpoints | A file of the site that a program reads, for example `/feed.xml`. |
-| engine | name | engines | The part of the site that draws the rooms with three.js, or a browser engine, or a search engine. |
+| engine | name | engines | The part of the site that draws the rooms with three.js. |
 | English | name | - | The language of the documentation. |
 | entry | name | entries | One item of a list, for example of the timeline or of the changelog. |
-| environment | name | - | The variables of a shell, or the light around a thing. |
+| environment | name | - | The variables that a shell gives to a program. |
 | errand | name | - | The move of the drone to a book and back to the visitor. |
 | escape | verb | escapes, escaped | To change a character so that a program reads it as text. |
 | event | name | events | A message in the browser about an action, for example a click. |
@@ -205,30 +208,30 @@ This table gives the approved technical names and technical verbs of the project
 | family | name | families | A builder and all the objects that it makes. |
 | fan | name | - | Lines of light from the reader to a thing in a scan. |
 | featured | name | - | Only in "featured project" and "featured post": an item that the page shows first. |
-| feed | name | feeds | The file `feed.xml` that lists the posts for a feed reader. |
+| feed | name | feeds | The file `feed.xml` that lists the posts for feed programs. |
 | fence | name | fences | The three backticks that start and end a code block in Markdown. |
 | field | name | fields | A value with a name in an object. |
 | film | name | films | A short sequence of images that move. |
-| filter | name | filters | A calculation that makes one value from many samples. |
+| filter | name | filters | A calculation that makes one value from many values. |
 | finger | name | - | The part of the hand that a person uses on a touch screen. |
 | fire | name | - | Only in "fire extinguisher". |
 | Firefox | name | - | A browser. |
 | fitting | name | fittings | A part on a wall or on the top of a room, for example a lamp. |
 | fixture | name | fixtures | Data that a test uses. |
 | flag | name | flags | A switch of a command, for example `--enable-gpu`. |
-| flat | name | - | Only in "flat thing", "flat field" and "flat wall": with no depth, or with no nested record. |
+| flat | name | - | With no depth. |
 | flicker | verb | flickers | To change fast between two images. |
 | floor | name | - | The surface under the visitor in a room. |
 | fly | verb | flies, flying | To move above the floor, with no thing under it. |
-| focus | name | - | The pick that the camera comes to, or the field `focus` of `scene.json`. |
-| fold | verb | folds | To close a sheet into its station. |
+| focus | name | - | The state of a pick when the camera is on it. |
+| fold | verb | folds | To close a sheet into its route stop. |
 | force | name | - | A push or a pull on a thing. |
 | foreground | name | - | Only in "foreground group": the process group that the keys of a terminal go to. |
 | frame | name | frames | One image in the sequence of images that the engine draws. |
 | freight | name | - | Only in "freight track": a track for cargo. |
 | furniture | name | - | The chairs, the tables, the shelves and similar items in a room. |
 | gallery | name | - | The page `/asset-catalogue/`. |
-| gasket | name | gaskets | A ring of soft material around a door. |
+| gasket | name | gaskets | The soft part between a door and its surround. |
 | gate | name | - | Only in "frame gate": a test helper that holds the frames of a page. |
 | generate | verb | generated | To make a file with a tool. |
 | generator | name | - | Only in "page generator": `tools/site.py`. |
@@ -246,8 +249,8 @@ This table gives the approved technical names and technical verbs of the project
 | GPU | name | GPUs | The device that draws the images of the rooms. |
 | graph | name | graphs | The modules and the links between them. |
 | gzip | name | - | A format that makes files small. |
-| hall | name | - | The large space of the Atrium. |
-| hardware | name | - | The parts on a door or on furniture that open, close or lock it. |
+| hall | name | - | The large area of the Atrium. |
+| hardware | name | - | The parts on a door or on furniture that a person moves to open it. |
 | hash | name | hashes | A short value that a calculation makes from the content of a file. |
 | hatch | name | hatches | A door in a deck. |
 | HD | name | - | Only in "Intel HD 630": the GPU of the laptop of the owner. |
@@ -267,6 +270,7 @@ This table gives the approved technical names and technical verbs of the project
 | home | name | - | Only in "home page": the page at `/`. |
 | homelab | name | - | The name of a project of the owner. |
 | hook | name | hooks | A function on `window.__lobby` that tests call. |
+| hoop | name | hoops | A part of the hull in the shape of a circle that makes the hull strong. |
 | host | name | hosts | A computer on the network, for example the CI host. |
 | hostile | name | - | Only in "hostile data": data that can break the page. |
 | hotspot | name | hotspots | A point on a 3D model that a viewer marks. |
@@ -304,16 +308,16 @@ This table gives the approved technical names and technical verbs of the project
 | join | verb | joins | To put two parts together. |
 | JPEG | name | - | An image format. |
 | JSON | name | - | A text format for data. |
-| JSON-LD | name | - | JSON data in a page that tells search engines about the page. |
+| JSON-LD | name | - | JSON data in a page that tells a search service about the page. |
 | KB | name | - | A unit of data of 1,024 bytes. |
 | kernel | name | kernels | A program that runs on the GPU. |
 | keyboard | name | - | The device with the keys of a computer. |
 | kill | verb | kills, killed | To stop a process with a signal. |
 | kit | name | - | The set of functions or builders that more than one part uses. |
 | KTX2 | name | - | The file format of the textures. |
-| lamp | name | lamps | A light in a room. |
+| lamp | name | lamps | A thing in a room or in a scene that gives light. |
 | laptop | name | - | The small computer of the owner, which has the HD 630 GPU. |
-| layer | name | layers | One level of a group of parts, for example the page layer or one file of a texture group. |
+| layer | name | layers | One image of a texture group, for one sky angle or one orrery position. |
 | layout | name | - | The positions and the sizes of the parts of a page or a route. |
 | leak | name | leaks | Memory that a program does not release. |
 | lede | name | - | The first paragraph of a page, under the title. |
@@ -323,10 +327,10 @@ This table gives the approved technical names and technical verbs of the project
 | Library | name | - | The room at the path `/blog/`. |
 | lifetime | name | - | Only in "lifetime credential": a credential that does not stop. |
 | lift | name | lifts | A device that moves a person or cargo up and down. |
-| light | name | lights | A lamp in a scene, or what a lamp or the sun gives. |
-| lighting | name | - | The light of a room, or the checks of the light. |
+| light | name | - | What a lamp or the sun gives. |
+| lighting | name | - | The light of a room. |
 | lightmap | name | lightmaps | A texture that holds the baked light of surfaces. |
-| linear | name | - | Only in "linear color space" and "linear radiance": values of light before the change for the screen. |
+| linear | name | - | Only in "linear radiance" and "linear value": values of light before the change for the screen. |
 | lining | name | - | The surface on the inside of the walls of the Atrium. |
 | link | name | links | Text in a Markdown file that goes to a different file or heading. |
 | LinkedIn | name | - | A social network. |
@@ -340,11 +344,12 @@ This table gives the approved technical names and technical verbs of the project
 | log | name | logs | A file with the output of a program. |
 | logo | name | logos | The image of an organization. |
 | look | verb | looks | To show a quality to the eye. |
+| loopback | name | - | Only in "loopback address": the address that connects a computer to the same computer. |
 | Lounge | name | - | The room at the path `/about/`. |
 | lower | name | - | Only in "lower case": the small form of a letter, for example a. |
 | LQIP | name | - | A small copy of an image that a page shows while the image loads. |
 | machine | name | machines | A computer that runs a task, for example the bake machine. |
-| map | name | maps | Only in "route map" and "shadow map": the model in Navigation with the stations, or a texture of depths for shadows. |
+| map | name | maps | Only in "route map": the model in Navigation with the route stops. |
 | mapping | name | - | Only in "tone mapping". |
 | Markdown | name | - | The text format of the documentation files. |
 | markup | name | - | The HTML elements of a page. |
@@ -370,7 +375,7 @@ This table gives the approved technical names and technical verbs of the project
 | mouse | name | - | The pointer device of a computer. |
 | ms | name | - | A unit of time, 0.001 second. |
 | n | name | - | A number. |
-| NASA | name | - | The space agency that made the images of Earth. |
+| NASA | name | - | The agency that made the images of Earth. |
 | nav | name | - | The list of the links to the rooms at the top of the page. |
 | Navigation | name | - | The room at the path `/experience/`. |
 | nested | name | - | Only in "nested list" and "nested record": an item inside a different item. |
@@ -378,12 +383,12 @@ This table gives the approved technical names and technical verbs of the project
 | node | name | nodes | An object in the scene graph of three.js. |
 | None | name | - | The Python value for no value. |
 | normal | name | - | The direction at right angles to a surface. |
-| note | name | notes | A short text, or the field `note`. |
+| note | name | notes | A short text in the field `note` of a record. |
 | noun | name | nouns | A word that is the name of a thing. |
 | NVIDIA | name | - | A company that makes GPUs. |
 | object | name | objects | A value in code that has fields and functions. |
 | Observation | name | - | Only in "Observation Lounge", the full name of the Lounge. |
-| Oculus | name | - | The large ring in the spinward bulkhead of the Atrium that shows Earth. |
+| Oculus | name | - | The large circle in the spinward bulkhead of the Atrium that shows Earth. |
 | offer | name | - | Only in "the offer `#stepin`": the button that tells the visitor to go into the station. |
 | opaque | name | - | Light does not go through it. |
 | opening | name | openings | Only in "the opening move": the first move of the camera in a room. |
@@ -399,7 +404,7 @@ This table gives the approved technical names and technical verbs of the project
 | overflow | name | - | Text or a part that goes out of its box on a page. |
 | overlap | verb | overlaps | To cover the same area as a different thing. |
 | owner | name | owners | The person who has the repository and the site. |
-| p95 | name | - | The value that 95 of 100 samples are less than. |
+| p95 | name | - | The value that 95 of 100 measured values are less than. |
 | pack | verb | packs, packed, packing | To make the room files for the site from the bake files with `tools/pack.py`. |
 | package | name | packages | A set of files that a tool such as `npm` installs. |
 | pad | name | pads | The soft part of a seat. |
@@ -407,35 +412,37 @@ This table gives the approved technical names and technical verbs of the project
 | pair | name | pairs | Two things together. |
 | palette | name | - | A set of colors or materials. |
 | panorama | name | - | An image of all directions around a point. |
-| paper | name | papers | A sheet in a room, or a report in the profile. |
+| paper | name | papers | A report of the owner in the profile. |
 | parallel | name | - | At the same time, in more than one process. |
 | parameter | name | parameters | An item of the list `parameters` of a project. |
 | parent | name | - | The node that holds a different node. |
+| parser | name | parsers | A program that reads a file format into data. |
 | particle | name | particles | A small point that the engine draws. |
 | pass | name | passes | One run of the engine or of Cycles that makes one part of an image or of a bake. |
 | passive | name | - | The form of a sentence, for example `is run`, where the subject does not do the action. |
+| path trace | name | - | A calculation of the light of a scene that follows many rays. |
 | PBR | name | - | Physically based rendering: a material model that calculates light as it is in the world. |
-| PDF | name | PDFs | A document format. |
+| PDF | name | PDFs | A file format for pages. |
 | pen | name | - | A pointer device that you hold in the hand. |
 | perf | name | - | The tier of the performance checks. |
 | performance | name | - | How fast the site renders and loads. |
 | period | name | - | The text that shows the dates of a project or of an entry. |
 | periscope | name | - | Optics that send a view from one place to a different place with mirrors. |
 | person | name | persons | For example, the visitor or the owner. |
-| phase | name | phases | One step of a bake, or one angle of the sky or of the orrery. |
+| phase | name | phases | One step of a bake runner, for example `build`, `probe` or `bake`. |
 | Physically | name | - | Only in "Physically based rendering". |
 | pick | name | picks | A thing in a room that a visitor can select. |
 | picture | name | pictures | A screenshot of a fixed state, which the `pictures` tier compares. |
-| pitch | name | - | The distance between two items in a row. |
+| pitch | name | - | The distance between two items in a line. |
 | pixel | name | pixels | One point of an image on the screen. |
 | placard | name | placards | A sign with text in a room. |
-| place | name | places | A position, or a part of a text that a script fills. |
+| place | name | places | Where a thing is. |
 | placement | name | - | The position, the direction and the size of an object in a room. |
 | plain | name | - | Only in "plain text": text with no markup. |
 | plaincheck | name | - | The checks of `tests/e2e/helpers/plaincheck.ts`. |
 | planar | name | - | Only in "planar pass": a pass that renders a reflection in a plane. |
 | plane | name | planes | A flat surface without limits. |
-| planet | name | planets | A large body in space that turns around the sun, for example Earth. |
+| planet | name | planets | A large body that turns around the sun, for example Earth. |
 | Playwright | name | - | The browser test tool that runs the browser checks. |
 | PNG | name | - | An image format. |
 | pointer | name | - | The mouse, the pen or the finger, and its position on the page. |
@@ -445,7 +452,7 @@ This table gives the approved technical names and technical verbs of the project
 | Portable | name | - | Only in "Portable Text": the format of the text with marks in Sanity. |
 | portfolio | name | - | The work of the owner that the site shows. |
 | pose | name | poses | A position and a direction of the camera. |
-| position | name | positions | The place of a thing in a space or in a list. |
+| position | name | positions | Where a thing is, in a room or in a list. |
 | post | name | posts | A text in `data/posts/` that the Library shows. |
 | poster | name | - | An image that shows before a 3D viewer loads. |
 | PowerShell | name | - | The shell language of the scripts that run on the bake machine. |
@@ -456,7 +463,7 @@ This table gives the approved technical names and technical verbs of the project
 | press | name | - | A push on a button or on the screen. |
 | pressure | name | - | The force for each unit of area in a ring. |
 | preview | name | previews | A copy of the site that the CI host serves for review. |
-| print | verb | printed | To put text or an image on paper. |
+| print | verb | printed | To put text or an image on a sheet. |
 | probe | name | probes | A panorama that a room uses for reflections. |
 | procedure | name | procedures | A module that gives the steps of a task. |
 | process | name | processes | A program that runs. |
@@ -484,6 +491,7 @@ This table gives the approved technical names and technical verbs of the project
 | ray | name | rays | A line from a point in one direction. |
 | raycast | name | raycasts | A test of the first mesh on the line of a ray. |
 | reader | name | - | The part of the site that shows an article in the room. |
+| reader panel | name | - | The flat part in the room where the reader shows the article. |
 | real | name | - | Not a model or a stand-in. |
 | receive | name | - | The way that a thing opens for the reader when the thing has no model in the room. |
 | recipe | name | recipes | The settings that make a material in Blender. |
@@ -506,18 +514,19 @@ This table gives the approved technical names and technical verbs of the project
 | retention | name | - | The Sanity settings for the time that it keeps versions. |
 | revision | name | - | A change to a post after the date of the post. |
 | rim | name | - | The part of a ring that is at the maximum distance from the spine. |
-| ring | name | rings | One of the four parts of the station that turn, or a shape that is a circle. |
+| ring | name | rings | One of the four parts of the station that turn. |
 | role | name | - | The work of the owner in a project. |
 | roll | name | - | The turn of the station, which moves the sun in the windows. |
 | rolling | name | - | Only in "rolling sky": the sky that moves with the roll. |
 | room | name | rooms | One of the six areas of the station that a visitor can go to. |
 | rough | name | - | With a reflection that is not clear. |
 | roughness | name | - | The property of a material that makes its reflections less clear. |
-| route | name | routes | The line of the stations on the route map. |
-| row | name | rows | A line of a table, or a line of items. |
+| route | name | routes | The line of the route stops on the route map. |
+| route stop | name | route stops | One of the points on the line of the route map in Navigation. |
+| row | name | rows | A line of a table. |
 | runner | name | runners | A script that runs a set of steps on a machine. |
 | Safari | name | - | The browser of one company, which uses WebKit. |
-| sample | name | samples | One measured value, or one ray of a path trace. |
+| sample | name | samples | One ray of a path trace for one texel or one pixel. |
 | Sanity | name | - | The content service that kept the posts, the projects and the profile before. |
 | save | verb | saves, saved | To write data to a file. |
 | scan | name | scans | The way that a thing opens for the reader, with lines of light across it. |
@@ -528,7 +537,7 @@ This table gives the approved technical names and technical verbs of the project
 | screenshot | name | screenshots | An image of a page that a test records. |
 | script | name | scripts | A file of code that a program runs, for example a shell script. |
 | scroll | verb | scrolls, scrolled | To move the page up or down. |
-| search | name | - | Only in "search engine": a service that finds pages on the internet. |
+| search | name | - | Only in "search service": a service that finds pages on the internet. |
 | seat | name | seats | A part of furniture for a person. |
 | second | name | seconds | A unit of time. |
 | seed | name | - | A value that makes the same numbers in each run of a calculation. |
@@ -536,24 +545,25 @@ This table gives the approved technical names and technical verbs of the project
 | serve | verb | serves, served | To send the files of the site to a browser. |
 | server | name | servers | A program that sends files to a browser. |
 | setting | name | settings | A value that changes how a program works. |
-| settle | verb | settles | To come to a stop at a station. |
+| settle | verb | settles | To stop at a route stop. |
 | setup | name | - | The steps that prepare a test. |
 | SHA-1 | name | - | A hash function. |
 | SHA-256 | name | - | A hash function. |
 | shader | name | shaders | A program that runs on the GPU and calculates the color of points. |
 | shading | name | - | The calculation of the color of a surface from its light. |
 | shadow | name | shadows | The dark area where a thing stops light. |
+| shadow map | name | shadow maps | A texture of depths that the engine uses for shadows. |
 | shape | name | shapes | The form of a thing in three dimensions. |
 | share | verb | shares, shared | To use the same thing as a different thing. |
 | sharp | name | - | Clear, with no blur. |
 | shebang | name | - | The first line of a script that starts with `#!` and names its program. |
 | sheen | name | - | A soft reflection on a rough surface. |
-| sheet | name | sheets | A flat thing, for example the display of a station or the sheet of a scan. |
+| sheet | name | sheets | A thin flat part in a room, for example the sheet of a scan or of an unfold. |
 | shelf | name | shelves | A flat part of furniture for books. |
 | shell | name | - | The program that reads commands and runs them, for example `bash`. |
 | shielding | name | - | Material that stops the radiation of the sun. |
 | Shift | name | - | A key of the keyboard. |
-| ship | name | - | A vehicle in space. |
+| ship | name | - | A vehicle that flies above Earth. |
 | SIGHUP | name | - | The signal that tells a process that its terminal closed. |
 | SIGINT | name | - | The signal that Ctrl-C sends. |
 | SIGKILL | name | - | The signal that stops a process at once, which a process cannot catch. |
@@ -562,11 +572,12 @@ This table gives the approved technical names and technical verbs of the project
 | Simplified | name | - | Only in "Simplified Technical English", the language standard of the documentation. |
 | singleton | name | - | A Sanity document type that has only one document. |
 | site | name | - | The pages, scripts and files that a visitor opens in a browser. |
-| sitemap | name | - | The file `sitemap.xml` that lists the pages for search engines. |
-| size | name | sizes | The dimensions of a thing, or the number of bytes of a file. |
+| sitemap | name | - | The file `sitemap.xml` that lists the pages for a search service. |
+| size | name | sizes | The dimensions of a thing. |
 | skill | name | skills | An item of the skill groups of the profile. |
-| sky | name | - | The view of space and Earth through a window. |
+| sky | name | - | The view through a window, with Earth and the sun. |
 | slang | name | - | Words that are not standard words of the language. |
+| slot | name | - | The opening in the Library where the drone gives a book to the visitor. |
 | slow | name | - | Only in "slow step": a step that runs for a long time. |
 | slug | name | slugs | The name of the file of a post or a project, in lower case words with hyphens. |
 | smoke | name | - | Only in "smoke test": a short test that the main parts work. |
@@ -574,10 +585,11 @@ This table gives the approved technical names and technical verbs of the project
 | sofa | name | - | A long seat for more than one person. |
 | soft | name | - | Not clear. |
 | software | name | - | Only in "in software": on the processor, not on the GPU. |
-| Solid | name | - | The library that the page layer uses. |
+| Solid | name | - | The JavaScript library that the new pages use. |
 | sort | verb | sorts, sorted | To put items in an order. |
-| space | name | spaces | The character between two words, or the area above Earth. |
+| space | name | spaces | The character between two words. |
 | spec | name | specs | A Playwright test file, `*.spec.ts`. |
+| sphere | name | spheres | A 3D shape with all points at the same distance from its center. |
 | spin | name | - | The turn of a ring about the spine. |
 | spine | name | - | The axis of the station that the rings turn on. |
 | spinward | name | - | In the direction of the spin of a ring. |
@@ -587,11 +599,12 @@ This table gives the approved technical names and technical verbs of the project
 | stale | name | - | Not correct for the current state. |
 | stanchion | name | - | A post with a belt, to make a line for persons. |
 | stand-in | name | - | A part that a test uses in place of the correct part. |
-| star | name | - | A large body in space that gives light, for example the sun. |
+| star | name | - | A large body that gives light, for example the sun. |
 | static | name | - | That does not change while the site runs. |
-| station | name | stations | The site as one place with six rooms, or a stop on the route map. |
+| station | name | stations | The structure in orbit above Earth that the site shows as one place with six rooms. |
 | STE | name | - | Simplified Technical English. |
 | stillness | name | - | The state of a part that does not move. |
+| storage | name | - | Only in "Docker storage": an area of files with a name that Docker keeps for containers. |
 | story | name | - | Only in "story world": the world of the station that the site shows. |
 | strict | name | - | Only in "strict subset": a subset that does not contain all of the set. |
 | string | name | strings | A sequence of characters in code. |
@@ -601,18 +614,18 @@ This table gives the approved technical names and technical verbs of the project
 | subcommand | name | subcommands | A word after a command that selects one of its functions. |
 | success | name | - | The result of a run that passes. |
 | suite | name | - | The tier that runs all browser checks with `tools/check.sh`. |
-| summary | name | - | A short text about a project, or the last part of the output of a run. |
+| summary | name | - | A short text about a project, in the field `summary`. |
 | sun | name | - | The star that gives light to Earth and to the station. |
 | sunlight | name | - | The light of the sun. |
 | supply | verb | supplies | To give a value. |
 | surface | name | surfaces | The outside of a thing. |
-| surround | name | - | The frame around a door. |
+| surround | name | - | The part of a wall around a door. |
 | sway | verb | sways | To move a small distance from side to side. |
 | switch | name | - | A setting that turns a function on or off. |
 | symbolic | name | - | Only in "symbolic link": a file that points to a different file. |
 | synthetic | name | - | Only in "synthetic event": an event that a test makes. |
 | tab | name | tabs | A page in a browser window. |
-| tag | name | tags | An HTML tag, a label of a post, or the text near the cue. |
+| tag | name | tags | An HTML element in the source of a page, for example `<meta>`. |
 | tagline | name | - | The short text under the name of the owner. |
 | tail | name | - | Only in "tail file": the file with the large levels of a texture. |
 | takeaways | name | - | The list of the main points of a post. |
@@ -625,7 +638,7 @@ This table gives the approved technical names and technical verbs of the project
 | telescope | name | - | Optics that make things at a long distance look large. |
 | temporary | name | - | Only for a short time, and deleted after it. |
 | tense | name | tenses | The form of a verb that shows the time of the action. |
-| terminal | name | - | The program that shows a shell, or the catalogue terminal in the Library. |
+| terminal | name | - | The program that shows a shell. |
 | texel | name | texels | One point of a texture. |
 | texture | name | textures | An image that gives the color or the light of a surface. |
 | thin | name | - | Only in "thin data": data with few items. |
@@ -642,7 +655,7 @@ This table gives the approved technical names and technical verbs of the project
 | total | name | totals | The result when you add numbers. |
 | touch | name | - | The use of a finger on a screen. |
 | tour | name | - | The sequence of picks that `step(d)` moves along. |
-| trace | verb | traced | A record of the builder calls of a room build. |
+| trace | name | traces | A record of the builder calls of a room build. |
 | track | name | - | A line on which a tram goes. |
 | tram | name | - | A vehicle on a track. |
 | transform | name | transforms | The position, the direction and the size of a node. |
@@ -652,8 +665,8 @@ This table gives the approved technical names and technical verbs of the project
 | TSV | name | - | A text format of a table, with a tab between the values. |
 | tube | name | - | A long container with a section that is a circle. |
 | turn | verb | turns, turned | To move around an axis. |
-| TypeScript | name | - | The language with types that the build changes into JavaScript. |
-| unfold | verb | unfolds | To open as a sheet that comes out of a station. |
+| TypeScript | name | - | The JavaScript language with types. |
+| unfold | verb | unfolds | To open as a sheet that comes out of a route stop. |
 | uniform | name | uniforms | A value that a shader uses for each draw. |
 | unique | name | - | Only one in a set. |
 | update | name | - | An entry of the changelog of the kind `update`. |
@@ -677,7 +690,7 @@ This table gives the approved technical names and technical verbs of the project
 | visit | name | visits | A period when a visitor is in a room. |
 | visitor | name | visitors | A person who uses the site in a browser. |
 | voice | name | - | The active or passive form of a sentence. |
-| volume | name | volumes | A book of the Library, or a Docker volume, which keeps files for containers. |
+| volume | name | volumes | A book of the Library. |
 | wait | verb | waits | To stop until a condition is true. |
 | walkway | name | - | A path for persons. |
 | wall | name | walls | A vertical side of a room. |
@@ -686,7 +699,7 @@ This table gives the approved technical names and technical verbs of the project
 | way | name | ways | Only in "the way that a thing opens": scan, receive or unfold. |
 | WebGL | name | - | The browser function that the engine uses to draw with the GPU. |
 | WebGL2 | name | - | Version 2 of WebGL. |
-| WebKit | name | - | The browser engine of Safari. |
+| WebKit | name | - | The part of Safari that draws pages. |
 | WebP | name | - | An image format. |
 | weight | name | - | How strong a part of a page looks. |
 | wheel | name | - | The wheel of a mouse, or a scroll on a touch surface. |
@@ -697,7 +710,7 @@ This table gives the approved technical names and technical verbs of the project
 | worker | name | workers | A process that runs tests at the same time as other processes. |
 | workspace | name | - | Only in "schema workspace": a set of document types in Sanity. |
 | worktree | name | worktrees | A directory with a copy of one branch of the repository. |
-| world | name | - | The 3D space of a scene. |
+| world | name | - | The 3D area of a scene. |
 | Writing | name | - | The label of the Library in the navigation of the site, and the title of the list of posts. |
 | x | name | - | The first axis. |
 | y | name | - | The second axis. |

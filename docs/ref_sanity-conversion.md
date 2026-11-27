@@ -5,7 +5,7 @@ depends: [docs/ref_post-file.md, docs/ref_project-file.md, docs/ref_profile-file
 ---
 # The conversion from Sanity
 
-This reference gives how `tools/sanity_to_md.py` changes the Sanity documents into the files of the site.
+This reference tells how `tools/sanity_to_md.py` changes the Sanity documents into the files of the site.
 
 | Source | Result |
 |---|---|
@@ -77,7 +77,7 @@ A link changes as this list shows:
 
 `python3 -m unittest tools/test_sanity_to_md.py` compares the new files with the archive, without the code of the tool.
 
-- For a post, the test compares the words, the code blocks, the images, the links, the headings and the lists. It also compares the code, the strong text and the fields of the front matter. It uses a different Markdown reader.
+- For a post, the test compares the words, the code blocks, the images, the links, the headings and the lists. It also compares the code, the strong text and the fields of the front matter. It uses a different Markdown parser.
 - For a project, the test compares each body block by block, then each word, link, heading and list. Then it compares each highlight, lesson, next step, link, parameter, result and field.
 - For the profile, the test finds each string, number and boolean of the Sanity document in the new file. It does this field by field and record by record. It also makes sure that the new file adds no value, and that each number is a number in the two files.
 - Then the test breaks the files in many ways in memory, and makes sure that the test finds each change.

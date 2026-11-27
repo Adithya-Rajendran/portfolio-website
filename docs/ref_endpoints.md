@@ -24,5 +24,20 @@ This reference gives the static files that the site serves next to the pages.
 | `llms.txt` | A section `## Projects`, with `projects_intro` and then `- [title](<SITE>/portfolio/<slug>/): summary` in the order of `/portfolio/`. A section `## Site` with the five pages. |
 | `feed.xml` | The feed of the posts. |
 | `_redirects` | Only the rules for `/blog/tags/*` and for the résumé. |
-| `public/_headers` | Git keeps this file. It gives `no-cache` for `/portfolio/`, `/portfolio/:slug/`, `/portfolio/index.json`, `/about/`, `/experience/`, `/contact/` and `/profile.json`. `public, max-age=31536000, immutable` for `/media/*.webp`. |
+| `public/_headers` | Git keeps this file. See the cache rules below. |
 | `public/robots.txt` | Git keeps this file. |
+
+## Cache rules
+
+| Paths | `Cache-Control` |
+|---|---|
+| `/assets/*` | `public, max-age=31536000, immutable` |
+| `/assets/*/scene.json` | `no-cache`, in place of the rule of `/assets/*` |
+| `/vendor/*` | `public, max-age=2592000` |
+| `/blog/, /blog/:slug/, /blog/index.json, /portfolio/, /portfolio/:slug/, /portfolio/index.json, /about/, /experience/, /contact/, /profile.json, /resume/*` | `no-cache` |
+| `/blog/media/*.webp`, `/media/*.webp` | `public, max-age=31536000, immutable` |
+| `/feed.xml, /sitemap.xml, /llms.txt, /robots.txt` | `public, max-age=3600` |
+
+- `public/_headers` gives these rules to Cloudflare.
+- Cloudflare joins the values of all rules for a path, so each path has a maximum of one rule.
+- A social card and a file of a post keep their original names, so Cloudflare gives them its default rule.

@@ -17,7 +17,7 @@ This reference gives the files that `tools/pack.py` makes for each room in `publ
 
 ## Textures
 
-- Each sky angle and each orrery phase has one KTX2 file for each layer: `<group>_s0.ktx2` and `<group>_c0.ktx2` and the next numbers. `tex_layers` in `scene.json` gives the number of layers.
+- Each sky angle and each orrery position has one KTX2 file for each layer: `<group>_s0.ktx2` and `<group>_c0.ktx2` and the next numbers. `tex_layers` in `scene.json` gives the number of layers.
 - The room loader loads the layers that the room uses before the cover goes away, and the other layers after it.
 - The pack tool cuts each other texture, except the probe, into two files.
 - `<name>.tail.ktx2` holds the levels that are more than a quarter of the full size.

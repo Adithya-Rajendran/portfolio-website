@@ -17,11 +17,11 @@ This reference gives the functions on `window.__lobby` that the browser tests us
 | `volumes()` | The catalogue, `[{ slug, title }]`, in the order of the shelf |
 | `held()` | The slug of the book that the drone holds, or `null` |
 | `display.state()` | `{ lock, named, hint, gliding, cue }`. See the list below. `window.__lobby.display` has only `state`. |
-| `picks[i].name`, `picks[i].verb` | The name of the pick on the display, in capital letters, and the action of a click on it. Both are `''` on the pick that has `reads`, which the display does not lock. |
+| `picks[i].name`, `picks[i].verb` | The name of the pick on the display, in capital letters, and the action of a click on it. Both are `''` on the pick that has `reads`, which has no display lock. |
 | `picks[i].bounds()` | Not necessary. The outline of the pick as points in the world. |
 | `scene`, `scene.getObjectByName(...)` | The meshes of the reader by name. See the list below. |
 | `turn` | `null` in all rooms except Navigation. See the list below. |
-| `step(d)` | The tour moves `d` steps: the stations first, in the order of the line, then the other picks. |
+| `step(d)` | The tour moves `d` steps: the route stops first, in the order of the line, then the other picks. |
 | `enter(id)` | A move to a different room without a new load of the page. |
 
 ## Fields of display.state()
@@ -35,25 +35,26 @@ This reference gives the functions on `window.__lobby` that the browser tests us
 ## Meshes of the reader
 
 - `ReadGlyph`: the READ glyph, which is the `mesh.parent` of the pick that has `reads`. Its uniforms are `uShow`, `uWord`, `uHover` and `uProgress`, with no `uTime`.
-- `ReadFrame`: the frame of the reader.
+- `ReadFrame`: the reader panel.
 - `ReadBeam`: the beam, with the uniforms `uK` and `uFlow`.
 - `ReadAnchor`: an `Object3D` on the thing that the visitor reads.
-- `ScanSheet`, with the uniform `uSnap`, and `ScanFan`: the scan of a flat thing has one sheet and one fan.
-- `ScanBody`: one box for each thing with a shape. Each `ScanBody` has a `ScanFan`, so there can be more than one `ScanFan`.
-- `ReadFlow`: the receive way.
-- `ReadPrint`: the unfold way.
+- `ScanSheet`: the sheet of a scan, with the uniform `uSnap`.
+- `ScanFan`: the fan of a scan.
+- `ScanBody`: the box of a thing with a shape in a scan.
+- `ReadFlow`: the mesh of the receive way.
+- `ReadPrint`: the mesh of the unfold way.
 - A mesh that the page does not show has `visible` false, on the mesh or on a parent.
 
 ## Functions of turn
 
 - `angle()`: the angle in radians from the layout of the route.
-- `front()`: the station that is near to the front.
+- `front()`: the route stop that is near to the front.
 - `settled()`: `true` when the map does not move.
 - `moving()`: `true` when the map coasts or settles after a release.
-- `byHand()`: `true` when the visitor turned the map last, and not a focus that sent it to a station.
-- `heading()`: the station that the map is on or goes to, or `null` while the visitor holds the map or while it coasts.
-- `to(i, now)`: turns to station `i`. With `now`, or with reduced motion, it goes there at once.
+- `byHand()`: `true` when the visitor turned the map last, and not a focus that sent it to a route stop.
+- `heading()`: the route stop that the map is on or goes to, or `null` while the visitor holds the map or while it coasts.
+- `to(i, now)`: turns to route stop `i`. With `now`, or with reduced motion, it goes there at once.
 - `nudge(r)`: the same as a drag of `r` radians and a release.
-- `step(d)`: moves `d` stations along the line at once.
+- `step(d)`: moves `d` route stops along the line at once.
 - `grip()`: the pixels of drag for one radian.
 - The picks of the route map have `station: i`. While the map turns, the canvas has the class `turns`.

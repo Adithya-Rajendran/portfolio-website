@@ -24,9 +24,9 @@ Git does not keep the packed rooms or the pages.
    ```
 4. Serve the site.
    ```sh
-   python3 tools/serve.py 127.0.0.1 8123
+   python3 tools/serve.py <bind address> <port>
    ```
 
 ## Verification
 
-- The browser shows the Atrium at `http://127.0.0.1:8123/`.
+- The browser shows the Atrium at `http://<bind address>:<port>/`.
