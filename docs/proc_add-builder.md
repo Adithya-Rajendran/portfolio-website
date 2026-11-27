@@ -1,11 +1,11 @@
 ---
 type: procedure
 title: Add a shared builder
-depends: [docs/proc_asset-census.md]
+depends: [docs/con_room-kit.md, docs/ref_model-tools.md, docs/proc_asset-census.md]
 ---
 # Add a shared builder
 
-Use this procedure to add a builder to the shared kit of the rooms.
+Use this procedure to add a builder to [the shared kit of the rooms](con_room-kit.md).
 
 ## Prerequisites
 
@@ -13,12 +13,9 @@ Use this procedure to add a builder to the shared kit of the rooms.
 
 ## Procedure
 
-1. Write the builder as a function with a Blender placement matrix `M` as its first argument.
-2. Give the local dimensions and the direction where they change as arguments of the builder.
-3. Use only the materials of the `MAT` and `EM` palette that the room supplies.
-4. Keep the fixed positions, the wall labels and the pick data in the script of the room.
-5. Add the builder to the dict of its module, for example `TECH` in `blender/assets_tech.py`.
-6. Render the builder alone in its canonical studio.
+1. Write the builder as a function in the form that [the shared kit](con_room-kit.md#how-a-builder-works) gives.
+2. Add the builder to the dict of its module, for example `TECH` in `blender/assets_tech.py`.
+3. Render the builder alone in its canonical studio with [the model tools](ref_model-tools.md).
    ```sh
    python3 tools/review-models.py <key>
    ```
@@ -29,7 +26,6 @@ Use this procedure to add a builder to the shared kit of the rooms.
 
 ## Troubleshooting
 
-- A builder cannot run in a room that does not supply its palette.
 - In the Library, do not move `FX_screen0`, the catalogue screen, the dock, the slot or the delivery poses without the others.
 
 ## Next steps

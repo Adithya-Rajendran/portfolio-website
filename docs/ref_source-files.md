@@ -40,7 +40,7 @@ The Blender scripts make the `.blend` files.
 | `public/js/comms.js` | The links of Comms. |
 | `public/js/kit.js` | The functions that the other scripts share. |
 | `public/js/site.js` | The function that fills the rooms from the data: the placards, the route stops and the shelves of the Library. |
-| `public/js/reader.js` | The reader, which shows the article of a page as a hologram. |
+| `public/js/reader.js` | The reader, which shows the article of a page on the reader panel. |
 | `public/js/opening/scan.js`, `receive.js`, `unfold.js` | The three ways that a thing opens for the reader. |
 | `public/post.css` | The styles of the pages that a visitor reads without the station. |
 | `public/blueprint.html` | The 3D blueprint of the station. See [the review pages](ref_review-pages.md). |

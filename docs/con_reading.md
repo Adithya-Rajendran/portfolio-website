@@ -15,7 +15,7 @@ A pick that gives a text to read has the function `source()`, and `public/js/rea
 | `url` | The page of the article: `/blog/<slug>/`, `/portfolio/<slug>/` or `/experience/#<id>`. |
 | `how` | The way that the thing opens: `'scan'` (the default), `'unfold'` or `'receive'`. |
 | `bodies` | For `'scan'`: the things that the scan goes across in place of a flat sheet. Each body is `{ position, quaternion, size: [w, h, d], reads }`, a box in the room. `reads` marks the box where the light of the reader panel starts. |
-| `station` | For `'unfold'`: the display of the stop, `{ page, holder }`. `page` is its sheet, a sprite with `userData.pane`. `holder` is its model. |
+| `station` | For `'unfold'`: the sheet and the model of the route stop, `{ page, holder }`. `page` is the sheet, a sprite with `userData.pane`. `holder` is the model. |
 
 ## The states
 

@@ -11,14 +11,11 @@ This reference gives the directories, the output and the signals of `tools/check
 
 Each browser step has a directory under `$OUT/steps/`, and the suite does not delete them at the end.
 
-```text
-$OUT/steps/
-  01-rooms.cross.mjs_desktop/     NN: the order the steps start in (the parallel ones in queue order, then the serial ones)
-    log.txt                       everything the step printed (the suite's output shows it again once the step ends)
-    ...                           what the script wrote to /out (screenshots, JSON)
-  02-rooms.read.mjs_desktop/
-  ...
-```
+| Path | Contents |
+|---|---|
+| `$OUT/steps/NN-<title>/` | The directory of one step, for example `01-rooms.cross.mjs_desktop/`. `NN` is the sequence in which the steps start: first the parallel steps, then the serial steps. |
+| `$OUT/steps/NN-<title>/log.txt` | All output of the step. The output of the suite shows it again when the step ends. |
+| The other files of the directory | The files that the script wrote to `/out`, for example screenshots and JSON files. |
 
 - The name of the directory is the title of the step. Each character that is not in `A-Za-z0-9._-` changes to `_`, and the name has a maximum of 80 characters.
 

@@ -1,7 +1,7 @@
 ---
 type: concept
 title: The shared kit of the rooms
-depends: [docs/ref_review-pages.md, docs/proc_add-builder.md]
+depends: [docs/ref_review-pages.md]
 ---
 # The shared kit of the rooms
 
@@ -38,4 +38,3 @@ The kit does not make instances at run time, and it does not decrease the downlo
 - The six route stops are in `public/js/routemap.js`, not in the mesh of the table.
 
 [The review pages](ref_review-pages.md) show the builders, their studios and where the rooms use them.
-See [the procedure](proc_add-builder.md) to add a builder.

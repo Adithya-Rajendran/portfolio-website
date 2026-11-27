@@ -51,7 +51,7 @@ The route map of Navigation turns about the axis of the table, with `TURN` in `p
 - A drag must be more than 6 px, and its part from left to right must be equal to or more than its vertical part.
 - A vertical wheel without Shift does not turn the map. The page scrolls.
 - After the release, the map coasts at a maximum of `TURN.FAST` radians each second. Then it stops with a route stop at the front.
-- With reduced motion, the map goes to its stop at once, and a wheel moves one route stop for each 100 px.
+- With reduced motion, the map goes to its route stop at once, and a wheel moves one route stop for each 100 px.
 - The map does not turn while the reader is open, or from a press inside `#reader`, the nav, the bar or a button.
 - A press that stops the map is not a click. A click immediately after a drag is not a click.
 - When a route stop comes into focus, the map turns to it.

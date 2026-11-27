@@ -18,7 +18,7 @@ A script of one line in the head of the shell sets the class.
 An article page, `/blog/<slug>/` or `/portfolio/<slug>/`, starts in the `reading` mode.
 The page of a room starts in the `station` mode.
 
-In the station, the reader shows a post in the hologram `#reader`.
+In the station, the reader shows a post on the reader panel `#reader`.
 The reader uses `article.post` from `#page`. If `#page` does not have the post, the reader loads `/blog/<slug>/` and uses `article.post` from that page.
 See [the reader](con_reading.md) for how a thing opens.
 

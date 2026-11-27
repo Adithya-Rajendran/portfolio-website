@@ -263,7 +263,7 @@ This table gives the approved technical names and technical verbs of the project
 | helper | name | helpers | A small function that tests use. |
 | hero | name | - | Only in "hero view": the first view of a room. |
 | hex | name | - | Base 16, with the digits 0 to 9 and the letters a to f. |
-| hide | verb | hides | To stop the display of a thing. |
+| hide | verb | hides | To make a thing not visible. |
 | highlight | name | highlights | A small area of reflected light on a surface. |
 | hint | name | hints | The part of the display that tells the visitor what to do. |
 | hologram | name | holograms | A 3D image of light in a room. |
@@ -340,7 +340,7 @@ This table gives the approved technical names and technical verbs of the project
 | loader | name | loaders | A function that loads a room or data. |
 | lobby | name | - | The identifier of the Atrium. |
 | lobe | name | - | Only in "glossy lobe". |
-| lock | name | locks | A file that only one program can hold at a time. |
+| lock | name | locks | A file that a program holds to control which other programs can run at the same time. |
 | log | name | logs | A file with the output of a program. |
 | logo | name | logos | The image of an organization. |
 | look | verb | looks | To show a quality to the eye. |
@@ -490,7 +490,7 @@ This table gives the approved technical names and technical verbs of the project
 | rank | name | - | A position in an order. |
 | ray | name | rays | A line from a point in one direction. |
 | raycast | name | raycasts | A test of the first mesh on the line of a ray. |
-| reader | name | - | The part of the site that shows an article in the room. |
+| reader | name | - | The part of the site that shows an article on the reader panel. |
 | reader panel | name | - | The flat part in the room where the reader shows the article. |
 | real | name | - | Not a model or a stand-in. |
 | receive | name | - | The way that a thing opens for the reader when the thing has no model in the room. |
@@ -533,7 +533,7 @@ This table gives the approved technical names and technical verbs of the project
 | schema | name | - | The definition of the document types in Sanity. |
 | scheme | name | - | The first part of a URL, for example `https:`. |
 | school | name | schools | A place of education. |
-| screen | name | screens | A display on a wall of a room. |
+| screen | name | screens | A flat panel on a wall of a room that shows text or images. |
 | screenshot | name | screenshots | An image of a page that a test records. |
 | script | name | scripts | A file of code that a program runs, for example a shell script. |
 | scroll | verb | scrolls, scrolled | To move the page up or down. |
