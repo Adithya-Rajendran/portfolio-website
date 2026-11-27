@@ -52,9 +52,9 @@ export function createTurn({ points, center, still = false }) {
     },
     step(d) { T.hand = true; land(((closest(T.a) + d) % N + N) % N); },
     nudge(r) { turn.drag(turn.grab() + r); turn.release(0); },
-    grip(camera) {
+    grip(camera, height) {
       const d = camera.position.distanceTo(new THREE.Vector3(Math.sin(ahead) * TURN.REACH, midY, Math.cos(ahead) * TURN.REACH).add(center));
-      return TURN.REACH * innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.max(d, 0.5));
+      return TURN.REACH * height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.max(d, 0.5));
     },
   };
   function advance(dt) {

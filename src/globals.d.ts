@@ -2,5 +2,6 @@
 interface Window {
   __modules?: any;
   __lobby?: any;
+  __station?: import('./engine/types.ts').Station;
   __bp?: { ready(): boolean };
 }

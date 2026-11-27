@@ -788,7 +788,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const commsLit = comms && probe ? probeEnvironment(renderer, probeU, probe) : null; if (commsLit) comms.setEnv(commsLit.texture);
   let last = 0;
   return {
-    id, info, scene, picks, floors, hidden, CAM, TGT, chart, reader, terminal, volumes,
+    id, info, scene, picks, floors, hidden, CAM, TGT, chart, reader, terminal, volumes, comms,
     turn: routeMap?.turn ?? null,
     reads: (url) => !!reader && !!url && (!drone || volumes.some((v) => v.url === url.split('#')[0])),
     heldVolume: () => drone?.open() ?? -1,

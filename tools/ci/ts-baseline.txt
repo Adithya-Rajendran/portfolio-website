@@ -12,12 +12,6 @@ src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Obje
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
 src/engine/hologram.js	TS2339	Property 'halo' does not exist on type 'Group<Object3DEventMap>'.
-src/engine/hud.js	TS2345	Argument of type '[any, any, ...number[]]' is not assignable to parameter of type '[any, any, any, any]'.
-src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
-src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
-src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
-src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
-src/engine/hud.js	TS2345	Argument of type 'any[]' is not assignable to parameter of type '[any, any]'.
 src/engine/kit.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
 src/engine/post.js	TS2339	Property 'bloom' does not exist on type '{}'.
 src/engine/post.js	TS2339	Property 'contrast' does not exist on type '{}'.
@@ -79,14 +73,6 @@ src/engine/routemap.js	TS2339	Property 'tick' does not exist on type 'Group<Obje
 src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'number | ArrayBuffer | ArrayLike<number> | Iterable<number>'.
 src/engine/routemap.js	TS2345	Argument of type 'string | number | any[]' is not assignable to parameter of type 'string'.
 src/engine/routemap.js	TS2363	The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-src/main.js	TS2339	Property 'closest' does not exist on type 'EventTarget'.
-src/main.js	TS2339	Property 'connection' does not exist on type 'Navigator'.
-src/main.js	TS2339	Property 'dataset' does not exist on type 'Element'.
-src/main.js	TS2353	Object literal may only specify known properties, and 'bake' does not exist in type '{ max?: number; min?: number; now?: number; }'.
-src/main.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
-src/main.js	TS2556	A spread argument must either have a tuple type or be passed to a rest parameter.
-src/main.js	TS2739	Type 'URL' is missing the following properties from type 'Location': ancestorOrigins, assign, reload, replace
-src/main.js	TS2810	Expected 1 argument, but got 0. 'new Promise()' needs a JSDoc hint to produce a 'resolve' that can be called without arguments.
 src/pages/blueprint.js	TS2339	Property 'classList' does not exist on type 'EventTarget'.
 src/pages/blueprint.js	TS2339	Property 'dataset' does not exist on type 'Element'.
 src/pages/blueprint.js	TS2339	Property 'dataset' does not exist on type 'Element'.
