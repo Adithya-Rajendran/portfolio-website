@@ -248,8 +248,8 @@ if [ "$SUBCMD" != "blurdiff" ]; then
   export ASSETS
   if [ -L "$W/public/assets" ]; then rm -f "$W/public/assets"; fi
   mkdir -p "$W/public/assets"
-  if ! bgwait bash -c 'cd "$1" && python3 tools/site.py > "$2" 2>&1' _ "$W" "$JOB/site.log"; then
-    echo "hd630: site.py failed, see $JOB/site.log" >&2
+  if ! bgwait bash -c 'cd "$1" && pnpm install --frozen-lockfile --ignore-scripts > "$2" 2>&1 && pnpm build >> "$2" 2>&1 && mkdir -p dist/assets' _ "$W" "$JOB/site.log"; then
+    echo "hd630: pnpm build failed, see $JOB/site.log" >&2
     tail -20 "$JOB/site.log" >&2 || true
     exit 1
   fi
@@ -335,7 +335,7 @@ build_direct_cmd() {
     docker run --rm --init --name "$CID" --ipc=host "${dev[@]}"
     -e ORIGIN=http://127.0.0.1:8080 -e SETUP -e UNTIL
     -v "$docker_src:/work:ro"
-    -v "$W/public:/site:ro"
+    -v "$W/dist:/site:ro"
     "${assets_mount[@]}"
     -v "$OUT_DIR:/out"
     -v lobby_pw_modules:/w:ro

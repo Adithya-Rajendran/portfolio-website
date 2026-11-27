@@ -50,7 +50,7 @@ export const spy = () => {
   HTMLCanvasElement.prototype.getContext = function (...a) { (window.__canvases ??= new Set()).add(this); return gc.apply(this, a); };
 };
 export const canvasTexts = (p) => p.evaluate(() => [...(window.__canvases ?? [])].filter((c) => c.__t?.length).map((c) => ({ w: c.width, h: c.height, t: c.__t })));
-export const planePoint = (p, pickIndex, cw, ch, x, y) => p.evaluate(async ({ i, cw, ch, x, y }) => { const THREE = await import('three'), l = window.__lobby, m = l.picks[i].mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+export const planePoint = (p, pickIndex, cw, ch, x, y) => p.evaluate(async ({ i, cw, ch, x, y }) => { const THREE = window.__modules.THREE, l = window.__lobby, m = l.picks[i].mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   const g = m.geometry.parameters, v = new THREE.Vector3((x / cw - 0.5) * g.width, (0.5 - y / ch) * g.height, 0).applyMatrix4(m.matrixWorld).project(l.camera);
   return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, z: v.z }; }, { i: pickIndex, cw, ch, x, y });
 
@@ -78,7 +78,7 @@ export const snap = (p) => p.evaluate(() => {
 });
 
 export const readBox = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, pick = l.picks.find((q) => q.reads), m = pick.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+  const THREE = window.__modules.THREE, l = window.__lobby, pick = l.picks.find((q) => q.reads), m = pick.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].map(([x, y]) => { const g = m.geometry.parameters, v = new THREE.Vector3(x * g.width / 2, y * g.height / 2, 0).applyMatrix4(m.matrixWorld).project(l.camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, z: v.z }; });
   const xs = pts.slice(0, 4).map((q) => q.x), ys = pts.slice(0, 4).map((q) => q.y), c = pts[4], top = document.elementFromPoint(c.x, c.y);
   return { live: !!pick.live(), glyph: m.parent.visible, cx: c.x, cy: c.y, left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys), behind: pts.some((q) => q.z > 1),
@@ -94,7 +94,7 @@ export async function rayHits(p, x, y) {
   let hits = [];
   for (let n = 0; n < 4 && !hits.length; n++) {
     if (n) await p.waitForTimeout(400);
-    hits = await p.evaluate(async ({ x, y }) => { const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live());
+    hits = await p.evaluate(async ({ x, y }) => { const THREE = window.__modules.THREE, l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live());
       l.camera.updateMatrixWorld(true); for (const q of live) q.mesh.updateWorldMatrix(true, false);
       ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
       return ray.intersectObjects(live.map((q) => q.mesh), false).map((h) => [l.picks.findIndex((q) => q.mesh === h.object), h.object.geometry.type, +h.distance.toFixed(2)]); }, { x, y });

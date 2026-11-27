@@ -22,7 +22,7 @@ try {
   if(which==='all'||which==='spec'){
     await load('experience');
     const result=await p.evaluate(async wantImages=>{
-      const T=await import('three'), {Vector3}=T, {uMirror}=await import('./js/kit.js'), l=window.__lobby, gl=l.renderer.getContext(), W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;
+      const T=window.__modules.THREE, {Vector3}=T, {uMirror}=window.__modules.kit, l=window.__lobby, gl=l.renderer.getContext(), W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;
       const uniforms=new Map();l.scene.traverse(o=>{for(const k of ['uSpecGain','uFloorRefl'])if(o.material?.uniforms?.[k]){
         if(!uniforms.has(k))uniforms.set(k,new Set());uniforms.get(k).add(o.material.uniforms[k]);}});
       const images={};function measure(key,eyes,target,patch,prefix){
@@ -63,7 +63,7 @@ try {
   if(which==='all'||which==='shadow'){
     await load('about');
     const result=await p.evaluate(async wantImages=>{
-      const T=await import('three'),{windowShadow}=await import('./js/sunlight.js'),l=window.__lobby,R=l.renderer,S=448,cam=new T.Camera(),sc=new T.Scene();let u;
+      const T=window.__modules.THREE,{windowShadow}=window.__modules.sunlight,l=window.__lobby,R=l.renderer,S=448,cam=new T.Camera(),sc=new T.Scene();let u;
       l.scene.traverse(o=>{if(o.userData.grp?.startsWith('floor')&&o.material?.uniforms?.tShadow)u=o.material.uniforms;});if(!u)throw new Error('No live sun on the floor');
       const rt=new T.WebGLRenderTarget(S,S,{depthBuffer:false}),mode={value:0};
       const m=new T.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:{tShadow:u.tShadow,uSunVP:u.uSunVP,uSunDir:u.uSunDir,mode},vertexShader:'varying vec2 st; void main(){st=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`uniform sampler2D tShadow;uniform mat4 uSunVP;uniform vec3 uSunDir;uniform float mode;varying vec2 st;
@@ -91,7 +91,7 @@ try {
   if(which==='all'||which==='caster'){
     await load('writing',{rollat:0});
     const result=await p.evaluate(async()=>{
-      const T=await import('three'),{uMirror,DSCALE}=await import('./js/kit.js'),l=window.__lobby,R=l.renderer,root=l.scene.getObjectByName('Catalogue drone'),S=768;
+      const T=window.__modules.THREE,{uMirror,DSCALE}=window.__modules.kit,l=window.__lobby,R=l.renderer,root=l.scene.getObjectByName('Catalogue drone'),S=768;
       if(!root)throw new Error('Missing live catalogue drone');const pick=l.picks.find(p=>p.options?.length);if(!pick)throw new Error('Missing catalogue');
       let u;l.scene.traverse(o=>{if(o.userData.grp?.startsWith('floor')&&o.material?.uniforms?.tShadow)u=o.material.uniforms;});
       const sc=new T.Scene(),cam=new T.Camera(),rt=new T.WebGLRenderTarget(S,S,{depthBuffer:false});

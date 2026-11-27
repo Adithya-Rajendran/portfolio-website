@@ -5,7 +5,7 @@ import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '../..');
-const siteDir = resolve(process.env.SITE_DIR || process.argv[2] || join(ROOT, 'public'));
+const siteDir = resolve(process.env.SITE_DIR || process.argv[2] || join(ROOT, 'dist'));
 const port = Number(process.env.PORT || process.argv[3] || 8080);
 
 function hasEntries(dir) {

@@ -174,7 +174,7 @@ test.describe('opening: ways of opening across Fabrication, Lounge, and Navigati
       const rectOf = () =>
         st.page.evaluate(
           async ({ pts, all }) => {
-            const THREE = await import('three');
+            const THREE = window.__modules.THREE;
             const l = (window as any).__lobby;
             l.camera.updateMatrixWorld(true);
             const proj = (set: Array<[number, number, number]>) => {

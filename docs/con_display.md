@@ -6,7 +6,7 @@ depends: [docs/ref_content-json.md]
 # The display of the visitor
 
 The display of the visitor is the set of parts that the page shows on the rooms: `#hud`, `#inspectbar`, `#lock`, the cue, the READ glyph and the scan.
-`public/js/hud.js` makes the display lock, the cue, the caption of the bar and the hint.
+`src/engine/hud.js` makes the display lock, the cue, the caption of the bar and the hint.
 
 ## Parts that do not move
 
@@ -45,7 +45,7 @@ After the visitor selects a thing for the first time, the general hint goes away
 
 ## The turn of the route map
 
-The route map of Navigation turns about the axis of the table, with `TURN` in `public/js/routemap.js` and `turning()` in `public/main.js`.
+The route map of Navigation turns about the axis of the table, with `TURN` in `src/engine/routemap.js` and `turning()` in `src/main.js`.
 
 - A drag across the room with a mouse, a pen or a finger turns the map. A wheel that goes left and right (`deltaX`), or Shift with a vertical wheel, also turns it.
 - A drag must be more than 6 px, and its part from left to right must be equal to or more than its vertical part.

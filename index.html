@@ -7,12 +7,9 @@
 <base href="/">
 <title>Arcadia Station</title>
 <!--site:head-->
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="post.css">
+<link rel="stylesheet" href="/src/styles/style.css">
+<link rel="stylesheet" href="/src/styles/post.css">
 <script>document.documentElement.className = /^\/(blog|portfolio)\/[^/]+\/?$/.test(location.pathname) ? 'reading' : 'station';</script>
-<script type="importmap">
-{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/jsm/" } }
-</script>
 </head>
 <body>
 <canvas id="scene"></canvas>
@@ -43,6 +40,6 @@
 <div id="inspectbar" hidden>
   <span id="named" aria-live="polite"></span><button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button><span id="ways"></span>
 </div>
-<script type="module" src="main.js"></script>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>

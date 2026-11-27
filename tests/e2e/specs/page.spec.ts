@@ -44,10 +44,10 @@ function kindOf(path: string): PageKind {
 async function verifyGeneratedPage(ctx: BrowserContext, path: string, testInfo: TestInfo): Promise<void> {
   const kind = kindOf(path);
   const p = await ctx.newPage();
-  const requests: string[] = [];
+  const requests: { url: string; type: string }[] = [];
   const errors: string[] = [];
 
-  p.on('request', (r) => requests.push(r.url()));
+  p.on('request', (r) => requests.push({ url: r.url(), type: r.resourceType() }));
   p.on('requestfailed', (r) => errors.push(`request failed: ${r.url()} ${r.failure()?.errorText ?? ''}`));
   p.on('response', (r) => {
     if (r.status() >= 400) errors.push(`http ${r.status()}: ${r.url()}`);
@@ -58,9 +58,9 @@ async function verifyGeneratedPage(ctx: BrowserContext, path: string, testInfo: 
     expect(res?.status(), `${path} status`).toBe(200);
     expect(errors, `${path} failed requests/http`).toEqual([]);
     expect(
-      requests.some((u) => u.endsWith('/main.js')),
-      `${path}: main.js must not be requested with JS disabled`,
-    ).toBe(false);
+      requests.filter((r) => r.type === 'script' || /\.m?js$/.test(new URL(r.url).pathname)).map((r) => r.url),
+      `${path}: no script may be requested with JS disabled`,
+    ).toEqual([]);
 
     const root =
       kind === 'list'

@@ -12,7 +12,7 @@ try {
   const u = new URL(base); u.pathname = '/'; u.search = 'lightcheck=1&shot=hero&tier=1&scale=1&rollat=0&chand=0&grain=0&bloom=0&vig=0&skip=dust';
   await p.goto(u.href); await p.waitForFunction(() => window.__lobby?.mode().room === 'lobby' && document.querySelector('#loader.done'), null, { timeout: 180000 });
   const r = await p.evaluate(async (wantImages) => {
-    const T = await import('three'), l = window.__lobby, gl = l.renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
+    const T = window.__modules.THREE, l = window.__lobby, gl = l.renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
     const X = 6.75, target = [X, 0.7, -5.0], eyes = [[4.1, 1.0, -2.2], [4.0, 1.0, -7.9]];
     let gain, lamp; l.scene.traverse((o) => { const v = o.material?.uniforms; if (v?.tFin) { gain ??= v.uSpecGain; lamp ??= v.uLP && v; } });
     if (!gain) throw new Error('No live-reflection material in this room');

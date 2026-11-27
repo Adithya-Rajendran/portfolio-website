@@ -164,7 +164,7 @@ class Extras(unittest.TestCase):
                      for r in (os.path.relpath(os.path.join(d, f), out) for d, _, fs in os.walk(out) for f in fs)
                      if os.path.basename(r) == 'index.html'}
             pages.add('/')
-            self.assertTrue(os.path.isfile(os.path.join(PUBLIC, 'index.html')))
+            self.assertTrue(os.path.isfile(s.SHELL))
             locs = [loc for loc, _ in self.sitemap(out)]
             self.assertEqual(sorted(locs), sorted(SITE + p for p in pages))
             self.assertEqual(len(locs), len(set(locs)))

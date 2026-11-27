@@ -80,7 +80,7 @@ const state = (p) => p.evaluate(() => window.__t.ds());
 const glyphLive = (p, t = 25000) => until(p, () => { const q = window.__t.reads(); return !!q && q.live() && q.mesh.parent.visible; }, null, t);
 
 const cands = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), W = innerWidth, H = innerHeight, live = l.picks.filter((q) => !q.live || q.live());
+  const THREE = window.__modules.THREE, l = window.__lobby, ray = new THREE.Raycaster(), W = innerWidth, H = innerHeight, live = l.picks.filter((q) => !q.live || q.live());
   l.camera.updateMatrixWorld(true); for (const q of l.picks) q.mesh.updateWorldMatrix(true, false);
   const out = [];
   l.picks.forEach((q, i) => {
@@ -99,7 +99,7 @@ const cands = (p) => p.evaluate(async () => {
   return out;
 });
 const emptyPoint = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live());
+  const THREE = window.__modules.THREE, l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live());
   l.camera.updateMatrixWorld(true); for (const q of l.picks) q.mesh.updateWorldMatrix(true, false);
   for (let gy = 0.9; gy > 0.1; gy -= 0.1) for (let gx = 0.1; gx < 0.95; gx += 0.1) { const x = gx * innerWidth, y = gy * innerHeight;
     ray.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), l.camera);
@@ -107,7 +107,7 @@ const emptyPoint = (p) => p.evaluate(async () => {
   return { x: innerWidth / 2, y: innerHeight / 2 };
 });
 const readBox = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, m = window.__t.reads().mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+  const THREE = window.__modules.THREE, l = window.__lobby, m = window.__t.reads().mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   const g = m.geometry.parameters, v = new THREE.Vector3(0, 0, 0).applyMatrix4(m.matrixWorld).project(l.camera);
   return { cx: (v.x * 0.5 + 0.5) * innerWidth, cy: (-v.y * 0.5 + 0.5) * innerHeight, w: g.width, h: g.height };
 });

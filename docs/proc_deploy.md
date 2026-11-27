@@ -1,12 +1,12 @@
 ---
 type: procedure
 title: Deploy the site
-depends: [docs/proc_prepare-checkout.md]
+depends: [docs/proc_prepare-checkout.md, docs/con_vite-output.md]
 ---
 # Deploy the site
 
-Use this procedure to publish `public/` to Cloudflare.
-`npx wrangler deploy` uploads `public/` as it is, with the configuration in `wrangler.jsonc` and the cache rules in `public/_headers`.
+Use this procedure to publish `dist/` to Cloudflare.
+`npx wrangler deploy` uploads `dist/`, with the configuration in `wrangler.jsonc` and the cache rules in `public/_headers`.
 
 ## Prerequisites
 
@@ -19,11 +19,15 @@ Use this procedure to publish `public/` to Cloudflare.
    ```sh
    python3 tools/pack.py
    ```
-2. Make the pages.
+2. Install the packages.
    ```sh
-   python3 tools/site.py
+   pnpm install --frozen-lockfile
    ```
-3. Deploy the site.
+3. Make [the Vite output](con_vite-output.md) and the pages.
+   ```sh
+   pnpm build
+   ```
+4. Deploy the site.
    ```sh
    npx wrangler deploy
    ```
@@ -31,4 +35,4 @@ Use this procedure to publish `public/` to Cloudflare.
 ## Verification
 
 - The output of `wrangler` shows no error.
-- The upload does not include the files in `public/.assetsignore`.
+- The upload does not include the files in `public/.assetsignore`, which `pnpm build` copies to `dist/.assetsignore`.
