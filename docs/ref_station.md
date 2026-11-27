@@ -41,7 +41,7 @@ Each value has `get()` and `subscribe(fn)`.
 |---|---|---|---|
 | `room` | `enter` | The loader of the page | `{ id, status, progress, label, error }`. `id` is the room that shows, or `null` while no room shows. `status` is `'loading'`, `'ready'` or `'failed'`. |
 | `focused` | `focus`, `back`, `step`, `read`, `tap` and each frame | The inspect bar, the caption of the bar and the address | `null`, or the pick in focus: `pick`, `name`, `verb`, `aside`, `steady`, `backLabel`, `tour`, `ways`, `options`, `current`, `list`, `canRead`, `readLabel`, `typing`, `reads`, `url` and `title`. |
-| `picks` | Each frame | The cue and the hero button | The live picks of the room, with no pick that has `reads`: `{ id, name, verb, kind, cta, cue }`. |
+| `picks` | Each frame | The cue and the hero button | The live picks of the room, with no pick that has `reads`: `{ id, name, verb, kind, canRead, cta, cue }`. |
 | `pointed` | Each frame | The display lock | The pick under the pointer, or `null`. |
 | `gliding` | `focus` and each frame | `display.state()` | `true` until the camera is at the pick in focus, or back at the room. |
 | `wideAtRest` | Each frame | The cue | `true` when the full view of the room does not move and no pick is in focus. |
@@ -58,13 +58,15 @@ Each value has `get()` and `subscribe(fn)`.
 |---|---|---|
 | `enter(id, { want })` | The page, at the start and for a new room | The engine loads the room `id`. `want` is the slug of a book that the Library must have on its shelf. |
 | `start()` | The page, after the first room loads | The engine draws the first frame and starts each frame. |
-| `focus(id)` | The cue and the hero button | The focus goes to the pick `id`. For a door with one stop, the visitor goes to its room after `1500` ms. |
+| `focus(id, { travel })` | The cue and the hero button, with `travel: false` | The focus goes to the pick `id`. For a door with one stop, the visitor goes to its room after `1500` ms, but not when `travel` is `false`. |
 | `back()`, `step(d)`, `choose(i)`, `travel(to)` | The inspect bar and the keys | The actions of BACK, of the tour, of an item of the list and of a door. |
 | `read(id)` | The `Enter` key and the READ button | The reader opens the pick in focus, or the pick `id`. The result is `false` when the pick has no article. |
 | `readAt(url, { fly })` | The address of an article, the hero button | The reader opens the article at `url`. |
-| `closeReader()`, `jump(anchor)`, `readerScrollTo(anchor)` | The address | The reader closes, goes to a heading, or goes to a heading when it opens. |
+| `jump(anchor)`, `readerScrollTo(anchor)` | The address | The reader goes to a heading, or goes to a heading when it opens. |
+| `closeReader()` | Not used yet, for `U5` | The reader closes. |
 | `reads(url)` | The page that a visitor reads without the station | `true` when the room can show the article at `url`. |
-| `rectOf(id)`, `contactLinkRect(i)`, `frameOf('reader')` | The display lock and the cue | The `Rect` of a pick or of a link of Comms in CSS px, or the size and the transform of the reader. |
+| `rectOf(id)` | The display lock and the cue | The `Rect` of a pick in CSS px. |
+| `frameOf('reader')`, `contactLinkRect(i)` | Not used yet, for `U5` and `U6` | The size and the transform of the reader, or the `Rect` of a link of Comms in CSS px. |
 | `setCovered('bar', rect)` | Not used yet | The `Rect` of the inspect bar, in place of `host.clearance`. |
 | `setView(view, { now })` | The navigation and the step into the station | The camera goes to the full view or to the close view. With `now`, it is there at once. |
 | `pointer(x, y, type, how)`, `pointerGone()`, `tilt(gamma, beta)` | The pointer and the device angle | The camera sways, and the engine finds the pick under the pointer. |

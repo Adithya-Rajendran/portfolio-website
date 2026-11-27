@@ -73,7 +73,7 @@ export interface StationPick {
   verb: string;
   kind: PickKind;
   cta?: boolean;
-  canRead?: boolean;
+  canRead: boolean;
   cue?: Cue;
 }
 
@@ -337,7 +337,7 @@ export interface Station {
   reads(url: string | null | undefined): boolean;
   readonly volumesCount: number;
 
-  focus(pick: PickId | null): void;
+  focus(pick: PickId | null, opts?: { travel?: boolean }): void;
   back(): void;
   step(direction: 1 | -1): void;
   focused: Readable<Focused | null>;

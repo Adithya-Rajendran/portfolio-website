@@ -45,7 +45,7 @@ export async function boot(stayPlain) {
 
   let inflight = false, failed = false, silent = 0, pushNext = null, unturn = null;
   const busy = () => inflight || failed;
-  const display = createDisplay({ station, words: content.display, choose: (pick) => { if (station.room.get().id && !busy() && !plain()) station.focus(pick.id); } });
+  const display = createDisplay({ station, words: content.display, choose: (pick) => { if (station.room.get().id && !busy() && !plain()) station.focus(pick.id, { travel: false }); } });
   let focusNow = null;
   const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);
   const { roomAt, route: routeOf } = addresses(content.rooms);
@@ -254,7 +254,7 @@ export async function boot(stayPlain) {
   $('.hero').addEventListener('click', (e) => {
     const id = station.room.get().id;
     if (!e.target.closest('.cta') || !id) return;
-    const reads = content.rooms[id].ctaReads; if (reads) readPost(reads, false); else station.focus(station.picks.get().find((p) => p.cta)?.id ?? null);
+    const reads = content.rooms[id].ctaReads; if (reads) readPost(reads, false); else station.focus(station.picks.get().find((p) => p.cta)?.id ?? null, { travel: false });
   });
   $('#hud nav').addEventListener('click', (e) => {
     const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -282,7 +282,7 @@ export async function boot(stayPlain) {
   }
   if (plain()) {
     for (const type of ['scroll', 'keydown', 'pointerdown', 'wheel']) addEventListener(type, () => { touched = true; }, { once: true, passive: true });
-    if (Reflect.get(navigator, 'connection')?.saveData) await offer();
+    if (navigator.connection?.saveData) await offer();
   }
   await enter(roomInUrl(), false);
   if (plain()) {

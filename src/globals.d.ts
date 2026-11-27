@@ -5,3 +5,7 @@ interface Window {
   __station?: import('./engine/types.ts').Station;
   __bp?: { ready(): boolean };
 }
+
+interface Navigator {
+  connection?: { saveData?: boolean };
+}

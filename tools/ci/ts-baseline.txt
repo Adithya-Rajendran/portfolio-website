@@ -34,7 +34,6 @@ src/engine/reader.js	TS2556	A spread argument must either have a tuple type or b
 src/engine/reader.js	TS2561	Object literal may only specify known properties, but 't' does not exist in type '{ T: any; on: any; }'. Did you mean to write 'T'?
 src/engine/room.js	TS2339	Property 'boundingSphere' does not exist on type 'Object3D<Object3DEventMap>'.
 src/engine/room.js	TS2339	Property 'computeBoundingSphere' does not exist on type 'Object3D<Object3DEventMap>'.
-src/engine/room.js	TS2339	Property 'connection' does not exist on type 'Navigator'.
 src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
 src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.
 src/engine/room.js	TS2339	Property 'geometry' does not exist on type 'Object3D<Object3DEventMap>'.

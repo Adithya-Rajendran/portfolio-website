@@ -31,6 +31,7 @@ The regex does not find these uses of the browser in `src/engine/`:
 
 - `requestAnimationFrame` and `localStorage` in `src/engine/station.ts`.
 - `matchMedia` for reduced motion in `station.ts`, `room.js`, `reader.js`, `comms.js` and `routemap.js`.
-- `navigator` in `context.js` and `room.js`.
+- `navigator` in `context.js` and `room.js`, and `navigator.clipboard` in `reader.js`.
+- `new Image()` in `hologram.js`.
 - `location` in `dev.js`, `reader.js` and `comms.js`.
 - On the canvas: the `webglcontextlost` listener and `style.cursor`.

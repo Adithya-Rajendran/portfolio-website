@@ -118,8 +118,8 @@ export function createStation(canvas: HTMLCanvasElement, content: Content, _site
   }
   const focused = polled(focusedNow, () => (focus.pick ? [idOf(focus.pick), !!focus.pick.enter?.(), focus.pick.current?.() ?? -1, !!focus.pick.typing?.()] : null));
   const livePicks = (): Pick[] => (room ? room.picks.filter((p) => !p.reads && (!p.live || p.live())) : []);
-  const picks = polled((): StationPick[] => livePicks().map((p) => ({ id: idOf(p), name: p.name ?? '', verb: p.verb ?? '', kind: kindOf(p),
-    ...(p.cta ? { cta: true } : {}), ...(p.cue ? { cue: p.cue } : {}) })), () => livePicks().map(idOf));
+  const picks = polled((): StationPick[] => livePicks().map((p) => ({ id: idOf(p), name: p.name ?? '', verb: p.verb ?? '', kind: kindOf(p), canRead: !!p.enter?.(),
+    ...(p.cta ? { cta: true } : {}), ...(p.cue ? { cue: p.cue } : {}) })), () => livePicks().map((p) => [idOf(p), !!p.enter?.()]));
   const pointed = store<PickId | null>(null), wideAtRest = store(false), hintTurnDone = store(false);
   const gliding = polled(() => focus.f < 1);
   const view$ = polled((): ViewName => (viewTarget >= 0.5 ? 'close' : 'wide'));
@@ -284,9 +284,9 @@ export function createStation(canvas: HTMLCanvasElement, content: Content, _site
     room: roomState,
     reads: (url) => !!room?.reads(url),
     get volumesCount() { return room?.volumes?.length ?? 0; },
-    focus(id) {
+    focus(id, { travel: go = true } = {}) {
       const p = pickOf(id); setFocus(p);
-      if (p?.door && !p.door.stops) travel(p.door.to, 1500);
+      if (go && p?.door && !p.door.stops) travel(p.door.to, 1500);
     },
     back,
     step,
