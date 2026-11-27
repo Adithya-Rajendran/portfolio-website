@@ -1,6 +1,6 @@
 // Check of the words of the page and of the wall screens that are not picks, on desktop and phone
 import { PROFILES, ORIGIN, load, suite, launch, context, open, until, inRoom } from './rooms.kit.mjs';
-import { sleep, camStill, dstate } from './r2.kit.mjs';
+import { sleep, camStill, dstate, CLOCK, settle } from './r2.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.text'), { chk, note } = S;
 const { profile, content } = await load(), R = content.rooms, norm = (s) => s.replace(/\s+/g, ' ').trim();
 const b = await launch();
@@ -30,7 +30,7 @@ const wallPoints = (p) => p.evaluate(async () => {
 async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, errs = [];
   console.log(`\n=== ${name} ${P.viewport.width}x${P.viewport.height}`);
-  const ctx = await context(b, P), p = await open(ctx, '/', 'lobby', errs); await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
+  const ctx = await context(b, P); await ctx.addInitScript(CLOCK); const p = await open(ctx, '/', 'lobby', errs); await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
   const expect = { lobby: norm(`${profile.name}  ·  ${profile.headline}`), about: norm(`${profile.headline}  ·  ${profile.location}`) };
   chk('T', ['projects', 'experience'].every((k) => R[k].screens.inspect === false) && ['projects', 'experience'].every((k) => R[k].screens.list.every((c) => !('cta' in c))), "content.json: screens.inspect is false in Fabrication and Navigation, and their cards have no `cta` line");
   chk('T', Object.entries(R).every(([k, r]) => Array.isArray(r.sub) && (k === 'lobby' || k === 'about' ? r.sub.length === 1 : r.sub.length === 0)), 'content.json: each room\'s `sub` is [] but the Atrium\'s and the Lounge\'s (one line each)', Object.fromEntries(Object.entries(R).map(([k, r]) => [k, r.sub])));
@@ -50,7 +50,8 @@ async function run(name) {
         if (!phone) {
           for (let i = 0, last = null; i < 10; i++) {
             const now = (await wallPoints(p)).find((q) => q.screen === w0.screen)?.at; if (!now) break; w = { ...w0, at: now };
-            if (last && Math.hypot(now.x - last.x, now.y - last.y) < 3) break; await p.mouse.move(now.x, now.y, { steps: 4 }); await sleep(900); last = now;
+            if (last && Math.hypot(now.x - last.x, now.y - last.y) < 3) { await p.mouse.move(now.x + 2, now.y); await sleep(120); await p.mouse.move(now.x, now.y); await settle(p, 0.5); break; }
+            await p.mouse.move(now.x, now.y, { steps: 4 }); if (!(await settle(p))) note(`${id}: wall screen ${w0.screen}: the page drew no frames for 120 s`); last = now;
           }
         }
         const eye0 = await p.evaluate(() => window.__lobby.camera.position.toArray());

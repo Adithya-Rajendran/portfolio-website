@@ -1,6 +1,6 @@
 // Opening sequence check on desktop, phone and reduced motion
 import { PROFILES, ORIGIN, load, json, suite, launch, context, spy, open, until, snap, sources, rayHits, readNow, frameChecks, leave, focus } from './rooms.kit.mjs';
-import { sleep, WAYS, GATE, gate, look, camStill, boxCorners, dstate, sampled } from './r2.kit.mjs';
+import { sleep, WAYS, GATE, CLOCK, settle, gate, look, camStill, boxCorners, dstate, sampled } from './r2.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('opening'), { chk, note } = S;
 const { projects, content } = await load(), scene = await json('/assets/about/scene.json'), books = scene.focus[0].boxes, bookCorners = boxCorners(books);
 const b = await launch();
@@ -14,7 +14,7 @@ const closed = async (p, phone) => { await leave(p, phone); await until(p, () =>
 async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, still = !!P.reducedMotion, W = P.viewport.width, H = P.viewport.height, errs = [];
   console.log(`\n=== ${name} ${W}x${H}`);
-  const ctx = await context(b, P), external = []; await ctx.addInitScript(spy); await ctx.addInitScript(WAYS); await ctx.addInitScript(GATE);
+  const ctx = await context(b, P), external = []; await ctx.addInitScript(spy); await ctx.addInitScript(WAYS); await ctx.addInitScript(GATE); await ctx.addInitScript(CLOCK);
   await ctx.route((u) => u.origin !== new URL(ORIGIN).origin, (r) => { external.push(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: '<title>external</title>' }); });
 
   {
@@ -89,7 +89,7 @@ async function run(name) {
         }, { pts: bookCorners, x: ptr[0], y: ptr[1] });
         const onBooks = async (target) => {
           for (let i = 0; i < 10; i++) {
-            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); await sleep(700);
+            const s = await rectOf(p), e = target === 'all' ? s.all : s.each[target]; ptr = [(e.l + e.r) / 2, (e.t + e.b) / 2]; await p.mouse.move(ptr[0], ptr[1], { steps: 3 }); if (!(await settle(p))) note(`the pointer on the books: the page drew no frames for 120 s`);
             const t = await rectOf(p), f = target === 'all' ? t.all : t.each[target]; if (t.lock && Math.abs((f.l + f.r) / 2 - ptr[0]) < 8 && Math.abs((f.t + f.b) / 2 - ptr[1]) < 8) return true;
           }
           return false;
