@@ -19,7 +19,7 @@ The lines of the engine that use the page are in [the page parts that the engine
 |---|---|---|
 | `canvas` | `src/legacy-shell/shell.js` | The `<canvas id="scene">` element. |
 | `content` | `src/legacy-shell/shell.js` | The data of `content.json` after `furnish()` of `src/content/site.js`. |
-| `site` | `src/legacy-shell/shell.js` | The posts, the projects and the profile from `loadSite()`. |
+| `site` | `src/legacy-shell/shell.js` | The posts, the projects and the profile from `loadSite()` of `src/content/load.js`. |
 | `host` | `src/legacy-shell/shell.js` | The functions of the page that the engine calls. See the list below. |
 
 ## Functions of host

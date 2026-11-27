@@ -1,12 +1,12 @@
 // The page code of the station: the head-up display, the inspect bar, the keys, the pointer, the addresses and the loader, over the Station.
 import { createStation } from '../engine/station.ts';
 import { params, DEV } from '../engine/dev.js';
-import { loadSite, furnish } from '../content/site.js';
+import { furnish } from '../content/site.js';
 import { initLive, live, fill } from '../content/live.js';
 import { addresses } from './address.js';
 import { createDisplay } from './display.js';
 
-export async function boot(stayPlain) {
+export async function boot(stayPlain, data) {
   const Q = params();
   const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
   const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
@@ -20,7 +20,7 @@ export async function boot(stayPlain) {
   }
   addEventListener('error', (e) => fail('ERROR: ' + (e.message || 'failed to start')));
   addEventListener('unhandledrejection', (e) => fail('ERROR: ' + (e.reason?.message || e.reason || 'failed to load')));
-  const [content, site] = await Promise.all([fetch('content.json').then((r) => r.json()), loadSite()]);
+  const [content, site] = await data;
   furnish(content, site);
   const titles = new Map([...site.posts, ...site.projects].map((p) => [p.url, p.title]));
 

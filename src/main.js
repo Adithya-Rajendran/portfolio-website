@@ -1,4 +1,5 @@
 // The entry of the page: the plain page without WebGL 2, or else the station and the page code that use it.
+import { loadData } from './content/load.js';
 import { stayPlain } from './legacy-shell/plain.js';
 
 const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
@@ -13,9 +14,11 @@ function hasWebGL2() {
 }
 
 async function start() {
+  const data = loadData();
+  data.catch(() => {});
   let shell;
   try { shell = await import('./legacy-shell/shell.js'); } catch (e) { return stayPlain('The station code did not load: ' + (e instanceof Error ? e.message : String(e))); }
-  await shell.boot(stayPlain);
+  await shell.boot(stayPlain, data);
 }
 
 if (!hasWebGL2()) stayPlain();

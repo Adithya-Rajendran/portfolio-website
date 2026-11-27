@@ -49,6 +49,7 @@ The Blender scripts make the `.blend` files.
 | `src/legacy-shell/display.js` | The display of the visitor: the display lock, the cue, the caption of the bar and the hint. |
 | `src/engine/comms.js` | The links of Comms. |
 | `src/engine/kit.js` | The functions that the other scripts share. |
+| `src/content/load.js` | The requests for `content.json` and for the posts, the projects and the profile. `src/main.js` sends them before the station code arrives. |
 | `src/content/site.js` | The function that fills the rooms from the data: the placards, the route stops and the shelves of the Library. |
 | `src/engine/reader.js` | The reader, which shows the article of a page on the reader panel. |
 | `src/engine/opening/scan.js`, `receive.js`, `unfold.js` | The three ways that a thing opens for the reader. |

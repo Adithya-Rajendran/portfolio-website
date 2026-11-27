@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { setDistanceScale, uTime, V } from '../engine/kit.js';
 import { createDrone } from '../engine/drone.js';
-import { loadSite } from '../content/site.js';
+import { loadSite } from '../content/load.js';
 import { params } from '../engine/dev.js';
 
 const Q = params(), num = (k, d) => (Q.has(k) ? parseFloat(Q.get(k)) : d);
