@@ -2,7 +2,7 @@
 import os
 _here = os.path.dirname(os.path.abspath(__file__))
 _src = open(os.path.join(_here, 'build_scene.py')).read()
-exec(_src.split('# ---- everything above this line is the shared kit')[0], globals())
+exec(_src.split('_SHARED_KIT_END = True')[0], globals())
 
 random.seed(23)
 WD = 7.0; Y0, Y1 = -6.0, 9.0; H = 6.6
@@ -237,7 +237,7 @@ for d in (-1, 1):
 SUN_EL, SUN_AZ = math.radians(12.5), math.radians(1.5)
 SUN_DIR = Vector((math.sin(SUN_AZ) * math.cos(SUN_EL), math.cos(SUN_AZ) * math.cos(SUN_EL), math.sin(SUN_EL)))
 PEOPLE = False
-_out = _src.split('# ================================================================= OUTSIDE (Earth seen from low orbit, stars)')[1].split('# ================================================================= LIGHTS / CAMERA')[0]
+_out = _src.split('_OUTSIDE = True')[1].split('_LIGHTS_CAMERA = True')[0]
 exec(_out, globals())
 sun = bpy.data.lights.new('Sun', 'SUN'); sun.energy = 9.0; sun.color = (1.0, 0.77, 0.54); sun.angle = math.radians(0.9)
 so = bpy.data.objects.new('Sun', sun); COL.objects.link(so); so.rotation_euler = SUN_DIR.to_track_quat('Z', 'Y').to_euler()

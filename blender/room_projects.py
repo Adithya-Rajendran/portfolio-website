@@ -1,7 +1,7 @@
 # Projects room, Fabrication Bay 02
 import os
 _here = os.path.dirname(os.path.abspath(__file__))
-exec(open(os.path.join(_here, 'build_scene.py')).read().split('# ---- everything above this line is the shared kit')[0], globals())
+exec(open(os.path.join(_here, 'build_scene.py')).read().split('_SHARED_KIT_END = True')[0], globals())
 
 random.seed(11)
 WD = 8.0

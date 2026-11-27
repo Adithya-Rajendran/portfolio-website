@@ -1,7 +1,7 @@
 # Experience room, the Navigation deck
 import os
 _here = os.path.dirname(os.path.abspath(__file__))
-exec(open(os.path.join(_here, 'build_scene.py')).read().split('# ---- everything above this line is the shared kit')[0], globals())
+exec(open(os.path.join(_here, 'build_scene.py')).read().split('_SHARED_KIT_END = True')[0], globals())
 
 random.seed(5)
 R = 9.0; WALL_H = 3.6; APEX = 8.4; OCULUS = 1.7
