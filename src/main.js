@@ -12,4 +12,4 @@ function hasWebGL2() {
 }
 
 if (!hasWebGL2()) stayPlain();
-else await (await import('./legacy-shell/shell.js')).boot();
+else await (await import('./legacy-shell/shell.js')).boot(stayPlain);

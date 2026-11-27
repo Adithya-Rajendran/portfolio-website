@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => mode === 'review'
     }
   : {
       root: ROOT,
-      build: { ...common, emptyOutDir: true, assetsDir: 'app', sourcemap: 'hidden' },
+      build: { ...common, emptyOutDir: true, assetsDir: 'app', sourcemap: 'hidden',
+        modulePreload: { polyfill: false, resolveDependencies: (_file, deps, { hostType }) => (hostType === 'html' ? [] : deps) } },
       plugins: [publicPages(), notFoundStyles()],
     });

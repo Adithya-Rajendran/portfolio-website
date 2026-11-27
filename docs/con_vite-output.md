@@ -25,6 +25,9 @@ It writes all files into `dist/`, and Git does not keep this directory.
 
 Vite makes a small bundle from `src/main.js`.
 Vite makes a second bundle from `src/legacy-shell/shell.js`, the engine and three.js, and `src/main.js` loads it only when the browser has WebGL 2.
+
+The two bundles share a small file with the settings of WebGL. The HTML of a page does not link to this file, so a page without JavaScript requests no script.
+
 Vite makes one CSS file from `src/styles/style.css` and `src/styles/post.css`.
 The name of each file in `/app/` has a hash of its content, so a new version of a file has a new name.
 For this reason, the cache rule of `/app/*` is `immutable`. See [the cache rules](ref_endpoints.md#cache-rules).

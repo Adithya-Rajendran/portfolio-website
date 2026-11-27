@@ -5,9 +5,8 @@ import { loadSite, furnish } from '../content/site.js';
 import { initLive, live, fill } from '../content/live.js';
 import { addresses } from './address.js';
 import { createDisplay } from './display.js';
-import { stayPlain } from './plain.js';
 
-export async function boot() {
+export async function boot(stayPlain) {
   const Q = params();
   const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
   const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
