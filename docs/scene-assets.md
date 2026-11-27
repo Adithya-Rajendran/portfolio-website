@@ -35,7 +35,7 @@ We traced `a_*` builder calls and `pressure_door` during five **normal Blender b
 **65 named families; 14 shared** (11 of 60 if considering direct room calls only). The previous reported 53 were studio families, not a count of everything modelled. The actual room builds now make 238 top-level and 4,800 nested builder calls. A `shelf_volume` call makes one upright book plus zero or two gilt bands; it does not make a new book design. A shell can be a single mesh; a single console can contain dozens. The parts inspector keeps the levels separate.
 
 - Lounge / Library: eight reading-kit families plus the pressure door. The shelf bays contain **973 / 3,765 upright books** respectively; there are also flat books and bookends. The closer, case-bound table/cart book is called **9 / 19** times. The five live volume choices still use three.js and do not remove any mesh from the shelf.
-- Atrium / Fabrication: door, deck hatch and stanchion. A stanchion call builds **a belt span with two posts**, not one post. Atrium / Navigation: door and kiosk. Fabrication / Navigation: door, grille and extinguisher. All other off-diagonal ones are the door alone; it has six total placements across five rooms.
+- Atrium / Fabrication: door, deck hatch and stanchion. A stanchion call builds **a belt span with two posts**, not one post; `posts=` lists which of the two (0 at the start, the span length at the end) it builds, so two spans that meet share one post instead of two posts in the same place. Atrium / Navigation: door and kiosk. Fabrication / Navigation: door, grille and extinguisher. All other off-diagonal ones are the door alone; it has six total placements across five rooms.
 
 ## Objects promoted to studio assets
 

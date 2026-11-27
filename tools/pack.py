@@ -4,6 +4,8 @@
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
 import json, os, re, shutil, struct, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import geomcheck
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 OPT = os.path.expanduser('~/.local/opt')
@@ -44,6 +46,8 @@ def pack(room):
                 sys.exit(f'Missing Atrium hologram input: {src}/tex/{name}. Include the tracked PNGs before packing.')
     with open(f'{src}/scene.json') as f: info = json.load(f)
     if info.get('room') != room or not os.path.isfile(f'{src}/room.glb'): sys.exit(f'Incomplete {room} geometry or manifest')
+    bad = geomcheck.faults(geomcheck.check(f'{src}/room.glb'))
+    if bad: sys.exit(f'{room}: {bad} overlapping or duplicate faces; see python3 tools/geomcheck.py {room}')
     needed = set(info['groups'])
     if info.get('portal'): needed.add('backdrop')
     for group in info.get('chand',{}).get('layered',[]):

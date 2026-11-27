@@ -105,10 +105,10 @@ for z, wts, col in ((2.4, 420, (1.0, 0.68, 0.3)), (3.6, 260, (0.3, 0.75, 1.0))):
 
 # ================================================================= FLOOR: brass rings, compass rose lines, marker lights
 for r in (4.2, 6.7):
-    lathe(f'inlay{r}', [(r, 0.0), (r + 0.06, 0.0), (r + 0.06, 0.003), (r, 0.003)], 'brass', 'center', segs=128)
+    lathe(f'inlay{r}', [(r, -PROUD), (r + 0.06, -PROUD), (r + 0.06, 0.003), (r, 0.003)], 'brass', 'center', segs=128)
 for k in range(12):
     a = k * 30
-    rbox(f'ray{k}', (2.44, 0.03, 0.003), at(a, 5.45, 0.0015), 'brass', 'center')
+    rbox(f'ray{k}', (2.44, 0.03, 0.003 + 2 * PROUD), at(a, 5.45, 0.0015), 'brass', 'center')
     lathe(f'marker{k}', [(0, 0.004), (0.04, 0.004), (0.04, 0.0), (0, 0.0)], em='mark', segs=12, closed=False, M=T(polar(a + 15, 6.73, 0)))
 
 for a_ in (0, 180): a_kiosk(at(a_, 7.7, 0, 180), 'props')
