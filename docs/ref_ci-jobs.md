@@ -15,7 +15,7 @@ Each job writes to `$CI_JOB/`, which is `$CI_HOME/jobs/<timestamp>-<sha8>-<tier>
 |---|---|
 | `result.json` | `{ "ref", "sha", "tier", "status", "seconds", "job" }` |
 | `log.txt` | The output of `tools/ci/run.sh`, with its errors. |
-| `pack.log`, `site.log` | The logs of the pack tool and of the page generator. |
+| `pack.log`, `site.log` | The logs of the pack tool, and of `pnpm install` and `pnpm build`. |
 | `out/` | The screenshots and the output of the scripts (`$OUT`). The `pictures` tier writes `$OUT/current/` and `$OUT/heat/`. |
 
 The last line of a job is `ci <tier> <sha8> PASS|FAIL <seconds>s <job directory>`.
@@ -24,7 +24,7 @@ The last line of a job is `ci <tier> <sha8> PASS|FAIL <seconds>s <job directory>
 
 - The key of the room cache is the first 20 characters of a SHA-256 hash of all files under `assets-src/` and of `tools/pack.py`.
 - The key does not use `.git`, so it works in a copy from `git archive`.
-- `run.sh` keeps `$ROOT/public/assets` as an empty directory, not a symbolic link, so that Docker can mount `$ASSETS` at `/site/assets:ro`.
+- `run.sh` keeps `$ROOT/public/assets` as an empty directory, not a symbolic link, so that `pnpm build` copies no packed rooms. Docker mounts `$ASSETS` at `/site/assets:ro` over the empty `dist/assets`.
 
 ## Golden pictures
 
@@ -34,3 +34,4 @@ The last line of a job is `ci <tier> <sha8> PASS|FAIL <seconds>s <job directory>
 - The hash does not include the contents of `lobby_pw_modules`, the Docker storage that holds the Playwright package of the scripts. After a change to that Docker storage, clear `$CI_HOME/cache/pictures/`.
 - The tier always renders the current commit again into `$OUT/current/`.
 - When the cache has no golden pictures of `<base>`, the tier copies `<base>` with `git archive` and uses its rooms from the room cache or packs them. Then it renders `<base>` with the current `tools/docker/detsnap.mjs`.
+- The tier runs `pnpm build` in a checkout that has `vite.config.ts`, and serves its `dist/`. It serves `public/` of a checkout that has no `vite.config.ts`.

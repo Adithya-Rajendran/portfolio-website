@@ -31,11 +31,12 @@ This reference gives the static files that the site serves next to the pages.
 |---|---|
 | `/assets/*` | `public, max-age=31536000, immutable` |
 | `/assets/*/scene.json` | `no-cache`, in place of the rule of `/assets/*` |
+| `/app/*` | `public, max-age=31536000, immutable` |
 | `/vendor/*` | `public, max-age=2592000` |
 | `/blog/, /blog/:slug/, /blog/index.json, /portfolio/, /portfolio/:slug/, /portfolio/index.json, /about/, /experience/, /contact/, /profile.json, /resume/*` | `no-cache` |
 | `/blog/media/*.webp`, `/media/*.webp` | `public, max-age=31536000, immutable` |
 | `/feed.xml, /sitemap.xml, /llms.txt, /robots.txt` | `public, max-age=3600` |
 
-- `public/_headers` gives these rules to Cloudflare.
+- `public/_headers` gives these rules to Cloudflare. `pnpm build` copies it to `dist/_headers`.
 - Cloudflare joins the values of all rules for a path, so each path has a maximum of one rule.
 - A social card and a file of a post keep their original names, so Cloudflare gives them its default rule.

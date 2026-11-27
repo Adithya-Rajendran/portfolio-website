@@ -11,7 +11,7 @@ This reference gives the Playwright scripts in `tools/docker/` that check the si
 
 | Tool | Use |
 |---|---|
-| `tools/dtest.sh <script.mjs> [args]` | Runs a script from `tools/docker/` on the checkout that holds it. It serves `public/` inside the container at the loopback address of the container, port 8080 (`ORIGIN`), and the host opens no port. The screenshots go to `/out`, which is `$OUT` on the host, by default `/tmp/dtest`. |
+| `tools/dtest.sh <script.mjs> [args]` | Runs a script from `tools/docker/` on the checkout that holds it. It serves `dist/`, which `pnpm build` makes, inside the container at the loopback address of the container, port 8080 (`ORIGIN`), and the host opens no port. The screenshots go to `/out`, which is `$OUT` on the host, by default `/tmp/dtest`. |
 | `tools/dshot.sh` | Screenshots. |
 | `tools/dperf.sh` | Frame times. |
 | `tools/dsnap.sh` | Screenshots before and after a change. |

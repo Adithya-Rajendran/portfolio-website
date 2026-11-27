@@ -7,6 +7,8 @@ depends: []
 
 This reference gives the functions on `window.__lobby` that the browser tests use, and also `ready`, `picks`, `setFocus`, `camera` and `mode`.
 
+It also gives the values on `window.__modules`.
+
 ## Hooks
 
 | Hook | Return value |
@@ -58,3 +60,18 @@ This reference gives the functions on `window.__lobby` that the browser tests us
 - `step(d)`: moves `d` route stops along the line at once.
 - `grip()`: the pixels of drag for one radian.
 - The picks of the route map have `station: i`. While the map turns, the canvas has the class `turns`.
+
+## Modules for the tests
+
+On a DEV host, `src/main.js` sets `window.__modules` before it loads a room.
+
+The browser tests read these values in place of a load of a module by its address.
+
+| Value | Contents |
+|---|---|
+| `THREE` | Only the parts of three.js that the tests use: `BoxGeometry`, `Camera`, `Color`, `DataUtils`, `DoubleSide`, `FloatType`, `FrontSide`, `HalfFloatType`, `Mesh`, `MeshBasicMaterial`, `PlaneGeometry`, `Raycaster`, `Scene`, `ShaderMaterial`, `SphereGeometry`, `Vector2`, `Vector3` and `WebGLRenderTarget` |
+| `kit` | `uTime`, `uMirror` and `DSCALE` from `src/engine/kit.js`. `DSCALE` gives the value at the time of the read. |
+| `sunlight` | `windowShadow` from `src/engine/sunlight.js` |
+
+- On a public host, `window.__modules` is `undefined`.
+- `tools/docker/detsnap.mjs` loads `/js/kit.js` when `window.__modules` is not there, so that it can render a commit from before the move to `src/`.

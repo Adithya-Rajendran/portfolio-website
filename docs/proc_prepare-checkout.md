@@ -1,12 +1,12 @@
 ---
 type: procedure
 title: Serve a new checkout
-depends: [docs/ref_room-files.md, docs/con_page-generator.md]
+depends: [docs/ref_room-files.md, docs/con_vite-output.md]
 ---
 # Serve a new checkout
 
-Use this procedure to make the rooms and the pages of a new checkout, and to serve the site.
-Git does not keep the packed rooms or the pages.
+Use this procedure to make the rooms and the site of a new checkout, and to serve the site.
+Git does not keep the packed rooms or `dist/`.
 
 ## Procedure
 
@@ -18,11 +18,15 @@ Git does not keep the packed rooms or the pages.
    ```sh
    python3 tools/pack.py
    ```
-3. Make the pages with [the page generator](con_page-generator.md).
+3. Install the packages.
    ```sh
-   python3 tools/site.py
+   pnpm install --frozen-lockfile
    ```
-4. Serve the site.
+4. Make [the Vite output](con_vite-output.md) and the pages in `dist/`.
+   ```sh
+   pnpm build
+   ```
+5. Serve `dist/`.
    ```sh
    python3 tools/serve.py <bind address> <port>
    ```

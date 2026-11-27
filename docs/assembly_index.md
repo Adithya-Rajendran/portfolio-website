@@ -12,7 +12,7 @@ This assembly gives the sequence of the documentation modules of the project.
 - [The site and its rooms](assembly_site.md)
 - [The content](assembly_content.md)
 - [The generated pages](assembly_pages.md)
-- [Packing and deployment](assembly_build.md)
+- [Packing, the Vite output and deployment](assembly_build.md)
 - [Baking and models](assembly_baking.md)
 - [Checks and CI](assembly_checks.md)
 - [Tests](assembly_tests.md)

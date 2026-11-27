@@ -9,20 +9,22 @@ depends: [docs/con_content-sources.md, docs/ref_blog-pages.md, docs/ref_room-pag
 It reads [the content](con_content-sources.md) through `tools/content.py`, and it writes the pages, the JSON files and the endpoints of the site.
 `tools/site_extras.py` writes the endpoints for it.
 Git does not keep the files that it writes.
+It writes into the directory of `--out`: `public/` by default, and `dist/` in `pnpm build`.
 
 ## What it writes
 
 | Output | Reference |
 |---|---|
-| `public/blog/`: the list of posts, a page for each post, `index.json`, and their images and files | [The pages of the Library](ref_blog-pages.md) |
-| `public/about/`, `public/portfolio/`, `public/experience/`, `public/contact/` | [The pages of the rooms](ref_room-pages.md) |
+| `blog/`: the list of posts, a page for each post, `index.json`, and their images and files | [The pages of the Library](ref_blog-pages.md) |
+| `about/`, `portfolio/`, `experience/`, `contact/` | [The pages of the rooms](ref_room-pages.md) |
 | The tags in the head of each page | [The head of a page](ref_page-head.md) |
-| `public/portfolio/index.json`, `public/profile.json` | [The reference of the JSON files](ref_site-json.md) |
-| `public/media/, feed.xml, sitemap.xml, llms.txt, _redirects, /resume/` | [The reference of the endpoints](ref_endpoints.md) |
+| `portfolio/index.json`, `profile.json` | [The reference of the JSON files](ref_site-json.md) |
+| `media/, feed.xml, sitemap.xml, llms.txt, _redirects, /resume/` | [The reference of the endpoints](ref_endpoints.md) |
 
 ## How it makes a page
 
-Each page is `public/index.html` with three changes, and the other bytes of the shell do not change:
+The shell is the file of `--shell`: `index.html` by default, and `dist/index.html` in `pnpm build`.
+Each page is the shell with three changes, and the other bytes of the shell do not change:
 
 - The text of the `<title>` element changes.
 - The tags of the head of the page replace `<!--site:head-->`.
@@ -43,8 +45,8 @@ The shell has `<base href="/">`, so each URL that the generator writes starts wi
 
 ## What it removes
 
-`public/` also holds files that no tool writes, so the generator removes only the files that it wrote.
+The directory of `--out` also holds files that no tool writes, so the generator removes only the files that it wrote.
 
-- It keeps the list of all files of its last run in `public/.generated-files`.
+- It keeps the list of all files of its last run in `.generated-files` in that directory.
 - A later run removes the files on that list that it does not make again, but only under `blog/`, `portfolio/`, `about/`, `experience/`, `contact/`, `media/` and `profile.json`.
 - Only the generator writes in `blog/`, so it removes all other files in `blog/` too.

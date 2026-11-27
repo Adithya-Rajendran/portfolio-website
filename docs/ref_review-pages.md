@@ -7,17 +7,17 @@ depends: [docs/ref_lighting-checks.md]
 
 This reference gives the pages for developers and the data files that they read.
 
-`public/.assetsignore` keeps these pages out of the deployed site, but the previews and the test server serve them.
+`public/.assetsignore` keeps these pages and their scripts in `/app/review/` out of the deployed site, but the previews and the test server serve them.
 
 ## Pages
 
 | Page | Source | Contents |
 |---|---|---|
-| `/blueprint.html` | `public/blueprint.html`, `public/js/blueprint.js` | The 3D blueprint of the station, made from the models of the rooms. A hash selects a room, for example `/blueprint.html#about`. A query does not select a room. |
+| `/blueprint.html` | `src/pages/blueprint.html`, `src/pages/blueprint.js` | The 3D blueprint of the station, made from the models of the rooms. A hash selects a room, for example `/blueprint.html#about`. A query does not select a room. |
 | `/asset-catalogue/parts.html` | `tools/scene-parts.py` | The parts inspector: each Blender object of each room before the bake, by builder, and the parts that move in the browser. |
 | `/asset-catalogue/` | `tools/asset-catalogue.py` | The gallery of the models that the rooms share, from renders of their Blender studios. |
 | `/lighting-review/` | `tools/finish-gallery.py` | Views of the packed rooms from the browser, the poses of the inspect views and two short films. |
-| `/asset.html` | `public/asset.html`, `public/js/asset.js` | One live asset alone, for work on it, for example `asset.html?asset=drone&open=1`. |
+| `/asset.html` | `src/pages/asset.html`, `src/pages/asset.js` | One live asset alone, for work on it, for example `asset.html?asset=drone&open=1`. |
 
 The gallery shows renders from Blender.
 

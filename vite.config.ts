@@ -1,11 +1,12 @@
 // Vite configuration of the site build and of the review pages build
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin, type BuildEnvironmentOptions } from 'vite';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const DIST = resolve(ROOT, 'dist');
+const PUBLIC = resolve(ROOT, 'public');
 const PAGE_STYLES = '<link rel="stylesheet" href="style.css">\n<link rel="stylesheet" href="post.css">';
 
 const common: BuildEnvironmentOptions = {
@@ -14,6 +15,24 @@ const common: BuildEnvironmentOptions = {
   assetsInlineLimit: 0,
   modulePreload: { polyfill: false },
 };
+
+function publicPages(): Plugin {
+  return {
+    name: 'arcadia:public-pages',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const url = req.url ?? '/';
+        const path = url.split('?')[0];
+        if (path !== '/' && path.endsWith('/')) {
+          const page = resolve(PUBLIC, '.' + decodeURIComponent(path), 'index.html');
+          if (page.startsWith(PUBLIC + '/') && existsSync(page)) req.url = path + 'index.html' + url.slice(path.length);
+        }
+        next();
+      });
+    },
+  };
+}
 
 function notFoundStyles(): Plugin {
   return {
@@ -44,5 +63,5 @@ export default defineConfig(({ mode }) => mode === 'review'
   : {
       root: ROOT,
       build: { ...common, emptyOutDir: true, assetsDir: 'app' },
-      plugins: [notFoundStyles()],
+      plugins: [publicPages(), notFoundStyles()],
     });

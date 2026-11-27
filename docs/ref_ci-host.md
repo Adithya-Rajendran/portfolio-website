@@ -14,7 +14,7 @@ This reference gives the programs of the CI host, the scripts in `tools/ci/` and
 | `tools/ci/run.sh` | Runs [the check tiers](ref_ci-tiers.md), on the CI host or on a local machine. |
 | `tools/ci/hd630.sh` | Runs the `perf` and `bench` measurements on a local Intel HD 630. See [the HD 630 runner](ref_hd630-runner.md). |
 | `tools/ci/preview.sh` | Prepares a checkout for a preview. |
-| `tools/ci/serve.sh` | Serves the site that `preview.sh` prepares. |
+| `tools/ci/serve.sh` | Serves the `dist/` that `preview.sh` prepares. |
 | `tools/ci/pictures.txt` | The list of the fixed states of the `pictures` tier. |
 | `tools/ci/legacy.txt`, `tools/ci/legacy.py` | The legacy list of the documentation and comment checks, and its parser. |
 
@@ -26,7 +26,7 @@ This reference gives the programs of the CI host, the scripts in `tools/ci/` and
 | `/srv/arcadia/bin/preview <ref> [port]` | Copies `<ref>` into `$CI_HOME/preview/<port>/next`, runs `CI_HOME="$A" tools/ci/preview.sh`, and then replaces `src` with `next`. Then it starts the service `arcadia-preview@<port>`. |
 | `/srv/arcadia/bin/preview-serve` | The program of the service `arcadia-preview@<port>`. It runs `tools/ci/serve.sh <bind address> <port>`, or `tools/serve.py` when the checkout has no `serve.sh`. |
 
-- `preview.sh` makes `public/assets` a symbolic link to `$ASSETS`, so that `serve.sh` can serve the packed rooms.
+- `preview.sh` runs `pnpm build`. Then it makes `dist/assets` a symbolic link to `$ASSETS`, so that `serve.sh` can serve the packed rooms.
 
 ## Locks
 

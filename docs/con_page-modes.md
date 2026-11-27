@@ -6,7 +6,7 @@ depends: [docs/con_reading.md]
 # The modes of the page
 
 Each page of the site is in one of three modes.
-A class on the `<html>` element tells the mode, and `public/post.css` gives the styles for each mode.
+A class on the `<html>` element tells the mode, and `src/styles/post.css` gives the styles for each mode.
 A script of one line in the head of the shell sets the class.
 
 | Class | When | What the page shows |
@@ -22,4 +22,4 @@ In the station, the reader shows a post on the reader panel `#reader`.
 The reader uses `article.post` from `#page`. If `#page` does not have the post, the reader loads `/blog/<slug>/` and uses `article.post` from that page.
 See [the reader](con_reading.md) for how a thing opens.
 
-The page generator does not write `public/js/`, `public/main.js`, `public/index.html` or the style sheets.
+The page generator does not write the files in `src/` or the shell.
