@@ -157,7 +157,7 @@ def llms_txt(posts, profile, resume_name, projects=()):
 def redirects_txt(resume_name):
     pdf = f'/resume/{quote(resume_name)}' if resume_name else None
     rules = [(s, pdf if t == 'RESUME' else t) for s, t in REDIRECTS if t != 'RESUME' or pdf]
-    return '# Written by tools/site_extras.py from the table at its top. Old addresses (docs/v1-contracts.md §1).\n' + \
+    return '# Written by tools/site_extras.py from the table at its top. Old addresses (docs/ref_urls.md).\n' + \
            ''.join(f'{s} {t} 301\n' for s, t in rules)
 
 

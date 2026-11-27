@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # Converter from Sanity documents to the files the site reads
 USAGE = """Sanity documents -> the files the site reads from now on, which are edited by hand:
-    data/posts/<slug>.json     -> data/posts/<slug>.md          (docs/v1-contracts.md §2)
-    data/projects/<slug>.json  -> data/projects/<slug>.md       (§6)
-    data/profile/profile.json  -> data/profile.json             (§7)
+    data/posts/<slug>.json     -> data/posts/<slug>.md          (docs/ref_post-file.md)
+    data/projects/<slug>.json  -> data/projects/<slug>.md       (docs/ref_project-file.md)
+    data/profile/profile.json  -> data/profile.json             (docs/ref_profile-file.md)
 tools/content.py reads them.
 
     python3 tools/sanity_to_md.py            # write the files that do not exist; list the ones that differ
@@ -11,7 +11,7 @@ tools/content.py reads them.
 
 Anything in a document that this script does not know (a block type, style, mark, list level, a field) stops it with
 an error naming the document and the field or block: nothing is dropped silently. What is deliberately not carried is
-a short list (DROPPED below, and data/README.md); each use of it is printed as a `note`. tools/test_sanity_to_md.py
+a short list (DROPPED below, and docs/ref_sanity-conversion.md); each use of it is printed as a `note`. tools/test_sanity_to_md.py
 checks the output.
 """
 import datetime, glob, json, os, re, sys
