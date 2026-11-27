@@ -47,6 +47,7 @@ This table gives the approved technical names and technical verbs of the project
 | band | name | bands | A thin line of gilt on the spine of a book. |
 | bar | name | bars | Only in "inspect bar": the part of the display that shows the name and the actions of the pick in focus. |
 | barrel | name | - | The tube that holds the optics of the Oculus. |
+| baseline | name | baselines | A file that lists the problems that a check found, in which a change can only remove lines. |
 | Basis | name | - | Only in "Basis transcoder": the part of three.js that changes a KTX2 texture into a format that the GPU can use. |
 | batch | name | batches | A group of meshes that the engine draws with one draw call. |
 | Bay | name | - | Only in "Fabrication Bay 02": the full name of Fabrication. |
@@ -336,6 +337,7 @@ This table gives the approved technical names and technical verbs of the project
 | lining | name | - | The surface on the inside of the walls of the Atrium. |
 | link | name | links | Text in a Markdown file that goes to a different file or heading. |
 | LinkedIn | name | - | A social network. |
+| lint | name | - | Only in "lint check" and "lint problem": a check that finds code that is not safe or not used, with `oxlint`. |
 | Linux | name | - | An operating system. |
 | lit | name | - | With light on it. |
 | live | name | - | Only in "live pick", "live part" and "live element": a part that the engine changes while the page runs. |
@@ -694,6 +696,7 @@ This table gives the approved technical names and technical verbs of the project
 | visit | name | visits | A period when a visitor is in a room. |
 | visitor | name | visitors | A person who uses the site in a browser. |
 | Vite | name | - | The tool that makes the bundle and the CSS file of the site, and that serves `src/` while a person works on the site. |
+| Vitest | name | - | The tool that runs the unit tests of the JavaScript and TypeScript files. |
 | voice | name | - | The active or passive form of a sentence. |
 | volume | name | volumes | A book of the Library. |
 | wait | verb | waits | To stop until a condition is true. |

@@ -256,6 +256,34 @@ render_pictures_checkout() {
   gpu pw_for "$src_dir" "$RESOLVED_ASSETS" "$out_dir" detsnap.mjs http://127.0.0.1:8080 /out 90 "${PIC_STATES[@]}"
 }
 
+js_checks() {
+  local base_dir="" ref name kind rc=0
+  local -a ts_bases=() lint_bases=()
+  mkdir -p "${CI_JOB:-$OUT}"
+  if ! pnpm_cmd install --frozen-lockfile --ignore-scripts > "${CI_JOB:-$OUT}/pnpm-static.log" 2>&1; then
+    echo "ci: pnpm install failed" >&2
+    tail -20 "${CI_JOB:-$OUT}/pnpm-static.log" >&2 || true
+    return 1
+  fi
+  if [ -n "${CI_HOME:-}" ] && [ -d "$CI_HOME/repo.git" ]; then
+    base_dir="$(mktemp -d)"
+    for ref in $(git --git-dir="$CI_HOME/repo.git" for-each-ref --format='%(refname:short)' refs/heads/prog/int 'refs/heads/prog/ws-*'); do
+      for kind in ts lint; do
+        name="$base_dir/${kind}_${ref//\//_}.txt"
+        if git --git-dir="$CI_HOME/repo.git" show "$ref:tools/ci/$kind-baseline.txt" > "$name" 2>/dev/null; then
+          if [ "$kind" = ts ]; then ts_bases+=(--base "$name"); else lint_bases+=(--base "$name"); fi
+        fi
+      done
+    done
+  fi
+  echo "ci: baseline base lists: typecheck $(( ${#ts_bases[@]} / 2 )), lint $(( ${#lint_bases[@]} / 2 ))"
+  node tools/ci/ratchet.mjs typecheck "${ts_bases[@]}" || rc=1
+  node tools/ci/ratchet.mjs lint "${lint_bases[@]}" || rc=1
+  pnpm_cmd exec vitest run || rc=1
+  [ -z "$base_dir" ] || rm -rf "$base_dir"
+  return "$rc"
+}
+
 docs_rules() {
   local vale base_dir="" ref name sha8 mb rc=0
   local -a bases=()
@@ -289,12 +317,15 @@ tier="${1:?usage: tools/ci/run.sh <tier> [args...]}"; shift
 case "$tier" in
   static)
     (
-      cd "$ROOT" &&
-      python3 tools/content.py &&
-      for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done &&
-      node --test tools/test_*.mjs &&
-      docs_rules &&
-      python3 tools/site.py > /dev/null
+      cd "$ROOT" || exit 1
+      rc=0
+      python3 tools/content.py || rc=1
+      for t in tools/test_*.py; do python3 -m unittest -q "$t" || rc=1; done
+      node --test tools/test_*.mjs || rc=1
+      docs_rules || rc=1
+      js_checks || rc=1
+      python3 tools/site.py > /dev/null || rc=1
+      exit "$rc"
     )
     ;;
   smoke)

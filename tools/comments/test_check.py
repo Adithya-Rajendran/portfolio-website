@@ -277,6 +277,13 @@ class LegacyTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("not a checked file", r.stdout)
 
+    def test_node_modules_is_not_checked(self):
+        self.seed()
+        os.makedirs(os.path.join(self.root, "node_modules", "pkg"))
+        self.write("node_modules/pkg/index.js", "export const z = 1; // why\n")
+        r = self.run_check()
+        self.assertEqual(r.returncode, 0, r.stdout)
+
     def test_new_file_is_checked(self):
         self.seed()
         self.write("new.js", "export const b = 1;\n")
