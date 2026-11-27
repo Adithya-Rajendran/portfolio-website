@@ -49,24 +49,25 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `view.mjs` | A WebGL smoke test in `chromium`, `firefox` and `webkit`. |
 | `ringline.mjs`, `door.mjs`, `tour.mjs` | The tour, the doors and the bar of the Ring Line. |
 | `writing-alias.mjs` | `/blog/`, a room query that names no room, and Back and Forward. |
-| `measure-selftest.mjs` | [The measuring scripts](#the-measuring-scripts): a plain `/` fails at once with the switches named, the pinned hero page gives GPU ms, and the deadline stops a hung run. |
+| `measure-selftest.mjs` | [The measure scripts](#the-measure-scripts): a plain page fails at once, the hero page with a pin gives GPU ms, and the deadline stops a script. |
 
 - `rooms.kit.mjs` and `r2.kit.mjs` hold what these scripts share: the profiles, a recorder of the meshes of the reader, and a gate on the frames of the page.
 - `r2.kit.mjs` also holds a clock that adds the time of the frames of the page.
 - [The lighting checks](ref_lighting-checks.md) are also scripts in `tools/docker/`.
 
-## The measuring scripts
+## The measure scripts
 
-`passes.mjs` and `bench.mjs` time the GPU with their own timer queries, and a page can have only one timer query active at a time.
+`passes.mjs` and `bench.mjs` use a timer query of the GPU, and a page can have only one timer query at a time.
 
 | Rule | What the scripts do |
 |---|---|
-| Pinned state | The page must run with a pinned governor, which the query switches `tier=0` (or `tier=1`) and `scale=1` give, for example `/?shot=hero&tier=0&scale=1`. |
-| Unpinned page | The script exits with the code 1 at once, and the message names the needed switches, because the page then wraps each draw in its own timer query. |
-| No GPU sample | The script exits with the code 1 and says that no GPU query result came back. |
-| Deadline | The script stops the browser and exits with the code 3 after 180 s plus 3 s for each second of measuring, and for `bench.mjs` plus 60 s and 3 s for each second of measuring for each run. |
-| Override | The environment variable `MEASURE_TIMEOUT_S` sets the deadline in seconds. |
+| Pin | The query of the page must pin the governor with `tier=0` or `tier=1`, and with `scale=1`, for example `/?shot=hero&tier=0&scale=1`. |
+| Page without a pin | The script stops at once with the exit code 1, and its message names `tier` and `scale`. |
+| No sample | The script stops with the exit code 1 when no GPU result comes. |
+| Deadline | After 180 seconds and 3 seconds for each second of measure, the script stops the browser and ends with the exit code 3. |
+| Deadline of `bench.mjs` | The time is 180 seconds, and 60 seconds and 3 seconds for each second of measure, for each run. |
+| Variable | `MEASURE_TIMEOUT_S` sets the deadline in seconds. |
 
-- `measure-guard.mjs` holds the pinned-state check and the deadline that both scripts use.
-- `tools/test_measure_guard.mjs` tests them without a browser, with `measure-hang.mjs` as a script that never ends.
-- `ci <ref> script measure-selftest.mjs` runs both measuring scripts against a plain page and against the pinned hero page.
+- `measure-guard.mjs` holds the pin check and the deadline that both scripts use.
+- `tools/test_measure_guard.mjs` tests them without a browser, with `measure-hang.mjs` as a script that does not stop.
+- `ci <ref> script measure-selftest.mjs` runs both scripts on a plain page and on the hero page with a pin.

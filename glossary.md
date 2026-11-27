@@ -138,6 +138,7 @@ This table gives the approved technical names and technical verbs of the project
 | dark | name | - | With a small quantity of light or no light. |
 | dataset | name | datasets | One set of documents in a Sanity project. |
 | date | name | dates | A day, a month and a year. |
+| deadline | name | deadlines | The time after which a measure script stops, and the lock is free. |
 | deck | name | decks | The floor of a ring. |
 | decorative | name | - | Only in "decorative image": an image that gives no information, with `alt=""`. |
 | definition | name | definitions | Only in "link definition": a line that gives the target of a link with a label. |
@@ -438,6 +439,7 @@ This table gives the approved technical names and technical verbs of the project
 | Physically | name | - | Only in "Physically based rendering". |
 | pick | name | picks | A thing in a room that a visitor can select. |
 | picture | name | pictures | A screenshot of a fixed state, which the `pictures` tier compares. |
+| pin | verb | pins, pinned, pinning | To fix a value of the governor with a query, so that the governor does not change it. |
 | pitch | name | - | The distance between two items in a line. |
 | pixel | name | pixels | One point of an image on the screen. |
 | placard | name | placards | A sign with text in a room. |
@@ -655,6 +657,7 @@ This table gives the approved technical names and technical verbs of the project
 | tier | name | tiers | A set of checks with a name, for example `static`, that `ci` runs. |
 | timeline | name | - | The list of the work and the schools of the owner in the profile. |
 | timeout | name | timeouts | A time limit after which a program stops a step. |
+| timer | name | timers | Only in "timer query": a query that gives the time of the GPU for a part of the work. |
 | title | name | titles | The name of a page, a post or a project. |
 | token | name | tokens | A text that gives access to a service. |
 | tone | name | - | Only in "tone mapping": the change of HDR values into the values of the screen. |

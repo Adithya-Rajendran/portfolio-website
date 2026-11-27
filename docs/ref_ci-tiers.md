@@ -1,7 +1,7 @@
 ---
 type: reference
 title: The check tiers
-depends: [docs/con_suite.md, docs/ref_doc-checks.md, docs/ref_js-checks.md, docs/ref_ci-jobs.md, docs/ref_e2e-files.md]
+depends: [docs/ref_browser-scripts.md, docs/con_suite.md, docs/ref_doc-checks.md, docs/ref_js-checks.md, docs/ref_ci-jobs.md, docs/ref_e2e-files.md]
 ---
 # The check tiers
 
@@ -18,7 +18,7 @@ Each tier that serves the site first runs `pnpm install` and `pnpm build`, and t
 | `smoke` | None | `errs.mjs` on `/`, `/about/`, `/portfolio/`, `/experience/`, `/contact/` and `/blog/` | `quiet.lock`, shared, and `gpu.lock` |
 | `script` | `<name.mjs> [args...]` | One script `tools/docker/<name.mjs>`, through `tools/dtest.sh` | `quiet.lock`, shared, and `gpu.lock` |
 | `suite` | None | `tools/check.sh`. See [the suite](con_suite.md). | `quiet.lock`, shared, and `gpu.lock` |
-| `bench` | `"<query>" [runs] [seconds]` | `tools/docker/bench.mjs` at 1920 × 1080 px. The default of `runs` is 3, and the default of `seconds` is 8. The query must pin the governor, for example `shot=hero&tier=0&scale=1`. See [the measuring scripts](ref_browser-scripts.md#the-measuring-scripts). | `quiet.lock`, exclusive, and `gpu.lock` |
+| `bench` | `"<query>" [runs] [seconds]` | `tools/docker/bench.mjs` at 1920 × 1080 px. The default of `runs` is 3, and the default of `seconds` is 8. The query must pin the governor, for example `shot=hero&tier=0&scale=1`. See [the measure scripts](ref_browser-scripts.md#the-measure-scripts). | `quiet.lock`, exclusive, and `gpu.lock` |
 | `snap` | `<name> <state=query>...` | Fixed 1920 × 1080 px screenshots with `detsnap.mjs` after 60 frames, into `$OUT/<name>/`. | `quiet.lock`, shared, and `gpu.lock` |
 | `pdiff` | `<jobA/out/name> <jobB/out/name>` | The pixel difference with `pdiff.mjs`, in Docker without a GPU | `quiet.lock`, shared |
 | `pictures` | `[--against <base>]` | The fixed states of `tools/ci/pictures.txt`, compared with golden pictures. See the list below. | `quiet.lock`, shared, `gpu.lock` and `pictures.lock` |
