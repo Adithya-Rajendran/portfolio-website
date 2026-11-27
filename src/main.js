@@ -24,6 +24,22 @@ if (DEV) window.__modules = {
 const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
 const html = document.documentElement, plain = () => !html.classList.contains('station');
+const halt = () => new Promise(() => {});
+function stayPlain(reason) {
+  html.className = ''; loader.dataset.failed = 'true';
+  const note = $('#nogl');
+  $('#page')?.prepend(note);
+  note.hidden = false;
+  if (reason) console.warn(reason);
+}
+function hasWebGL2() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    return !!gl;
+  } catch { return false; }
+}
+if (!hasWebGL2()) { stayPlain(); await halt(); }
 function fail(msg) {
   if (loader.dataset.failed) return;
   if ($('#page')) { loader.dataset.failed = 'true'; html.className = ''; console.error(msg); return; }
@@ -42,8 +58,8 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });
 } catch (e) {
-  fail('THIS BROWSER CANNOT START WEBGL 2 — ENABLE HARDWARE ACCELERATION');
-  throw e;
+  stayPlain('WebGL 2 did not start: ' + (e?.message ?? e));
+  await halt();
 }
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.info.autoReset = false;

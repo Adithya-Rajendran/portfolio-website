@@ -7,6 +7,20 @@ const SIZES: Array<[string, { width: number; height: number }]> = [
   ['desktop', { width: 1280, height: 720 }],
   ['phone', { width: 390, height: 844 }],
 ];
+const NO_WEBGL = ['--disable-gpu', '--disable-webgl', '--disable-3d-apis', '--disable-software-rasterizer'];
+
+async function webglNotice(p: Page): Promise<{ text: string; links: number; covered: string }> {
+  return p.evaluate(() => {
+    const n = document.querySelector('#nogl') as HTMLElement | null;
+    if (!n || n.hidden || !n.getClientRects().length) return { text: '', links: 0, covered: '' };
+    n.scrollIntoView({ block: 'center' });
+    const r = n.getBoundingClientRect();
+    const t = document.elementFromPoint(r.left + 8, r.top + Math.min(r.height / 2, 20));
+    const covered = t && (n === t || n.contains(t)) ? '' : t ? t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') : 'nothing';
+    scrollTo(0, 0);
+    return { text: (n.textContent || '').trim(), links: n.querySelectorAll('a[href]').length, covered };
+  });
+}
 
 async function imageChecks(p: Page): Promise<{ found: string[]; notes: string[]; n: number }> {
   const tall = await p.evaluate(() => [document.scrollingElement!.scrollHeight, innerHeight] as const);
@@ -109,6 +123,9 @@ async function checkPlainPage(
       if (o.cls !== '' || !o.loader) {
         failures.push(`${where}: loader/error cover over page (html class "${o.cls}", loader hidden ${o.loader}, text "${o.what}")`);
       }
+      const note = await webglNotice(p);
+      if (!/WebGL/.test(note.text)) failures.push(`${where}: no visible notice #nogl that the station needs WebGL`);
+      if (note.covered) failures.push(`${where}: the notice #nogl is covered by ${note.covered}`);
     }
 
     const { found } = await plainChecks(p, kind);
@@ -121,9 +138,7 @@ async function checkPlainPage(
     const imgs = await imageChecks(p);
     for (const f of imgs.found) failures.push(`${where}: ${f}`);
 
-    if (item === 11) {
-      for (const e of [...new Set(errs)]) failures.push(`${where}: JavaScript is off but: ${e}`);
-    }
+    for (const e of [...new Set(errs)]) failures.push(`${where}: ${item === 11 ? 'JavaScript' : 'WebGL'} is off but: ${e}`);
 
     if (failures.length > 0) {
       await p.screenshot({
@@ -180,9 +195,7 @@ test.describe('plainpage: no-JS, no-WebGL, and 404', () => {
       ['/contact/', 'post'],
     ];
 
-    const noWebglBrowser = await chromium.launch({
-      args: ['--disable-gpu', '--disable-webgl', '--disable-3d-apis', '--disable-software-rasterizer'],
-    });
+    const noWebglBrowser = await chromium.launch({ args: NO_WEBGL });
     const allFailures: string[] = [];
     try {
       for (const [size, viewport] of SIZES) {
@@ -205,6 +218,48 @@ test.describe('plainpage: no-JS, no-WebGL, and 404', () => {
       await noWebglBrowser.close();
     }
     expect(allFailures, allFailures.join('\n')).toEqual([]);
+  });
+
+  test('14: the landing page without WebGL shows the notice and throws nothing', async ({ baseURL }) => {
+    const b = await chromium.launch({ args: NO_WEBGL });
+    const failures: string[] = [];
+    try {
+      for (const [size, viewport] of SIZES) {
+        const ctx = await b.newContext({ viewport, baseURL });
+        const p = await ctx.newPage();
+        const errs: string[] = [];
+        p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
+        p.on('console', (m) => {
+          if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 200)}`);
+        });
+        p.on('response', (r) => {
+          if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`);
+        });
+        try {
+          await p.goto('/', { waitUntil: 'load' });
+          await p.waitForFunction(() => !!document.querySelector('#loader')?.getAttribute('data-failed'), undefined, { timeout: 60_000 });
+          await p.waitForTimeout(1200);
+          const o = await p.evaluate(() => ({
+            cls: document.documentElement.className,
+            loader: getComputedStyle(document.querySelector('#loader')!).display,
+            nav: (document.querySelector('#pagenav') as HTMLElement).getClientRects().length,
+          }));
+          if (o.cls !== '') failures.push(`/ ${size}: html class "${o.cls}"`);
+          if (o.loader !== 'none') failures.push(`/ ${size}: the loader shows (display ${o.loader})`);
+          if (!o.nav) failures.push(`/ ${size}: #pagenav is not shown`);
+          const note = await webglNotice(p);
+          if (!/WebGL/.test(note.text)) failures.push(`/ ${size}: no visible notice #nogl that the station needs WebGL`);
+          if (note.links !== 5) failures.push(`/ ${size}: the notice has ${note.links} links, not 5`);
+          if (note.covered) failures.push(`/ ${size}: the notice #nogl is covered by ${note.covered}`);
+          for (const e of [...new Set(errs)]) failures.push(`/ ${size}: WebGL is off but: ${e}`);
+        } finally {
+          await ctx.close();
+        }
+      }
+    } finally {
+      await b.close();
+    }
+    expect(failures, failures.join('\n')).toEqual([]);
   });
 
   test('13: unknown post and project URLs return 404 without soft-404 article/list markup', async ({ request }) => {
