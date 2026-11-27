@@ -17,7 +17,7 @@ Deploy: `python3 tools/pack.py && python3 tools/site.py && npx wrangler deploy`.
   - `assets/<room>/` — `scene.json`, `room.glb` and `tex/` for each room, packed by `tools/pack.py` from the tracked `assets-src/<room>/` bake masters. The sky angles and orrery phases are one KTX2 file per layer (`<group>_s0.ktx2`…, `<group>_c0.ktx2`…, counted in `scene.json`'s `tex_layers`): the room loader fetches the layers in use before the cover lifts and the others after it. Every other texture but the probe is cut where its levels above a quarter of the full size start: `<name>.head.ktx2` (the cover lifts on these small levels) and `<name>.tail.ktx2` (fetched after, joined to the head in the browser; `scene.json`'s `tex_split`). A texture with 2 levels or fewer, or whose tail would be under 64 KB (`MIN_TAIL`), stays one file.
   - `blueprint.html` — the 3D station blueprint. `vendor/` — three.js 0.181.
 - `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `reflection_probe.py`, `backdrop.py`.
-  `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine; `remote/arm64/` builds Blender for an ARM64 GPU machine (NVIDIA GB10) and runs the same phases there in Docker.
+  `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine; `remote/arm64/` builds Blender for an ARM64 GPU machine (NVIDIA GB10) and runs the same phases there in Docker: `live.sh <phase> <room>` runs one phase, `queue.sh <phase> <room>...` runs and times the whole build, probe and bake sequence for several rooms.
 - `data/` — the portfolio content (profile, posts, projects, images, PDFs) exported from Sanity by `tools/sanity-export.py`; see [`data/README.md`](data/README.md).
 - `tools/` — `site.py` writes `public/blog/` (the post pages, `index.json`, their images and files; generated, not committed) from
   `data/posts/*.md`, read by `content.py` (format: [`docs/v1-contracts.md`](docs/v1-contracts.md)); test it with
@@ -37,6 +37,8 @@ blender/run.sh -b blender/about.blend --python-exit-code 2 -P blender/backdrop.p
 blender/run.sh -b blender/about.blend --python-exit-code 2 -P blender/bake.py -- 1.0 192
 python3 tools/pack.py about
 ```
+
+`tools/pack.py` refuses a room whose `room.glb` has overlapping coplanar or duplicated faces that can be seen from the room's camera, door, inspect and standing eye positions (they z-fight in the browser). `python3 tools/geomcheck.py <room>` lists them.
 
 The printed field atlas is an original reference illustration (`blender/textures_dl/field-folio.svg` and its tracked PNG). It is lit paper in the room, not an HTML overlay. Preserve the Atrium’s two tracked hologram PNGs when copying bakes from another machine. `tools/docker/lighting.mjs` checks the packed floor mirror, polished glass and sunlight from controlled camera poses.
 

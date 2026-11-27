@@ -67,7 +67,7 @@ def arch(r, n=24):
     return [((WIN_W + r) * math.cos(pi * i / n), HW + (RISE - WIN_INSET + r) * math.sin(pi * i / n)) for i in range(n + 1)]
 band('bow_frame', [(WD, 0)] + vault(0.0) + [(-WD, 0)], [(WIN_W, WIN_Z0)] + arch(0.0) + [(-WIN_W, WIN_Z0)], Y1 - 0.6, Y1, 'rib', 'center')
 box('win_b', -WIN_W, WIN_W, Y1 - 0.6, Y1, 0, WIN_Z0, 'rib', 'center', bevel=0.03)
-box('sill', -WIN_W, WIN_W, Y1 - 0.95, Y1 - 0.55, WIN_Z0 - 0.05, WIN_Z0, 'wood_l', 'center', bevel=0.015)
+box('sill', -WIN_W - PROUD, WIN_W + PROUD, Y1 - 0.95, Y1 - 0.55, WIN_Z0 - 0.05, WIN_Z0 + PROUD, 'wood_l', 'center', bevel=0.015)
 band('arch_glaze_bead', arch(0.0), arch(-0.05), Y1 - 0.2, Y1 - 0.08, 'frame', 'center')
 for x in (-WIN_W / 2, WIN_W / 2):
     top = HW + (RISE - WIN_INSET) * math.sqrt(1 - (x / WIN_W) ** 2)

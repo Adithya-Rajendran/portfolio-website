@@ -213,7 +213,7 @@ a_floorhatch(T((-3.4, 7.5, 0))); a_floorhatch(T((3.4, 7.5, 0)))
 for c, _ in EXHIBITS:                                                          # each exhibit roped off on three sides, open to the aisle
     out = 1 if c.x > 0 else -1
     a_stanchion(T((c.x + out * 1.95, c.y - 1.95, 0)), 'props', L=3.9)
-    for yy in (c.y - 1.95, c.y + 1.95): a_stanchion(T((c.x - 1.95, yy, 0)) @ Matrix.Rotation(-pi / 2, 4, 'Z'), 'props', L=3.9)
+    for yy in (c.y - 1.95, c.y + 1.95): a_stanchion(T((c.x - 1.95, yy, 0)) @ Matrix.Rotation(-pi / 2, 4, 'Z'), 'props', L=3.9, posts=(3.9,) if out < 0 else (0,))
 for s_ in (-1, 1): a_duct(T((s_ * 6.95, Y0 + 1.0, 5.0)), 'archL' if s_ < 0 else 'archR', L=Y1 - Y0 - 2.0)
 
 # ================================================================= CAMERA / RENDER

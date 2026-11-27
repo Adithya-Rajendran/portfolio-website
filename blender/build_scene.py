@@ -388,9 +388,9 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
         bmesh.ops.transform(bm, matrix=Matrix.Translation(loc) @ Matrix.Diagonal((*size, 1)), verts=bm.verts)
         return finish(f'{name}_{n}', bm, m, None if em else grp, em=em, bevel=bevel, M=M)
     for d in (-1, 1):
-        kb(f'jamb{d}', (0.36, 0.28, h + 0.3), (0.06, d * (w / 2 + 0.14), (h + 0.3) / 2), 'rib', bevel=0.03)
+        kb(f'jamb{d}', (0.36, 0.28, h + 0.06), (0.06, d * (w / 2 + 0.14), (h + 0.06) / 2), 'rib', bevel=0.03)
         kb(f'leaf{d}', (0.08, w / 2 - 0.015, h), (-0.03, d * w / 4, h / 2), 'wall2', bevel=0.012)
-        for i in range(3): kb(f'bar{d}{i}', (0.05, w / 2 - 0.22, 0.09), (0.03, d * w / 4, 0.45 + i * 0.8), 'rib', bevel=0.01)
+        for i in range(3): kb(f'bar{d}{i}', (0.05 - PROUD, w / 2 - 0.22, 0.09), (0.03 - PROUD / 2, d * w / 4, 0.45 + i * 0.8), 'rib', bevel=0.01)
         # A recessed borrowed-light cassette, not a luminous rectangle pasted on the leaf.
         # Revolve a stadium-shaped section in the YZ face. The lip actually returns to the glass.
         cy, cz = d * .32, 1.72
@@ -408,29 +408,29 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
                 for j in range(len(row)):
                     k = (j+1) % len(row); bm.faces.new((row[j],row[k],other[k],other[j]))
             finish(name + n, bm, material, grp, M=M)
-        capsule('_cassette_seal', [(.011,.095),(.025,.095),(.025,.077),(.011,.077)], 'dark')
+        capsule('_cassette_seal', [(.011 + PROUD,.095),(.025,.095),(.025,.077),(.011 + PROUD,.077)], 'dark')
         capsule('_cassette_bezel', [(.023,.087),(.041,.084),(.046,.072),(.030,.064),(.023,.064)], 'rib')
         # The backing sits behind the lip. A stack of actual louvres gives it depth without
         # pretending there is a modelled corridor visible through a solid bulkhead.
         kb(f'slit{d}', (.012, .129, .489), (.021, cy, cz), 'lum_cool', bevel=.006)
-        for j in range(6): kb('cassette_louvre', (.008,.127,.009), (.031,cy,cz+(j-2.5)*.070), 'dark')
+        for j in range(6): kb('cassette_louvre', (.008,.127 + 4 * PROUD,.009), (.031 + PROUD,cy,cz+(j-2.5)*.070), 'dark')
         # A rebated gasket at the meeting stile and a pull with knuckle clearance.
         kb(f'gasket{d}', (0.023, 0.016, h - 0.06), (0.012, d * 0.012, h / 2), 'dark')
         for z in (0.91, 1.29):
             kb('pull_boss', (0.038, 0.08, 0.07), (0.037, d * 0.1, z), 'rib', bevel=0.008)
             kb('pull_return', (0.09, 0.031, 0.031), (0.089, d * 0.1, z), 'brass', bevel=0.007)
-        kb(f'grip{d}', (0.032, 0.032, 0.41), (0.127, d * 0.1, 1.1), 'brass', bevel=0.009)
+        kb(f'grip{d}', (0.032, 0.032 + 2 * PROUD, 0.41 + 2 * PROUD), (0.127, d * 0.1, 1.1), 'brass', bevel=0.009)
         for z in (0.2, h - 0.22):
             # Removable jamb covers; captive hex heads are proud of the face.
-            kb('inspection_plate', (0.014, 0.22, 0.29), (0.248, d*(w/2+0.14), z), 'wall2', bevel=0.008)
+            kb('inspection_plate', (0.014, 0.22, 0.29), (0.248 + PROUD, d*(w/2+0.14), z), 'wall2', bevel=0.008)
             for sy in (-0.08, 0.08):
                 for sz in (-0.11, 0.11):
-                    lathe('jamb_fastener', [(0,0),(.012,0),(.012,.008),(0,.008)], 'chrome', grp, segs=6, M=M @ T((.255,d*(w/2+.14)+sy,z+sz),(0,pi/2,0)))
-        for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')   # warning bands at the foot of the frame
+                    lathe('jamb_fastener', [(0,0),(.012,0),(.012,.008),(0,.008)], 'chrome', grp, segs=6, M=M @ T((.255 + PROUD,d*(w/2+.14)+sy,z+sz),(0,pi/2,0)))
+        for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245 + PROUD, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')
     kb('lintel', (0.36, w + 0.56, 0.32), (0.06, 0, h + 0.16), 'rib', bevel=0.03)
     # Flush trolley threshold with sloping noses, parallel leaf guides and a bolt-on sign tray.
     prism(name+'_threshold', [(-.15,0),(.42,0),(.36,.026),(-.10,.026)], 'Y', -w/2-.26, w/2+.26, 'wall2', grp, M=M)
-    for x in (.015,.055): kb('sill_guide', (.012,w+.08,.004), (x,0,.028), 'brass')
+    for x in (.015 + PROUD,.055): kb('sill_guide', (.012,w+.08,.004), (x,0,.028), 'brass')
     kb('sign_carrier', (.095,w+.47,.415), (.14,0,h+.513), 'wall2', bevel=.018)
     kb('enamel_sign', (.025,w+.42,.378), (.208,0,h+.514), 'dark', bevel=.011)
     for y in (-w/2-.15,w/2+.15):
@@ -445,6 +445,7 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
 
 # ---- small builders every room's assets use, and the bench that shows one asset on its own
 I4 = Matrix.Identity(4)
+PROUD = 0.003
 def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
@@ -728,12 +729,12 @@ for s in (1, -1):
                 shell(f'spot_{g}{bi}', s, t - 0.29, t + 0.29, yy - 0.05, yy + 0.05, em='warm', depth=0.02)
 
     # ---- floor: a brass strip let into the stone, with small in-ground marker lights that brighten towards the portal
-    box(f'floorinlay_{g}', sx(4.57), sx(4.63), Y0, STAIR_Y, 0.0, 0.003, 'brass', 'center')
+    box(f'floorinlay_{g}', sx(4.57), sx(4.63), Y0, STAIR_Y, -PROUD, 0.003, 'brass', 'center')
     for i in range(14):
         y = -6.0 + 2.0 * i
         if abs(math.hypot(4.6, y - DAIS.y) - 4.34) < 0.3: continue           # where the strip meets the ring round the dais
         lathe(f'marker_{g}{i}', [(0, 0.004), (0.036, 0.004), (0.036, 0.0), (0, 0.0)], em=em_ramp('mark', i, y, 0.5, 5.5), segs=12, closed=False, M=T((sx(4.6), y, 0)))
-        lathe(f'markerbezel_{g}{i}', [(0.036, 0.0045), (0.06, 0.0045), (0.06, 0.0), (0.036, 0.0)], 'dark', 'center', segs=16, closed=False, M=T((sx(4.6), y, 0)))
+        lathe(f'markerbezel_{g}{i}', [(0.036, 0.0045), (0.06, 0.0045), (0.06, -PROUD), (0.036, -PROUD)], 'dark', 'center', segs=16, closed=False, M=T((sx(4.6), y, 0)))
 
 # ---- Lift lobby bulkhead behind the camera
 def profile_pts():
@@ -842,10 +843,10 @@ a_orrery(Matrix.Translation(CH_C), stem_rise=H - CH_C.z)
 # ================================================================= CONCOURSE DETAIL (assets_tech.py): what a working terminal accumulates
 exec(open(os.path.join(HERE, 'assets_tech.py')).read(), globals())
 a_kiosk(T((7.0, 3.0, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z')); a_kiosk(T((-7.0, 15.0, PLAT_Z)))
-a_bench_hall(T((7.1, 9.8, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z') @ T((0, -2.4, 0))); a_bench_hall(T((-7.1, -2.2, PLAT_Z)))
+a_bench_hall(T((7.1, 9.8, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z') @ T((0, -2.4, 0))); a_bench_hall(T((-7.1, -2.2, PLAT_Z)), L=1.75)
 a_luggage(T((-7.3, 7.2, PLAT_Z), (0, 0, 0.5))); a_luggage(T((7.4, 18.7, PLAT_Z), (0, 0, 2.4)))
 a_floorhatch(T((-7.2, 11.0, PLAT_Z)), 'props'); a_floorhatch(T((7.2, -1.0, PLAT_Z)), 'props')
-for y in (6.2, 8.2): a_stanchion(T((6.3, y, PLAT_Z)), 'props', L=2.0)
+for y in (6.2, 8.2): a_stanchion(T((6.3, y, PLAT_Z)), 'props', L=2.0, posts=None if y == 6.2 else (2.0,))
 
 # ================================================================= PEOPLE
 # Crew and families gathered at the window for a last look at Earth. They are seen from behind, backlit by the
