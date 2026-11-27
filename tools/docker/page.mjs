@@ -1,9 +1,4 @@
-// A generated page read the way a crawler or a reader without JavaScript sees it:  tools/dtest.sh page.mjs <path>
-// <path>: a post (/blog/<slug>/), a list (/blog/, /portfolio/), a project (/portfolio/<slug>/) or a room's page (/about/,
-// /experience/, /contact/): docs/v1-contracts.md §3 and §8. Generate the pages first (python3 tools/site.py). Checks the
-// DOM, not the looks: the loader overlay covers the page when no script runs. Every image in it must load at the size
-// its attributes say, and every link it makes to the site must answer 200. Saves /out/page.png (the viewport, as served)
-// and /out/page-article.png (the page's content with #loader and the canvas hidden, after every check has run).
+// Generated page as a crawler or a reader without JavaScript sees it
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 const path = process.argv[2] || '/blog/every-construct/';
@@ -25,7 +20,6 @@ try {
   if (requests.some(u => u.endsWith('/main.js'))) fail('main.js was requested with JavaScript disabled');
   console.log('kind:', kind);
 
-  // What the page must hold (required) and what it may (counted), as §3 and §8 write it.
   const root = kind === 'list' ? 'main#page > section.post-list' : kind === 'post' ? 'main#page > article.post'
     : kind === 'project' ? 'main#page > article.post.project[data-slug]' : `main#page > article.post.page[data-slug="${kind}"]`;
   const content = p.locator(root);
@@ -64,8 +58,6 @@ try {
   if (new Set(ids).size !== ids.length) fail('an id is used twice', ids.filter((x, i) => ids.indexOf(x) !== i));
   if (await p.locator(`${root} form, ${root} input, ${root} script`).count()) fail('a form, an input or a script in the content');
 
-  // Every image in it has loaded (scroll to each: with scripting off Chromium loads lazy images anyway, but the check
-  // should not depend on that).
   const imgs = p.locator(`${root} img`);
   for (let i = 0; i < await imgs.count(); i++) {
     const img = imgs.nth(i);
@@ -76,8 +68,6 @@ try {
     else if (`${nw}x${nh}` !== `${await img.getAttribute('width')}x${await img.getAttribute('height')}`) fail('width/height attributes differ from the file', src, nw, nh);
     else console.log('image', src, `${nw}x${nh}`);
   }
-  // Every link to the site answers 200, and a #fragment names an element of the page it leads to. External links open
-  // apart (target, rel); nothing else is a link.
   const hrefs = await p.locator(`${root} a[href]`).evaluateAll(as => as.map(a => [a.getAttribute('href'), a.getAttribute('target'), a.getAttribute('rel')]));
   const site = new Set();
   for (const [h, target, rel] of hrefs) {
@@ -96,10 +86,10 @@ try {
     if (frag && !pages.get(where).includes(` id="${frag}"`)) fail('link to a missing id', h);
   }
   console.log(`${hrefs.length} links, ${site.size} on the site, all answered`);
-  await p.evaluate(() => { document.documentElement.scrollTop = document.body.scrollTop = 0; });   // body is the scroller
+  await p.evaluate(() => { document.documentElement.scrollTop = document.body.scrollTop = 0; });
   await p.screenshot({ path: '/out/page.png' });
   for (const over of ['#loader', '#scene']) await p.locator(over).evaluate(el => { el.style.display = 'none'; });
-  const box = await content.boundingBox();               // the shell's style.css does not scroll the page: grow the window
+  const box = await content.boundingBox();
   await p.setViewportSize({ width: 1000, height: Math.ceil(Math.min(box.y + box.height, 16000)) });
   await content.screenshot({ path: '/out/page-article.png' });
   console.log(failed ? `${failed} failed` : 'page ok', path);

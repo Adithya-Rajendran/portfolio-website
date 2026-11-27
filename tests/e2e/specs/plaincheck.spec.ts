@@ -1,3 +1,4 @@
+// End-to-end spec for the plain page checks, on built test pages
 import { expect, test } from '../fixtures/site.ts';
 import { plainChecks, type PlainCheckFindings } from '../helpers/plaincheck.ts';
 

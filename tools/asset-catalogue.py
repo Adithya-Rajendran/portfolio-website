@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Make the static visual inventory from measured placements and canonical studio stills.
-After tools/review-models.py and tools/asset-inventory.py: python3 tools/asset-catalogue.py
-No renderer, JS, scene files or network requests to external services on the catalogue page.
-"""
+# Static visual inventory made from measured placements and canonical studio stills
 import csv
 from html import escape
 from pathlib import Path
@@ -16,7 +13,6 @@ out = root / 'public/asset-catalogue'
 imgs = root / 'blender/out/model-review'
 with (root / 'docs/asset-placements.tsv').open() as f: rows = list(csv.DictReader(f, delimiter='\t'))
 listing = subprocess.check_output([sys.executable, root / 'tools/review-models.py', '--list'], text=True)
-# Choose the face with the joinery, gilt spine, pulls or other identifying details.
 reverse = {'bay', 'armchair', 'frame', 'sideboard', 'bookend', 'shelf_volume'}
 views = {name: imgs / studio / f'asset_{name}_{int(name in reverse)}.png' for line in listing.splitlines()
          for studio, keys in [line.split(': ')] for name in keys.split()}

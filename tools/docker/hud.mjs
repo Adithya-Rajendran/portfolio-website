@@ -1,17 +1,8 @@
-// hud.mjs [desktop|phone|reduced|all]: the visitor's display (the HUD), driven the way a visitor drives it.
-//   Nothing on the display moves by itself; a part of it moves once when it appears, changes or is asked for (docs/v1-contracts.md, the HUD).
-//   desktop 1280x720: the glyph has no clock and holds still (1), the scan only when READ is asked and only then (2), the lock on a pick (3),
-//     names and verbs in every room (4), the hint: the pointer's words, gone after the first inspect (7).
-//   phone 390x844 (touch): a tap brings no lock, the hint is the touch words, the bar's name fits and moves nothing (5), the Library's list
-//     clears the bar (3), and the hint goes (7).   reduced 1280x720: the lock has no transition, READ shows no scan (6).
-//   All profiles: no console error, page error or failed request (8).
-// Every check prints "ok" or "FAIL [profile item] what"; the item numbers are the brief's (the contract's section C).
-// It never edits anything: a missing hook is a FAIL line, never an exception. Screenshots go to /out/hud-<profile>-<step>.png. Exit code 1 if any check failed.
-// Frames are slow on a shared GPU: no state is waited for with a fixed sleep (only the 1.5 s / 3 s / 1 s of "nothing changes" are measured spans, taken once the display has settled).
+// HUD check on desktop, phone and reduced motion
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080', which = process.argv[2] || 'all';
-const results = [];                                              // { profile, item, ok, what, detail }
+const results = [];
 let profile = '';
 function chk(item, ok, what, detail = '') {
   results.push({ profile, item, ok: !!ok, what, detail });
@@ -29,13 +20,9 @@ const PROFILES = {
 };
 const ROOMS = [['lobby', '/'], ['about', '/about/'], ['projects', '/portfolio/'], ['experience', '/experience/'], ['writing', '/blog/'], ['comms', '/contact/']];
 
-/** Wait for a condition in the page; false (never an exception) if it did not come true. */
 const until = (p, fn, arg, timeout = 90000) => p.waitForFunction(fn, arg, { timeout, polling: 150 }).then(() => true, () => false);
-/** Run one part of the test; if the page or a hook breaks under it, that is a FAIL line and the next part still runs. */
 async function guard(item, what, fn) { try { await fn(); } catch (e) { chk(item, false, `${what}: the test could not go on`, String(e.message).split('\n')[0]); } }
 
-/** What the test reads in the page (installed before the page's own scripts, so it survives room changes: they do not reload). Everything
- *  is guarded: a missing hook gives null, never an exception. A poller (8 ms) records what the scan and the lock do, since 'scanning' lasts seconds. */
 const INSTALL = () => {
   const L = () => window.__lobby;
   const T = window.__t = {
@@ -47,7 +34,7 @@ const INSTALL = () => {
     obj: (n) => L()?.scene?.getObjectByName(n) ?? null,
     rec: null,
     mark() { const r = T.rec; T.rec = fresh(); return r; },
-    async watch(ms) {                                              // the glyph's four uniforms and the display's state, sampled for ms: min, max, and whether the state changed
+    async watch(ms) {
       const lo = {}, hi = {}, s0 = JSON.stringify(T.ds()); let changed = false, n = 0;
       await new Promise((res) => { const t0 = performance.now(), iv = setInterval(() => { n++; const u = T.uni() ?? {}; for (const k in u) { if (u[k] === null) continue; lo[k] = Math.min(lo[k] ?? 1e9, u[k]); hi[k] = Math.max(hi[k] ?? -1e9, u[k]); } if (JSON.stringify(T.ds()) !== s0) changed = true; if (performance.now() - t0 > ms) { clearInterval(iv); res(); } }, 30); });
       return { lo, hi, changed, n };
@@ -66,7 +53,6 @@ const INSTALL = () => {
   }, 8);
 };
 
-/** A page on a room, with every console error, page error, failed request and 4xx/5xx collected in errs. */
 async function open(ctx, path, id, errs) {
   const p = await ctx.newPage();
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
@@ -78,12 +64,10 @@ async function open(ctx, path, id, errs) {
   await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
   return p;
 }
-/** Go to another room as the page does (no reload) and wait until it is there. */
 async function goRoom(p, id) {
   await p.evaluate((id) => window.__lobby.enter(id), id);
   return until(p, (id) => window.__lobby.mode().room === id && window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, id, 120000);
 }
-/** Until the camera has stopped (display.state().gliding false, twice), and the glyph's uniforms and the camera are still over three looks. */
 async function settle(p, timeout = 90000) {
   let last = null, calm = 0; const end = Date.now() + timeout;
   while (Date.now() < end && calm < 3) {
@@ -95,8 +79,6 @@ async function settle(p, timeout = 90000) {
 const state = (p) => p.evaluate(() => window.__t.ds());
 const glyphLive = (p, t = 25000) => until(p, () => { const q = window.__t.reads(); return !!q && q.live() && q.mesh.parent.visible; }, null, t);
 
-/** Where picks are on the screen, as a visitor could point at them: the projected centre of the mesh's bounding box, the screen rectangle of its
- *  8 corners, whether the nearest live pick along that ray is the pick itself, and what element lies there. */
 const cands = (p) => p.evaluate(async () => {
   const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), W = innerWidth, H = innerHeight, live = l.picks.filter((q) => !q.live || q.live());
   l.camera.updateMatrixWorld(true); for (const q of l.picks) q.mesh.updateWorldMatrix(true, false);
@@ -116,7 +98,6 @@ const cands = (p) => p.evaluate(async () => {
   });
   return out;
 });
-/** A point where no live pick lies and the canvas is what is there (to leave a pick by). */
 const emptyPoint = (p) => p.evaluate(async () => {
   const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), live = l.picks.filter((q) => !q.live || q.live());
   l.camera.updateMatrixWorld(true); for (const q of l.picks) q.mesh.updateWorldMatrix(true, false);
@@ -125,13 +106,11 @@ const emptyPoint = (p) => p.evaluate(async () => {
     if (!ray.intersectObjects(live.map((q) => q.mesh), false).length && document.elementFromPoint(x, y)?.id === 'scene') return { x, y }; }
   return { x: innerWidth / 2, y: innerHeight / 2 };
 });
-/** Where the READ pick's tap area is on the screen. */
 const readBox = (p) => p.evaluate(async () => {
   const THREE = await import('three'), l = window.__lobby, m = window.__t.reads().mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
   const g = m.geometry.parameters, v = new THREE.Vector3(0, 0, 0).applyMatrix4(m.matrixWorld).project(l.camera);
   return { cx: (v.x * 0.5 + 0.5) * innerWidth, cy: (-v.y * 0.5 + 0.5) * innerHeight, w: g.width, h: g.height };
 });
-/** The rectangles of the bar's parts, and whether each is shown. */
 const barBox = (p) => p.evaluate(() => { const o = {}, W = innerWidth, H = innerHeight;
   for (const id of ['back', 'prev', 'next', 'count', 'named', 'ways', 'enter']) { const e = document.getElementById(id); if (!e) { o[id] = null; continue; }
     const r = e.getBoundingClientRect(), cs = getComputedStyle(e); o[id] = { l: r.left, t: r.top, r: r.right, b: r.bottom, shown: !e.hidden && r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none',
@@ -153,7 +132,6 @@ async function run(name) {
   const p = await open(ctx, '/blog/', 'writing', errs);
   await shot(p, '0-library');
 
-  // ---- 7. the hint at the start: the words for how the visitor points; hovering is not inspecting, so it stays
   await guard(7, 'the hint at the start', async () => {
     const want = phone ? hintWords.touch : hintWords.pointer;
     chk(7, !!want, `content.json has display.hint.${phone ? 'touch' : 'pointer'}`, want ?? 'content.display is missing');
@@ -167,8 +145,6 @@ async function run(name) {
     }
   });
 
-  // ---- 3 (phone) / 5: the Library's terminal on a phone: the list clears the bar, the bar's name fits
-  // ---- the Library: the terminal's list, a held volume, the glyph; then 1, 2 and (reduced) 6
   let read = false;
   await guard(1, 'the Library', async () => {
     const lockBefore = await p.evaluate(() => { const l = window.__lobby, q = l.picks.find((x) => x.options); l.setFocus(q); return q?.name ?? null; });
@@ -183,7 +159,6 @@ async function run(name) {
     for (const k of parts) if (bb.ways && overlap(bb.ways, bb[k])) clash.push(k);
     chk(3, bb.ways?.shown && clash.length === 0 && parts.length === 5, 'with the volumes listed above the bar, nothing overlaps it', { list: bb.ways && [bb.ways.l, bb.ways.t, bb.ways.r, bb.ways.b].map(Math.round), clash, missing: ['back', 'prev', 'next', 'count', 'named'].filter((k) => !bb[k]) });
     await shot(p, '1-list');
-    // choose the first volume, as a visitor does
     const slug = await p.evaluate(() => window.__lobby.volumes()[0]?.slug);
     const folded = await p.evaluate(() => { const x = document.querySelector('#ways [data-option="0"]'); return !!x && x.getClientRects().length === 0; });
     if (folded) await poke(p, '#ways [data-option][aria-current]');
@@ -192,11 +167,10 @@ async function run(name) {
     chk(1, held, `a volume is chosen and held (${slug})`, ok === true ? '' : ok);
     if (!held) return;
     chk(1, await glyphLive(p, 60000), 'the READ glyph is live and shown for the held volume');
-    if (!P.reducedMotion) await p.mouse.move(W - 4, 4);          // parked off the glyph (a hover would be a change, and uHover is measured apart)
+    if (!P.reducedMotion) await p.mouse.move(W - 4, 4);
     const calm = await settle(p); chk(1, calm, 'the camera, the glyph and the display come to rest after choosing the volume');
     await shot(p, '2-held');
 
-    // 1. quiet
     const sh = await p.evaluate(() => window.__t.shaders());
     chk(1, !!sh, 'the READ glyph is the reading pick\'s mesh.parent and has a material with uniforms', sh ? '' : 'no glyph material');
     chk(1, await p.evaluate(() => window.__t.glyph()?.name === 'ReadGlyph'), "the glyph is named 'ReadGlyph'", await p.evaluate(() => window.__t.glyph()?.name ?? null));
@@ -208,16 +182,13 @@ async function run(name) {
       chk(1, known && Math.abs(w.hi[k] - w.lo[k]) < 1e-3, `${k} is unchanged over 1.5 s once settled`, known ? { min: +w.lo[k].toFixed(4), max: +w.hi[k].toFixed(4), samples: w.n } : 'the uniform does not exist');
     }
     const hasDs = !!(await state(p)); chk(1, hasDs && !w.changed, 'display.state() is the same over 1.5 s', !hasDs ? 'no display.state()' : w.changed ? 'it changed' : '');
-    // no looping animation anywhere on the display
     const loops = await p.evaluate(() => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations === Infinity && a.effect.target?.closest?.('#hud, #inspectbar, #lock')).map((a) => `${a.animationName ?? a.constructor.name} on ${a.effect.target.tagName.toLowerCase()}${a.effect.target.id ? '#' + a.effect.target.id : '.' + (a.effect.target.className?.baseVal ?? a.effect.target.className)}`));
     chk(1, loops.length === 0, 'no animation on the display loops for ever (#hud, #inspectbar, #lock)', loops.slice(0, 5));
 
-    // 2. the scan only when asked: standing here, nothing is scanned
     if (!P.reducedMotion) {
       await p.evaluate(() => window.__t.mark()); await p.waitForTimeout(3000); const idle = await p.evaluate(() => window.__t.mark());
       chk(2, idle.fanFound && idle.sheetFound, "'ScanFan' and 'ScanSheet' exist in the scene (so that \"not visible\" means something)", { fan: idle.fanFound, sheet: idle.sheetFound });
       chk(2, !idle.fanSeen && !idle.sheetSeen, 'standing 3 s with nothing asked: ScanFan and ScanSheet are not visible', { fanSeen: idle.fanSeen, sheetSeen: idle.sheetSeen, state: idle.states });
-      // the glyph brightens while the pointer is over it, with an ease that ends
       if (!phone) {
       const r0 = await readBox(p); await p.mouse.move(r0.cx - 40, r0.cy - 60); await p.mouse.move(r0.cx, r0.cy, { steps: 6 });
       const hov = await until(p, () => (window.__t.uni()?.uHover ?? 0) > 0.5, null, 15000);
@@ -226,7 +197,6 @@ async function run(name) {
       chk(1, w2.lo.uHover !== undefined && Math.abs(w2.hi.uHover - w2.lo.uHover) < 1e-3, 'uHover has stopped easing 1.5 s after the pointer arrived', w2.lo.uHover === undefined ? 'no uHover' : { min: +w2.lo.uHover.toFixed(4), max: +w2.hi.uHover.toFixed(4) });
       }
     }
-    // READ
     await p.evaluate(() => window.__t.mark());
     const r = await readBox(p); let how = 'click';
     await p.mouse.move(r.cx, r.cy); await p.waitForTimeout(150); await tapAt(p, r.cx, r.cy);
@@ -244,7 +214,6 @@ async function run(name) {
       chk(2, scan.both, 'ScanFan and ScanSheet are both visible while reader.state() is scanning', { fanFound: scan.fanFound, sheetFound: scan.sheetFound, fanSeen: scan.fanSeen, sheetSeen: scan.sheetSeen });
       chk(2, scan.maxUw !== null && scan.maxUw > 0.5, 'the glyph says SCANNING during the scan (uWord rises)', { maxUWord: scan.maxUw });
       chk(2, scan.maxUp !== null && scan.maxUp > 0.5, 'the glyph shows the scan\'s progress (uProgress rises)', { maxUProgress: scan.maxUp });
-      // once open and settled, the scan is gone again
       const calm = await until(p, () => !!window.__t.reads()?.calm?.(), null, 60000); await p.waitForTimeout(500);
       await p.evaluate(() => window.__t.mark()); await p.waitForTimeout(1500); const after = await p.evaluate(() => window.__t.mark());
       const bm = await p.evaluate(async () => { const m = window.__t.obj('ReadBeam')?.material?.uniforms; if (!m) return null; const g = () => [m.uK?.value, m.uFlow?.value]; const a = g(); await new Promise((r) => setTimeout(r, 1500)); return { before: a, after: g() }; });
@@ -255,7 +224,6 @@ async function run(name) {
     await until(p, () => window.__lobby.reader.state() === 'closed', null, 20000); await p.waitForTimeout(500);
   });
 
-  // ---- 7. after the first inspect the hint is gone, in the room and in the next
   await guard(7, 'the hint after the first inspect', async () => {
     const st = await state(p), sh = await hintShown(p);
     chk(7, !!st && st.hint === '', 'after the first inspect display.state().hint is empty', st?.hint ?? 'no display.state()');
@@ -267,7 +235,6 @@ async function run(name) {
     chk(7, sh2 !== true, 'and not on the screen there either', sh2 === null ? 'no #hud .hint (gone)' : sh2);
   });
 
-  // ---- Fabrication: 3 the lock (desktop, reduced), 5 a tap and the bar (phone), 1 an exhibit in focus
   await guard(3, 'Fabrication', async () => {
     await p.evaluate(() => window.__lobby.setFocus(null)); await settle(p, 60000);
     await shot(p, '4-fab');
@@ -275,7 +242,6 @@ async function run(name) {
     if (good.length < all.length) note(`Fabrication: ${all.length - good.length} of ${all.length} picks cannot be pointed at from the room's view (behind another pick, off screen or too big); they are skipped: ${all.filter((c) => !c.ok).map((c) => `#${c.i} ${c.type}${c.self ? '' : ' (covered)'}${c.behind ? ' (off view)' : ''}`).join(', ')}`);
     chk(3, 'at least two picks of Fabrication can be pointed at (the test can run)', { picks: all.length, pointable: good.length });
     if (phone) {
-      // 5. a tap brings no lock, ever (the poller samples every 8 ms), and still focuses the pick
       const c = good[0]; if (!c) return;
       await p.evaluate(() => window.__t.mark()); await p.touchscreen.tap(c.x, c.y);
       const named = await until(p, (n) => window.__lobby.display?.state().named === n && !!n, c.name, 25000);
@@ -283,7 +249,6 @@ async function run(name) {
       chk(5, !rec.lockEver && !st?.lock, 'a tap brings no lock (not at any moment)', { everShown: rec.lockEver, lock: st?.lock ?? null, samples: rec.n });
       chk(5, named, `the tap focused the pick and the bar names it (${c.name})`, st?.named ?? 'no display.state()');
       await settle(p, 60000); await shot(p, '5-tapped');
-      // the bar's name: shown, inside the window, and nothing moves as the tour steps
       const first = await barBox(p); const nextLeft = first.next?.l, prevLeft = first.prev?.l;
       chk(5, first.named?.shown === true && first.named?.inside === true, '#named is visible and inside the window', first.named);
       const seen = [];
@@ -301,7 +266,6 @@ async function run(name) {
       await shot(p, '6-bar');
       return;
     }
-    // 3. the lock: the pointer on a pick brings its name and verb; a click focuses it
     const empty = await emptyPoint(p);
     const sample = [good[0], good[Math.floor(good.length / 2)], good[good.length - 1]].filter((c, i, a) => c && a.findIndex((d) => d.i === c.i) === i).slice(0, P.reducedMotion ? 1 : 3);
     for (const c of sample) {
@@ -328,7 +292,6 @@ async function run(name) {
       const gone = await until(p, () => !window.__lobby.display?.state().lock, null, 20000), st2 = await state(p);
       chk(3, !!st2 && gone, `${tag}: off the pick the lock is null`, st2 ? '' : 'no display.state()');
     }
-    // a press takes the lock away; a click focuses the pick
     const c = good[0]; if (!c) return;
     await p.mouse.move(c.x - 30, c.y - 30); await p.mouse.move(c.x, c.y, { steps: 6 });
     await until(p, () => !!window.__lobby.display?.state().lock, null, 20000);
@@ -346,7 +309,6 @@ async function run(name) {
     await shot(p, '8-clicked');
   });
 
-  // ---- 1. an exhibit (a source in Fabrication; the wall cards are not picks) in focus is as quiet as the held volume (desktop)
   if (!phone && !P.reducedMotion) await guard(1, 'an exhibit in Fabrication', async () => {
     const i = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.source && !q.reads));
     chk(1, i >= 0, 'Fabrication has a pick that offers something to read', i);
@@ -364,7 +326,6 @@ async function run(name) {
     chk(2, !idle.fanSeen && !idle.sheetSeen, 'an exhibit in focus 3 s with nothing asked: ScanFan and ScanSheet are not visible', { fanSeen: idle.fanSeen, sheetSeen: idle.sheetSeen });
   });
 
-  // ---- 4. names and verbs, in every room (desktop)
   if (!phone && !P.reducedMotion) await guard(4, 'names and verbs', async () => {
     const need = ['read', 'inspect', 'catalogue', 'choose', 'open', 'write', 'enter', 'stops', 'sealed'], missing = need.filter((k) => typeof D?.[k] !== 'string' || !D[k]);
     chk(4, !!D && missing.length === 0 && !!D.hint?.pointer && !!D.hint?.touch, 'content.json has a "display" object with the verbs, the catalogue name and the hint', D ? { missing } : 'no "display" in content.json');
@@ -380,13 +341,11 @@ async function run(name) {
       const odd = rest.filter((q) => q.verb && !verbs.has(q.verb) && !/^\d+ /.test(q.verb) && !(D?.stops && q.verb === D.stops));
       chk(4, rest.length > 0 && D && odd.length === 0, `${path}: every verb is one of content.json's display verbs (or "n STOPS")`, odd.slice(0, 4).map((q) => [q.name, q.verb]));
       for (const q of picks.filter((x) => x.reads)) chk(4, q.name === '', `${path}: the reading pick has the name ''`, JSON.stringify(q.name));
-      // 7. the hint: Navigation's own words until its map has been turned by hand; in every other room the visitor has inspected something, so none
       const hs = (await state(p))?.hint, own = content.rooms[id].hint?.pointer;
       chk(7, hs === (own ?? ''), own ? `${path}: the room's own hint stands (the map has not been turned by hand)` : `${path}: no hint (something has been inspected)`, hs);
-      const cue = (await state(p))?.cue;      // (the Library's, on a new visit, comes once the view is wide: it may or may not be there yet)
+      const cue = (await state(p))?.cue;
       chk(4, id === 'writing' ? cue === null || cue.words === D.cue?.pointer || cue.name === D.catalogue : cue === null, `${path}: ${id === 'writing' ? 'the cue, if there, is the catalogue\'s' : 'no cue stands on anything (only the Library has one)'}`, cue);
     }
-    // the named exhibits of the Lounge and Fabrication, and the terminal
     await goRoom(p, 'writing'); const term = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.options); return q ? [q.name, q.verb] : null; });
     chk(4, !!D && term?.[0] === D.catalogue && term?.[1] === D.choose, "the Library's terminal is the catalogue: it chooses a volume", term);
     await goRoom(p, 'comms'); const cm = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.cta); return q ? [q.name, q.verb, document.querySelector('#comms')?.dataset.mode] : null; });
@@ -396,7 +355,6 @@ async function run(name) {
     await shot(p, 'atrium');
   });
 
-  // ---- 8. nothing went wrong
   chk(8, errs.length === 0, 'no console error, page error or failed request', errs.slice(0, 5));
   await ctx.close();
 }

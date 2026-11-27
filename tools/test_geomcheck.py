@@ -1,4 +1,4 @@
-"""Tests for tools/geomcheck.py and the pack step that runs it, on small GLB files written into a temporary folder."""
+# Tests for tools/geomcheck.py and the pack step that runs it
 import json, os, shutil, struct, sys, tempfile, unittest
 from unittest import mock
 

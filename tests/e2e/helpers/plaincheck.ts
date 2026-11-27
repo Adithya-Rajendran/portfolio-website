@@ -1,3 +1,4 @@
+// Checks of a plain page for scroll, contrast, headings and images
 import type { Page } from '@playwright/test';
 
 export type PlainPageKind = 'post' | 'list';
@@ -47,7 +48,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
       return R;
     }
 
-    // ---- it scrolls, and the end of it can be reached
     const se = document.scrollingElement!;
     const max = se.scrollHeight - Hh;
     if (max > 0) {
@@ -60,7 +60,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
     const style = getComputedStyle(document.documentElement);
     if (style.overflowY === 'hidden' && max > 0) R.scroll.push('html has overflow-y: hidden');
 
-    // ---- not covered: h1 and a paragraph first (the brief's check), then every block at every scroll position
     const top = (e: Element) => {
       const r = e.getClientRects()[0];
       return r && document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(r.height / 2, 30));
@@ -118,7 +117,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
     }
     scrollTo(0, 0);
 
-    // ---- headings
     const hs = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')];
     if (document.querySelectorAll('h1').length !== 1) R.h1.push(`${document.querySelectorAll('h1').length} h1 in the document`);
     let prev = 0;
@@ -131,7 +129,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
     if (k === 'post' && !root.querySelector('article.post h1')) R.h1.push('the h1 is not in the article');
     if (k === 'list' && !root.querySelector('.post-list h1')) R.h1.push('the h1 is not in the list');
 
-    // ---- images and links
     for (const i of document.images) {
       if (!(i.getAttribute('alt') || '').trim()) R.alt.push(`img ${i.getAttribute('src')} has alt ${JSON.stringify(i.getAttribute('alt'))}`);
     }
@@ -145,7 +142,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
       if (!a.getAttribute('href')) R.links.push(`an <a> without href: "${txt(a)}"`);
     }
 
-    // ---- contrast
     const cv = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true })!;
     const rgba = (s: string): [number, number, number, number] => {
       cv.clearRect(0, 0, 1, 1);
@@ -236,7 +232,6 @@ export async function plainChecks(p: Page, kind: PlainPageKind): Promise<PlainCh
     R.contrast.push(...bad.values());
     R.notes.push(`lowest contrast against its need: ${low[1]}`);
 
-    // ---- nothing sticks out sideways; wide code scrolls inside itself
     const de = document.documentElement;
     if (de.scrollWidth > W) R.overflow.push(`the page is ${de.scrollWidth} px wide in a ${W} px window`);
     if (document.body.scrollWidth > W) R.overflow.push(`the body is ${document.body.scrollWidth} px wide in a ${W} px window`);

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Frame-time benchmark on the host's Intel GPU.   [ORIGIN=http://host:port] tools/dperf.sh [query] [w] [h] [seconds] [dpr]
+# Frame time benchmark on the Intel GPU of the host
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 resolve_assets() {

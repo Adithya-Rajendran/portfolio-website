@@ -1,9 +1,4 @@
-// rooms.deeplink.mjs [desktop|phone|all]: the addresses of things read in the rooms (item 8).
-//   /portfolio/<slug>/ for a project with an exhibit and one without: a readable page at once (html.reading, its own <title>), then read in the room by itself,
-//     or, for a reader who had scrolled, offered; the place in the text is kept; Escape afterwards; the room it opens is Fabrication
-//   /experience/#<id> for each entry: the room, the reader open on it, that entry's heading at the top; Escape returns to the room's own address
-//   /about/, /portfolio/, /contact/ and /contact/#availability as rooms (no page first), and an address of a project that does not exist
-// Prints FAIL lines (-v: ok lines too) and a summary; exit 1 on failure.
+// Check of deep links to rooms on desktop and phone
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, until, snap, frameChecks, leaveAndSnap, inRoom, sleep } from './rooms.kit.mjs';
 import { streamAbort } from './reqfail.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.deeplink'), { chk, note } = S;
@@ -18,7 +13,6 @@ async function run(name) {
   const page = async () => { const p = await ctx.newPage(); p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
     p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); }); return p; };
 
-  // ---------------------------------------------------------------- a project's own address: a page first, then the room
   for (const [pr, how] of [[withExhibit, 'exhibited'], [without, 'no exhibit']]) for (const scrolled of [false, true]) {
     const tag = `${pr.slug} (${how}, ${scrolled ? 'scrolled first' : 'left alone'})`, p = await page(), t0 = Date.now();
     await p.goto(`${ORIGIN}${pr.url}?shot=hero&rollat=20`, { waitUntil: 'domcontentloaded' });
@@ -28,7 +22,7 @@ async function run(name) {
     chk(8, first.title === `${pr.title} — ${profile.name}`, `${tag}: the tab title is "<title> — <name>" while it is a page`, first.title);
     await shot(p, `${pr.slug}-1-page`);
     let target = null;
-    if (scrolled) {                                                          // read well into it: a heading near a quarter of the way down the window
+    if (scrolled) {
       const ids = await p.evaluate(() => [...document.querySelectorAll('#page .post-body h2[id]')].map((h) => h.id));
       target = ids[Math.min(2, ids.length - 1)];
       await p.mouse.move(W / 2, H / 2); await p.mouse.wheel(0, 100); await p.waitForTimeout(100);
@@ -52,14 +46,12 @@ async function run(name) {
       chk(8, !!pos && pos[0] >= -2 && pos[0] <= pos[1] * 0.3, `${tag}: the place in the text is kept (#${target} is at ${pos?.[0]} px from the top of the frame, which is ${pos?.[1]} px)`, { pos, scrollTop: st.top });
     } else chk(8, st.top < 5, `${tag}: it opens at its top`, st.top);
     await shot(p, `${pr.slug}-3-open${scrolled ? '-scrolled' : ''}`);
-    // leaving it: the room, with or without the pick that offered it
     const back = await leaveAndSnap(p, phone);
     chk(8, back.ok && back.s.path === '/portfolio/' && back.s.title === content.rooms.projects.title, `${tag}: Escape closes it; the address is /portfolio/ and the title the room's`, { path: back.s.path, title: back.s.title });
     chk(8, back.s.enter === exhibited.has(pr.slug) && back.s.bar === exhibited.has(pr.slug), `${tag}: ${exhibited.has(pr.slug) ? 'back at the placard or exhibit that offers it (READ offered)' : 'nothing offers it, so the visitor is left in the room (no bar)'}`, { enter: back.s.enter, bar: back.s.bar });
     await p.close();
   }
 
-  // ---------------------------------------------------------------- /experience/#<id>
   for (const e of profile.timeline) {
     const p = await page(), t0 = Date.now(); await p.goto(`${ORIGIN}/experience/#${e.id}?shot=hero&rollat=20`.replace('#' + e.id + '?shot=hero&rollat=20', '?shot=hero&rollat=20#' + e.id));
     const ok = await until(p, () => window.__lobby?.mode().room === 'experience' && window.__lobby.reader.state() === 'open', null, 150000); await p.waitForTimeout(1500);
@@ -73,7 +65,6 @@ async function run(name) {
     chk(8, back.ok && back.s.path === '/experience/' && back.s.hash === '', `/experience/#${e.id}: Escape closes it and the address is /experience/ (the #fragment goes)`, { path: back.s.path + back.s.hash });
     await p.close();
   }
-  // ---------------------------------------------------------------- the rooms' own pages, and what does not exist
   for (const [path, room, reads] of [['/about/', 'about', false], ['/portfolio/', 'projects', false], ['/contact/', 'comms', false], ['/contact/#availability', 'comms', '/contact/#availability']]) {
     const p = await page(); await p.goto(`${ORIGIN}${path.replace('#', '?shot=hero&rollat=20#')}${path.includes('#') ? '' : '?shot=hero&rollat=20'}`);
     const ok = await inRoom(p, room, 150000); if (reads) await until(p, () => window.__lobby.reader.state() === 'open', null, 60000); await p.waitForTimeout(1500); const s = await snap(p);
@@ -83,7 +74,7 @@ async function run(name) {
     await p.close();
   }
   {
-    const p = await ctx.newPage(), r = await p.goto(`${ORIGIN}/portfolio/no-such-project/`); chk(8, r.status() === 404, '/portfolio/no-such-project/ answers 404', r.status()); await p.close();      // (a page without the error listeners: a 404 logs one)
+    const p = await ctx.newPage(), r = await p.goto(`${ORIGIN}/portfolio/no-such-project/`); chk(8, r.status() === 404, '/portfolio/no-such-project/ answers 404', r.status()); await p.close();
   }
   chk(8, errs.length === 0, 'no pageerror, console error or failed request through the whole run', [...new Set(errs)].slice(0, 8));
   await ctx.close();

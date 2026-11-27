@@ -1,5 +1,4 @@
-// A static server for tests, run inside the Playwright container:  node serve.mjs <dir> <port>
-// Serves <dir> the way the site is hosted: /folder/ -> /folder/index.html, /folder -> 301 /folder/, no caching.
+// Static server for tests in the Playwright container
 import { createServer } from 'node:http';
 import { createReadStream, statSync } from 'node:fs';
 import { join, normalize, extname } from 'node:path';

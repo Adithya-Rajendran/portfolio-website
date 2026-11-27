@@ -1,4 +1,4 @@
-// Where the time to the first frame goes when the network is not the limit (a warm cache, or a fast link).  node loadprof.mjs <url>
+// Profile of the time to the first frame with a warm cache or a fast link
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

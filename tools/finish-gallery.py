@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble /lighting-review/ from real, pinned browser captures. See docs/finish-lighting.md.
-No capture => fail, rather than publishing old room art as this release's evidence.
-"""
+# Builder of /lighting-review/ from pinned browser captures
 from pathlib import Path
 import argparse, html, shutil, subprocess
 p=argparse.ArgumentParser();p.add_argument('shots',type=Path);a=p.parse_args();src=a.shots
@@ -12,7 +10,7 @@ rooms={'lobby':('Atrium','The reception desk and projector now have distinct cas
        'projects':('Fabrication Bay 02','Bridge trucks carry the hoist; harnesses, fittings and cell strings articulate the construction of the suspended satellite. These are static exhibits.'),
        'experience':('Navigation','Smoked chart glass carries narrow illuminated bearings. The projected stations and passing reader reflect in the glass; the brass scale and table stay put.'),
        'writing':('Library','Wing chairs, shelf bindings and table atlases share the reading-room kit. Request a volume at the desk to see the live book, lit by the room and its window.')}
-RP={'lobby':'/','about':'/about/','projects':'/portfolio/','experience':'/experience/','writing':'/blog/','comms':'/contact/'}   # a room is named by its path
+RP={'lobby':'/','about':'/about/','projects':'/portfolio/','experience':'/experience/','writing':'/blog/','comms':'/contact/'}
 for r in rooms:
     for k,folder in [('before','matched-before'),('after','after')]:
         subprocess.run([webp,'-quiet','-resize','1120','0','-q','83',src/folder/(r+'.png'),'-o',out/f'{r}-{k}.webp'],check=True)

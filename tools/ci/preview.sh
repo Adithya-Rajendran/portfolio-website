@@ -1,6 +1,5 @@
 #!/bin/bash
-# Prepare a checkout for previewing (matching /srv/arcadia/bin/preview: CI_HOME=... tools/ci/preview.sh).
-# Packs rooms (caching by content hash under $CI_HOME/cache/assets when CI_HOME is set) and generates public/ via site.py.
+# Preparation of a checkout for a preview
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

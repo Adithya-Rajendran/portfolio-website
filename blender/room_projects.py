@@ -1,28 +1,20 @@
-"""
-PROJECTS room — "Fabrication Bay 02": the workshop where things get built.
-A steel-framed hangar: exhibits on lit plinths down both sides (one per project, each with its own placard screen),
-and at the far end a satellite hanging from the gantry crane over the assembly pad, in front of the bay door.
-
-Run:  blender -b --python room_projects.py      -> projects.blend
-Uses the shared kit (materials + mesh helpers) from build_scene.py.
-"""
+# Projects room, Fabrication Bay 02
 import os
 _here = os.path.dirname(os.path.abspath(__file__))
 exec(open(os.path.join(_here, 'build_scene.py')).read().split('# ---- everything above this line is the shared kit')[0], globals())
 
 random.seed(11)
-# ----------------------------------------------------------------- dimensions
-WD = 8.0                     # half width
+WD = 8.0
 Y0, Y1 = -7.0, 25.0
 H = 8.6
 CAM_POS = Vector((0, -4.6, 1.7)); CAM_TGT = Vector((0, 12, 2.9))
 CLOSE_POS = Vector((2.3, 11.6, 1.75)); CLOSE_TGT = Vector((0, 19.0, 3.3))
-PAD = Vector((0, 19.0, 0))                      # assembly pad under the crane
-FRAMES = [-5.0, -1.0, 3.0, 7.0, 11.0, 15.0, 19.0, 23.0]     # steel frames on the ring's 4 m hull-frame pitch
-FLOOR_ROUGH = (0.2, 0.24); FLOOR_IOR = 1.5      # sealed concrete: a soft, blurred mirror
+PAD = Vector((0, 19.0, 0))
+FRAMES = [-5.0, -1.0, 3.0, 7.0, 11.0, 15.0, 19.0, 23.0]
+FLOOR_ROUGH = (0.2, 0.24); FLOOR_IOR = 1.5
 
 mat('steel', (0.15, 0.16, 0.18), 0.45, 0.6, var=0.12)
-mat('panel', (0.3, 0.31, 0.33), 0.55, var=0.08, seams=(0, 2.5, 2.15))      # painted wall cladding
+mat('panel', (0.3, 0.31, 0.33), 0.55, var=0.08, seams=(0, 2.5, 2.15))
 mat('roof', (0.13, 0.135, 0.14), 0.6, var=0.08, seams=(3.0, 2.5, 0))
 mat('yellow', (0.8, 0.5, 0.03), 0.45, 0.0, 1.5, 0.3, var=0.1)
 mat('concrete', (0.2, 0.2, 0.2), 0.6, var=0.1, seams=(2.0, 2.0, 0))
@@ -40,25 +32,21 @@ def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
     return finish(name, bm, m, grp, bevel=bevel, M=M, **kw)
 def beam(name, p0, p1, t, y0, y1, m, grp):
-    """Straight member between two (x, z) points, thickness t, extruded along Y."""
     a, b = Vector(p0), Vector(p1); n = (b - a).normalized(); o = Vector((-n.y, n.x)) * t / 2
     return prism(name, [tuple(a + o), tuple(b + o), tuple(b - o), tuple(a - o)], 'Y', y0, y1, m, grp)
 def spot(name, loc, target, watts, size=42, color=(1.0, 0.86, 0.7), blend=0.35, radius=0.08):
     l = bpy.data.lights.new(name, 'SPOT'); l.energy = watts; l.spot_size = math.radians(size); l.spot_blend = blend; l.color = color; l.shadow_soft_size = radius
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc
     o.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
-    # the fitting people would see: a can with a glowing lens, aimed the same way
     Mc = Matrix.Translation(loc) @ o.rotation_euler.to_matrix().to_4x4()
     lathe(name + '_can', [(0.0, 0.3), (0.12, 0.3), (0.16, 0.02), (0.16, -0.02), (0.13, -0.02), (0.13, 0.26), (0, 0.26)], 'dark', 'archC', segs=20, closed=False, M=Mc)
     lathe(name + '_lens', [(0, 0.03), (0.125, 0.03), (0.125, 0.04), (0, 0.04)], em='work', segs=16, closed=False, M=Mc)
     return o
 
-# Station hardware and Fabrication exhibits; ASSET=<name> shows one asset alone.
 exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals())
 exec(open(os.path.join(_here, 'assets_exhibits.py')).read(), globals())
 bench({**TECH, **EXHIBIT_ASSETS})
 
-# ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 9, 0), (-WD, 9, 0)], 'floor', 'floorN')
 quad('floor_far', [(-WD, 9, 0), (WD, 9, 0), (WD, Y1, 0), (-WD, Y1, 0)], 'floor', 'floorF')
 quad('ceiling', [(-WD, Y0, H), (WD, Y0, H), (WD, Y1, H), (-WD, Y1, H)], 'roof', 'archC')
@@ -67,7 +55,6 @@ box('backlum', -3.0, 3.0, Y0, Y0 + 0.05, 5.6, 6.2, 'lum_cool', 'back')
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'; sx = lambda x: s * x
     quad(f'wall_{g}', [(sx(WD), Y0, 0), (sx(WD), Y1, 0), (sx(WD), Y1, H), (sx(WD), Y0, H)], 'panel', g)
-    # ---- Wall plinth courses, cable trays and pipes
     box(f'base_{g}', sx(7.82), sx(WD), Y0, Y1, 0, 0.5, 'concrete', g, bevel=0.02)
     box(f'dado_{g}', sx(7.9), sx(WD), Y0, Y1, 1.05, 1.13, 'steel', g)
     box(f'tray_{g}', sx(7.45), sx(7.95), Y0, Y1, 5.15, 5.2, 'steel', g)
@@ -75,8 +62,7 @@ for s in (1, -1):
     for i, (dx, r, m) in enumerate(((7.58, 0.035, 'rubber'), (7.68, 0.03, 'rubber'), (7.8, 0.045, 'brass'))):
         tube(f'cable_{g}{i}', sx(dx), 5.2 + r, r, Y0, Y1, m, g, n=8)
     tube(f'pipe_{g}', sx(7.75), 6.1, 0.09, Y0, Y1, 'wall2', g)
-    box(f'wash_{g}', sx(7.8), sx(7.86), Y0, Y1, 0.5, 0.52, em='cool')                    # low wall wash above the plinth course
-    # ---- Steel portal frames, roof trusses and work lights
+    box(f'wash_{g}', sx(7.8), sx(7.86), Y0, Y1, 0.5, 0.52, em='cool')
     for k, fy in enumerate(FRAMES):
         gg = 'back' if fy < CAM_POS.y else g
         box(f'col_{g}{k}', sx(7.35), sx(7.75), fy - 0.16, fy + 0.16, 0, H - 0.25, 'steel', gg, bevel=0.012)
@@ -91,30 +77,24 @@ for s in (1, -1):
             beam(f'web_{g}{k}{i}', a, b, 0.1, fy - 0.06, fy + 0.06, 'steel', 'archC')
         box(f'worklight_{g}{k}', sx(1.4), sx(4.6), fy - 0.07, fy + 0.07, H - 1.66, H - 1.62, em=em_ramp('work', k, fy, 4.0, 11.0, 1.3))
         box(f'worklightbody_{g}{k}', sx(1.3), sx(4.7), fy - 0.1, fy + 0.1, H - 1.62, H - 1.56, 'dark', 'archC')
-    # ---- Crane rails on corbels
     box(f'rail_{g}', sx(6.3), sx(6.6), Y0, Y1, 6.0, 6.3, 'yellow', g, bevel=0.015)
     box(f'railcap_{g}', sx(6.38), sx(6.52), Y0, Y1, 6.3, 6.36, 'steel', g)
     for k, fy in enumerate(FRAMES):
         prism(f'corbel_{g}{k}', [(sx(7.35), 6.0), (sx(6.3), 6.0), (sx(6.3), 5.86), (sx(7.35), 5.3)], 'Y', fy - 0.12, fy + 0.12, 'steel', 'back' if fy < CAM_POS.y else g)
-    # ---- Aisle stripes and marker lights
     box(f'aisle_{g}', sx(2.36), sx(2.48), Y0, 14.2, 0.0, 0.003, 'hazard_y', 'center')
     for i in range(10):
         y = -6.0 + 2.2 * i
         lathe(f'marker_{g}{i}', [(0, 0.004), (0.04, 0.004), (0.04, 0.0), (0, 0.0)], em=em_ramp('mark', i, y, 0.5, 5.0), segs=12, closed=False, M=T((sx(2.42), y, 0)))
 
-# ---- Roof purlins
 for x in (-6.0, -3.0, 0.0, 3.0, 6.0):
     box('purlin', x - 0.07, x + 0.07, Y0, Y1, H - 0.24, H - 0.02, 'steel', 'archC')
 
-# ================================================================= BAY DOOR (end wall)
 quad('endwall', [(-WD, Y1, 0), (WD, Y1, 0), (WD, Y1, H), (-WD, Y1, H)], 'panel', 'archC')
 a_cargo_bulkhead(T((0, Y1, 0)))
 
-# ================================================================= GANTRY CRANE + the satellite it carries
 BY = PAD.y
 hook_anchor = a_gantry(T(PAD))
 SAT = Vector((0, BY, 3.1))
-# The sling lifting points keep their bay-aligned offsets, independent of the bus heading.
 for a in range(4):
     ang = pi / 4 + a * pi / 2
     bot = SAT + Vector((0.55 * math.cos(ang), 0.55 * math.sin(ang), 0.92))
@@ -122,13 +102,12 @@ for a in range(4):
     q = axis.to_track_quat('Z', 'Y')
     rbox(f'sling{a}', (0.018, 0.018, axis.length), Matrix.Translation((hook_anchor + bot) / 2) @ q.to_matrix().to_4x4(), 'rubber', 'center')
 a_satellite(Matrix.Translation(SAT) @ Matrix.Rotation(math.radians(24), 4, 'Z'))
-# ---- Assembly pad and work stands
 MPD = T(PAD)
 lathe('pad', [(0, 0.16), (3.0, 0.16), (3.0, 0.1), (2.86, 0.1), (2.86, 0)], 'plat', 'center', segs=128, closed=False, M=MPD)
 lathe('pad_led', [(2.88, 0.085), (2.97, 0.085), (2.97, 0.095), (2.88, 0.095)], em='stair', segs=128, M=MPD)
 lathe('pad_ring', [(2.5, 0.16), (2.66, 0.16), (2.66, 0.163), (2.5, 0.163)], 'hazard_y', 'center', segs=128, M=MPD)
 lathe('pad_floor_ring', [(3.6, 0.0), (3.7, 0.0), (3.7, 0.003), (3.6, 0.003)], 'hazard_y', 'center', segs=128, M=MPD)
-for a in range(3):                                                            # work stands around the pad
+for a in range(3):
     ang = math.radians(200 + a * 70); p = PAD + Vector((2.0 * math.cos(ang), 2.0 * math.sin(ang), 0.16))
     lathe(f'stand{a}', [(0, 1.15), (0.05, 1.15), (0.05, 0.05), (0.3, 0.03), (0.3, 0), (0, 0)], 'steel', 'center', segs=16, closed=False, M=T(p))
     rbox(f'standtop{a}', (0.5, 0.36, 0.03), T(p + Vector((0, 0, 1.16)), (0.5, 0, ang + pi / 2)), 'dark', 'center', bevel=0.008)
@@ -136,10 +115,9 @@ spot('key_sat', (3.0, BY - 4.2, 7.0), SAT, 9000, 46)
 spot('key_sat2', (-3.4, BY - 3.6, 7.0), SAT, 4500, 46)
 spot('rim_sat', (-3.2, BY + 2.6, 7.0), SAT, 6000, 44, color=(0.6, 0.82, 1.0))
 spot('pad_fill', (0, BY - 1.0, 7.0), PAD, 1500, 60)
-for d in (-1, 1):                                                             # the bay door is washed from above
+for d in (-1, 1):
     spot(f'door_wash{d}', (d * 3.2, Y1 - 3.2, 7.0), (d * 2.8, Y1 - 0.3, 2.6), 3500, 60, color=(0.75, 0.88, 1.0))
 
-# ================================================================= EXHIBITS (one per project) + placard screens
 def place_rover(M, _i):
     a_rover(M @ Matrix.Rotation(math.radians(-28 if M.translation.x < 0 else 28), 4, 'Z'))
 
@@ -154,17 +132,13 @@ for i, (c, build) in enumerate(EXHIBITS):
     s = 1 if c.x > 0 else -1; g = 'archR' if s > 0 else 'archL'
     spot(f'key{i}', (c.x - s * 1.6, c.y - 1.8, 6.9), top + Vector((0, 0, 0.9)), 4200, 40)
     spot(f'rim{i}', (c.x + s * 1.2, c.y + 2.2, 6.9), top + Vector((0, 0, 0.9)), 1800, 46, color=(0.62, 0.84, 1.0))
-    # placard screen on the wall behind the exhibit
-    # the placard hangs proud of the steel columns on two arms, midway between frames, so nothing stands in front of it
     box(f'bezel{i}', s * 7.14, s * 7.24, c.y - 1.55, c.y + 1.55, 1.5, 3.6, 'dark', g, bevel=0.02)
     for dy in (-1.1, 1.1):
         box(f'arm{i}', s * 7.24, s * WD, c.y + dy - 0.04, c.y + dy + 0.04, 2.5, 2.6, 'steel', g)
     quad(f'FX_screen{i}', [(s * 7.133, c.y + s * 1.45, 1.6), (s * 7.133, c.y - s * 1.45, 1.6), (s * 7.133, c.y - s * 1.45, 3.5), (s * 7.133, c.y + s * 1.45, 3.5)], 'lum_screen', fx='screen', uv=True)
     text3d(f'exno{i}', f'0{i + 1}', 0.42, wall_M(s, s * 7.135, c.y + s * 1.2, 3.85), spacing=1.1)
 
-# ================================================================= WORKSHOP DRESSING (between the exhibits)
 def rack(name, x, y, s, n=4):
-    """Open shelving against the wall, loaded with bins and cases."""
     for dy in (-1.0, 1.0):
         for dx in (0.0, 0.55):
             box(name + 'post', s * (7.75 - dx) - 0.025, s * (7.75 - dx) + 0.025, y + dy - 0.025, y + dy + 0.025, 0, 2.6, 'steel', 'props')
@@ -186,21 +160,17 @@ def bench(name, x0, x1, y):
     box(name + 'vise', x1 - 0.5, x1 - 0.25, y - 0.1, y + 0.1, 0.96, 1.12, 'steel', 'props', bevel=0.02)
     lathe(name + 'lamp', [(0, 0.6), (0.012, 0.6), (0.012, 0.02), (0.08, 0.01), (0.08, 0), (0, 0)], 'chrome', 'props', segs=12, closed=False, M=T(((x0 + x1) / 2, y + 0.3, 0.96)))
     lathe(name + 'shade', [(0, 0.1), (0.05, 0.1), (0.11, 0.0), (0.1, 0.0), (0.045, 0.085), (0, 0.085)], 'yellow', 'props', segs=16, closed=False, M=T(((x0 + x1) / 2, y + 0.18, 1.5), (0.5, 0, 0)))
-# ---- Storage racks and bins
 rack('rackL', 0, 5.0, -1); rack('rackR', 0, 5.0, 1); rack('rackL2', 0, 17.0, -1, 3)
 pressure_door('door', T((7.8, 9.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)
-# ---- Workbenches, vices and bench lamps
 bench('benchL', -7.6, -5.6, -3.0); bench('benchR', 5.4, 7.5, 17.0)
-# ---- Cargo crates and bottle storage
 for ci, (x, y, z, sz, m) in enumerate(((6.9, -1.9, 0, 0.8, 'crate_w'), (6.95, -1.0, 0, 0.62, 'crate_o'), (6.9, -1.75, 0.8, 0.55, 'crate_o'), (-6.6, 20.6, 0, 0.9, 'crate_w'), (-6.75, 21.6, 0, 0.7, 'crate_w'),
                                        (-6.6, 20.7, 0.9, 0.6, 'crate_o'), (6.4, 21.4, 0, 0.85, 'crate_o'), (6.9, 20.4, 0, 0.6, 'crate_w'))):
     box(f'crate{ci}', x - sz / 2, x + sz / 2, y - sz / 2, y + sz / 2, z, z + sz, m, 'props', bevel=0.025)
     box(f'cratelid{ci}', x - sz / 2 - 0.012, x + sz / 2 + 0.012, y - sz / 2 - 0.012, y + sz / 2 + 0.012, z + sz * 0.44, z + sz * 0.5, 'dark', 'props')
-for d in (-1, 1):                                                             # gas bottles chained by the door
+for d in (-1, 1):
     for k in range(3):
         lathe(f'bottle{d}{k}', [(0, 1.5), (0.03, 1.5), (0.04, 1.42), (0.11, 1.3), (0.115, 0.02), (0.1, 0), (0, 0)], ('wall2', 'crate_o', 'white')[k], 'props', segs=20, closed=False, M=T((d * (6.3 + k * 0.27), 24.2, 0)))
 
-# ================================================================= WORKING DETAIL (assets_tech.py)
 a_toolchest(T((-6.95, 6.7, 0))); a_toolchest(T((7.0, 6.9, 0)) @ Matrix.Rotation(pi, 4, 'Z'))
 a_cabinet(T((-7.82, 13.5, 0)), rise=3.15); a_cabinet(T((-7.82, 9.6, 0)), rise=3.15); a_cabinet(T((7.82, 13.5, 0)) @ Matrix.Rotation(pi, 4, 'Z'), rise=3.15); a_cabinet(T((7.82, 14.4, 0)) @ Matrix.Rotation(pi, 4, 'Z'), h=1.6, rise=3.55)
 for k, fy in enumerate(FRAMES):
@@ -210,20 +180,19 @@ a_pallet(T((-6.7, 8.4, 0), (0, 0, 0.3))); a_pallet(T((6.9, 10.9, 0), (0, 0, -1.4
 for x, y, m_ in ((-6.9, -0.6, 't_paint'), (-6.35, -0.25, 't_orange'), (-7.0, 0.1, 't_paint')): a_drum(T((x, y, 0)), 'props', m_)
 a_stepladder(T((-6.9, 15.7, 0), (0, 0, 0.4))); a_pegboard(T((7.98, 17.0, 1.25)) @ Matrix.Rotation(pi, 4, 'Z'))
 a_floorhatch(T((-3.4, 7.5, 0))); a_floorhatch(T((3.4, 7.5, 0)))
-for c, _ in EXHIBITS:                                                          # each exhibit roped off on three sides, open to the aisle
+for c, _ in EXHIBITS:
     out = 1 if c.x > 0 else -1
     a_stanchion(T((c.x + out * 1.95, c.y - 1.95, 0)), 'props', L=3.9)
     for yy in (c.y - 1.95, c.y + 1.95): a_stanchion(T((c.x - 1.95, yy, 0)) @ Matrix.Rotation(-pi / 2, 4, 'Z'), 'props', L=3.9, posts=(3.9,) if out < 0 else (0,))
 for s_ in (-1, 1): a_duct(T((s_ * 6.95, Y0 + 1.0, 5.0)), 'archL' if s_ < 0 else 'archR', L=Y1 - Y0 - 2.0)
 
-# ================================================================= CAMERA / RENDER
 cam = bpy.data.cameras.new('Hero'); cam.sensor_fit = 'VERTICAL'; cam.angle_y = math.radians(50); cam.clip_start = 0.1; cam.clip_end = 5000
 co = bpy.data.objects.new('Hero', cam); scene.collection.objects.link(co)
 co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z', 'Y').to_euler(); scene.camera = co
 w = bpy.data.worlds.new('Dark'); w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Color'].default_value = (0, 0, 0, 1); scene.world = w
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
-light_level(3)                      # brighter fittings throughout: a workshop
+light_level(3)
 scene['lobby'] = dict(room='projects', focus=[{'c': [-4.6, 2.5, 1.3], 'r': 1.5, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 2.5, 1.4], 'r': 1.6, 'dir': [-1, -0.9, 0.25]}, {'c': [-4.6, 12.5, 1.3], 'r': 1.3, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 12.5, 1.6], 'r': 1.3, 'dir': [-1, -0.9, 0.25]}, {'c': [0, 19, 3.1], 'r': 3.0, 'dir': [0.15, -1, -0.1]}], exposure=1.1, doors=DOORS, screens=[f'FX_screen{i}' for i in range(4)], cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=2.0), y0=Y0, y1=Y1, dust=dict(x=14, y0=Y0, y1=Y1, h=8),
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})

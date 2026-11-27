@@ -1,5 +1,4 @@
-// plaincheck-selftest.mjs: the plain-page checks must be able to fail. Each page below breaks exactly one rule and the check
-// of that name has to say so; the good page has to pass them all.
+// Self test that each plain page check can fail
 import { chromium } from 'playwright';
 import { plainChecks } from './plaincheck.mjs';
 const page = (body, css = '') => `<!doctype html><html><head><style>html{background:#04060a;color:#dcecf5}body{margin:0;background:#04060a}a{color:#7fe3ff}pre{overflow-x:auto}${css}</style></head><body><main id="page"><article class="post">${body}</article></main></body></html>`;

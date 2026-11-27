@@ -1,3 +1,4 @@
+// Tour check with keys, the next button and screenshots
 import { chromium } from 'playwright';
 const [url, n = 2] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });

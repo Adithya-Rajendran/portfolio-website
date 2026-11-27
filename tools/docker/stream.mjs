@@ -1,4 +1,4 @@
-// Frames, bytes and first-frame time while a room streams its textures in.  node stream.mjs <url> [mbps] [rtt ms] [runs]
+// Frames, bytes and first frame time while a room streams its textures
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

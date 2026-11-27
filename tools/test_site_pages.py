@@ -1,17 +1,9 @@
-"""Tests for the pages tools/site.py writes from the projects and the profile (docs/v1-contracts.md §8), on the fixtures in
-tools/testdata/site/ (every field, every awkward character, and a profile with only what is required), and a
-faithfulness check of the real data/ that reads the generated HTML with html.parser, not with the generator's code.
-    python3 -m unittest tools/test_site_pages.py          (from the repository root; -v lists each test)
-Needs cwebp under ~/.local/opt/webp like site.py itself; the images are encoded once and copied between runs.
-
-The fixture profile points at real things in data/ (content.py checks a profile's references there): the post
-my-homelab (tools/testdata/site/posts/ has a stand-in of that name), the projects homelab and robot-scene-memory (the
-fixture projects have those names), and real images and files."""
+# Tests for the project, profile and other pages that tools/site.py writes
 import contextlib, hashlib, importlib.util, io, json, os, re, shutil, tempfile, unittest
 from html.parser import HTMLParser
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
-spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))   # `import site` is Python's
+spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))
 s = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s)
 FIX = os.path.join(TOOLS, 'testdata', 'site')
@@ -48,7 +40,6 @@ class Node:
 
 
 class Tree(HTMLParser):
-    """A DOM from html.parser that records every unbalanced tag and every id."""
     def __init__(self, text):
         super().__init__(convert_charrefs=True)
         self.root = self.cur = Node('#root', {})
@@ -81,7 +72,6 @@ class Tree(HTMLParser):
 
 
 def generate(out, posts=POSTS, projects=PROJECTS, profile=PROFILE):
-    """Run site.py's main(); return what it printed."""
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
         s.main(['--posts', posts, '--projects', projects, '--profile', profile, '--out', out])
@@ -102,12 +92,10 @@ def squash(t):
     return ' '.join(t.split())
 
 
-URL = r'\((?:[^()\s]|\([^()\s]*\))*\)'                  # a link's (destination), parentheses in it balanced
+URL = r'\((?:[^()\s]|\([^()\s]*\))*\)'
 
 
 def md_text(t):
-    """Inline Markdown as a reader sees it, worked out here without the generator: [text](url) is its text, and the
-    marks and escapes go."""
     t = re.sub(r'\[((?:[^\]\\]|\\.)*)\]' + URL, r'\1', t)
     return squash(re.sub(r'\\(.)', r'\1', t.replace('**', '').replace('`', '').replace('*', '')))
 
@@ -117,10 +105,8 @@ def words(t):
 
 
 def body_words(md):
-    """The words of a Markdown body a reader reads: link targets, image lines, fence lines and markup aside. Code is
-    shown as it is."""
     md = re.sub(r'^!\[.*$', ' ', md, flags=re.M)
-    md = re.sub(r'^```.*$', ' ', md, flags=re.M)         # a fence line: its language is not shown
+    md = re.sub(r'^```.*$', ' ', md, flags=re.M)
     md = re.sub(r'\]' + URL, ']', md)
     return words(md)
 
@@ -138,7 +124,7 @@ class Pages(unittest.TestCase):
         os.makedirs(cls.min_posts)
         cls.minimal = os.path.join(cls.tmp, 'minimal')
         generate(cls.minimal, cls.min_posts, cls.min_projects, MINIMAL)
-        cls.real = os.path.join(cls.tmp, 'real')               # the real data, for the faithfulness check
+        cls.real = os.path.join(cls.tmp, 'real')
         generate(cls.real, os.path.join(s.DATA, 'posts'), os.path.join(s.DATA, 'projects'), os.path.join(s.DATA, 'profile.json'))
         cls.profile = s.load_profile(PROFILE)
         cls.projects = {p['slug']: p for p in s.load_projects(PROJECTS)}
@@ -168,8 +154,6 @@ class Pages(unittest.TestCase):
     def ld(self, rel, out=None):
         return json.loads(next(n for n in self.tree(rel, out).all('script') if n.attrs.get('type') == 'application/ld+json').text())
 
-    # ------------------------------------------------------------ every page
-
     def test_the_pages(self):
         self.assertEqual(sorted(self.all_pages()), sorted(list(PAGES) + [f'portfolio/{p}/index.html' for p in self.projects]))
 
@@ -183,7 +167,7 @@ class Pages(unittest.TestCase):
             for rel in self.all_pages(out):
                 m = pattern.fullmatch(read(out, rel))
                 self.assertTrue(m, rel)
-                self.assertNotIn('<', m[1], rel)           # the title is text
+                self.assertNotIn('<', m[1], rel)
                 self.assertTrue(m[3].startswith('<main id="page">\n') and m[3].endswith('\n</main>'), rel)
 
     def test_well_formed_unique_ids_and_no_scripts(self):
@@ -196,7 +180,7 @@ class Pages(unittest.TestCase):
                 main_ids = [n.attrs['id'] for n in t.root.one('main').all() if 'id' in n.attrs]
                 self.assertFalse(set(main_ids) & (shell_ids | set(s.RUNTIME_IDS)), rel)
                 scripts = sorted(n.attrs.get('type') or '' for n in t.root.all('script'))
-                self.assertEqual(scripts, ['', 'application/ld+json', 'importmap', 'module'], rel)   # the shell's three, and JSON-LD
+                self.assertEqual(scripts, ['', 'application/ld+json', 'importmap', 'module'], rel)
                 self.assertFalse(list(t.root.one('main').all('script')), rel)
                 for tag in ('form', 'input', 'textarea', 'button', 'iframe', 'style'):
                     self.assertFalse(list(t.root.one('main').all(tag)), (rel, tag))
@@ -222,7 +206,7 @@ class Pages(unittest.TestCase):
             self.assertEqual((ld['@context'], ld['@type'], ld['url']), ('https://schema.org', kind, s.SITE + path), rel)
             raw = read(self.out, rel)
             inner = raw[raw.index('<script type="application/ld+json">') + 35:]
-            self.assertNotIn('<', inner[:inner.index('</script>')], rel)   # no text can close the element
+            self.assertNotIn('<', inner[:inner.index('</script>')], rel)
         ld = self.ld('portfolio/index.html')
         self.assertEqual([i['url'] for i in ld['mainEntity']['itemListElement']],
                          [f'{s.SITE}/portfolio/{p["slug"]}/' for p in sum(s.listing(self.projects.values()), [])])
@@ -243,11 +227,10 @@ class Pages(unittest.TestCase):
         w, h, _ = s.image_info(os.path.join(self.out, metas['og:image'][len(s.SITE) + 1:]))
         self.assertEqual((metas['og:image:width'], metas['og:image:height']), (str(w), str(h)))
         metas = {m.attrs.get('property') or m.attrs.get('name'): m.attrs['content'] for m in self.tree('portfolio/quiet-featured/index.html').all('meta') if 'content' in m.attrs}
-        self.assertEqual(metas['og:image:alt'], 'Quiet, though featured')   # a decorative cover: the title says what it shows
+        self.assertEqual(metas['og:image:alt'], 'Quiet, though featured')
         self.assertNotIn('og:image', {m.attrs.get('property') for m in self.tree('portfolio/robot-scene-memory/index.html').all('meta')})
 
     def test_escaping(self):
-        """Every awkward string arrives intact as text, as an attribute and in JSON-LD, and no markup is made from it."""
         p, prof = self.projects['homelab'], self.profile
         t = self.tree('portfolio/homelab/index.html')
         self.assertEqual(t.one('h1').text(), p['title'])
@@ -265,7 +248,7 @@ class Pages(unittest.TestCase):
         self.assertNotIn('javascript:', main.lower())
         t = self.tree('about/index.html')
         self.assertEqual(t.one('h1').text(), prof['name'])
-        self.assertEqual(t.one('p', 'post-lede').text(), prof['tagline'])     # long, and whole
+        self.assertEqual(t.one('p', 'post-lede').text(), prof['tagline'])
         self.assertEqual(t.one('head').one('title').text(), f'About — {prof["name"]}')
         self.assertEqual(self.ld('about/index.html')['description'], prof['seo_description'])
         for rel in PAGES:
@@ -274,8 +257,6 @@ class Pages(unittest.TestCase):
             self.assertNotIn('</script>', main, rel)
             self.assertNotIn('<b>not bold', main, rel)
             self.assertNotIn('<script>', main, rel)
-
-    # ------------------------------------------------------------ a project
 
     def test_project_every_part(self):
         p = self.projects['homelab']
@@ -333,15 +314,15 @@ class Pages(unittest.TestCase):
 
     def test_project_with_only_what_is_required(self):
         art = self.main('portfolio/robot-scene-memory/index.html').one('article')
-        self.assertEqual([c.tag for c in art.kids()], ['header', 'footer'])  # no cover, no body
+        self.assertEqual([c.tag for c in art.kids()], ['header', 'footer'])
         self.assertEqual([c.tag + '.' + '.'.join(c.cls()) for c in art.one('header').kids()], ['p.post-meta', 'h1.', 'p.post-lede'])
-        self.assertEqual(squash(art.one('p', 'post-meta').text()), 'Active · Hardware')   # no dates: no period
+        self.assertEqual(squash(art.one('p', 'post-meta').text()), 'Active · Hardware')
         art = self.main('portfolio/robot-scene-memory/index.html', self.minimal).one('article')
-        self.assertEqual([c.tag for c in art.kids()], ['header'])   # the only project: no next
+        self.assertEqual([c.tag for c in art.kids()], ['header'])
         art = self.main('portfolio/quiet-featured/index.html').one('article')
-        self.assertEqual(art.one('img').attrs['alt'], '')           # no cover_alt: decorative
+        self.assertEqual(art.one('img').attrs['alt'], '')
         self.assertFalse(list(art.all('figcaption')))
-        self.assertEqual([h.attrs['id'] for h in art.all('h2')], ['problem', 'approach'])   # no outcome
+        self.assertEqual([h.attrs['id'] for h in art.all('h2')], ['problem', 'approach'])
         self.assertEqual(squash(art.one('p', 'post-meta').text()), 'Active · 2024 – now · Infrastructure, Software')
         self.assertEqual(squash(self.main('portfolio/featured-two/index.html').one('p', 'post-meta').text()), 'Complete · 2026 · Research, Software')
 
@@ -351,10 +332,8 @@ class Pages(unittest.TestCase):
         self.assertEqual(P(started='2026-01-01', ended='2026-01-01', date_precision='year'), '2026')
         self.assertEqual(P(started='2022-01-01', date_precision='year', status='active'), '2022 – now')
         self.assertEqual(P(started='2024-01-01', ended='2025-12-31', date_precision='year', dates_approximate=True), 'c. 2024 – 2025')
-        self.assertEqual(P(started='2024-03-01', date_precision='month'), 'Mar 2024')       # completed, no end: the start
+        self.assertEqual(P(started='2024-03-01', date_precision='month'), 'Mar 2024')
         self.assertIsNone(P(status='active'))
-
-    # ------------------------------------------------------------ /portfolio/
 
     def test_portfolio_list(self):
         sec = self.main('portfolio/index.html').one('section', 'post-list')
@@ -362,7 +341,6 @@ class Pages(unittest.TestCase):
         self.assertEqual((sec.one('h1').text(), sec.one('p', 'post-lede').text()), ('Projects', self.profile['projects_intro']))
         self.assertEqual([(h.attrs['id'], h.text()) for h in sec.kids('h2')], [('selected', 'Selected projects'), ('more', 'Experiments & systems')])
         groups = [[li.kids('a')[0].attrs['href'].split('/')[2] for li in ol.kids('li')] for ol in sec.kids('ol')]
-        # featured by rank, then by order; the quiet one (featured 3) is never selected
         self.assertEqual(groups, [['homelab', 'featured-two', 'robot-scene-memory'], ['quiet-featured', 'unranked']])
         lis = {li.kids('a')[0].attrs['href'].split('/')[2]: li for ol in sec.kids('ol') for li in ol.kids('li')}
         self.assertEqual([k for k, li in lis.items() if 'quiet' in li.cls()], ['quiet-featured'])
@@ -381,8 +359,6 @@ class Pages(unittest.TestCase):
         sel, more = s.listing([mk('a', 1), mk('b', 2, featured=1), mk('c', 3)])
         self.assertEqual(([p['slug'] for p in sel], [p['slug'] for p in more]), (['b', 'a', 'c'], []))
         self.assertEqual(s.listing([]), ([], []))
-
-    # ------------------------------------------------------------ /about/
 
     def test_about(self):
         prof = self.profile
@@ -418,14 +394,12 @@ class Pages(unittest.TestCase):
     def test_about_with_only_what_is_required(self):
         body = self.main('about/index.html', self.minimal).one('div', 'post-body')
         self.assertEqual([h.attrs['id'] for h in body.all('h2')], ['story', 'availability', 'elsewhere'])
-        self.assertEqual(body.one('p', 'post-availability').text(), 'Closed')   # no date, nothing sought
-        self.assertEqual(body.one('p', 'post-cta').one('a').attrs['href'], '/contact/')   # no hiring route
+        self.assertEqual(body.one('p', 'post-availability').text(), 'Closed')
+        self.assertEqual(body.one('p', 'post-cta').one('a').attrs['href'], '/contact/')
         contact = self.main('contact/index.html', self.minimal)
-        self.assertEqual(list(contact.all('p', 'post-cta')), [])                 # on the contact page that link would lead to itself
-        self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')], ['https://github.com/example'])   # no résumé
+        self.assertEqual(list(contact.all('p', 'post-cta')), [])
+        self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')], ['https://github.com/example'])
         self.assertFalse(os.path.exists(os.path.join(self.minimal, 'resume')))
-
-    # ------------------------------------------------------------ /experience/
 
     def test_experience(self):
         prof = self.profile
@@ -439,11 +413,10 @@ class Pages(unittest.TestCase):
         self.assertEqual([e.one('h2').text() for e in entries], [t['title'] for t in prof['timeline']])
         self.assertEqual([e.one('p', 'post-meta').text() for e in entries], [
             'Org <&> "Co" · Aug 2026 – now (expected 2028) · Remote & <home> · Full-time',
-            'Acme · May 2024 – Jul 2025',                  # "Internship" goes unsaid beside "Intern"
+            'Acme · May 2024 – Jul 2025',
             'A University · 2019 – 2023'])
         self.assertEqual([e.one('img').attrs['alt'] for e in entries[:2]], ['A logo <alt>', ''])
         self.assertEqual([li.text() for li in entries[0].one('ul').kids('li')], prof['timeline'][0]['highlights'])
-        # the timeline id "skills" is the entry's: the section heading of that name takes the next
         self.assertEqual([(h.tag, h.attrs['id']) for h in body.kids() if h.tag in ('h2', 'h3')],
                          [('h2', 'skills-2'), ('h3', 'programming-languages'), ('h3', 'skills-3'), ('h2', 'credentials'),
                           ('h2', 'talks-and-papers'), ('h2', 'resume')])
@@ -467,8 +440,6 @@ class Pages(unittest.TestCase):
         self.assertEqual([h.attrs['id'] for h in body.all() if h.tag in ('h2', 'h3') and 'id' in h.attrs], ['skills', 'tools'])
         self.assertEqual(body.one('section', 'entry').one('p', 'post-meta').text(), 'School · Sep 2020')
 
-    # ------------------------------------------------------------ /contact/
-
     def test_contact(self):
         prof = self.profile
         art = self.main('contact/index.html').one('article')
@@ -486,7 +457,6 @@ class Pages(unittest.TestCase):
                          + [('/resume/Adithya-Rajendran-Research-CV.pdf', 'Résumé (PDF)', '_blank', 'noopener')])
         self.assertNotIn('Credly', read(self.out, 'contact/index.html'))
         self.assertNotIn('mailto:', read(self.out, 'contact/index.html'))
-        # real data: LinkedIn (marked to write), GitHub, Résumé in order; Credly stays on /about/
         real_contact = self.main('contact/index.html', self.real).one('div', 'post-body')
         self.assertEqual([h.attrs['id'] for h in real_contact.kids('h2')], ['elsewhere', 'availability'])
         self.assertEqual([(a.text(), a.attrs.get('target'), a.attrs.get('rel'))
@@ -494,12 +464,9 @@ class Pages(unittest.TestCase):
                          [('LinkedIn', '_blank', 'noopener'), ('GitHub', '_blank', 'noopener'),
                           ('Résumé (PDF)', '_blank', 'noopener')])
         self.assertIn('Credly', [a.text() for a in self.main('about/index.html', self.real).one('ul', 'post-links').all('a')])
-        # minimal profile: contact_links omitted falls back to social_links
         body = self.main('contact/index.html', self.minimal).one('div', 'post-body')
         self.assertEqual(list(body.kids('section')), [])
         self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')], ['https://github.com/example'])
-
-    # ------------------------------------------------------------ links
 
     def test_every_link_is_allowed_and_leads_somewhere(self):
         for out in (self.out, self.minimal, self.real):
@@ -516,7 +483,7 @@ class Pages(unittest.TestCase):
                             continue
                         self.assertTrue(u.startswith('/') and not u.startswith('//'), (rel, u))
                         path, _, frag = u.partition('#')
-                        self.assertNotIn('?', path, (rel, u))   # §8 pages link the projects' pages, not a query
+                        self.assertNotIn('?', path, (rel, u))
                         target = os.path.join(out, path.lstrip('/'), 'index.html' if path.endswith('/') else '')
                         self.assertTrue(os.path.isfile(target.rstrip('/')), (rel, u))
                         if frag:
@@ -529,14 +496,10 @@ class Pages(unittest.TestCase):
                          '<a href="/portfolio/homelab/">x</a> <a href="/portfolio/">y</a> <a href="/portfolio/nope/">z</a>')
         self.assertEqual(len(d.warnings), 1)
         self.assertIn('no project nope', d.warnings[0])
-        post = s.Doc('t', 1)                               # and in a post
+        post = s.Doc('t', 1)
         self.assertEqual(s.render_inline('[x](/portfolio/homelab/)', post), '<a href="/portfolio/homelab/">x</a>')
 
-    # ------------------------------------------------------------ the JSON
-
     def check_shape(self, value, shape, where):
-        """shape: a type, a tuple of types, [shape] for a list of them, or {key: shape} for a record with exactly these
-        keys in this order."""
         if isinstance(shape, dict):
             self.assertIsInstance(value, dict, where)
             self.assertEqual(list(value), list(shape), where)
@@ -577,7 +540,7 @@ class Pages(unittest.TestCase):
             self.assertRegex(doc['v'], r'^[0-9a-f]{8}$')
             self.assertEqual(doc['v'], self.version(doc))
             src = s.load_projects(folder)
-            self.assertEqual([p['slug'] for p in doc['projects']], [p['slug'] for p in src])   # the projects' own order
+            self.assertEqual([p['slug'] for p in doc['projects']], [p['slug'] for p in src])
             for j, p in zip(doc['projects'], src):
                 self.assertEqual((j['url'], j['name'], j['title'], j['summary'], j['status'], j['types'], j['role'], j['technologies'], j['featured'], j['quiet']),
                                  (f'/portfolio/{p["slug"]}/', p['name'], p['title'], p['summary'], p['status'], p['types'], p['role'], p['technologies'], p['featured'], bool(p['quiet'])))
@@ -589,7 +552,7 @@ class Pages(unittest.TestCase):
                          ('c. Dec 2022 – Mar 2023', None, '2024 – now'))
         real = {p['slug']: p for p in json.loads(read(self.real, 'portfolio/index.json'))['projects']}
         self.assertEqual((real['gmail-spam-filter']['period'], real['driving-detection-evaluation']['period'], real['homelab']['period']),
-                         ('Dec 2022 – Oct 2026', '2026', '2022 – now'))           # the contract's examples
+                         ('Dec 2022 – Oct 2026', '2026', '2022 – now'))
 
     def test_profile_json(self):
         for out, path in ((self.out, PROFILE), (self.minimal, MINIMAL), (self.real, None)):
@@ -620,12 +583,9 @@ class Pages(unittest.TestCase):
         self.assertEqual(doc['resume'], '/resume/Adithya-Rajendran-Research-CV.pdf')
         self.assertIsNone(json.loads(read(self.minimal, 'profile.json'))['resume'])
         real = json.loads(read(self.real, 'profile.json'))
-        self.assertEqual({t['id']: t['period'] for t in real['timeline']}['canonical-2024'], 'May 2024 – Jul 2026')   # the contract's example
-
-    # ------------------------------------------------------------ faithfulness, read from the HTML alone
+        self.assertEqual({t['id']: t['period'] for t in real['timeline']}['canonical-2024'], 'May 2024 – Jul 2026')
 
     def test_faithful_to_the_data(self):
-        """Every project's and the profile's words appear in the text of their pages: the real data and the fixtures."""
         for out, posts, projects, profile in ((self.real, None, None, None), (self.out, POSTS, PROJECTS, PROFILE)):
             for p in s.load_projects(projects):
                 t = self.main(f'portfolio/{p["slug"]}/index.html', out)
@@ -684,8 +644,6 @@ class Pages(unittest.TestCase):
                 self.assertIn(squash(p['title']), listing)
                 self.assertIn(squash(p['summary']), listing)
 
-    # ------------------------------------------------------------ writing
-
     def test_second_run_writes_nothing(self):
         out = self.fresh()
         before = snapshot(out)
@@ -711,13 +669,13 @@ class Pages(unittest.TestCase):
         cover = [m for m in os.listdir(os.path.join(out, 'media')) if m.startswith('0f0e342e')]
         self.assertEqual(len(cover), 1)
         mine = {'index.html', 'js/hand-written.js', 'media/hand-placed.webp', 'portfolio/notes.txt', 'about/extra.txt'}
-        for rel in mine:                                   # files nobody generated, in and beside the generated folders
+        for rel in mine:
             os.makedirs(os.path.dirname(os.path.join(out, rel)), exist_ok=True)
             with open(os.path.join(out, rel), 'w') as f:
                 f.write('kept')
-        with open(os.path.join(out, s.RECORD), 'a') as f:  # a record edited to name things that are not the generator's
+        with open(os.path.join(out, s.RECORD), 'a') as f:
             f.write('index.html\njs/hand-written.js\n../outside.txt\n/etc/passwd\n'
-                    'blog/../index.html\nmedia/../js/hand-written.js\nportfolio/../index.html\nprofile.jsonx\nabout/./../index.html\n')   # ... or that climb out of its folders
+                    'blog/../index.html\nmedia/../js/hand-written.js\nportfolio/../index.html\nprofile.jsonx\nabout/./../index.html\n')
         log = generate(out, projects=projects)
         self.assertEqual(sorted(l for l in log.splitlines() if l.startswith('removed')),
                          ['removed media/' + cover[0], 'removed portfolio/quiet-featured/index.html'])

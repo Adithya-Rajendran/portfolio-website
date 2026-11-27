@@ -1,6 +1,5 @@
 #!/bin/bash
-# Screenshot the site from a browser inside the Playwright Docker image (Chromium uses the host's Intel GPU).
-#   [ORIGIN=http://host:port] [OUT=/dir] tools/dshot.sh <name> [engine] [w] [h] [mouseX] [mouseY] [hud] [query]   -> $OUT/<name>.png
+# Screenshot of the site from a browser in the Playwright Docker image
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${1:?usage: tools/dshot.sh <name> [engine] [w] [h] [mouseX] [mouseY] [hud] [query]}"
 OUT="${OUT:-/tmp/dshot}"

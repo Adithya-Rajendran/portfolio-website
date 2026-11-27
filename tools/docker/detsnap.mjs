@@ -1,7 +1,4 @@
-// Deterministic snapshots (tools/detsnap.sh, tools/ci/run.sh pictures).
-//   node detsnap.mjs <origin> <outdir> <defaultFrames> <name=query[|frames=N][|action=...]...>
-// Time is faked (Playwright clock installed already-paused, exact 16 ms steps) and Math.random is seeded per calling
-// file, so two runs of the same code give bit-identical pictures.
+// Deterministic snapshots for tools/detsnap.sh and the pictures tier
 import { chromium } from 'playwright';
 
 const [origin, out, frames, ...jobs] = process.argv.slice(2);
@@ -71,8 +68,6 @@ for (const raw of jobs) {
   const { name, q, frames: jobFrames, action } = parseJob(raw);
   const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
-  // Install and pause atomically at the same timestamp, then trigger _replayLogOnce() at document_start so
-  // Playwright's 100 ms real-time inject timer cannot fire before module scripts load.
   await p.clock.pauseAt(new Date('2026-11-20T12:00:00Z'));
   await p.addInitScript(() => { performance.now(); });
   await p.addInitScript(SEED);
@@ -94,13 +89,12 @@ for (const raw of jobs) {
     if (Date.now() - t0 > LOAD_WAIT_MS) { stuck(net, 'loading', LOAD_WAIT_MS); break; }
     await new Promise((r) => setTimeout(r, 100));
   }
-  await new Promise((r) => setTimeout(r, 1500));                    // image decodes
+  await new Promise((r) => setTimeout(r, 1500));
   let streamed = false;
   for (let i = 0; i < 1200 && !(streamed = await p.evaluate(() => window.__lobby?.scene?.userData?.stream?.settled?.() ?? true)); i++) await new Promise((r) => setTimeout(r, 100));
   if (!streamed) { console.error(`[${name}] textures still streaming in after 120 s: not pictured`); failed = true; await ctx.close(); continue; }
   settled = true;
 
-  // Ensure ?focus= poses settle completely even when called with a smaller default frame count (e.g. run.sh snap 60).
   const hasFocusParam = new URLSearchParams(q.split('?')[1] || '').has('focus');
   const initialFrames = hasFocusParam && !action ? Math.max(jobFrames, 150) : jobFrames;
 
@@ -150,8 +144,6 @@ for (const raw of jobs) {
     }
   }
 
-  // Hide all DOM overlays (#hud, #lock, #cue, #inspectbar, #reader, #comms, #loader, #stepin, #page) without
-  // collapsing layout, then step 2 deterministic frames so WebGL renders clean and CSS transitions never race.
   await p.evaluate(() => {
     if (!document.getElementById('detsnap-hide')) {
       const st = document.createElement('style');

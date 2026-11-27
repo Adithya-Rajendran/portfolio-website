@@ -1,7 +1,4 @@
-// plaincheck.mjs: what a page must be when it is only a page (no JavaScript, or no WebGL). Used by plainpage.mjs.
-//   plainChecks(page, kind): runs inside the page and returns { name: [findings] } (an empty list is a pass) and { notes }.
-// It looks at the page as it is rendered, not at its markup: the scroll, what is on top at a point, headings, image text,
-// link names, the contrast of every piece of text against what is behind it, and anything sticking out sideways.
+// Checks of a page when it is only a page, with no JavaScript or no WebGL
 export async function plainChecks(p, kind) {
   await p.evaluate(() => scrollTo(0, 0));
   const out = await p.evaluate(async (kind) => {
@@ -10,14 +7,12 @@ export async function plainChecks(p, kind) {
     const txt = (e) => (e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40);
     if (!root) { R.scroll.push('no main#page in the document'); return R; }
 
-    // ---- it scrolls, and the end of it can be reached
     const se = document.scrollingElement, max = se.scrollHeight - Hh;
     if (max > 0) { scrollTo(0, 400); if (scrollY < 1) R.scroll.push(`scrollTo(0, 400) left scrollY at ${scrollY} (document ${se.scrollHeight} px, window ${Hh})`); scrollTo(0, 0); }
     else R.notes.push(`the page is not taller than the window (${se.scrollHeight} <= ${Hh})`);
     const style = getComputedStyle(document.documentElement);
     if (style.overflowY === 'hidden' && max > 0) R.scroll.push('html has overflow-y: hidden');
 
-    // ---- not covered: h1 and a paragraph first (the brief's check), then every block at every scroll position
     const top = (e) => { const r = e.getClientRects()[0], t = r && document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(r.height / 2, 30)); return t; };
     const h1 = root.querySelector('h1'), para = root.querySelector('p:not(.post-meta):not(.post-lede), .post-lede');
     for (const [what, e] of [['h1', h1], ['a paragraph', para]]) {
@@ -43,7 +38,6 @@ export async function plainChecks(p, kind) {
     if (last && lr.bottom > Hh + 1) R.scroll.push(`at the end of the page the last block ends at ${Math.round(lr.bottom)}, below the window (${Hh})`);
     scrollTo(0, 0);
 
-    // ---- headings
     const hs = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')];
     if (document.querySelectorAll('h1').length !== 1) R.h1.push(`${document.querySelectorAll('h1').length} h1 in the document`);
     let prev = 0; for (const h of hs) { const l = +h.tagName[1]; if (l - prev > 1) R.levels.push(`${h.tagName.toLowerCase()} "${txt(h)}" follows ${prev ? 'h' + prev : 'nothing'}`); prev = l; }
@@ -51,7 +45,6 @@ export async function plainChecks(p, kind) {
     if (kind === 'post' && !root.querySelector('article.post h1')) R.h1.push('the h1 is not in the article');
     if (kind === 'list' && !root.querySelector('.post-list h1')) R.h1.push('the h1 is not in the list');
 
-    // ---- images and links
     for (const i of document.images) if (!(i.getAttribute('alt') || '').trim()) R.alt.push(`img ${i.getAttribute('src')} has alt ${JSON.stringify(i.getAttribute('alt'))}`);
     for (const a of document.querySelectorAll('a')) {
       const t = (a.textContent || '').trim() || (a.getAttribute('aria-label') || '').trim() || [...a.querySelectorAll('img')].map((i) => i.alt).join('').trim() || (a.getAttribute('title') || '').trim();
@@ -59,15 +52,13 @@ export async function plainChecks(p, kind) {
       if (!a.getAttribute('href')) R.links.push(`an <a> without href: "${txt(a)}"`);
     }
 
-    // ---- contrast: the colour of each piece of text over what lies behind it (the ancestors' backgrounds, composited; where
-    // a background image is a gradient, the lightest of its colours: the least contrast a light text can have)
     const cv = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
     const rgba = (s) => { cv.clearRect(0, 0, 1, 1); cv.fillStyle = '#000'; cv.fillStyle = s; cv.fillRect(0, 0, 1, 1); const d = cv.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3] / 255]; };
     const over = (f, b) => [0, 1, 2].map((i) => f[i] * f[3] + b[i] * (1 - f[3])).concat(1), lum = (c) => { const l = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2]; };
     const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-    const backs = (e, pseudo) => {                                // every background the text may sit on: a list of opaque colours
+    const backs = (e, pseudo) => {
       const chain = []; for (let n = e; n; n = n.parentElement) chain.push(n);
-      let bases = [[4, 6, 10, 1]];                                 // not painted at all: the canvas (white by default; every html here paints its own)
+      let bases = [[4, 6, 10, 1]];
       for (const n of chain.reverse()) {
         const s = getComputedStyle(n, n === e ? pseudo : undefined), c = rgba(s.backgroundColor); if (c[3] > 0) bases = bases.map((b) => over(c, b));
         const cols = [...(s.backgroundImage.match(/rgba?\([^)]*\)/g) ?? [])].map(rgba).filter((c) => c[3] > 0);
@@ -91,7 +82,6 @@ export async function plainChecks(p, kind) {
     }
     R.contrast.push(...bad.values()); R.notes.push(`lowest contrast against its need: ${low[1]}`);
 
-    // ---- nothing sticks out sideways; wide code scrolls inside itself
     const de = document.documentElement;
     if (de.scrollWidth > W) R.overflow.push(`the page is ${de.scrollWidth} px wide in a ${W} px window`);
     if (document.body.scrollWidth > W) R.overflow.push(`the body is ${document.body.scrollWidth} px wide in a ${W} px window`);

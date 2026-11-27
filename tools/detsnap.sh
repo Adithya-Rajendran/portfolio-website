@@ -1,7 +1,5 @@
 #!/bin/bash
-# Deterministic 1920x1080 snapshots of a fixed list of states (fake clock, seeded randomness; see docker/detsnap.mjs).
-#   [ORIGIN=http://host:port] [ONLY=<regex>] [OUT=/dir] tools/detsnap.sh <name> [frames]   -> $OUT/<state>.png
-# Compare two sets with tools/pdiff.sh <nameA> <nameB>. Two runs of the same code differ by exactly 0.
+# Deterministic 1920x1080 snapshots of a fixed list of states
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${1:?usage: tools/detsnap.sh <name> [frames]}"
 O="${OUT:-/tmp/detsnap/$NAME}"
@@ -32,7 +30,7 @@ resolve_assets() {
 }
 
 J=()
-rp() { case "$1" in lobby) echo /;; about) echo /about/;; projects) echo /portfolio/;; experience) echo /experience/;; writing) echo /blog/;; comms) echo /contact/;; esac; }   # a room is named by its path
+rp() { case "$1" in lobby) echo /;; about) echo /about/;; projects) echo /portfolio/;; experience) echo /experience/;; writing) echo /blog/;; comms) echo /contact/;; esac; }
 for r in lobby about; do
   for a in 0 45 90 180 300; do J+=("$r-hero-r$a=$(rp $r)?shot=hero&scale=1&tier=0&chand=30&rollat=$a"); done
   J+=("$r-close-r90=$(rp $r)?shot=close&scale=1&tier=0&chand=30&rollat=90" "$r-hero-r45-t1=$(rp $r)?shot=hero&scale=1&tier=1&chand=30&rollat=45")

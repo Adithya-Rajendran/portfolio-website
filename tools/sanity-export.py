@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""Copy the Sanity portfolio-blog content into data/.
-
-    python3 tools/sanity-export.py            # project ppk2h9tb, dataset production
-
-Reads the dataset export (public dataset, so no token; set SANITY_TOKEN for a private one) and writes
-  data/profile/profile.json, data/posts/<slug>.json, data/projects/<slug>.json  (one document per file)
-  data/assets/images.json, data/assets/files.json                               (the asset documents)
-  data/assets/images/<sha1>-<w>x<h>.<ext>, data/assets/files/<sha1>.<ext>       (the binaries, SHA-1 checked)
-Sanity system documents (groups, retention, schema) are left out. Re-running replaces what it wrote.
-
-Files always come back as uploaded. Original image bytes need a token (Viewer is enough): without one the image CDN
-re-encodes some images, and those are kept but listed in data/assets/cdn-copies.json until a run with SANITY_TOKEN.
-"""
+# Copy of the Sanity portfolio blog content into data/
 import hashlib, json, os, re, sys, urllib.request
 
 PROJECT = os.environ.get("SANITY_PROJECT", "ppk2h9tb")
@@ -87,7 +75,7 @@ def main():
             if os.path.exists(path) and sha1(path) == a["sha1hash"]:
                 continue
             image = asset_type == "sanity.imageAsset"
-            if os.path.exists(path) and image and not token:  # a CDN copy from an earlier run; only a token improves it
+            if os.path.exists(path) and image and not token:
                 copies[a["_id"]] = {"path": f"{folder}/{name}", "originalSha1": a["sha1hash"], "originalSize": a["size"],
                                     "sha1": sha1(path), "size": os.path.getsize(path)}
                 continue

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Load the page on the GPU browser and print console errors / failed requests.   [ORIGIN=http://host:port] tools/derr.sh [query]
+# Page load on the GPU browser that prints console errors and failed requests
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 resolve_assets() {

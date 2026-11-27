@@ -1,6 +1,4 @@
-"""Tests for tools/content.py: what a post's or a project's header may hold, and what the profile may hold. Each test writes
-its file into a temporary folder.
-    python3 -m unittest tools/test_content.py          (from the repository root; -v lists each test)"""
+# Tests for tools/content.py
 import copy, json, os, shutil, sys, tempfile, unittest, zlib
 from unittest import mock
 
@@ -22,7 +20,6 @@ class Header(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp)
 
     def load(self, extra='', header=HEADER):
-        """The post data/posts/a-post.md with this header (the valid minimum, then `extra`) -> load_posts()."""
         folder = tempfile.mkdtemp(dir=self.tmp)
         with open(os.path.join(folder, 'a-post.md'), 'w', encoding='utf-8') as f:
             f.write(f'---\n{header}{extra}---\n\nBody.\n')
@@ -34,8 +31,6 @@ class Header(unittest.TestCase):
         for w in ('data/posts/a-post.md',) + words:
             self.assertIn(w, str(e.exception), extra)
         return str(e.exception)
-
-    # ------------------------------------------------------------ the social card's file name
 
     def test_image_is_a_file_name_in_the_images_folder(self):
         self.assertEqual(self.load(f'image: {CARD}\n')[0]['image'], CARD)
@@ -51,13 +46,11 @@ class Header(unittest.TestCase):
             self.assertEqual(self.load('image: card.png\n')[0]['image'], 'card.png')
             self.refused('image: link.png\n', '`image`')
 
-    # ------------------------------------------------------------ every field's type
-
     def test_reported_cases(self):
-        self.refused('takeaways:\n  - note: "x"\n', '`takeaways`')         # was KeyError: 0, in site.py
+        self.refused('takeaways:\n  - note: "x"\n', '`takeaways`')
         self.refused(f'image: {CARD}\nimage_alt: [a, b]\n', '`image_alt`')
         self.refused('next: a-post\nnext_reason:\n  - "x"\n', '`next_reason`')
-        self.refused('next: [a-post]\n', '`next`')                          # was TypeError: unhashable type
+        self.refused('next: [a-post]\n', '`next`')
         self.refused('tags: ["a", 1]\n', '`tags`')
         self.refused('projects: [homelab, ""]\n', '`projects`')
         self.refused('changelog: [{"date": "2026-01-20", "kind": "update", "note": 5}]\n', '`changelog`')
@@ -69,7 +62,6 @@ class Header(unittest.TestCase):
         self.refused('changelog:\n  - date: 2026-01-20\n    date: 2026-01-21\n    kind: update\n    note: "x"\n', '`changelog`')
 
     def test_every_field_in_every_shape(self):
-        """Any value in any field: a ContentError naming the field, or a post whose fields have the right types."""
         for k in content.KNOWN:
             for v in SHAPES:
                 line = f'{k}:{v}\n' if v.startswith('\n') or not v else f'{k}: {v}\n'
@@ -88,11 +80,9 @@ class Header(unittest.TestCase):
                     else:
                         self.assertTrue(post[f] is None or isinstance(post[f], str), line)
 
-    # ------------------------------------------------------------ values that must agree
-
     def test_dates_agree(self):
         entry = lambda d, kind='update': f'  - date: {d}\n    kind: {kind}\n    note: "x"\n'
-        self.load('revised: 2026-01-15\nchangelog:\n' + entry('2026-01-15') + entry('2026-01-15'))   # same day: fine
+        self.load('revised: 2026-01-15\nchangelog:\n' + entry('2026-01-15') + entry('2026-01-15'))
         self.assertIn('earlier than', self.refused('revised: 2026-01-14\n', '`revised`'))
         self.assertIn('newest first', self.refused('changelog:\n' + entry('2026-01-20') + entry('2026-02-01'), '`changelog`'))
         self.assertIn('before', self.refused('changelog:\n' + entry('2026-02-01') + entry('2026-01-14'), '`changelog`'))
@@ -103,10 +93,7 @@ class Header(unittest.TestCase):
         for bad in ('no-such-project', '../projects/homelab', 'Homelab'):
             self.refused(f'projects: ["{bad}"]\n', '`projects`', 'data/projects/')
 
-    # ------------------------------------------------------------ the social card
-
     def test_social_card(self):
-        """A PNG or JPEG of exactly 1200x630 by its own header, named for its type, with no EXIF."""
         def chunk(kind, data):
             return len(data).to_bytes(4, 'big') + kind + data + zlib.crc32(kind + data).to_bytes(4, 'big')
         def png(w, h, extra=b''):
@@ -145,8 +132,6 @@ class Header(unittest.TestCase):
             self.assertTrue(p['image'] and content.card_problem(content.image_file(p['image'])) is None, p['slug'])
 
 
-# ---------------------------------------------------------------- projects
-
 PROJECT = 'title: "A project"\nname: "Project"\nsummary: "One sentence."\norder: 1\nstatus: active\ntypes: [software]\n'
 PSHAPES = SHAPES + ['true', 'false', '1', '0', '07', 'year', 'active', 'completed', 'repo', '[software, research]',
                     '\n  - label: "a"\n    value: "b"', '\n  - label: "a"\n    kind: repo\n    url: "https://example.org/"',
@@ -161,8 +146,6 @@ class Projects(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp)
 
     def load(self, extra='', header=PROJECT, body='Body.\n', more=()):
-        """data/projects/a-project.md with this header (the valid minimum, then `extra`) and body, beside the files in
-        `more` {file name: text}; -> load_projects() of that folder."""
         folder = tempfile.mkdtemp(dir=self.tmp)
         for name, text in dict({'a-project.md': f'---\n{header}{extra}---\n{body}'}, **dict(more)).items():
             with open(os.path.join(folder, name), 'w', encoding='utf-8') as f:
@@ -242,7 +225,7 @@ class Projects(unittest.TestCase):
         ok = 'started: 2026-01-01\ndate_precision: month\n'
         self.load(ok + 'ended: 2026-01-01\n', PROJECT.replace('active', 'completed'))
         self.load(ok)
-        self.refused(ok + 'ended: 2026-02-01\n', '`ended`')                    # active, but ended
+        self.refused(ok + 'ended: 2026-02-01\n', '`ended`')
 
     def test_order_and_featured_are_unique_and_sort(self):
         two = lambda order, feat='': f'---\ntitle: "T"\nname: "N"\nsummary: "S"\norder: {order}\nstatus: active\ntypes: [software]\n{feat}---\n'
@@ -263,7 +246,7 @@ class Projects(unittest.TestCase):
         for body, word in [('[x](/blog/no-such/)\n', '/blog/no-such/'), ('[x](/portfolio/no-such/)\n', '/portfolio/no-such/'),
                            ('[x](../assets/files/no-such.pdf)\n', 'no-such.pdf'), ('![x](../assets/images/no-such.png)\n', 'no-such.png')]:
             self.refused('', word, body=body)
-        self.load(body='```text\n[x](/blog/no-such/)\n```\n')                  # in code it is only text
+        self.load(body='```text\n[x](/blog/no-such/)\n```\n')
 
     def test_the_file_itself(self):
         folder = tempfile.mkdtemp(dir=self.tmp)
@@ -278,7 +261,6 @@ class Projects(unittest.TestCase):
             os.remove(os.path.join(folder, name))
 
     def test_every_field_in_every_shape(self):
-        """Any value in any field: a ContentError naming a field, or a project whose fields have the right types."""
         for k in content.PROJECT_KNOWN:
             for v in PSHAPES:
                 line = f'{k}:{v}\n' if v.startswith('\n') or not v else f'{k}: {v}\n'
@@ -304,7 +286,7 @@ class Projects(unittest.TestCase):
         with open(os.path.join(folder, 'a-post.md'), 'w', encoding='utf-8') as f:
             f.write(f'---\n{HEADER}projects: [homelab]\n---\nBody.\n')
         self.assertEqual(content.load_posts(folder)[0]['projects'], ['homelab'])
-        self.assertTrue(os.path.isfile(os.path.join(content.DATA, 'projects', 'homelab.json')))   # the archive is no longer what counts
+        self.assertTrue(os.path.isfile(os.path.join(content.DATA, 'projects', 'homelab.json')))
         for bad in ('no-such-project', 'Homelab'):
             with open(os.path.join(folder, 'a-post.md'), 'w', encoding='utf-8') as f:
                 f.write(f'---\n{HEADER}projects: [{bad}]\n---\nBody.\n')
@@ -322,8 +304,6 @@ class Projects(unittest.TestCase):
             self.assertTrue(p['body'].strip() and p['words'] > 0, p['slug'])
             self.assertEqual(p['cover'] is None, p['cover_alt'] is None, p['slug'])
 
-
-# ---------------------------------------------------------------- the profile
 
 class Profile(unittest.TestCase):
     def setUp(self):
@@ -356,7 +336,7 @@ class Profile(unittest.TestCase):
         p = content.load_profile()
         self.assertEqual(p['name'], 'Adithya Rajendran')
         self.assertEqual([e['id'] for e in p['timeline']], ['sjsu-2026', 'canonical-2024', 'tcr-2023', 'ucsc-2019'])
-        self.assertEqual(p['timeline'][0]['end_date'], None)                  # absent: None
+        self.assertEqual(p['timeline'][0]['end_date'], None)
         self.assertEqual(p['timeline'][3]['highlights'][0][:9], 'Explored ')
         self.assertEqual(self.load(), p)
 
@@ -476,7 +456,6 @@ class Profile(unittest.TestCase):
         self.assertIn('data/profile.json', str(e.exception))
 
     def test_every_field_in_every_shape(self):
-        """Any value at any place in the file: a ContentError naming the field, or a profile; never another exception."""
         shapes = [None, 1, 0, -1, 1.5, True, False, '', ' ', 'x', 'a\nb', 'x ', '2026-01-01', 'https://example.org/', 'my-homelab', IMG,
                   [], [1], ['x'], [None], {}, {'a': 1}, [{}], [[]], 10 ** 30, float('1e308')]
 

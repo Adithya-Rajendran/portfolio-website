@@ -1,7 +1,5 @@
 #!/bin/bash
-# Frame time (median / p95 of rAF intervals, each frame waited for with readPixels), GPU time of the whole frame
-# (timer query), draw calls, GPU memory allocated through WebGL, requests/bytes once loading is complete.
-#   [ORIGIN=http://host:port] tools/dbench.sh "<query>" [runs] [seconds]   -> one summary line (all runs in a fresh context)
+# Frame time, GPU time, draw calls, GPU memory and requests on the GPU browser
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 resolve_assets() {

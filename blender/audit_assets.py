@@ -1,10 +1,4 @@
-"""Census during an actual room build: named builder calls AND every linked Blender object.
-
-blender/run.sh -b --python-exit-code 2 -P blender/audit_assets.py -- writing /tmp/writing.json
-Runs the normal generator (.blend save, no render/pack). `path` is the observed builder
-instance stack, outermost first. Objects made directly rather than by a mesh helper are
-still enumerated by the final scene walk. Nothing is added to authored meshes or exports.
-"""
+# Asset census taken during a real room build
 from collections import Counter, defaultdict
 import json
 import os
@@ -31,7 +25,6 @@ for line in source.read_text().splitlines():
 
 
 def anchor(frame):
-    """The top-level placement in the ROOM script, even for a nested kit executed with exec()."""
     while frame:
         if frame.f_code.co_name == '<module>' and frame.f_code.co_filename == str(source):
             line = frame.f_lineno
