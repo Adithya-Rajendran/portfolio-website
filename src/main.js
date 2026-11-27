@@ -7,6 +7,7 @@ import { loadRoom } from './engine/room.js';
 import { reflectEye } from './engine/reflections.js';
 import { initLive, live, fill } from './engine/screens.js';
 import { loadSite, furnish } from './engine/site.js';
+import { addresses } from './engine/address.js';
 import { createDisplay } from './engine/hud.js';
 import { TURN } from './engine/routemap.js';
 import { windowShadow } from './engine/sunlight.js';
@@ -240,12 +241,8 @@ function fillHud(id) {
   display.paintHint(); tick();
 }
 const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);
-const ROOMS = Object.entries(content.rooms).map(([id, r]) => [r.path, id]);
-const roomAt = (pathname) => { const first = `/${pathname.split('/')[1]}/`.replace('//', '/'); return [first === '/' ? null : ROOMS.find(([p]) => p === first)?.[1] ?? null, first]; };
-function route(u = location) {
-  const path = u.pathname.replace(/\/?$/, '/'), [at, base] = roomAt(path);
-  return { id: at ?? 'lobby', read: at && (path !== base || u.hash.length > 1) ? path + u.hash : null };
-}
+const { roomAt, route: routeOf } = addresses(content.rooms);
+const route = (u = location) => routeOf(u);
 const roomInUrl = () => route().id;
 const query = () => { const p = new URLSearchParams(Q); p.delete('room'); return `${p}` ? `?${p}` : ''; };
 const urlFor = (id) => content.rooms[id].path + query();

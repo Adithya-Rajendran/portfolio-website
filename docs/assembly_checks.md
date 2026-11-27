@@ -1,7 +1,7 @@
 ---
 type: assembly
 title: Checks and CI
-depends: [docs/con_ci-host.md, docs/ref_ci-host.md, docs/ref_ci-tiers.md, docs/ref_ci-jobs.md, docs/proc_run-tier.md, docs/ref_local-runs.md, docs/con_suite.md, docs/ref_suite.md, docs/ref_hd630-runner.md, docs/ref_doc-checks.md, docs/proc_shrink-legacy.md]
+depends: [docs/con_ci-host.md, docs/ref_ci-host.md, docs/ref_ci-tiers.md, docs/ref_ci-jobs.md, docs/proc_run-tier.md, docs/ref_local-runs.md, docs/con_suite.md, docs/ref_suite.md, docs/ref_hd630-runner.md, docs/ref_doc-checks.md, docs/proc_shrink-legacy.md, docs/ref_js-checks.md]
 ---
 # Checks and CI
 
@@ -18,3 +18,4 @@ This assembly tells how the CI host and a local machine run the check tiers.
 - [The HD 630 runner](ref_hd630-runner.md)
 - [Documentation and comment checks](ref_doc-checks.md)
 - [Remove a file from the legacy list](proc_shrink-legacy.md)
+- [The type check, the lint check and the unit tests](ref_js-checks.md)

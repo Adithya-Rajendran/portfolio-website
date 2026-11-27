@@ -4,7 +4,7 @@ import os
 import subprocess
 
 KINDS = ("docs", "comments")
-SKIP_DIRS = (".git",)
+SKIP_DIRS = (".git", "node_modules")
 
 
 def tracked_files(root):
