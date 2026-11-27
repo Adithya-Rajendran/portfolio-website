@@ -15,7 +15,7 @@ This reference gives the commands, the files and the output of the checks for [t
 | `python3 tools/docs/check.py --vale "$(tools/docs/vale.sh)"` | The module check, the dependency graph check and the language check. |
 | `python3 tools/docs/check.py --no-vale` | The module check and the dependency graph check, without the language check. |
 | `--seed` | A legacy line for each file that does not obey the rules. |
-| `--base-legacy <file>` | A failure if the legacy list has a path that is not in the base list, or a hash that is different from the base list. |
+| `--base-legacy <file>` | A failure if a path or a hash on the legacy list is not on the base list. |
 
 ## Files
 
