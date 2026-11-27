@@ -251,7 +251,7 @@ test.describe('plainpage: no-JS, no-WebGL, and 404', () => {
           if (!/WebGL/.test(note.text)) failures.push(`/ ${size}: no visible notice #nogl that the station needs WebGL`);
           if (note.links !== 5) failures.push(`/ ${size}: the notice has ${note.links} links, not 5`);
           if (note.covered) failures.push(`/ ${size}: the notice #nogl is covered by ${note.covered}`);
-          for (const e of [...new Set(errs)]) failures.push(`/ ${size}: WebGL is off but: ${e}`);
+          for (const e of new Set(errs)) failures.push(`/ ${size}: WebGL is off but: ${e}`);
         } finally {
           await ctx.close();
         }
