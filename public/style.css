@@ -1,11 +1,11 @@
+/* The styles of the station page. */
 :root { --cy: #7fe3ff; --am: #ff9a4a; --fg: #e9f4fa; --soft: #a9c0cd; --edge: clamp(16px, 3vw, 40px); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--fg);
   font-family: "Eurostile", "Michroma", "Orbitron", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-#scene.turns { touch-action: pan-y pinch-zoom; }          /* a room whose map turns (main.js): a finger drawn across it turns the map; up and down, and pinching, stay the browser's */
+#scene.turns { touch-action: pan-y pinch-zoom; }
 
-/* cover shown while a room loads: comes down quickly, lifts slowly */
 #loader { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px;
   background: #04060a; transition: opacity .45s ease; z-index: 5; }
 #loader.done { opacity: 0; pointer-events: none; transition-duration: 1.2s; }
@@ -15,14 +15,13 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #loader .label { font-size: 11px; letter-spacing: .45em; color: #7d94a3; }
 @keyframes pulse { 50% { opacity: .35; transform: scale(.92); } }
 
-/* text over the scene; only links and buttons take the pointer */
 #hud { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
   padding: var(--edge); transition: opacity 1.6s ease .4s, background .6s; z-index: 2; text-shadow: 0 1px 14px rgba(0,0,0,.85);
   background: linear-gradient(90deg, rgba(2,5,9,.82) 0%, rgba(2,5,9,.5) 26%, rgba(2,5,9,0) 50%),
               linear-gradient(180deg, rgba(2,5,9,.7) 0%, rgba(2,5,9,0) 16%), linear-gradient(0deg, rgba(2,5,9,.75), rgba(2,5,9,0) 22%); }
 #hud.hidden { opacity: 0; }
 #hud .hero, #hud > footer { transition: opacity .5s; }
-#hud .hero.yield, #hud > footer.yield { opacity: .16; transition-duration: .2s; }      /* the lock lies over these words (js/hud.js): they step back for it */
+#hud .hero.yield, #hud > footer.yield { opacity: .16; transition-duration: .2s; }
 #hud.inspecting { background: none; }
 #hud.inspecting .hero, #hud.inspecting > footer { opacity: 0; }
 #hud > header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .32em; }
@@ -50,23 +49,20 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #hud > footer .hint { margin-left: auto; text-align: right; line-height: 1.7; color: #c5d8e2; }
 #hud > footer .hint .how, #hud > footer .hint small { display: block; }
 #hud > footer .hint small { font-size: 9px; letter-spacing: .12em; opacity: .7; }
-@media (max-width: 720px) {                          /* the hint on a line of its own over the facts; the credit is left to the wider screens */
+@media (max-width: 720px) {
   #hud nav { display: none; }
   #hud > footer { position: relative; }
   #hud > footer .hint { position: absolute; left: 0; right: 0; bottom: calc(100% + 16px); margin: 0; text-align: left; }
   #hud > footer .hint small, #hud > footer .hint.gone { display: none; }
 }
 
-/* A pale room (content.json "bright": true; main.js sets body.bright): the same words want more behind them. The top and
-   the foot of the view go darker, the hero's block carries a shade of its own wherever it stands, and the faintest of the
-   small words come up a step. Measured against the brightest thing that turns up behind each: 4.5:1 at least. */
 body.bright #hud { background: linear-gradient(90deg, rgba(2,5,9,.82) 0%, rgba(2,5,9,.5) 26%, rgba(2,5,9,0) 50%),
     linear-gradient(180deg, rgba(2,5,9,.76) 0, rgba(2,5,9,.7) 72px, rgba(2,5,9,0) 150px), linear-gradient(0deg, rgba(2,5,9,.78) 0, rgba(2,5,9,.72) 92px, rgba(2,5,9,0) 180px); }
-body.bright #hud.inspecting { background: linear-gradient(180deg, rgba(2,5,9,.76) 0, rgba(2,5,9,.7) 72px, rgba(2,5,9,0) 150px); }      /* the way around stays up while something is looked at */
+body.bright #hud.inspecting { background: linear-gradient(180deg, rgba(2,5,9,.76) 0, rgba(2,5,9,.7) 72px, rgba(2,5,9,0) 150px); }
 body.bright .hero { position: relative; isolation: isolate; }
 body.bright .hero::before { content: ""; position: absolute; inset: -30px -44px -30px -70px; z-index: -1; background: rgba(2,5,9,.58); filter: blur(26px); }
-@media (max-width: 720px) {                          /* upright, the hero stands in the middle of the room, over its lights: a deeper shade, a lighter amber */
-  body.bright .hero::before { inset: -56px -40px -36px; filter: blur(22px);      /* all the way across behind the kicker; behind the headline only where it is, so the room's subject beside it is seen */
+@media (max-width: 720px) {
+  body.bright .hero::before { inset: -56px -40px -36px; filter: blur(22px);
     background: linear-gradient(rgba(2,5,9,.8), rgba(2,5,9,.8)) 0 0 / 100% 104px no-repeat, linear-gradient(90deg, rgba(2,5,9,.8) 0%, rgba(2,5,9,.8) 42%, rgba(2,5,9,.26) 74%) 0 0 / 100% 100% no-repeat; }
   body.bright .kicker, body.bright .cta { color: #ffb884; }
   body.bright .cta { background: rgba(2,5,9,.7); }
@@ -77,7 +73,6 @@ body.bright #hud > footer .hint small { opacity: .95; }
 body.bright #named { padding: 6px 10px; background: rgba(2,5,9,.66); backdrop-filter: blur(6px); }
 body.bright #count { align-self: stretch; display: grid; place-items: center; padding: 0 4px; color: var(--fg); background: rgba(2,5,9,.6); backdrop-filter: blur(6px); }
 
-/* controls shown while something is being inspected */
 #inspectbar { position: fixed; left: var(--edge); bottom: var(--edge); z-index: 3; display: flex; align-items: center; gap: 8px; }
 #inspectbar[hidden] { display: none; }
 #inspectbar button { font: inherit; font-size: 12px; letter-spacing: .32em; color: var(--fg); background: rgba(2,5,9,.6);
@@ -89,29 +84,25 @@ body.bright #count { align-self: stretch; display: grid; place-items: center; pa
 #ways button:disabled { opacity: .5; cursor: default; }
 #ways #enter { order: 9; color: var(--am); border-color: var(--am); letter-spacing: .32em; text-align: center; }
 #ways #enter[hidden] { display: none; }
-/* a pick's own choices as a list (the Library's volumes): titles one under another, standing on the bar */
 #ways.list { display: flex; flex-direction: column; gap: 6px; position: absolute; left: 0; bottom: calc(100% + 12px); width: min(460px, calc(100vw - 2 * var(--edge))); }
 #ways.list button { text-align: left; font-size: 14px; letter-spacing: .04em; line-height: 1.3; padding: 11px 16px 12px; color: var(--fg); border-color: rgba(127,227,255,.4);
   font-family: "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif; }
 #ways.list button small { display: block; margin-top: 5px; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--soft); pointer-events: none; }
 #ways.list button:hover { color: var(--cy); border-color: var(--cy); }
 #ways.list button[aria-current] { color: #ffd2a8; border-color: var(--am); box-shadow: inset 3px 0 0 var(--am); }
-@media (max-width: 720px) {                          /* a door's ways on rows of their own over the controls: BACK ‹ › stay where they are */
+@media (max-width: 720px) {
   #inspectbar { flex-wrap: wrap; max-width: calc(100vw - 2 * var(--edge)); }
   #ways:not(.list) button[data-to] { order: -1; flex: 1 0 100%; }
 }
-@media (max-width: 720px) {                          /* no room beside the book: once one is chosen, only it stays, and opens the list again */
+@media (max-width: 720px) {
   #ways.list.chosen button:not([aria-current]):not(#enter) { display: none; }
   #ways.list.chosen button[aria-current]::after { content: "▾"; float: right; margin-top: -22px; color: var(--am); }
 }
-/* the bar's caption: what is in focus, standing over BACK (and under a list, if there is one) */
 #named { position: absolute; left: 0; bottom: calc(100% + 12px); max-width: calc(100vw - 2 * var(--edge)); font-size: 11px; letter-spacing: .3em; line-height: 1.4;
   color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 8px #000, 0 0 2px #000; border-left: 1px solid var(--cy); padding-left: 10px; }
 #named:empty { display: none; }
 #inspectbar:has(#named:not(:empty)) #ways.list { bottom: calc(100% + 40px); }
 
-/* the lock: corner marks around what the pointer rests on, and a tag under it (the cue, below, is made of the same
-   parts). It settles once as it appears (the marks close in, the tag comes up) and goes quickly; it never moves by itself. Reduced motion: it is simply there. */
 :is(#lock, #cue), :is(#lock, #cue) * { pointer-events: none; }
 :is(#lock, #cue) { position: fixed; inset: 0; z-index: 2; }
 :is(#lock, #cue)[hidden] { display: none; }
@@ -131,12 +122,8 @@ body.bright #count { align-self: stretch; display: grid; place-items: center; pa
 :is(#lock, #cue) .lock-verb { color: var(--am); flex: none; padding-left: 12px; border-left: 1px solid rgba(233,244,250,.25); }
 :is(#lock, #cue).cut, :is(#lock, #cue).cut * { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { :is(#lock, #cue), :is(#lock, #cue) * { transition: none !important; } }
-/* the cue: the same marks, standing already on the one thing in the room a visitor has to know about (js/hud.js), with what
-   a click on it does. Quieter than the lock, which takes its place when the pointer comes to rest on something. The first
-   time in a room it arrives once, slowly enough to be noticed (the marks close in from further out, then the words come);
-   after that it is still. */
 #cue.on .c { opacity: .85; }
-#cue.on .lock-tag { transition: opacity .25s; pointer-events: auto; cursor: pointer; }      /* its words can be pressed: they do what they say */
+#cue.on .lock-tag { transition: opacity .25s; pointer-events: auto; cursor: pointer; }
 #cue .lock-tag { border-left-color: rgba(127,227,255,.7); }
 #cue.first .tl { transform: translate(-18px, -18px); } #cue.first .tr { transform: translate(18px, -18px); }
 #cue.first .bl { transform: translate(-18px, 18px); } #cue.first .br { transform: translate(18px, 18px); }
