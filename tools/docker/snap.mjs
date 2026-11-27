@@ -1,5 +1,4 @@
-// Regression snapshots.  node snap.mjs <prefix>   (jobs, one "name=url" per line, are read from /out/<prefix>.jobs)
-// For each: a 1280x720 screenshot after a fixed wait, plus every wall-screen canvas, into /out/<prefix>_<name>*.png
+// Regression snapshots of the page and its wall screen canvases
 import { chromium } from 'playwright';
 import fs from 'fs';
 const prefix = process.argv[2], origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, ''), jobs = fs.readFileSync(`/out/${prefix}.jobs`, 'utf8').split('\n').filter(Boolean);

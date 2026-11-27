@@ -1,3 +1,4 @@
+// Page object for the station page
 import type { BrowserContext, Page } from '@playwright/test';
 import {
   attachErrorCollector,

@@ -1,26 +1,16 @@
-// plainpage.mjs: the posts, the projects, the room pages (/about/, /experience/, /contact/) and the lists as plain pages.
-//   11: JavaScript disabled, at 1280x720 and at 390x844: scrolls, uncovered, one h1, heading levels, alt text, link names,
-//       contrast, nothing wider than the window, code scrolls inside itself (checks in plaincheck.mjs)
-//   12: WebGL unavailable (Chromium started so that getContext('webgl2') and ('webgl') are null; verified on each page):
-//       the same checks, and no error overlay over the text
-//       and every image (a cover, a logo, a badge) loads, keeps its proportions, and is not larger than its container
-//   13: /blog/no-such-post/ and /portfolio/no-such-project/ answer 404
-// Findings print as FAIL lines with their evidence; exit code 1 if any. A screenshot of each failing page goes to /out.
+// Check of the posts, projects, room pages and lists as plain pages
 import { chromium } from 'playwright';
 import { plainChecks } from './plaincheck.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const index = await (await fetch(`${ORIGIN}/blog/index.json`)).json();
 const projects = (await (await fetch(`${ORIGIN}/portfolio/index.json`)).json()).projects;
-// what a page is, for plaincheck: 'post' has its h1 in an article.post (the room pages and the projects are such articles too), 'list' in a .post-list
 const pages = [['/blog/', 'list'], ...index.posts.map((p) => [`/blog/${p.slug}/`, 'post']), ['/about/', 'post'], ['/portfolio/', 'list'], ...projects.map((p) => [p.url, 'post']), ['/experience/', 'post'], ['/contact/', 'post']];
 const SIZES = [['desktop', { width: 1280, height: 720 }], ['phone', { width: 390, height: 844 }]];
 let failed = 0;
 const say = (ok, item, where, what) => { if (!ok) failed++; if (!ok || item === 13) console.log(`${ok ? 'ok  ' : 'FAIL'} [${item}] ${where}: ${what}`); };
 const guard = new Set();
 
-/** Every image of the page: loaded (lazy ones are scrolled to), proportions as written (width and height), inside its container and the window. */
 async function imageChecks(p) {
-  // (with JavaScript off the page's own timers never fire, so the waiting is done from here, not inside the page)
   const tall = await p.evaluate(() => [document.scrollingElement.scrollHeight, innerHeight]);
   for (let y = 0; y <= tall[0]; y += tall[1] * 0.7) { await p.evaluate((y) => scrollTo(0, y), y); await p.waitForTimeout(60); }
   for (let n = 0; n < 80 && !(await p.evaluate(() => [...document.querySelectorAll('main#page img')].every((i) => i.complete))); n++) await p.waitForTimeout(100);
@@ -46,7 +36,7 @@ async function checkPage(ctx, item, path, kind, size) {
   p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); });
   const res = await p.goto(ORIGIN + path, { waitUntil: 'load' });
   say(res.status() === 200, item, where, `status ${res.status()}`);
-  if (item === 12) {                                                          // let main.js give up, and make sure it was WebGL it could not have
+  if (item === 12) {
     const gl = await p.evaluate(() => { const c = document.createElement('canvas'); return [c.getContext('webgl2'), document.createElement('canvas').getContext('webgl')].map((x) => !!x); });
     say(!gl[0] && !gl[1], 12, where, `canvas.getContext('webgl2') / ('webgl') exist: ${gl}`);
     const done = await p.waitForFunction(() => document.querySelector('#loader')?.dataset.failed, null, { timeout: 60000 }).then(() => true, () => false);
@@ -69,7 +59,6 @@ async function checkPage(ctx, item, path, kind, size) {
   await p.close();
 }
 
-// ---- 11: no JavaScript
 {
   const b = await chromium.launch();
   for (const [size, viewport] of SIZES) {
@@ -79,7 +68,6 @@ async function checkPage(ctx, item, path, kind, size) {
   }
   await b.close();
 }
-// ---- 12: no WebGL
 {
   const b = await chromium.launch({ args: ['--disable-gpu', '--disable-webgl', '--disable-3d-apis', '--disable-software-rasterizer'] });
   for (const [size, viewport] of SIZES) {
@@ -89,7 +77,6 @@ async function checkPage(ctx, item, path, kind, size) {
   }
   await b.close();
 }
-// ---- 13: an unknown post
 for (const path of ['/blog/no-such-post/', '/blog/no-such-post', '/portfolio/no-such-project/', '/portfolio/no-such-project']) {
   const r = await fetch(ORIGIN + path, { redirect: 'follow' }), body = await r.text();
   say(r.status === 404, 13, path, `status ${r.status}`);

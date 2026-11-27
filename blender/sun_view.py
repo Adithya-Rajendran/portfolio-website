@@ -1,4 +1,4 @@
-"""What the sun sees at the dais (QA): orthographic Cycles render along the sun direction. blender -b room.blend -P sun_view.py -- out.png cx,cy,cz scale"""
+# Render of what the sun sees at the dais
 import bpy, sys, math
 from mathutils import Vector
 a = sys.argv[sys.argv.index('--') + 1:]; out = a[0]; c = Vector(map(float, a[1].split(','))); sc = float(a[2])

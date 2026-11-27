@@ -1,7 +1,5 @@
 #!/bin/bash
-# Run a Playwright script against THIS checkout, with no port opened on the host: the site is served inside the container.
-#   tools/dtest.sh <script.mjs in tools/docker> [args...]      env: OUT (default /tmp/dtest), ASSETS, ORIGIN
-# The script gets ORIGIN (http://127.0.0.1:8080 when serving locally) and writes files to /out.
+# Run of a Playwright script against this checkout, with no port open on the host
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${OUT:-/tmp/dtest}"
 S="${1:?usage: tools/dtest.sh <script.mjs> [args...]}"; shift
@@ -33,7 +31,6 @@ resolve_assets() {
 
 DEV=()
 [ -d /dev/dri ] && DEV=(--device /dev/dri)
-# tools/check.sh sets CHECK_RUN: its containers carry it as a label, so an interrupted suite can remove them (docker rm -f by label).
 LABEL=()
 [ -n "${CHECK_RUN:-}" ] && LABEL=(--label "arcadia.check=$CHECK_RUN")
 

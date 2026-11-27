@@ -1,7 +1,5 @@
 #!/bin/bash
-# Run a perf measurement or bench on the local Intel HD 630 from a clean git archive of <ref>,
-# serialized with an exclusive lock, bounded by timeout, with before/after load average checks.
-#   tools/ci/hd630.sh <ref> [perf] <passes|cpuprof|unpinned|load|loadprof|blurdiff|bench> [args...]
+# Perf measurement or bench on the local Intel HD 630 from a clean archive of a ref
 set -u
 
 usage() {
@@ -68,10 +66,6 @@ T0=$(date +%s)
 SCRIPT_ARGS=("$@")
 JOB=""; CID=""; SHOWPID=""; INTERRUPTED=""
 
-# Signals. Everything slow (lock wait, archive, packing, site.py, the measurement) runs as a background child that
-# this script waits for, so INT/TERM/HUP are handled at once: the whole process tree below this script is killed,
-# the run is recorded as interrupted (unusable) and the script exits 128+signal. Children inherit the lock, so a
-# stray one can never run unseen while the lock looks free.
 killtree() {
   local c
   for c in $(pgrep -P "$1" 2>/dev/null); do killtree "$c"; done
@@ -90,18 +84,18 @@ abort_run() {
   if [ -n "$JOB" ] && [ -d "$JOB" ]; then finish "$code"; fi
   exit "$code"
 }
-waitbg() {                      # wait for background pid $1; abort the run if a signal arrived
+waitbg() {
   local rc=0
   wait "$1" || rc=$?
   [ -z "$INTERRUPTED" ] || abort_run
   return "$rc"
 }
-bgwait() { "$@" & waitbg $!; }  # run a command as a background child and wait for it
+bgwait() { "$@" & waitbg $!; }
 
 finish() {
   local RC="$1" T1 SECONDS_ELAPSED LOAD_AFTER SUMMARY
   trap '' INT TERM HUP
-  sleep 0.3   # let the live follower print the last lines
+  sleep 0.3
   [ -n "$SHOWPID" ] && killtree "$SHOWPID"
   if [ -f "$JOB/log.raw" ]; then grep -v "GL Driver" "$JOB/log.raw" > "$JOB/log.txt" 2>/dev/null; rm -f "$JOB/log.raw"; fi
   docker rm -f "$CID" >/dev/null 2>&1 || true
@@ -170,15 +164,12 @@ PY
 }
 
 
-# Exclusive HD 630 lock, taken before any preparation (archive, packing, site.py) so that a second run's
-# preparation never overlaps the first run's measurement. The measurement timeout starts after this point.
 exec 9>"$LOCK_FILE"
 flock -w "$LOCK_WAIT" 9 &
 waitbg $! || {
   echo "hd630: timed out waiting ${LOCK_WAIT}s for lock $LOCK_FILE" >&2
   exit 75
 }
-# Holding the lock means no other run is active: whatever an earlier run (ended by SIGKILL) left behind is stale.
 rm -rf "$JOBS_ROOT"/*/src 2>/dev/null
 docker ps -aq --filter name=arcadia-hd630- 2>/dev/null | xargs -r docker rm -f >/dev/null 2>&1 || true
 
@@ -264,9 +255,6 @@ if [ "$SUBCMD" != "blurdiff" ]; then
   fi
 fi
 
-# Choose runner:
-# 1. The extracted commit's tools/ci/run.sh when it supports the requested tier/subcommand.
-# 2. Direct container execution fallback (for commits older than the perf tier).
 RUNNER=""
 RUNNER_ARGS=()
 if [ -x "$W/tools/ci/run.sh" ]; then
@@ -279,7 +267,6 @@ if [ -x "$W/tools/ci/run.sh" ]; then
   fi
 fi
 
-# Direct Docker invocation arguments for fallback mode (no GPU run until inside flock + timeout)
 build_direct_cmd() {
   local script="" sargs=()
   local q="${1:-}"
@@ -385,7 +372,6 @@ if [ -z "$RUNNER" ]; then
   build_direct_cmd "$@"
 fi
 
-# Preparation just ran inside the lock; let its load fade before sampling "before" (bounded wait).
 SETTLE="${HD630_SETTLE:-120}"
 while [ "$SETTLE" -gt 0 ] && awk -v l="$(cut -d' ' -f1 /proc/loadavg)" -v m="$LOAD_LIMIT" 'BEGIN{exit !(l>m)}'; do
   bgwait sleep 5; SETTLE=$((SETTLE - 5))
@@ -399,9 +385,6 @@ else
   MCMD=("${DIRECT_CMD[@]}")
 fi
 
-# The measurement runs under timeout in the background (its own process group). Its output goes straight to a
-# file (a log pipe could die with the group and lose the buffered tail); a follower shows it live, and the
-# "GL Driver" noise is filtered out into log.txt at the end.
 : > "$JOB/log.raw"
 ( tail -n +1 -f "$JOB/log.raw" 2>/dev/null | grep --line-buffered -v "GL Driver" ) &
 SHOWPID=$!
@@ -415,4 +398,3 @@ while :; do
 done
 
 finish "$RC"
-

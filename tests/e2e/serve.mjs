@@ -1,6 +1,4 @@
-// Static HTTP server for tests/e2e/ (worktree- and dist-safe):
-//   node tests/e2e/serve.mjs [site_dir] [port]
-// Env overrides: SITE_DIR, PORT, ASSETS
+// Static HTTP server for the end-to-end specs
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
@@ -33,7 +31,6 @@ function resolveAssetsDir() {
       if (hasEntries(mainAssets)) return mainAssets;
     }
   } catch {
-    // Not a git checkout (e.g. git archive in CI) — fall back to siteDir/assets.
   }
   return hasEntries(localAssets) ? localAssets : null;
 }

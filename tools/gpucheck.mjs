@@ -1,3 +1,4 @@
+// GPU flag variants check for Chromium
 import { chromium } from 'playwright';
 const variants = {
   egl: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'],

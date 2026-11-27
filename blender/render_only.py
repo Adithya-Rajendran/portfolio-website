@@ -1,4 +1,4 @@
-"""List objects Cycles renders that viewport tools (ray_cast, selection, export) may not see."""
+# List of the objects that Cycles renders and that viewport tools can miss
 import bpy
 s = bpy.context.scene; vl = bpy.context.view_layer
 for o in s.objects:

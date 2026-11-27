@@ -1,5 +1,4 @@
-// The switches in dev.js: ignored on a public host name (a stand-in, www.example.com, mapped to the local server), honoured
-// on 127.0.0.1. And the room query names nothing on either: the Atrium opens and the address stays.
+// Check of the switches in dev.js
 import { chromium } from 'playwright';
 const origin = new URL(process.env.ORIGIN || 'http://127.0.0.1:8080'), port = origin.port || '80';
 const PUBLIC_HOST = 'www.example.com';

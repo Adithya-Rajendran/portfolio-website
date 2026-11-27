@@ -1,11 +1,4 @@
-// rooms.read.mjs [desktop|phone|reduced|all]: the rooms open at their paths, and Fabrication's projects are read the way a visitor reads them.
-//   1  every room at its path: no error; the nav carries the paths; Back and Forward between rooms agree with the address
-//   2  Fabrication: no wall card is a source (they are not picks); focusing an exhibit offers READ (glyph in the viewport, #enter in the bar);
-//      READ opens that project (reader.url(), address, tab title, h1), the frame fits; Escape returns to the pick that offered it; a click on it focuses it
-//   3  the hero's button reads the list of every project; its links open any project, exhibited or not; Back agrees with itself
-//   10 the keyboard alone, and reduced motion, on one flow in Fabrication
-// Every check prints "ok" or "FAIL [profile item] what"; the item numbers are the brief's. Screenshots: /out/rooms-<profile>-<step>.png. Exit code 1 if any check failed.
-// A failure is a finding about the site unless the message says the test could not set up. Nothing is edited.
+// Check of the room paths and of reading the projects in Fabrication, on desktop, phone and reduced motion
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, open, inRoom, until, poke, tapAt, snap, readBox, readNow, focus, sources, rayHits, settledBox, frameChecks, leave, sleep, ROOM_OF } from './rooms.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.read'), { chk, note } = S;
 const D = await load(), { projects, content } = D, byUrl = new Map(projects.map((p) => [p.url, p]));
@@ -20,7 +13,6 @@ async function run(name) {
   const shot = (p, n) => p.screenshot({ path: `/out/rooms-${name}-${n}.png` }).catch(() => {});
   const poke_ = (p, sel) => poke(p, sel, phone), snap_ = snap;
 
-  // ---------------------------------------------------------------- 1. every room at its path and its alias; the nav; Back and Forward
   if (!P.reducedMotion) {
     for (const r of ROOMS) for (const [how, path] of [['path', r.path]]) {
       const e0 = errs.length, p = await open(ctx, path, r.id, errs, { pin: false });
@@ -35,11 +27,10 @@ async function run(name) {
       chk(1, errs.length === e0, `${path}: no pageerror, console error, failed request or 4xx`, errs.slice(e0, e0 + 4));
       await p.close();
     }
-    // Back and Forward between rooms: each step waits for the room it should show and then compares the address
     {
       const e0 = errs.length, p = await open(ctx, '/about/', 'about', errs, { pin: false }), seq = ['projects', 'experience', 'writing', 'comms', 'lobby'], trail = ['about'];
       for (const id of seq) {
-        if (phone) await p.evaluate((id) => window.__lobby.enter(id), id); else await p.click(`#hud nav a[data-room="${id}"]`);      // no nav on a narrow screen (style.css): a door does what it would
+        if (phone) await p.evaluate((id) => window.__lobby.enter(id), id); else await p.click(`#hud nav a[data-room="${id}"]`);
         const ok = await inRoom(p, id); const s = await snap_(p); trail.push(id);
         chk(1, ok && s.path === content.rooms[id].path, `${phone ? 'entering' : 'clicking'} ${id.toUpperCase()} ${phone ? '' : 'in the nav '}opens it at ${content.rooms[id].path}`, ok ? s.path : `room is ${s.room}`);
       }
@@ -53,7 +44,6 @@ async function run(name) {
       }
       chk(1, errs.length === e0, 'no error while moving between the rooms', errs.slice(e0, e0 + 4));
       await p.close();
-      // a room's path is a place in the history
       const q = await open(ctx, '/portfolio/', 'projects', errs, { pin: false });
       if (phone) await q.evaluate(() => window.__lobby.enter('experience')); else await q.click('#hud nav a[data-room="experience"]'); await inRoom(q, 'experience'); await q.goBack(); const back = await inRoom(q, 'projects');
       chk(1, back, 'Back from another room leads to the room whose path was opened', back ? '' : (await snap_(q)).room);
@@ -61,14 +51,13 @@ async function run(name) {
     }
   }
 
-  // ---------------------------------------------------------------- 2. Fabrication
   const p = await open(ctx, '/portfolio/', 'projects', errs), src = await sources(p);
   const placards = src.filter((q) => q.kind === 'screen'), exhibits = src.filter((q) => q.kind === 'sphere');
   const named = content.rooms.projects.exhibits.map((slug) => projects.find((q) => q.slug === slug) ?? null);
   chk(2, placards.length === 0 && exhibits.length === named.length, `Fabrication's wall cards are not sources (0 of them offer anything to read); its ${named.length} exhibits do`, { placards: placards.length, exhibits: exhibits.length });
   chk(2, await p.evaluate(() => window.__lobby.picks.every((q) => q.mesh.userData?.screen === undefined)), 'no wall screen of Fabrication is a pick at all (not clickable, not on the tour)');
   chk(2, exhibits.every((q, i) => q.url === named[i]?.url), "each exhibit offers the project content.json's exhibits names for it", { exhibits: exhibits.map((q) => q.url), want: named.map((q) => q?.url) });
-  const countOf = {};                                                      // pick index -> what #count says while it is focused
+  const countOf = {};
   const places = exhibits.map((q, i) => ({ ...q, what: `exhibit ${i + 1}`, project: named[i] }));
   for (const [n, pl] of places.entries()) {
     const pr = pl.project; if (!pr) continue;
@@ -81,7 +70,6 @@ async function run(name) {
     chk(2, r.bottom - r.top >= (phone ? 40 : 20), `${pl.what}: the tap area is at least ${phone ? 40 : 20} px tall`, `${(r.bottom - r.top).toFixed(1)} px`);
     chk(2, r.onTop === 'canvas#scene', `${pl.what}: nothing but the canvas lies over the glyph`, r.onTop);
     if (n === 4) await shot(p, 'exhibit');
-    // READ: the glyph for some, the bar's button for the others
     const how = n % 2 ? 'button' : 'glyph', t0 = Date.now(), reads = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.reads)), hits = await rayHits(p, r.cx, r.cy);
     chk(2, hits.some((h) => h[0] === reads), `${pl.what}: a ${phone ? 'tap' : 'click'} on the READ glyph reaches the READ pick (main.js gives it the click over anything behind it)`, { at: [Math.round(r.cx), Math.round(r.cy)], hits: hits.slice(0, 3), readPickIs: reads });
     let read = await readNow(p, phone, how);
@@ -93,7 +81,7 @@ async function run(name) {
     chk(2, s.url === pr.url && s.path === pr.url && s.title === pr.title && s.h1 === pr.title && s.shown === pr.slug, `${pl.what}: reader.url(), address, tab title, h1 and article all say ${pr.slug}`, { url: s.url, path: s.path + s.hash, title: s.title, h1: s.h1, shown: s.shown });
     for (const [ok, what, detail] of await frameChecks(p, W, H)) chk(2, ok, `${pl.what}: ${what}`, detail);
     if (n === 0 || n === 4) await shot(p, `open-${n}`);
-    await p.keyboard.press('Escape'); if (phone) { /* Escape reaches the page on a phone too */ }
+    await p.keyboard.press('Escape'); if (phone) { }
     const closed = await until(p, () => window.__lobby.reader.state() === 'closed', null, 8000); await p.waitForTimeout(1800); const a = await snap_(p);
     const live = await readBox(p);
     chk(2, closed && a.path === '/portfolio/' && a.title === content.rooms.projects.title, `${pl.what}: Escape closes it; the address is /portfolio/ and the tab title the room's`, { closed, path: a.path + a.hash, title: a.title });
@@ -101,7 +89,6 @@ async function run(name) {
     await p.keyboard.press('Escape'); await p.waitForTimeout(500);
   }
 
-  // a click on a pick focuses it: from the room's own view, at the centre of the pick on the screen
   await p.evaluate(() => window.__lobby.setFocus(null)); await p.waitForTimeout(1800);
   for (const pl of places) {
     if (!pl.project || !countOf[pl.i]) continue;
@@ -114,7 +101,6 @@ async function run(name) {
     await p.evaluate(() => window.__lobby.setFocus(null)); await p.waitForTimeout(600);
   }
 
-  // ---------------------------------------------------------------- 3. the list of projects
   {
     await p.evaluate(() => window.__lobby.setFocus(null)); await p.waitForTimeout(800);
     const cta = await p.evaluate(() => document.querySelector('.hero .cta')?.textContent ?? null);
@@ -131,7 +117,6 @@ async function run(name) {
     const s1 = await snap_(p);
     chk(3, s1.state === 'closed' && s1.path === '/portfolio/' && !s1.readerShown && !s1.enter && !s1.bar, 'Escape closes the list: the room alone, no bar, address /portfolio/', { state: s1.state, path: s1.path, bar: s1.bar, enter: s1.enter });
 
-    // every project from the list, exhibited or not
     const exhibited = new Set(named.filter(Boolean).map((q) => q.slug));
     for (const pr of projects) {
       await p.evaluate(() => { const l = window.__lobby; if (l.reader.state() !== 'closed') l.reader.close(); l.setFocus(null); }); await p.waitForTimeout(900);
@@ -143,7 +128,6 @@ async function run(name) {
       chk(3, ok && t.path === pr.url && t.title === pr.title && t.h1 === pr.title && t.shown === pr.slug, `the list's link opens ${pr.slug} (${exhibited.has(pr.slug) ? 'exhibited' : 'no exhibit'})`, ok ? { path: t.path, title: t.title, h1: t.h1, shown: t.shown } : res === true ? { state: t.state, url: t.url } : res);
       if (pr.slug === 'homelab' || !exhibited.has(pr.slug)) for (const [fok, what, detail] of await frameChecks(p, W, H)) chk(3, fok, `${pr.slug}: ${what}`, detail);
     }
-    // Back after a project opened from the list: the address, the reader and what is shown must agree
     await p.evaluate(() => { const l = window.__lobby; if (l.reader.state() !== 'closed') l.reader.close(); l.setFocus(null); }); await p.waitForTimeout(900);
     const exh = projects.find((q) => exhibited.has(q.slug)), free = projects.find((q) => !exhibited.has(q.slug));
     for (const pr of [exh, free]) {
@@ -161,7 +145,6 @@ async function run(name) {
         if (what === 'Back' && s.path === '/portfolio/') note(`Back from ${pr.slug} (opened from the list) leaves the reader ${s.state}: ${s.state === 'closed' ? 'the list the visitor came from is not shown again' : 'the list is shown again'}`);
         await shot(p, `back-${pr.slug}-${what.replace(/ /g, '-')}`);
       }
-      // leave it as it was: the room alone
       await p.evaluate(() => { const l = window.__lobby; if (l.reader.state() !== 'closed') l.reader.close(); l.setFocus(null); }); await p.waitForTimeout(900);
       if (n0 === undefined) break;
     }
@@ -169,12 +152,10 @@ async function run(name) {
   chk(2, errs.length === 0, 'no pageerror, console error or failed request through the whole run', [...new Set(errs)].slice(0, 6));
   await p.close();
 
-  // ---------------------------------------------------------------- 10. the keyboard alone; reduced motion
   {
     const kerrs = [], k = await open(ctx, '/portfolio/', 'projects', kerrs);
     if (P.reducedMotion) chk(10, await k.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), 'prefers-reduced-motion: reduce is in effect');
     await k.evaluate(() => document.activeElement?.blur());
-    // the arrow keys walk the tour (left to right) until a pick that offers a project has the visitor's attention
     let reached = -1, seen = [];
     for (let n = 0; n < 30 && reached < 0; n++) {
       await k.keyboard.press('ArrowRight'); await k.waitForTimeout(P.reducedMotion ? 250 : 500); seen.push((await snap(k)).count);
@@ -207,7 +188,6 @@ async function run(name) {
       await k.keyboard.press('Escape'); const cl = await until(k, () => window.__lobby.reader.state() === 'closed', null, 8000); await k.waitForTimeout(1000);
       const a = await snap(k);
       chk(10, cl && a.path === '/portfolio/' && a.enter && a.count === before.count, 'Escape closes: the address /portfolio/, and the same pick offers READ again', { count: a.count, before: before.count, enter: a.enter });
-      // Tab to the READ button in the bar and press Enter on it
       await k.evaluate(() => document.activeElement?.blur()); let m = 0, onEnter = false;
       for (; m < 60; m++) { await k.keyboard.press('Tab'); if (await k.evaluate(() => document.activeElement?.id === 'enter')) { onEnter = true; break; } }
       chk(10, onEnter, 'Tab reaches the READ button of the bar', onEnter ? `after ${m + 1} presses` : 'not within 60');

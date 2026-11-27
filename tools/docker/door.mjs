@@ -1,3 +1,4 @@
+// Door pick check with labels, cursor and screenshots
 import { chromium } from 'playwright';
 const [url, idx] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });

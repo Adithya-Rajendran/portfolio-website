@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-"""The site's written content, read from data/.  Everything that builds pages (tools/site.py, the feed, the tests)
-gets posts through load_posts(), so the files' format is defined in one place: docs/v1-contracts.md.
-
-    python3 tools/content.py            # list the posts and projects, say the profile is valid, or what is wrong
-
-A post is data/posts/<slug>.md and a project data/projects/<slug>.md: a header between two '---' lines, then the
-text in Markdown. The profile is data/profile.json. Formats: docs/v1-contracts.md §2, §6 and §7.
-"""
+# Reader of the written content of the site from data/
 import datetime, json, math, os, re, stat, sys, urllib.parse
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 DATA = os.path.join(ROOT, 'data')
 IMAGES = os.path.join(DATA, 'assets', 'images')
 FILES = os.path.join(DATA, 'assets', 'files')
-SITE = 'https://adithya-rajendran.com'                     # canonical origin: links in the feed, the sitemap, og:url
+SITE = 'https://adithya-rajendran.com'
 REQUIRED = ('title', 'description', 'published')
 LISTS = ('tags', 'takeaways', 'changelog', 'projects')
 KNOWN = REQUIRED + LISTS + ('revised', 'image', 'image_alt', 'next', 'next_reason')
-STRING_LISTS = ('tags', 'takeaways', 'projects')            # the other list, changelog, holds mappings
-CARD = (1200, 630)                                         # the social card's size, in pixels
+STRING_LISTS = ('tags', 'takeaways', 'projects')
+CARD = (1200, 630)
 DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 SLUG = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 
@@ -28,7 +21,6 @@ class ContentError(ValueError):
 
 
 def _is_date(s):
-    """2026-03-30 and a real day: the pattern alone lets 2026-13-45 through, which the page generator cannot print."""
     try:
         return bool(DATE.match(s)) and bool(datetime.date.fromisoformat(s))
     except (TypeError, ValueError):
@@ -36,7 +28,6 @@ def _is_date(s):
 
 
 def _scalar(v, where):
-    """A header value: a JSON string ("...", with JSON escapes), or bare text taken as it stands."""
     v = v.strip()
     if v.startswith('"'):
         try:
@@ -48,7 +39,7 @@ def _scalar(v, where):
 
 def _value(v, where):
     v = v.strip()
-    if v.startswith('['):                                   # [a, b] or ["a b", "c"]
+    if v.startswith('['):
         if not v.endswith(']'):
             raise ContentError(f'{where}: list is not closed')
         inner = v[1:-1].strip()
@@ -64,8 +55,6 @@ def _value(v, where):
 
 
 def parse_header(lines, name):
-    """The header's lines -> dict. Forms: `key: value`, `key: [a, b]`, and `key:` followed by `  - item` lines,
-    where an item is a value or a flat mapping (`  - date: ...` then `    kind: ...`)."""
     out, key, i = {}, None, 0
     pair = re.compile(r'^([a-z_]+):(?: (.*))?$')
     while i < len(lines):
@@ -76,12 +65,12 @@ def parse_header(lines, name):
         if line.startswith('  - '):
             if key is None:
                 raise ContentError(f'{where}: a list item without a `key:` line above it')
-            where += f', `{key}`'                           # errors in a value name its field
+            where += f', `{key}`'
             if not isinstance(out[key], list):
                 raise ContentError(f'{where}: a list item under a field that has a value')
             item = line[4:]
             m = pair.match(item)
-            if m and not item.startswith('"'):              # a mapping: this pair, then indented pairs
+            if m and not item.startswith('"'):
                 entry = {m.group(1): _scalar(m.group(2) or '', where)}
                 while i < len(lines) and lines[i].startswith('    ') and not lines[i].startswith('    - '):
                     m2 = pair.match(lines[i][4:])
@@ -104,7 +93,6 @@ def parse_header(lines, name):
 
 
 def split(text, name='post'):
-    """A file's text -> (header dict, Markdown body)."""
     lines = text.replace('\r\n', '\n').split('\n')
     if not lines or lines[0] != '---':
         raise ContentError(f'{name}: the first line must be ---')
@@ -116,29 +104,24 @@ def split(text, name='post'):
 
 
 def _plain_file(folder, name):
-    """folder/<name>, or None unless name is a bare file name (no folder, so nothing outside can be reached) of a
-    regular file there (not a symbolic link, which could point anywhere)."""
     if not isinstance(name, str) or not name or '/' in name or '\\' in name or name in ('.', '..'):
         return None
     path = os.path.join(folder, name)
     try:
         return path if stat.S_ISREG(os.lstat(path).st_mode) else None
-    except (OSError, ValueError):                         # ValueError: a NUL in the name
+    except (OSError, ValueError):
         return None
 
 
 def image_file(name):
-    """data/assets/images/<name>, or None (see _plain_file)."""
     return _plain_file(IMAGES, name)
 
 
 def asset_file(name):
-    """data/assets/files/<name>, or None (see _plain_file)."""
     return _plain_file(FILES, name)
 
 
 def prose_words(body):
-    """Words a reader reads: the body without fenced code, image lines and Markdown punctuation."""
     text = re.sub(r'^```.*?^```[ \t]*$', ' ', body, flags=re.S | re.M)
     text = re.sub(r'^!\[.*$', ' ', text, flags=re.M)
     text = re.sub(r'\]\([^)]*\)', ' ', text)
@@ -146,8 +129,6 @@ def prose_words(body):
 
 
 def check_header(head, name):
-    """Every field's type, then the values that must agree: a malformed header is a ContentError naming the file and
-    the field, never a traceback further on. Absent lists become []."""
     for k in head:
         if k not in KNOWN:
             raise ContentError(f'{name}: unknown header field `{k}`')
@@ -191,23 +172,20 @@ def check_header(head, name):
 
 
 def card_problem(path):
-    """What makes this file unfit to be the social card, or None. It is copied unchanged to the public site for
-    og:image, so it must be a PNG or JPEG of exactly CARD pixels (as its own header says, whatever its name says),
-    named for what it is, and carry no EXIF (camera, place, time)."""
     with open(path, 'rb') as f:
         d = f.read()
     ext = os.path.splitext(path)[1].lower()
     if d[:8] == b'\x89PNG\r\n\x1a\n' and d[12:16] == b'IHDR':
         kind, exts, size = 'PNG', ('.png',), (int.from_bytes(d[16:20], 'big'), int.from_bytes(d[20:24], 'big'))
         i, exif = 8, False
-        while i + 8 <= len(d) and not exif:                # chunks: length, type, data, CRC
+        while i + 8 <= len(d) and not exif:
             exif = d[i + 4:i + 8] == b'eXIf'
             i += 12 + int.from_bytes(d[i:i + 4], 'big')
     elif d[:3] == b'\xff\xd8\xff':
         kind, exts, size, i = 'JPEG', ('.jpg', '.jpeg'), None, 2
-        while size is None and i + 9 <= len(d) and d[i] == 0xff:   # segments up to the frame header, which has the size
+        while size is None and i + 9 <= len(d) and d[i] == 0xff:
             marker = d[i + 1]
-            if marker == 0xff:                             # a fill byte
+            if marker == 0xff:
                 i += 1
                 continue
             if 0xc0 <= marker <= 0xcf and marker not in (0xc4, 0xc8, 0xcc):
@@ -215,8 +193,6 @@ def card_problem(path):
             i += 2 + int.from_bytes(d[i + 2:i + 4], 'big')
         if size is None:
             return 'a JPEG whose size cannot be read from its header'
-        # An APP1 segment that starts with Exif. Inside compressed data 0xff is always followed by 0 or a restart
-        # marker, so these bytes can only be the segment itself, wherever it is.
         exif = re.search(rb'\xff\xe1..Exif\0\0', d, re.S) is not None
     else:
         return 'not a PNG or JPEG; the social card must be one of them'
@@ -245,8 +221,6 @@ def load_post(path):
 
 
 def load_posts(folder=None):
-    """Every post, newest first. Each is a dict: slug, the header fields (absent ones None, lists []), body (Markdown),
-    words and minutes (reading time at 200 words a minute, as the previous site counted it)."""
     folder = folder or os.path.join(DATA, 'posts')
     posts = [load_post(os.path.join(folder, f)) for f in sorted(os.listdir(folder)) if f.endswith('.md')]
     slugs = {p['slug'] for p in posts}
@@ -256,10 +230,7 @@ def load_posts(folder=None):
     return sorted(posts, key=lambda p: (p['published'], p['slug']), reverse=True)
 
 
-# ---------- values checked by a small table-driven reader, shared by projects (§6) and the profile (§7)
-
 class _Bad(ValueError):
-    """A value that is wrong; `path` names the field it is in, outermost first."""
     def __init__(self, msg, path=()):
         super().__init__(msg)
         self.msg, self.path = msg, path
@@ -287,7 +258,6 @@ def _line(v):
 
 
 def _text(v):
-    """Paragraphs of plain text, one blank line between them."""
     if not isinstance(v, str) or not v.strip():
         raise ValueError('must be a string, and not empty')
     if v != v.strip() or '\r' in v or re.search(r'\n\n\n|[\x00-\x09\x0b-\x1f\x7f]', v) or any(l != l.strip() for l in v.split('\n')):
@@ -322,7 +292,6 @@ def _enum(*values):
 
 
 def _count(v):
-    """A whole number from 1: an int (the profile's JSON) or its digits (a header, which reads everything as text)."""
     if isinstance(v, str) and re.fullmatch(r'[1-9]\d{0,8}', v):
         return int(v)
     if isinstance(v, int) and not isinstance(v, bool) and v >= 1:
@@ -331,7 +300,7 @@ def _count(v):
 
 
 def _bool(v):
-    if v in ('true', 'false'):                               # a header's bare words
+    if v in ('true', 'false'):
         return v == 'true'
     if isinstance(v, bool):
         return v
@@ -345,7 +314,6 @@ def _year(v):
 
 
 def _flag(v):
-    """true or false as JSON writes them (a header's bare words are _bool)."""
     if not isinstance(v, bool):
         raise ValueError('must be true or false')
     return v
@@ -389,8 +357,6 @@ def _lst(fn, *, nonempty=False):
 
 
 def _rec(fields, rule=None):
-    """A record with exactly these fields: {name: (check, required)}. Absent optional ones come back as None, or []
-    for a list. `rule(record)` then checks what must agree, raising ValueError."""
     def check(v):
         if not isinstance(v, dict):
             raise ValueError('must be a record of fields')
@@ -420,7 +386,6 @@ def _opt(fn):
 
 
 def _project(exists):
-    """A project's slug; `exists(slug)` says whether there is such a project."""
     def check(v):
         if not isinstance(v, str) or not SLUG.match(v) or not exists(v):
             raise ValueError(f'there is no project {v}')
@@ -429,7 +394,6 @@ def _project(exists):
 
 
 def _link(exists):
-    """label, kind, and exactly one place it goes: url (http or https), post, project or file (a slug or file name)."""
     def rule(r):
         if sum(r[k] is not None for k in ('url', 'post', 'project', 'file')) != 1:
             raise ValueError('a link needs exactly one of `url`, `post`, `project` and `file`')
@@ -438,12 +402,9 @@ def _link(exists):
 
 
 def _need(r, a, *others):
-    """`a` is set only when every one of `others` is."""
     if r[a] is not None and not all(r[o] is not None for o in others):
         raise ValueError(f'`{a}` needs ' + ' and '.join(f'`{o}`' for o in others))
 
-
-# ---------- projects: data/projects/<slug>.md (docs/v1-contracts.md §6)
 
 LINK_KINDS = ('article', 'repo', 'paper', 'dataset', 'other')
 PROJECT_STATUS = ('active', 'completed')
@@ -480,7 +441,6 @@ PROJECT_KNOWN = tuple(_project_fields(None))
 
 
 def load_project(path, slugs):
-    """One project file -> its dict. `slugs` are the projects that exist, for links to a project."""
     slug = os.path.basename(path)[:-3]
     name = f'data/projects/{slug}.md'
     if not SLUG.match(slug):
@@ -494,9 +454,9 @@ def load_project(path, slugs):
         rec = _rec(_project_fields(slugs.__contains__), _project_rule)(head)
     except _Bad as e:
         raise ContentError(f'{name}: {"`" + _where(e.path) + "`: " if e.path else ""}{e.msg}')
-    except ValueError as e:                                 # the rule, or a header that is not a record
+    except ValueError as e:
         raise ContentError(f'{name}: {e}')
-    text = re.sub(r'^```.*?^```[ \t]*$', ' ', body, flags=re.S | re.M)   # what the body points at must exist
+    text = re.sub(r'^```.*?^```[ \t]*$', ' ', body, flags=re.S | re.M)
     for target in re.findall(r'\]\(([^)\s]+)', text):
         m = re.fullmatch(r'/(blog|portfolio)/([^/?#]*)/?(?:[?#].*)?', target)
         if m and m[1] == 'blog' and not (SLUG.match(m[2]) and os.path.isfile(os.path.join(DATA, 'posts', m[2] + '.md'))):
@@ -511,8 +471,6 @@ def load_project(path, slugs):
 
 
 def load_projects(folder=None):
-    """Every project, in `order`. Each is a dict: slug, every header field (absent ones None, lists []), body (Markdown)
-    and words. `order` and `featured` are each unique among the projects."""
     folder = folder or os.path.join(DATA, 'projects')
     files = sorted(f for f in os.listdir(folder) if f.endswith('.md'))
     slugs = {f[:-3] for f in files}
@@ -524,8 +482,6 @@ def load_projects(folder=None):
                 raise ContentError(f'data/projects/{p["slug"]}.md: `{k}` {p[k]} is also used by {seen[p[k]]}')
     return sorted(projects, key=lambda p: p['order'])
 
-
-# ---------- the profile: data/profile.json (docs/v1-contracts.md §7)
 
 def _credential_rule(r):
     _need(r, 'badge_alt', 'badge')
@@ -589,7 +545,6 @@ def _profile_check():
 
 
 def _routes(v):
-    """contact_routes: {route id: {title, prompt}}."""
     if not isinstance(v, dict) or not v:
         raise ValueError('must be a record of routes, and not empty')
     route = _rec({'title': _req(_line), 'prompt': _req(_line)})
@@ -606,8 +561,6 @@ def _no_duplicates(pairs):
 
 
 def load_profile(path=None):
-    """data/profile.json -> its dict, validated: every field of §7 is there (absent optional ones None, lists []).
-    Anything wrong is a ContentError naming the field, never a traceback."""
     path = path or os.path.join(DATA, 'profile.json')
     name = 'data/profile.json'
     try:
@@ -632,7 +585,7 @@ def load_profile(path=None):
             raise _Bad('must be newest first by `start_date`', ('timeline',))
     except _Bad as e:
         raise ContentError(f'{name}: {"`" + _where(e.path) + "`: " if e.path else ""}{e.msg}')
-    except ValueError as e:                                 # the top level is not a record, or a record's rule
+    except ValueError as e:
         raise ContentError(f'{name}: {e}')
     return profile
 

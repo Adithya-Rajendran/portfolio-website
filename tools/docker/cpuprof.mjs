@@ -1,4 +1,4 @@
-// Where the JavaScript of a frame goes: V8 sampling profile, self time per function.  node cpuprof.mjs <url> [secs] [w] [h]
+// CPU profile of the JavaScript of a frame
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

@@ -1,17 +1,10 @@
-// contact.mjs [desktop|phone|reduced|all]: Contact (js/comms.js, content.json rooms.comms), offering three links and nothing else:
-//   LinkedIn (marked as the way to write to the owner), GitHub, and the résumé (no message box, no SEND, no mailto/endpoint).
-//   1 names and standby   2 what the open field says   3 nothing overlaps; every target inside the window and pressable (44 x 44 CSS px on a phone)   4 the links open their own addresses in a
-//   new tab and the station stays   5 the keyboard: order, focus ring   8 leaving   9 no error; nothing leaves the machine but the links pressed
-//   L  legibility (desktop): the page's words over the bright room, and the field's words standing in it, against what is behind them, at three angles of the sky: at least 4.5:1
-//      (the build measured 6 or better for the page's words, 8.75 or better for the field's; the owner's complaint was white words on a white background)
-// Other origins are stubbed. "ok" / "FAIL [profile item] what"; exit code 1 if any check failed.
+// Contact room check on desktop, phone and reduced motion
 import { PROFILES, ORIGIN, load, suite, launch, context, inRoom, until } from './rooms.kit.mjs';
 import { streamAbort } from './reqfail.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('contact'), { chk } = S;
 const { profile, content } = await load(), C = content.rooms.comms.comms;
 const b = await launch();
 
-/** The canvas spy of rooms.kit.mjs, with each text's font, width, alignment and colour (to know where it lies and what it is). */
 const cspy = () => {
   const P = CanvasRenderingContext2D.prototype, ft = P.fillText, fr = P.fillRect, cr = P.clearRect;
   const reset = (c, x, y, w, h) => { if (x === 0 && y === 0 && w >= c.canvas.width && h >= c.canvas.height) c.canvas.__t = []; };
@@ -32,7 +25,6 @@ async function openPage(ctx, path, errs) {
   await p.goto(`${ORIGIN}${path}`); if (!(await inRoom(p, 'comms', 400000))) throw new Error('the room did not load');
   await p.waitForFunction(() => getComputedStyle(document.querySelector('#hud')).opacity === '1', null, { timeout: 120000, polling: 250 }); return p;
 }
-/** The field: its canvas' texts as rectangles on the screen. */
 const fieldTexts = (p) => p.evaluate(async () => {
   const THREE = await import('three'), l = window.__lobby, pick = l.picks.find((q) => q.cta), hit = pick.mesh, panel = hit.parent.children.find((m) => m.material?.uniforms?.tMap), cv = panel.material.uniforms.tMap.value.image;
   l.camera.updateMatrixWorld(true); hit.updateWorldMatrix(true, false);
@@ -56,8 +48,6 @@ const hudWords = (p) => p.evaluate(() => {
 const hideWords = (p, on) => p.evaluate((on) => { let s = document.querySelector('#tmp-hide'); if (!s) { s = document.createElement('style'); s.id = 'tmp-hide'; document.head.append(s); }
   s.textContent = on === 'all' ? '#hud, #inspectbar, #lock { display: none !important; }' : on ? '#hud, #hud *, #inspectbar * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; } #hud .ring, #hud .cta, #hud nav a, #hud nav .sep { border-color: transparent !important; box-shadow: none !important; background-color: transparent !important; }' : ''; }, on);
 async function sky(p, deg, period = 120) { await p.evaluate(async ({ deg, period }) => { const { uTime } = await import('./js/kit.js'); uTime.value = deg / 360 * period + period * 5; }, { deg, period }); await frames(p, 4); }
-/** A page that reads screenshots: WCAG contrast of words against what is behind them. 'dom': the words' own colour over every pixel behind them (B: the view without the words);
- *  'light': the words are light in the scene, found by what they changed between A (with) and B (without). Returns the 1st percentile of the ratios ("worst") of each. */
 async function reader() {
   const p = await b.newPage(); await p.goto('about:blank');
   return (A64, B64, jobs) => p.evaluate(async ({ a, b, jobs }) => {
@@ -87,7 +77,6 @@ async function behave(prof) {
   const fieldLive = () => until(p, () => { const c = document.querySelector('#comms'); return c && !c.inert && c.style.pointerEvents !== 'none'; }, null, 60000);
   const want = [...(profile.contact.links ?? profile.links).map((l) => [l.label, l.url]), ...(profile.resume ? [[C.resume, new URL(profile.resume, ORIGIN).href]] : [])];
 
-  // ---- 1. what it is called, before anything is opened
   const pick = await p.evaluate(() => { const q = window.__lobby.picks.find((x) => x.cta); return [q.name, q.verb, q.steady]; });
   chk(1, pick[0] === 'CONTACT' && pick[1] === content.display.open && pick[2] === true, 'the display calls the field CONTACT, its verb is OPEN, and it holds the view still (steady)', pick);
   const cta = await p.evaluate(() => document.querySelector('.hero .cta')?.textContent);
@@ -98,7 +87,6 @@ async function behave(prof) {
   chk(1, await p.evaluate(() => document.querySelector('#comms').dataset.mode) === 'links', 'section#comms has data-mode="links"');
   await p.screenshot({ path: `/out/contact-${prof}-standby.png` }).catch(() => {});
 
-  // ---- 2, 3. opened with the room's button
   if (!phone) { await p.focus('.hero .cta'); await p.keyboard.press('Enter'); } else await press('.hero .cta');
   await p.waitForTimeout(1500); await settled(p); chk(2, await fieldLive(), 'the field opens and its elements go live'); await p.waitForTimeout(1200); await frames(p, 4);
   const first = await active(), firstVisible = await p.evaluate(() => document.activeElement?.matches(':focus-visible')), texts = await drawn(), all = texts.join(' | ');
@@ -122,7 +110,6 @@ async function behave(prof) {
   if (phone) chk(3, E.every((e) => e.w >= 44 && e.h >= 44), 'on the phone every target is at least 44 x 44 CSS px', E.map((e) => [e.what.slice(0, 20), Math.round(e.w), Math.round(e.h)]));
   await p.screenshot({ path: `/out/contact-${prof}-open.png` }).catch(() => {});
 
-  // ---- 4. the links
   const links = await p.evaluate(() => [...document.querySelectorAll('#comms a[target]')].map((a) => [a.textContent, a.href, a.target, a.rel, a.getAttribute('aria-label')]));
   chk(4, links.length === want.length && links.every((l, i) => l[0] === want[i][0] && l[1] === new URL(want[i][1], ORIGIN).href && l[2] === '_blank' && l[3].includes('noopener') && l[4] === `${want[i][0]}, opens in a new tab`), 'one real link per way, in order, target _blank, rel noopener, aria-label "<name>, opens in a new tab"', links);
   for (const [i, [label, href]] of links.entries()) {
@@ -133,7 +120,6 @@ async function behave(prof) {
   }
   chk(4, navs.length === 0 && (await p.evaluate(() => location.pathname)) === '/contact/', 'the station itself went nowhere', navs);
 
-  // ---- 5. the keyboard
   if (!phone) {
     chk(5, first === `a:${want[0][0]}`, 'opened by keyboard, the first link has the keyboard', first);
     chk(5, firstVisible, 'and it shows (:focus-visible)');
@@ -146,7 +132,6 @@ async function behave(prof) {
     chk(5, vis && (popups[n0]?.url() === links[1][1] || requests.includes(links[1][1])), `Enter on the focused link (${links[1][0]}) opens it in a new tab`, { vis, popup: popups[n0]?.url() }); await popups[n0]?.close().catch(() => {});
   }
 
-  // ---- 8. leaving
   if (phone) await press('#back'); else await p.keyboard.press('Escape'); await p.waitForTimeout(1500);
   chk(8, await p.evaluate(() => document.querySelector('#comms').inert), 'leaving puts its elements out of reach again');
   if (!phone) chk(8, (await active()) === 'button.cta', "and the keyboard is back on the room's button", await active());
@@ -155,7 +140,6 @@ async function behave(prof) {
   await ctx.close();
 }
 
-/** L. contrast, desktop. */
 async function legible() {
   const prof = 'desktop', P = PROFILES[prof]; S.profile(`${prof} legibility`); console.log('\n=== desktop legibility');
   const ctx = await context(b, P), errs = []; await ctx.addInitScript(cspy);

@@ -1,4 +1,4 @@
-// real pointer test: hover + click a point, screenshot, press Escape, screenshot
+// Real pointer test with hover, click, Escape and screenshots
 import { chromium } from 'playwright';
 let [url, x, y] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
@@ -6,7 +6,7 @@ const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
 p.on('console', (m) => console.log('[c]', m.text().slice(0, 200)));
 p.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await p.goto(url); await p.waitForFunction(() => window.__lobby?.ready() >= 1, null, { timeout: 120000 }); await p.waitForTimeout(1500);
-if (y === undefined) { const idx = +x;      // the camera follows the pointer, so home in on the target in a few steps
+if (y === undefined) { const idx = +x;
   for (let n = 0; n < 4; n++) { [x, y] = await p.evaluate((i) => { const L = window.__lobby, m = L.picks[i].mesh; m.geometry.computeBoundingSphere(); const v = m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld).project(L.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; }, idx);
     await p.mouse.move(+x, +y); await p.waitForTimeout(1500); }
   console.log('target', Math.round(x), Math.round(y)); }

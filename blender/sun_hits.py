@@ -1,4 +1,4 @@
-"""Every surface along the sun ray from points (QA). blender -b room.blend -P sun_hits.py -- x,y,z ..."""
+# List of every surface along the sun ray from given points
 import bpy, sys
 from mathutils import Vector
 s = bpy.context.scene; deps = bpy.context.evaluated_depsgraph_get()

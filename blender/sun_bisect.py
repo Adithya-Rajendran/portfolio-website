@@ -1,5 +1,4 @@
-"""Find what darkens a sunlit point in Cycles by bisection over render visibility (QA).
-  blender -b room.blend -P sun_bisect.py -- x,y,z"""
+# Bisection over render visibility to find what darkens a sunlit point in Cycles
 import bpy, sys, math, os, tempfile
 import numpy as np
 from mathutils import Vector
@@ -18,7 +17,7 @@ for d in pr.devices: d.use = d.type == pr.compute_device_type
 s.cycles.device = 'GPU'; s.render.resolution_x = s.render.resolution_y = 4; s.render.resolution_percentage = 100
 st = s.render.image_settings; st.file_format = 'OPEN_EXR'; st.color_depth = '32'; s.view_settings.view_transform = 'Standard'
 cam = bpy.data.objects.new('Q', bpy.data.cameras.new('Q')); s.collection.objects.link(cam); s.camera = cam; cam.data.angle = math.radians(0.3)
-cam.location = p_ + Vector((0, 0, 0.5)); cam.rotation_euler = (0, 0, 0)          # straight down onto the point
+cam.location = p_ + Vector((0, 0, 0.5)); cam.rotation_euler = (0, 0, 0)
 deps = bpy.context.evaluated_depsgraph_get()
 hit, loc, nrm, idx, own, _ = s.ray_cast(deps, cam.location, Vector((0, 0, -1)), distance=2)
 print('RECEIVER', own.name if hit else None, flush=True)

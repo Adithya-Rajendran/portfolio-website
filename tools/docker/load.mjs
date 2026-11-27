@@ -1,4 +1,4 @@
-// Time to the first frame over a throttled link, and what is fetched on the way.  node load.mjs <url> [mbps] [rtt ms]
+// Time to the first frame over a throttled link, and the requests on the way
 import { chromium } from 'playwright';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');

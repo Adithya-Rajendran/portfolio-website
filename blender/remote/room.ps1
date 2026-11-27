@@ -1,4 +1,4 @@
-# Per-room runner.   room.ps1 <room> build | preview <out.png> <spp> <width> [cam] | bake <scale> <spp>
+# Runner for one room on the bake machine
 $env:LOBBY_DEVICE = 'OPTIX'
 Set-Location "$HOME\lobby-bake\blender"
 $b = "$HOME\lobby-bake\blender-5.0.1-windows-x64\blender.exe"

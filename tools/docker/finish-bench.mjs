@@ -1,5 +1,4 @@
-// Paired, warm browser timings on the same real GPU. node finish-bench.mjs BEFORE AFTER [frames=180]
-// Use separate origins holding the old/new packed rooms. Don't run other GPU browser tests concurrently.
+// Paired warm browser timings of surface finishes on the same real GPU
 import {chromium} from 'playwright';import assert from 'node:assert/strict';
 import { ROOM_PATH } from './roompath.mjs';
 import { streamAbort } from './reqfail.mjs';

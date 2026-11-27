@@ -1,3 +1,4 @@
+// End-to-end spec for the plain pages on desktop and phone
 import { chromium, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { expect, test } from '../fixtures/site.ts';
 import { plainChecks, type PlainPageKind } from '../helpers/plaincheck.ts';

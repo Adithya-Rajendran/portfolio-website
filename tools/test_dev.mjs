@@ -1,3 +1,4 @@
+// Tests for the DEV host and parameter rules of public/js/dev.js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -24,7 +25,6 @@ test('off DEV nothing is readable; on DEV everything is; no key is public', () =
   assert.equal(paramsFor(q, true).get('tier'), '1');
 });
 
-// A room is named by its path and nothing else: ?room= must not come back in the site, the tools or the tests.
 const ROOT = resolve(import.meta.dirname, '..'), SELF = resolve(import.meta.filename);
 const SKIP_DIRS = new Set(['node_modules', 'vendor', 'assets', '.git', 'dist']), TEXT = /\.(m?js|ts|tsx|sh|py|html|css|json|md|txt|jsonc|yml|yaml)$/;
 const BAD = /[?&]room=|searchParams\.(get|set|has|append|delete)\(\s*['"]room['"]|URLSearchParams\(\s*['"\x60]room=|search\s*=\s*['"\x60]room=|URLSearchParams\(\{\s*room\b/;

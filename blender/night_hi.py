@@ -1,5 +1,4 @@
-"""Downscale NASA's full-resolution Black Marble (21600x10800) to a size Cycles can hold comfortably.
-   blender -b --python night_hi.py      (expects textures_dl/night_full.jpg, writes textures_dl/night_hi.jpg)"""
+# Downscale of the full-resolution NASA Black Marble map to a size that Cycles can hold
 import bpy, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 img = bpy.data.images.load(os.path.join(HERE, 'textures_dl', 'night_full.jpg'))

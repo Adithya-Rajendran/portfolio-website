@@ -1,4 +1,4 @@
-# Look-dev: render the portal view for several "lat,lon,spin" candidates.   earth.ps1 "30,31,0" "41,12,90" ...
+# Look-dev render of the portal view on the bake machine
 $env:LOBBY_DEVICE = 'OPTIX'
 Set-Location "$HOME\lobby-bake\blender"
 $b = "$HOME\lobby-bake\blender-5.0.1-windows-x64\blender.exe"
