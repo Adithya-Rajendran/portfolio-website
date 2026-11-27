@@ -1,7 +1,5 @@
 #!/bin/bash
-# Run one CI check tier on this checkout, either under /srv/arcadia/bin/ci (CI_JOB + CI_HOME) or standalone locally.
-#   tools/ci/run.sh <tier> [args...]
-# Tiers: static | smoke | script <name.mjs> [args...] | suite | bench "<query>" [runs] [seconds] | snap <name> <state=query>... | pdiff <dirA> <dirB> | pictures [--against <base>] | e2e [playwright args...] | perf <passes|cpuprof|unpinned|load|loadprof|blurdiff|bench> [args...]
+# CI check tiers for this checkout, under /srv/arcadia/bin/ci or on a local machine.
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -83,7 +81,6 @@ resolve_assets_for() {
     return 0
   fi
 
-  # Standalone local run without CI_HOME or ASSETS
   if [ -d "$src/public/assets" ] && [ ! -L "$src/public/assets" ] && [ -n "$(ls -A "$src/public/assets" 2>/dev/null)" ]; then
     resolved="$src/public/assets"
   elif git -C "$ROOT" rev-parse --git-common-dir >/dev/null 2>&1; then
@@ -135,7 +132,6 @@ site() {
 }
 
 gpu() {
-  # /srv/arcadia/bin/ci already holds quiet.lock on fd 8; only take gpu.lock here.
   if [ -n "${CI_HOME:-}" ]; then
     ( flock 7; "$@" 7>&- ) 7>"$CI_HOME/gpu.lock"
   else
@@ -243,6 +239,20 @@ render_pictures_checkout() {
   gpu pw_for "$src_dir" "$RESOLVED_ASSETS" "$out_dir" detsnap.mjs http://127.0.0.1:8080 /out 90 "${PIC_STATES[@]}"
 }
 
+docs_rules() {
+  local vale base_list="" base_ref="${LEGACY_BASE:-prog/int}" rc=0
+  vale="$(tools/docs/vale.sh)" || return 1
+  if [ -n "${CI_HOME:-}" ] && git --git-dir="$CI_HOME/repo.git" cat-file -e "$base_ref:tools/ci/legacy.txt" 2>/dev/null; then
+    base_list="$(mktemp)"
+    git --git-dir="$CI_HOME/repo.git" show "$base_ref:tools/ci/legacy.txt" > "$base_list"
+  fi
+  VALE="$vale" python3 -m unittest -q tools/comments/test_check.py tools/docs/test_check.py || rc=1
+  python3 tools/comments/check.py ${base_list:+--base-legacy "$base_list"} || rc=1
+  python3 tools/docs/check.py --vale "$vale" ${base_list:+--base-legacy "$base_list"} || rc=1
+  [ -z "$base_list" ] || rm -f "$base_list"
+  return "$rc"
+}
+
 tier="${1:?usage: tools/ci/run.sh <tier> [args...]}"; shift
 
 case "$tier" in
@@ -252,6 +262,7 @@ case "$tier" in
       python3 tools/content.py &&
       for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done &&
       node --test tools/test_*.mjs &&
+      docs_rules &&
       python3 tools/site.py > /dev/null
     )
     ;;
@@ -449,7 +460,6 @@ case "$tier" in
         echo "ci: using cached golden (${base_sha:0:8}_${list_hash})"
       fi
     else
-      # Local run without CI_HOME
       if [ -n "$against" ]; then
         base_dir="$OUT/base"
         rm -rf "$base_dir"
