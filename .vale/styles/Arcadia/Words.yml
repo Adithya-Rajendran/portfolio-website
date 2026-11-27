@@ -1,0 +1,7 @@
+extends: spelling
+message: "'%s' is not an approved word: use an approved word, or add a technical word to glossary.md"
+level: error
+custom: true
+dicpath: config/dictionaries
+dictionaries:
+  - ste

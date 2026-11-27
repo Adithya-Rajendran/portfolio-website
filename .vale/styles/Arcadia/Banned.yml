@@ -1,0 +1,39 @@
+extends: existence
+message: "Do not use '%s': it is an idiom, slang or a word that STE does not approve."
+level: error
+ignorecase: true
+tokens:
+  - a lot
+  - lots of
+  - kind of
+  - sort of
+  - on the fly
+  - out of the box
+  - under the hood
+  - in order to
+  - as well as
+  - and so on
+  - and/or
+  - e\.g\.
+  - i\.e\.
+  - etc\.?
+  - via
+  - basically
+  - simply
+  - just
+  - really
+  - very
+  - quite
+  - obviously
+  - actually
+  - please
+  - easily
+  - leverage
+  - utilize
+  - on top of
+  - at the end of the day
+  - in a nutshell
+  - deal with
+  - figure out
+  - set up
+  - look into
