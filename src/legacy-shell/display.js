@@ -1,11 +1,9 @@
-// The visitor's display: the lock, the cue, the caption of the bar and the hint.
-import * as THREE from 'three';
-
-const PAD = 6, EDGE = 8, MOST = 0.6, GAP = 6;
+// The visitor's display: the lock, the cue, the caption of the bar and the hint, placed from the rectangles of the station.
+const EDGE = 8, GAP = 6;
 const CLEAR = 20;
-const _v = new THREE.Vector3();
+const box4 = (r) => (r ? [r.x, r.y, r.width, r.height] : null);
 
-export function createDisplay({ camera, words, gliding, choose }) {
+export function createDisplay({ station, words, choose }) {
   const $ = (s) => document.querySelector(s), lock = $('#lock'), box = lock.querySelector('.lock-box'), tag = lock.querySelector('.lock-tag');
   const nameEl = tag.querySelector('.lock-name'), verbEl = tag.querySelector('.lock-verb'), named = $('#named');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -14,25 +12,8 @@ export function createDisplay({ camera, words, gliding, choose }) {
   const words_ = [$('#hud .hero'), $('#hud > footer')]; let behind = [];
   const meets = ([x, y, w, h], b) => x < b.right && x + w > b.left && y < b.bottom && y + h > b.top;
   const measure = () => { size = [tag.offsetWidth, tag.offsetHeight]; behind = words_.map((el) => [el, el.getBoundingClientRect()]); };
+  const frameOf = (pick) => box4(station.rectOf(pick.id));
 
-  function outline(pick) {
-    if (pick.bounds) return pick.bounds();
-    const g = pick.mesh.geometry; if (!g.boundingBox) g.computeBoundingBox();
-    const { min, max } = g.boundingBox;
-    return Array.from({ length: 8 }, (_, i) => new THREE.Vector3(i & 1 ? max.x : min.x, i & 2 ? max.y : min.y, i & 4 ? max.z : min.z).applyMatrix4(pick.mesh.matrixWorld));
-  }
-  function frameOf(pick) {
-    const W = innerWidth, H = innerHeight; let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const p of outline(pick)) {
-      _v.copy(p).applyMatrix4(camera.matrixWorldInverse); if (_v.z > -camera.near) return null;
-      _v.applyMatrix4(camera.projectionMatrix);
-      const x = (_v.x + 1) / 2 * W, y = (1 - _v.y) / 2 * H;
-      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-    }
-    x0 = Math.max(EDGE, x0 - PAD); y0 = Math.max(EDGE, y0 - PAD); x1 = Math.min(W - EDGE, x1 + PAD); y1 = Math.min(H - EDGE, y1 + PAD);
-    if (x1 - x0 < 2 || y1 - y0 < 2 || (x1 - x0) * (y1 - y0) > MOST * W * H) return null;
-    return [x0, y0, x1 - x0, y1 - y0];
-  }
   function place(r) {
     if (rect && r.every((x, i) => Math.abs(x - rect[i]) < 0.05)) return;
     rect = r; const [x, y, w, h] = r, [tw, th] = size;
@@ -58,9 +39,9 @@ export function createDisplay({ camera, words, gliding, choose }) {
 
   const cue = Object.assign(lock.cloneNode(true), { id: 'cue', className: '', hidden: true }); lock.after(cue);
   const cBox = cue.querySelector('.lock-box'), cTag = cue.querySelector('.lock-tag'), cName = cTag.querySelector('.lock-name'), cVerb = cTag.querySelector('.lock-verb');
-  const spent = new WeakSet(), met = new WeakSet(), range = document.createRange();
+  const spent = new Set(), met = new Set(), range = document.createRange();
   cTag.addEventListener('click', (e) => { e.stopPropagation(); if (cued) choose?.(cued); });
-  let picks = [], cued = null, cRect = null, cSize = [0, 0], cSide = 0, cGone = 0, zones = [], own = null; const done = new Set();
+  let cued = null, cRect = null, cSize = [0, 0], cSide = 0, cGone = 0, zones = [], own = null; const done = new Set();
   function wordZones() {
     const out = [];
     for (const el of document.querySelectorAll('#hud .hero > *, #hud > header > *, #hud > footer > *')) {
@@ -74,8 +55,8 @@ export function createDisplay({ camera, words, gliding, choose }) {
     const lx = x + tw <= innerWidth - EDGE ? x : inX(x + (w - tw) / 2);
     return [[lx, inY(y + h + GAP)], [inX(x + w + GAP), inY(y + (h - th) / 2)], [inX(x - GAP - tw), inY(y + (h - th) / 2)], [lx, inY(y - GAP - th)]];
   }
-  const free = ([l, t], r, room) => !meets([l, t, ...cSize], { left: r[0], right: r[0] + r[2], top: r[1], bottom: r[1] + r[3] })
-    && !zones.some((b) => meets([l - room, t - room, cSize[0] + 2 * room, cSize[1] + 2 * room], b));
+  const free = (p, r, room) => !meets([p[0], p[1], cSize[0], cSize[1]], { left: r[0], right: r[0] + r[2], top: r[1], bottom: r[1] + r[3] })
+    && !zones.some((b) => meets([p[0] - room, p[1] - room, cSize[0] + 2 * room, cSize[1] + 2 * room], b));
   function cuePlace(r) {
     if (cRect && r.every((x, i) => Math.abs(x - cRect[i]) < 0.05)) return;
     cRect = r; const [x, y, w, h] = r; let at = sides(r);
@@ -86,7 +67,7 @@ export function createDisplay({ camera, words, gliding, choose }) {
   function cueShow(pick, r, again = false) {
     cued = pick; cRect = null; clearTimeout(cGone);
     cName.textContent = pick.name; cVerb.textContent = pick.cue[kind] ?? pick.cue.pointer ?? '';
-    cue.hidden = false; cue.classList.add('cut'); if (!again) { cue.classList.remove('on'); cue.classList.toggle('first', !met.has(pick)); met.add(pick); }
+    cue.hidden = false; cue.classList.add('cut'); if (!again) { cue.classList.remove('on'); cue.classList.toggle('first', !met.has(pick.id)); met.add(pick.id); }
     cSize = [cTag.offsetWidth, cTag.offsetHeight]; zones = wordZones();
     const at = sides(r), i = at.findIndex((p) => free(p, r, CLEAR)); cSide = i < 0 ? Math.max(0, at.findIndex((p) => free(p, r, 0))) : i;
     cuePlace(r);
@@ -109,20 +90,20 @@ export function createDisplay({ camera, words, gliding, choose }) {
       const k = type === 'touch' ? 'touch' : type ? 'pointer' : kind;
       if (k !== kind) { kind = k; paintHint(); if (cued) cueShow(cued, cRect, true); }
     },
-    room(all, hint) { cueDrop(); picks = all ?? []; own = hint ?? null; },
+    room(hint) { cueDrop(); spent.clear(); met.clear(); own = hint ?? null; },
     did(what) { if (!done.has(what)) { done.add(what); paintHint(); } },
     frame(pick, wide = false) {
       const r = pick && frameOf(pick);
-      if (!r) drop(); else if (pick === on) place(r); else show(pick, r);
-      const c = wide && !on ? picks.find((q) => q.cue && !spent.has(q) && (!q.live || q.live())) : null, cr = c && frameOf(c);
-      if (!cr) cueDrop(); else if (c === cued) cuePlace(cr); else cueShow(c, cr);
+      if (!r) drop(); else if (pick.id === on?.id) place(r); else show(pick, r);
+      const c = wide && !on ? station.picks.get().find((q) => q.cue && !spent.has(q.id)) : null, cr = c && frameOf(c);
+      if (!cr) cueDrop(); else if (c.id === cued?.id) cuePlace(cr); else cueShow(c, cr);
     },
     focused(pick) {
-      drop(); cueDrop(); if (pick?.cue) spent.add(pick);
+      drop(); cueDrop(); if (pick) spent.add(pick.pick);
       named.textContent = named.title = pick?.name ?? '';
       if (pick && !inspected) { inspected = true; paintHint(); }
     },
-    state: () => ({ lock: on ? { name: on.name, verb: on.verb, rect: rect.map((x) => Math.round(x * 10) / 10) } : null, named: named.textContent, hint: hint(), gliding: gliding(),
+    state: () => ({ lock: on ? { name: on.name, verb: on.verb, rect: rect.map((x) => Math.round(x * 10) / 10) } : null, named: named.textContent, hint: hint(), gliding: station.gliding.get(),
       cue: cued ? { name: cued.name, words: cVerb.textContent, rect: cRect.map((x) => Math.round(x * 10) / 10) } : null }),
   };
 }

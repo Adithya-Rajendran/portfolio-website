@@ -9,6 +9,8 @@ This reference gives the functions on `window.__lobby` that the browser tests us
 
 It also gives the values on `window.__modules`.
 
+`window.__station` is the `Station` of the engine, with its types.
+
 ## Hooks
 
 | Hook | Return value |
@@ -63,7 +65,7 @@ It also gives the values on `window.__modules`.
 
 ## Modules for the tests
 
-On a DEV host, `src/main.js` sets `window.__modules` before it loads a room.
+On a DEV host, `src/legacy-shell/shell.js` sets `window.__modules` before it loads a room.
 
 The browser tests read these values in place of a load of a module by its address.
 

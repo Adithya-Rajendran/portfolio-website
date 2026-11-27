@@ -237,6 +237,9 @@ export function createComms({ scene, center, facing, text }) {
     },
     cursor(uv) { const x = uv.x * W, y = (1 - uv.y) * H, e = [...zones].find(([, r]) => inside(r, x, y))?.[0]; return e ? 'pointer' : ''; },
     typing: () => false,
+    expanded: () => expanded,
+    links: () => links.map((k) => ({ label: k[0], note: k.sub ?? '', url: k[1] })),
+    linkRect(i) { const r = links[i] && zones.get(links[i].el); if (!r || !expanded || !cam) return null; at(_a, r[0], r[1]); at(_b, r[2], r[3]); return [(Math.min(_a.x, _b.x) + 1) / 2, (1 - Math.max(_a.y, _b.y)) / 2, Math.abs(_b.x - _a.x) / 2, Math.abs(_b.y - _a.y) / 2]; },
     setEnv(env) { for (const m of [body.material, band.material]) { m.envMap = env; m.needsUpdate = true; } },
     update(t, dt) {
       if (layout()) redraw();

@@ -2,7 +2,6 @@ src/engine/drone.js	eslint(no-unused-vars)	Function 'wrap' is declared but never
 src/engine/drone.js	unicorn(no-thenable)	Do not add `then` to an object.
 src/engine/room.js	eslint(no-unused-expressions)	Expected expression to be used
 src/engine/room.js	eslint(no-unused-vars)	Identifier 'ADD' is imported but never used.
-src/main.js	eslint(no-unused-vars)	Variable 'pickAt' is declared but never used. Unused variables should start with a '_'.
 src/pages/blueprint.js	eslint(no-unused-expressions)	Expected expression to be used
 src/pages/blueprint.js	eslint(no-unused-expressions)	Expected expression to be used
 src/pages/blueprint.js	eslint(no-unused-vars)	Variable 'mode' is assigned a value but never used. Unused variables should start with a '_'.

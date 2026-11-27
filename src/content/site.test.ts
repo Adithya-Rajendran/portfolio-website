@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
-import { furnish, loadSite } from './site.js';
+import { loadSite } from './load.js';
+import { furnish } from './site.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const DATA = join(ROOT, 'tools/testdata/site');

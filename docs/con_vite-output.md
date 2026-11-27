@@ -14,7 +14,7 @@ It writes all files into `dist/`, and Git does not keep this directory.
 
 | Command | Output |
 |---|---|
-| `vite build` | `dist/index.html`, one bundle and one CSS file in `dist/app/`, and a copy of each file of `public/` |
+| `vite build` | `dist/index.html`, two bundles and one CSS file in `dist/app/`, and a copy of each file of `public/` |
 | `vite build --mode review` | The review pages `dist/blueprint.html` and `dist/asset.html`, with their scripts in `dist/app/review/` |
 | `python3 tools/site.py --shell dist/index.html --out dist` | The pages, the JSON files and the endpoints, from the shell that Vite wrote |
 
@@ -23,7 +23,11 @@ It writes all files into `dist/`, and Git does not keep this directory.
 
 ## Files
 
-Vite makes one bundle from `src/main.js`, the scripts that it uses and three.js.
+Vite makes a small bundle from `src/main.js`.
+Vite makes a second bundle from `src/legacy-shell/shell.js`, the engine and three.js, and `src/main.js` loads it only when the browser has WebGL 2.
+
+The two bundles share no file, so a page of the station loads the small bundle and then the second bundle. The HTML of a page links to no file that the second bundle uses, so a page without JavaScript requests no script.
+
 Vite makes one CSS file from `src/styles/style.css` and `src/styles/post.css`.
 The name of each file in `/app/` has a hash of its content, so a new version of a file has a new name.
 For this reason, the cache rule of `/app/*` is `immutable`. See [the cache rules](ref_endpoints.md#cache-rules).
@@ -44,4 +48,4 @@ Then it starts the server of Vite, which serves `index.html`, `src/` and `public
 These pages load `/src/main.js` from the server of Vite, so a change to a script shows after a new load of the page.
 The server of Vite shows the review pages at `/src/pages/blueprint.html` and `/src/pages/asset.html`.
 
-On the server of Vite and on each DEV host, `src/main.js` also sets `window.__modules` for the tests. See [the test hooks](ref_test-hooks.md#modules-for-the-tests).
+On the server of Vite and on each DEV host, `src/legacy-shell/shell.js` also sets `window.__modules` for the tests. See [the test hooks](ref_test-hooks.md#modules-for-the-tests).
