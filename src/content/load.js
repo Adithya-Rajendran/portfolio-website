@@ -1,4 +1,4 @@
-// loadData(): the content of the rooms and the published posts, projects and profile, which the page requests before the station code arrives.
+// loadData(): the content of the rooms and the published posts, projects and profile, which the page requests while the station code loads.
 const get = (url, none) => fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : none)).catch(() => none);
 
 export async function loadSite() {
