@@ -12,6 +12,9 @@ Each tier that serves the site first runs `pnpm install` and `pnpm build`, and t
 | Tier | Arguments | What it runs | Locks |
 |---|---|---|---|
 | `static` | None | `tools/content.py`, `tools/test_*.py`, `node --test tools/test_*.mjs`, `pnpm install` with [the type check, the lint check and the unit tests](ref_js-checks.md), [the documentation and comment checks](ref_doc-checks.md) and `tools/site.py` | `quiet.lock`, shared |
+| `build` | None | `pnpm install` and `pnpm build`, and then the checks of [the build tier](#the-build-tier) | `quiet.lock`, shared |
+| `unit` | `[vitest args...]` | `pnpm install` and the Vitest project `unit` in Node | `quiet.lock`, shared |
+| `component` | `[vitest args...]` | `pnpm install` and the Vitest project `component` in `mcr.microsoft.com/playwright:v1.65.1-noble`. See [the tests in Chromium](#the-tests-in-chromium). | `quiet.lock`, shared, and `gpu.lock` |
 | `smoke` | None | `errs.mjs` on `/`, `/about/`, `/portfolio/`, `/experience/`, `/contact/` and `/blog/` | `quiet.lock`, shared, and `gpu.lock` |
 | `script` | `<name.mjs> [args...]` | One script `tools/docker/<name.mjs>`, through `tools/dtest.sh` | `quiet.lock`, shared, and `gpu.lock` |
 | `suite` | None | `tools/check.sh`. See [the suite](con_suite.md). | `quiet.lock`, shared, and `gpu.lock` |
@@ -21,6 +24,19 @@ Each tier that serves the site first runs `pnpm install` and `pnpm build`, and t
 | `pictures` | `[--against <base>]` | The fixed states of `tools/ci/pictures.txt`, compared with golden pictures. See the list below. | `quiet.lock`, shared, `gpu.lock` and `pictures.lock` |
 | `e2e` | `[playwright args...]` | [The Playwright tests](ref_e2e-files.md) through `tests/e2e/run.mjs`, in `mcr.microsoft.com/playwright:v1.65.1-noble`. | `quiet.lock`, shared, and `gpu.lock` |
 | `perf` | `<subcommand> [args...]` | The performance commands `passes`, `cpuprof`, `unpinned`, `load`, `loadprof` and `bench`, and `blurdiff` with `<dirA> <dirB>` or pairs of images, without a GPU | `quiet.lock`, exclusive, but shared for `perf blurdiff`. `gpu.lock`, except for `blurdiff`. |
+
+## The build tier
+
+- The tier fails if `dist/index.html`, `dist/404.html`, `dist/blueprint.html` or `dist/asset.html` is not there.
+- The tier fails if `dist/app/` has no script or no CSS file.
+- The tier writes the number of files, the number of bytes and the number of pages in `dist/`.
+- The tier writes the bytes of each script and CSS file in `dist/app/`, and their bytes in gzip.
+
+## The tests in Chromium
+
+- The tier passes without tests when `vitest.config.ts` has no project with the name `component`.
+- The tier mounts the checkout at `/repo` and runs Vitest with `xvfb-run`.
+- The person that starts the tier is the owner of the files that Vitest writes in the checkout.
 
 ## The pictures tier
 

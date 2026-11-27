@@ -11,6 +11,10 @@ This reference gives the commands and the environment variables for [the check t
 
 ```bash
 tools/ci/run.sh static
+tools/ci/run.sh build
+tools/ci/run.sh unit
+tools/ci/run.sh component
+tools/ci/run.sh e2e
 tools/ci/run.sh smoke
 tools/ci/run.sh script rooms.mjs
 tools/ci/run.sh snap s1 "lobby-hero=/?shot=hero&scale=1&tier=0&chand=30&rollat=45"

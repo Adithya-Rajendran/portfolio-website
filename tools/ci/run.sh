@@ -630,6 +630,71 @@ case "$tier" in
         ;;
     esac
     ;;
+  build)
+    site || exit 1
+    (
+      cd "$ROOT" || exit 1
+      rc=0
+      for f in dist/index.html dist/404.html dist/blueprint.html dist/asset.html; do
+        [ -f "$f" ] || { echo "ci: missing $f" >&2; rc=1; }
+      done
+      ls dist/app/*.js > /dev/null 2>&1 || { echo "ci: no script in dist/app/" >&2; rc=1; }
+      ls dist/app/*.css > /dev/null 2>&1 || { echo "ci: no stylesheet in dist/app/" >&2; rc=1; }
+      pages="$(find dist -name index.html | wc -l)"
+      files="$(find dist -type f | wc -l)"
+      bytes="$(find dist -type f -printf '%s\n' | awk '{ s += $1 } END { print s + 0 }')"
+      echo "ci: dist has $files files, $bytes bytes, $pages pages"
+      for f in dist/app/*.js dist/app/review/*.js dist/app/*.css; do
+        [ -f "$f" ] || continue
+        echo "ci: $f $(stat -c %s "$f") bytes, $(gzip -9 -c "$f" | wc -c) bytes in gzip"
+      done
+      exit "$rc"
+    )
+    ;;
+  unit)
+    (
+      cd "$ROOT" || exit 1
+      log_dir="${CI_JOB:-$OUT}"
+      mkdir -p "$log_dir"
+      pnpm_cmd install --frozen-lockfile --ignore-scripts > "$log_dir/pnpm.log" 2>&1 || {
+        echo "ci: pnpm install failed, see $log_dir/pnpm.log" >&2
+        tail -20 "$log_dir/pnpm.log" >&2 || true
+        exit 1
+      }
+      pnpm_cmd exec vitest run --project unit "$@"
+    )
+    ;;
+  component)
+    (
+      cd "$ROOT" || exit 1
+      log_dir="${CI_JOB:-$OUT}"
+      mkdir -p "$log_dir"
+      pnpm_cmd install --frozen-lockfile --ignore-scripts > "$log_dir/pnpm.log" 2>&1 || {
+        echo "ci: pnpm install failed, see $log_dir/pnpm.log" >&2
+        tail -20 "$log_dir/pnpm.log" >&2 || true
+        exit 1
+      }
+      if pnpm_cmd exec vitest list --project component --filesOnly > "$log_dir/component-list.log" 2>&1; then
+        :
+      elif grep -q "The filter matched no projects: component" "$log_dir/component-list.log"; then
+        echo "ci: vitest.config.ts has no project named component, so the tier has no tests to run"
+        exit 0
+      else
+        cat "$log_dir/component-list.log" >&2
+        exit 1
+      fi
+      dev=()
+      [ -d /dev/dri ] && dev=(--device /dev/dri)
+      gpu docker run --rm --init --ipc=host "${dev[@]}" \
+        --user "$(id -u):$(id -g)" -e HOME=/tmp -e CI=1 \
+        -v "$ROOT":/repo \
+        "$E2E_IMG" bash -c '
+          cd /repo
+          xvfb-run -a -s "-screen 0 1280x720x24" node_modules/.bin/vitest run --project component "$@"
+        ' _ "$@" 2>&1 | grep --line-buffered -v "GL Driver"
+      exit "${PIPESTATUS[0]}"
+    )
+    ;;
   e2e)
     assets
     site || exit 1
