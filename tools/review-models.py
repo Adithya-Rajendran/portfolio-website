@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""One canonical Blender studio per registered asset, without building a whole room.
+# One canonical Blender studio for each registered asset, without a whole room build
+USAGE = """One canonical Blender studio per registered asset, without building a whole room.
   python3 tools/review-models.py --list
   python3 tools/review-models.py telescope closed_book   # or no keys for the full set
 Writes two views per asset in blender/out/model-review/<room>/. This is a review
@@ -17,7 +18,6 @@ source = root / 'blender'
 
 
 def registered(file, registry):
-    """Local entries only. Shared registries are enumerated once, in their canonical studio."""
     for node in ast.parse((source / file).read_text()).body:
         if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == registry for t in node.targets):
             value = node.value
@@ -38,7 +38,7 @@ def main():
         'projects': [*registered('assets_tech.py', 'TECH'), *registered('assets_exhibits.py', 'EXHIBIT_ASSETS')],
         'writing': [*registered('assets_reading.py', 'READING_ASSETS'), *registered('room_writing.py', 'ASSETS')],
     }
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=USAGE)
     parser.add_argument('--list', action='store_true'); parser.add_argument('assets', nargs='*')
     opts = parser.parse_args()
     flat = [k for keys in studios.values() for k in keys]
@@ -53,7 +53,6 @@ def main():
         out = source / 'out' / 'model-review' / room; out.mkdir(parents=True, exist_ok=True)
         script = 'build_scene.py' if room == 'lobby' else f'room_{room}.py'
         images = []
-        # Stage in an empty directory: a failed bench cannot appear to pass on old stills.
         with tempfile.TemporaryDirectory(dir=out) as work:
             for name in names:
                 with (out / f'{name}.log').open('w') as log:

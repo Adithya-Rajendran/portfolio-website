@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
-"""The site's static endpoints, written by tools/site.py's main() beside the pages (docs/v1-contracts.md §1):
-feed.xml (RSS 2.0, full articles), sitemap.xml and llms.txt (with the pages of §8 and the projects), resume/<file>.pdf
-and _redirects. robots.txt and _headers are plain committed files. There is no server, so each is written once from
-the posts, the projects and the profile, and nothing in them depends on the time of the run: a second run writes nothing.
-
-    build(posts, profile, projects) -> {path under public: bytes}       (raises ContentError; writes nothing)
-    write(out, files)                                          (changed files only; prunes out/resume/)
-
-Every URL written here is absolute on content.SITE, except in _redirects, where Cloudflare wants paths."""
+# Static endpoints that tools/site.py writes beside the pages
 import email.utils, datetime, importlib.util, json, os, re, sys
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content import ContentError, DATA, SITE
 
-# ---------------------------------------------------------------- the redirect table
-# Old URL -> where it goes now (docs/v1-contracts.md §1). Cloudflare takes the first rule that matches, one per line, and
-# `*` takes the rest of the path. 'RESUME' is the PDF's path, which comes from the data. The versions with a trailing
-# slash are there because Cloudflare matches the path as written. /studio, /api/contact, /openapi.json and
-# /.well-known/api-catalog are gone, and the _redirects syntax has no way to say 410: they are simply 404.
-# /about, /contact, /portfolio and /portfolio/<slug> are pages again (§8): Cloudflare adds their trailing slash itself.
 REDIRECTS = [
     ('/blog/tags/*', '/blog/'),
     ('/resume', 'RESUME'), ('/resume/', 'RESUME'),
@@ -31,8 +17,6 @@ _sitegen = None
 
 
 def sitegen():
-    """tools/site.py, loaded by path (`import site` is Python's own module) and only when needed: site.py imports this
-    file, so it cannot be imported here at the top."""
     global _sitegen
     if _sitegen is None:
         spec = importlib.util.spec_from_file_location('sitegen_for_extras', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site.py'))
@@ -41,19 +25,15 @@ def sitegen():
     return _sitegen
 
 
-# ---------------------------------------------------------------- small helpers
-
 XML_ILLEGAL = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff]')
 
 
 def esc(s):
-    """XML text and attribute values: characters XML 1.0 forbids are dropped; & < > " ' become references."""
     s = XML_ILLEGAL.sub('', str(s))
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#x27;')
 
 
 def rfc822(iso):
-    """2026-03-30 -> 'Mon, 30 Mar 2026 00:00:00 GMT' (a date has no time of day: midnight UTC)."""
     d = datetime.datetime.fromisoformat(iso).replace(tzinfo=datetime.timezone.utc)
     return email.utils.format_datetime(d, usegmt=True)
 
@@ -63,13 +43,10 @@ def modified(post):
 
 
 def newest(posts):
-    """The date of the latest change any post records (ISO dates sort as text), or None with no posts."""
     return max((modified(p) for p in posts), default=None)
 
 
 def absolute(html):
-    """Every site path in the article's HTML (links, images) becomes a URL on SITE: a reader opens the item elsewhere.
-    The renderer writes only http(s), mailto and paths starting with '/', so nothing else needs changing."""
     return re.sub(r'\b(href|src)="/(?!/)', lambda m: f'{m[1]}="{SITE}/', html)
 
 
@@ -82,13 +59,10 @@ def project_url(project):
 
 
 def ordered(projects):
-    """The projects in the order /portfolio/ lists them (site.py's listing())."""
     return sum(sitegen().listing(list(projects)), []) if projects else []
 
 
 def resume(profile):
-    """The profile's résumé -> (original file name, bytes), or None when the profile has none. `resume` is a file name
-    `<sha1>.<ext>` in data/assets/files/ (docs/v1-contracts.md §7); the original name comes from data/assets/files.json."""
     key = profile.get('resume')
     if not key:
         return None
@@ -104,11 +78,7 @@ def resume(profile):
         return name, f.read()
 
 
-# ---------------------------------------------------------------- the outputs
-
 def article_html(post, slugs):
-    """What a feed reader shows: the body as the page renders it, then the changes. Warnings are not repeated here
-    (site.py's build reported them)."""
     sg = sitegen()
     body, _ = sg.render_markdown(post['body'], doc=sg.Doc(f'{post["slug"]}.md', 1, (), slugs))
     parts = [body]
@@ -122,11 +92,11 @@ def article_html(post, slugs):
 
 def feed_xml(posts, profile):
     name, slugs = profile['name'], {p['slug'] for p in posts}
-    title = f'{name} — Writing'                            # as the pages' <link rel="alternate"> names it
+    title = f'{name} — Writing'
     stamp = newest(posts)
     channel = [f'<title>{esc(title)}</title>', f'<link>{SITE}/blog/</link>',
                f'<description>{esc(profile.get("writing_description") or title)}</description>', '<language>en-us</language>']
-    if stamp:                                              # the newest change, not the time of the run: same bytes every time
+    if stamp:
         channel.append(f'<lastBuildDate>{rfc822(stamp)}</lastBuildDate>')
     channel.append(f'<atom:link href="{SITE}/feed.xml" rel="self" type="application/rss+xml"/>')
     for p in posts:
@@ -134,7 +104,7 @@ def feed_xml(posts, profile):
         channel.append('<item>')
         channel += [f'  <title>{esc(p["title"])}</title>', f'  <link>{url}</link>',
                     f'  <guid isPermaLink="true">{url}</guid>', f'  <pubDate>{rfc822(p["published"])}</pubDate>',
-                    f'  <dc:creator>{esc(name)}</dc:creator>']   # RSS's own <author> is an email address; the site publishes none
+                    f'  <dc:creator>{esc(name)}</dc:creator>']
         channel += [f'  <category>{esc(t)}</category>' for t in p['tags']]
         channel += [f'  <description>{esc(p["description"])}</description>',
                     f'  <content:encoded>{esc(article_html(p, slugs))}</content:encoded>', '</item>']
@@ -145,9 +115,6 @@ def feed_xml(posts, profile):
 
 
 def sitemap_xml(posts, projects=()):
-    """The home page, the list and every post; then the pages of the rooms (§8) and every project, in /portfolio/'s
-    order. A post is dated by its last revision (else its publication), the list and the home page by the newest of
-    those. Projects and the profile record no date of change, so their pages have no <lastmod>."""
     stamp = newest(posts)
     pages = [(f'{SITE}/', stamp), (f'{SITE}/blog/', stamp)] + [(post_url(p), modified(p)) for p in posts]
     pages += [(f'{SITE}/about/', None), (f'{SITE}/portfolio/', None)] + [(project_url(p), None) for p in ordered(projects)]
@@ -157,13 +124,10 @@ def sitemap_xml(posts, projects=()):
 
 
 def md_link_text(s):
-    """Link text in Markdown: one line, and the characters that would end it written as escapes."""
     return re.sub(r'([\\\[\]])', r'\\\1', ' '.join(str(s).split()))
 
 
 def llms_txt(posts, profile, resume_name, projects=()):
-    """The llms.txt convention (llmstxt.org), as the previous site wrote it: a title, a one-line summary in a quote,
-    a few lines of detail, then sections of `- [title](url): notes`."""
     name, one_line = profile['name'], lambda s: ' '.join(str(s).split())
     lines = [f'# {one_line(name)}', '']
     if profile.get('work_summary') or profile.get('headline'):
@@ -191,7 +155,6 @@ def llms_txt(posts, profile, resume_name, projects=()):
 
 
 def redirects_txt(resume_name):
-    """_redirects: `source target 301` per line. The résumé rules are left out when the profile has no résumé."""
     pdf = f'/resume/{quote(resume_name)}' if resume_name else None
     rules = [(s, pdf if t == 'RESUME' else t) for s, t in REDIRECTS if t != 'RESUME' or pdf]
     return '# Written by tools/site_extras.py from the table at its top. Old addresses (docs/v1-contracts.md §1).\n' + \
@@ -199,7 +162,6 @@ def redirects_txt(resume_name):
 
 
 def build(posts, profile, projects=()):
-    """Everything this module writes, in memory: {path under public: bytes}."""
     files = {'feed.xml': feed_xml(posts, profile), 'sitemap.xml': sitemap_xml(posts, projects)}
     cv = resume(profile)
     files['llms.txt'] = llms_txt(posts, profile, cv and cv[0], projects)
@@ -211,7 +173,6 @@ def build(posts, profile, projects=()):
 
 
 def write(out, files):
-    """Write the files that changed (silently when none did) and remove what is left in out/resume/ from an earlier run."""
     for rel, data in sorted(files.items()):
         path = os.path.join(out, rel)
         try:

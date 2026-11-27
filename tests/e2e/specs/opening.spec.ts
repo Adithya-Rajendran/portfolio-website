@@ -1,3 +1,4 @@
+// End-to-end spec for the opening sequence
 import {
   canvasSpyInitScript,
   expect,
@@ -55,7 +56,6 @@ test.describe('opening: ways of opening across Fabrication, Lounge, and Navigati
         'no wall screen is a pick',
       ).toBe(true);
 
-      // Scan flat: an exhibit
       const ex = src[0];
       await st.focus(ex.i);
       await st.camStill();
@@ -82,7 +82,6 @@ test.describe('opening: ways of opening across Fabrication, Lounge, and Navigati
       }
       await waitClosed(st, profile.phone);
 
-      // List and non-exhibit project: received
       const { projects, content } = siteData;
       for (const via of ['button', 'address'] as const) {
         const nonEx = projects.find((q) => !content.rooms.projects.exhibits.includes(q.slug));
@@ -263,7 +262,6 @@ test.describe('opening: ways of opening across Fabrication, Lounge, and Navigati
         await st.until(() => !(window as any).__lobby.display.state().lock, undefined, 15_000);
       }
 
-      // READ: books scanned
       await st.focus(bk);
       await st.camStill();
       await st.until(() => (window as any).__lobby.picks.find((q: any) => q.reads).live(), undefined, 30_000);
@@ -377,7 +375,6 @@ test.describe('opening: ways of opening across Fabrication, Lounge, and Navigati
       const after = await st.look();
       expect(!after.ReadPrint && !after.ReadFrame, 'ReadPrint and ReadFrame hidden after CLOSE').toBe(true);
 
-      // CLOSE part-way folds the frame where it is
       if (!profile.phone && !profile.still) {
         await st.focus(stations[2].i);
         await st.camStill();

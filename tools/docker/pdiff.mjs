@@ -1,6 +1,4 @@
-// Pixel diff (tools/pdiff.sh, tools/ci/run.sh).
-//   node pdiff.mjs [--strict] [--fail-max=N] <dirA> <dirB> [heatdir]
-// Per common png: max / mean abs difference (0-255, max over channels), % of pixels > 2 and > 8.
+// Pixel difference for tools/pdiff.sh and the check tiers
 import { chromium } from 'playwright';
 import fs from 'fs';
 

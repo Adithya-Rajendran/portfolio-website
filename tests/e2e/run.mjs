@@ -1,3 +1,4 @@
+// Runner that starts Playwright with the end-to-end configuration
 import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 

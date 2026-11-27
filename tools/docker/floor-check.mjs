@@ -1,10 +1,8 @@
-// Check both eyes against the virtual image of a reflection-only lamp in EVERY room.
-// In the three window rooms, also read their actual sun maps at both eyes, then after 18 s of roll.
-// node floor-check.mjs URL
+// Check of both eyes against the virtual image of a reflection-only lamp in each room
 import {chromium} from 'playwright';import assert from 'node:assert/strict';
 import { ROOM_PATH } from './roompath.mjs';
 import { streamAbort } from './reqfail.mjs';
-const base=process.argv[2],errors=[],rooms={lobby:[.42,2.65],about:[.35,2.45],projects:[.42,2.6],experience:[.1,4.45],writing:[3.1,2.25]}; // bare deck, not a rug or plinth
+const base=process.argv[2],errors=[],rooms={lobby:[.42,2.65],about:[.35,2.45],projects:[.42,2.6],experience:[.1,4.45],writing:[3.1,2.25]};
 const browser=await chromium.launch({args:['--use-angle=gl-egl','--enable-gpu','--ignore-gpu-blocklist']});
 try {
  const page=await browser.newPage({viewport:{width:960,height:540},reducedMotion:'no-preference'});

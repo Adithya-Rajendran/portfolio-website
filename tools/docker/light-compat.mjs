@@ -1,6 +1,4 @@
-// Headless browser spot check, not a claim about Safari hardware. Reduced motion must hold the
-// default roll and skip the pullback, while opaque Cycles textures must contribute to real pixels.
-// node light-compat.mjs URL chromium|webkit width height [rooms...] (LIGHT_DEFAULT=1: use the visitor's adaptive quality)
+// Headless browser spot check of reduced motion and opaque Cycles textures
 import {chromium,webkit} from 'playwright'; import assert from 'node:assert/strict';
 import { ROOM_PATH } from './roompath.mjs';
 import { streamAbort } from './reqfail.mjs';

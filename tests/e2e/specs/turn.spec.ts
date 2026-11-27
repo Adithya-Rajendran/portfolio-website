@@ -1,3 +1,4 @@
+// End-to-end spec for the turning of the Navigation route map and its hint
 import { expect, test } from '../fixtures/site.ts';
 import { sleep, StationPage } from '../pages/station.ts';
 
@@ -78,7 +79,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
       );
       const N = stations.length;
 
-      // 1. Hooks & initial hint
       await test.step('1. hooks and initial state', async () => {
         const missingHooks = await p.evaluate(() => {
           const t = (window as any).__lobby.turn;
@@ -114,7 +114,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
       expect(tSnap.front === 0 && tSnap.settled && !tSnap.hand, 'turn.to(0, true) snaps cleanly').toBe(true);
       const gap = Math.abs(wrap(home[1] - home[0]));
 
-      // 2. Drag
       const spot = await st.canvasPoint(0.62, 0.3);
       expect(spot, 'canvasPoint available').not.toBeNull();
       const X0 = Math.round(spot!.x);
@@ -177,7 +176,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
           expect(s.front, `${how}: settles on nearest station`).toBe(nearest(target));
         }
 
-        // < 6 px; mostly vertical
         await p.evaluate(() => (window as any).__lobby.turn.to(0, true));
         const a0 = (await TS()).a;
         await st.pen.down(X0, Y0);
@@ -255,7 +253,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
         }
       });
 
-      // 3. Wheel
       await test.step('3. wheel behavior', async () => {
         await p.evaluate(() => (window as any).__lobby.turn.to(0, true));
         await sleep(300);
@@ -312,7 +309,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
         expect(await p.evaluate(() => scrollY), 'page itself did not scroll').toBe(y0);
       });
 
-      // 4. Focus and tour
       await test.step('4. focus and tour', async () => {
         if (N > 1) {
           await st.clearFocus();
@@ -386,7 +382,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
         }
       });
 
-      // 5. Guards
       await test.step('5. guards (nav and reading)', async () => {
         await st.clearFocus();
         await rested();
@@ -435,7 +430,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
         await rested();
       });
 
-      // 7. Hint after and fresh page nudge
       await test.step('7. hint lifecycle', async () => {
         const s = await TS();
         const inspected = N > 1;
@@ -459,7 +453,6 @@ test.describe('turn: Navigation route map turning and hint', { tag: '@timing' },
         }
       });
 
-      // 8. Other rooms
       await test.step('8. other rooms have no turn', async () => {
         await st.enter('projects');
         const there = await st.inRoom('projects', 240_000);

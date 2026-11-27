@@ -1,13 +1,8 @@
-// library.mjs [desktop|phone|reduced|all]: the Library's reader, driven the way a visitor drives it.
-//   desktop 1280x720 and phone 390x844 (touch): volumes, the terminal's list, a held book, READ, the open article, reading,
-//   leaving, a link to another post and the Back button, the keyboard alone, and (reduced motion) READ without the show.
-// Every check prints "ok" or "FAIL [item] what"; the item numbers are the brief's (docs/v1-contracts.md §4 has the hooks).
-// It never edits anything: a failure is a finding about the site, unless the message says the test could not set up.
-// Screenshots go to /out/lib-<profile>-<step>.png. Exit code 1 if any check failed.
+// Library room check on desktop, phone and reduced motion
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080', which = process.argv[2] || 'all';
-const results = [];                                              // { profile, item, ok, what, detail }
+const results = [];
 let profile = '';
 function chk(item, ok, what, detail = '') {
   results.push({ profile, item, ok: !!ok, what, detail });
@@ -24,7 +19,6 @@ const PROFILES = {
   reduced: { viewport: { width: 1280, height: 720 }, phone: false, reducedMotion: 'reduce' },
 };
 
-/** A page on the Library with every console error, page error, failed request and 4xx/5xx collected (item 10). */
 async function open(ctx, path, P) {
   const p = await ctx.newPage(), errs = P.errs;
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
@@ -34,13 +28,11 @@ async function open(ctx, path, P) {
   await p.goto(`${ORIGIN}${path}${path.includes('?') ? '&' : '?'}shot=hero&rollat=20`);
   await p.waitForFunction(() => window.__lobby?.mode().room === 'writing' && document.querySelector('#loader.done'), null, { timeout: 150000, polling: 250 });
   await p.waitForTimeout(1200);
-  // a log of every change in what the reader, the drone and the address say, with the time
   await p.evaluate(() => { const l = window.__lobby, log = (window.__log = []); let last = '';
     setInterval(() => { const r = document.querySelector('#reader'), s = [l.reader.state(), l.reader.slug(), location.pathname, l.held()].join('|');
       if (s !== last) { last = s; log.push({ t: Date.now(), state: l.reader.state(), slug: l.reader.slug(), path: location.pathname, held: l.held(), title: document.title, tf: r.style.transform, hidden: r.hidden }); } }, 15); });
   return p;
 }
-/** Wait for a condition in the page; false (never an exception) if it did not come true. */
 const until = (p, fn, arg, timeout = 90000) => p.waitForFunction(fn, arg, { timeout, polling: 200 }).then(() => true, () => false);
 const snap = (p) => p.evaluate(() => { const l = window.__lobby, r = document.querySelector('#reader'), w = document.querySelector('#ways'), vis = (e) => !!e && !e.hidden && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
   return { state: l.reader.state(), slug: l.reader.slug(), path: location.pathname, search: location.search, title: document.title, held: l.held(), mode: document.documentElement.className,
@@ -58,7 +50,6 @@ async function run(name) {
   const tapAt = (p, x, y) => (phone ? p.touchscreen.tap(x, y) : p.mouse.click(x, y));
   const title = (slug) => posts.find((q) => q.slug === slug)?.title;
   const log = (p) => p.evaluate(() => window.__log);
-  /** Where the READ pick is on the screen, how big, and what is on top of it there. */
   const readBox = (p) => p.evaluate(async () => {
     const THREE = await import('three'), l = window.__lobby, pick = l.picks.find((q) => q.reads), m = pick.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
     const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].map(([x, y]) => { const g = m.geometry.parameters, v = new THREE.Vector3(x * g.width / 2, y * g.height / 2, 0).applyMatrix4(m.matrixWorld).project(l.camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, z: v.z }; });
@@ -66,22 +57,21 @@ async function run(name) {
     return { live: !!pick.live(), glyph: m.parent.visible, cx: c.x, cy: c.y, left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys), behind: pts.some((q) => q.z > 1),
       onTop: top ? `${top.tagName.toLowerCase()}${top.id ? '#' + top.id : ''}${top.className && typeof top.className === 'string' ? '.' + top.className.split(' ')[0] : ''}` : null };
   });
-  const pickVolume = async (p, i) => {                            // choose volume i from the terminal's list, as a visitor does
-    // on a narrow screen the list folds down to the volume already chosen: touching that one opens it again
+  const pickVolume = async (p, i) => {
     if (await p.evaluate((i) => { const b = document.querySelector(`#ways [data-option="${i}"]`); return !!b && b.getClientRects().length === 0; }, i)) {
       const again = await poke(p, '#ways [data-option][aria-current]'); if (again !== true) return again;
     }
     const ok = await poke(p, `#ways [data-option="${i}"]`); if (ok !== true) return ok;
     return (await until(p, (s) => window.__lobby.held() === s, posts[i].slug, 120000)) ? true : `held() is ${await p.evaluate(() => window.__lobby.held())}, not ${posts[i].slug}`;
   };
-  const readNow = async (p, want) => {                                  // press READ where it is on screen; wait for the article
+  const readNow = async (p, want) => {
     await until(p, () => { const q = window.__lobby.picks.find((x) => x.reads); return q.live() && q.mesh.parent.visible; }, null, 20000); await p.waitForTimeout(500);
     const r = await readBox(p); await p.mouse.move(r.cx, r.cy); await p.waitForTimeout(100);
     const t = Date.now(); await tapAt(p, r.cx, r.cy);
     let hook = false;
-    if (!(await until(p, () => window.__lobby.reader.state() !== 'closed', null, 8000))) {      // the press did nothing: go on through the hook, so the rest can be tested (the failure is already recorded)
+    if (!(await until(p, () => window.__lobby.reader.state() !== 'closed', null, 8000))) {
       hook = true; console.log(`  note: the READ press did nothing (held() is now ${await p.evaluate(() => window.__lobby.held())}); carrying on with setFocus(READ pick)`);
-      if (await p.evaluate((w) => window.__lobby.held() !== w, posts[want].slug)) await pickVolume(p, want);       // the stray press chose another volume from the list under it
+      if (await p.evaluate((w) => window.__lobby.held() !== w, posts[want].slug)) await pickVolume(p, want);
       await until(p, () => window.__lobby.picks.find((x) => x.reads).live(), null, 60000); await p.waitForTimeout(500); await p.evaluate(() => { const l = window.__lobby; l.setFocus(l.picks.find((q) => q.reads)); });
     }
     const ok = await until(p, () => window.__lobby.reader.state() === 'open', null, 60000); return { ok, t, box: r, hook };
@@ -92,7 +82,6 @@ async function run(name) {
   const TERMINAL = () => window.__lobby.setFocus(window.__lobby.picks.find((q) => q.options));
   let opened = false;
 
-  // ---- 1. the catalogue
   if (!P.reducedMotion) {
     const vols = await p.evaluate(() => window.__lobby.volumes()), mode = await p.evaluate(() => window.__lobby.mode());
     chk(1, mode.room === 'writing', '/blog/ opens the Library', mode.room);
@@ -100,7 +89,6 @@ async function run(name) {
       { volumes: vols.map((v) => v.slug), index: posts.map((q) => q.slug) });
     if (vols.length < posts.length) console.log(`  note: the shelves hold ${vols.length} of ${posts.length} posts`);
 
-    // ---- 2. the terminal's list
     await p.evaluate(TERMINAL);
     chk(2, await until(p, (n) => document.querySelectorAll('#ways.list [data-option]').length === n, vols.length, 20000), 'focusing the terminal lists one button per volume');
     await p.waitForTimeout(1800); await shot(p, '1-list');
@@ -114,7 +102,6 @@ async function run(name) {
     const inOrder = await p.evaluate(() => { const o = [...document.querySelectorAll('#ways [data-option]')]; return o.map((x) => x.dataset.option).join() === o.map((_, i) => i).join(); });
     chk(2, inOrder, 'the buttons are in shelf order');
 
-    // ---- 3. choosing a volume
     const got = await pickVolume(p, 0);
     chk(3, got === true, `choosing "${A.title}": held() becomes its slug`, got === true ? '' : got);
     await shot(p, '2-held');
@@ -127,7 +114,6 @@ async function run(name) {
     chk(3, r.bottom - r.top >= (phone ? 40 : 20), `the tap area is at least ${phone ? 40 : 20} px tall`, `${(r.bottom - r.top).toFixed(1)} x ${(r.right - r.left).toFixed(1)} px`);
     chk(3, r.onTop === 'canvas#scene', 'nothing but the canvas lies over the READ glyph', r.onTop);
 
-    // ---- 4. reading
     if (live) {
       const read = await readNow(p, 0); opened = read.ok;
       await shot(p, '3-open');
@@ -160,13 +146,12 @@ async function run(name) {
         chk(4, g.cover.length === 0, 'nothing but the reader is on top of it (25 points)', g.cover.slice(0, 5));
       } else await shot(p, '3-open-failed');
 
-      // ---- 5. reading the article
       if (read.ok) {
         const c = await p.evaluate(() => { const r = document.querySelector('.reader-scroll').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
         const prog = () => p.evaluate(() => +(/scaleX\(([\d.e-]+)\)/.exec(document.querySelector('.reader-progress i').style.transform)?.[1] ?? NaN));
         const st = () => p.evaluate(() => [document.querySelector('.reader-scroll').scrollTop, scrollY, document.body.scrollTop]);
         const p0 = await prog(), s0 = await st();
-        if (phone) { const cdp = await ctx.newCDPSession(p), x = Math.min(c[0], W - 20), t = (type, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });   // a finger drawn up the text
+        if (phone) { const cdp = await ctx.newCDPSession(p), x = Math.min(c[0], W - 20), t = (type, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
           await t('touchStart', c[1] + 250); for (let i = 1; i <= 12; i++) { await t('touchMove', c[1] + 250 - 500 * i / 12); await sleep(16); } await t('touchEnd'); await cdp.detach(); }
         else { await p.mouse.move(c[0], c[1]); await p.mouse.wheel(0, 800); }
         const sc = await until(p, (t) => document.querySelector('.reader-scroll').scrollTop > t + 100, s0[0], 8000); await p.waitForTimeout(400);
@@ -175,7 +160,6 @@ async function run(name) {
         chk(5, s1[1] === 0 && s1[2] === 0, 'the page itself does not scroll', s1);
         chk(5, p1 > p0, 'the progress bar moves', `${p0} -> ${p1}`);
         await shot(p, '4-scrolled');
-        // the contents rail: one link per body h2, and each brings its heading into view
         const secs = A && index.posts[0].sections.filter((x) => x.level === 2);
         const rail = await p.evaluate(() => ({ links: [...document.querySelectorAll('.reader-rail a')].map((a) => a.getAttribute('href')), shown: getComputedStyle(document.querySelector('.reader-rail')).display !== 'none',
           h2: [...document.querySelectorAll('#reader .post-body h2')].map((h) => h.id), allH2: document.querySelectorAll('#reader article h2').length }));
@@ -198,7 +182,6 @@ async function run(name) {
           }
           await shot(p, '5-rail');
         } else chk(5, !rail.shown, 'the rail is hidden on the phone (by design: CSS)');
-        // copy buttons
         const pre = await p.evaluate(() => { const a = document.querySelector('#reader article'); return { pres: a.querySelectorAll('pre').length, copies: [...a.querySelectorAll('button.copy')].filter((b) => b.nextElementSibling?.tagName === 'PRE').length, copyAll: a.querySelectorAll('button.copy').length }; });
         chk(5, pre.pres > 0 && pre.copies === pre.pres && pre.copyAll === pre.pres, 'every pre has exactly one copy button right before it', pre);
         if (pre.pres) {
@@ -213,7 +196,6 @@ async function run(name) {
           const clip = await p.evaluate(async () => { try { return [await navigator.clipboard.readText(), document.querySelector('#reader button.copy').textContent, document.querySelector('#reader button.copy').nextElementSibling.textContent]; } catch (e) { return ['!' + e.message]; } });
           chk(5, done === true && clip[0] === clip[2] && clip[1] === 'COPIED', 'clicking copy puts the code on the clipboard and says COPIED', done === true ? { label: clip[1], clipboardOk: clip[0] === clip[2], got: String(clip[0]).slice(0, 60) } : done);
         }
-        // selecting text
         await p.evaluate(() => { const q = [...document.querySelectorAll('#reader .post-body p')].find((e) => e.textContent.length > 120); q.scrollIntoView({ block: 'center' }); }); await p.waitForTimeout(400);
         const para = await p.evaluate(() => { const q = [...document.querySelectorAll('#reader .post-body p')].find((e) => e.textContent.length > 120), r = q.getBoundingClientRect(), t = document.elementFromPoint(r.left + 20, r.top + 8); const rr = document.createRange(); rr.selectNodeContents(q); const l = rr.getClientRects()[0];
           return { l: l.left, r: Math.min(r.right, l.right), y: l.top + l.height / 2, line: l.height, us: getComputedStyle(q).userSelect, covered: !t || !q.contains(t), text: q.textContent.slice(0, 30) }; });
@@ -227,7 +209,6 @@ async function run(name) {
       }
     }
 
-    // ---- 6. leaving
     if (opened) {
       if (phone) await poke(p, '.reader-close'); else await p.keyboard.press('Escape');
       let closed = await until(p, () => window.__lobby.reader.state() === 'closed', null, phone ? 4000 : 8000);
@@ -246,7 +227,6 @@ async function run(name) {
       chk(6, (await snap(p)).current === posts.indexOf(B), 'and the list marks it', (await snap(p)).current);
     }
 
-    // ---- 7. a link to another post, then Back
     if (opened) {
       const read = await readNow(p, posts.indexOf(B));
       chk(7, read.ok, `READ opens ${B.slug} (set-up for the link test)`);
@@ -269,14 +249,12 @@ async function run(name) {
           const rail = await p.evaluate(() => document.querySelector('.reader-scroll').scrollTop);
           chk(7, rail < 5, 'and the new article starts at its top', rail);
 
-          // Back: what happens, and do the address, the reader's state and what is shown agree?
           const coherent = (s) => {
             const here = s.path.match(/^\/blog\/([^/]+)\/$/)?.[1];
             if (here) return [s.state === 'open' && s.slug === here && s.readerShown && s.shownSlug === here && s.title === title(here) && s.held === here, `address says ${here}`];
             if (s.path === '/blog/') return [s.state === 'closed' && s.slug === null && !s.readerShown && s.listShown && s.title === 'Writing — Library', 'address says the catalogue'];
             return [false, `unexpected address ${s.path}`];
           };
-          // a flight to a shelf takes up to 20 s and the room says 'closed' while it lasts, so wait for agreement, then for quiet
           const settle = async () => { let n = 0, s, t = Date.now(); for (; Date.now() - t < 120000 && n < 5; await sleep(400)) { s = await snap(p); n = coherent(s)[0] ? n + 1 : 0; } return [s, Date.now() - t]; };
           const steps = [['Back', () => p.goBack()], ['Back again', () => p.goBack()], ['Forward', () => p.goForward()], ['Forward again', () => p.goForward()]];
           for (const [i, [what, go]] of steps.entries()) {
@@ -290,9 +268,8 @@ async function run(name) {
         }
       }
     }
-  } // item-1..7 block is skipped for the reduced-motion profile, which has its own
+  }
 
-  // ---- 8. the keyboard alone (a fresh page: no book yet)
   if (!P.reducedMotion) {
     const k = await open(ctx, '/blog/', P);
     await k.evaluate(TERMINAL); await until(k, (n) => document.querySelectorAll('#ways.list [data-option]').length === n, posts.length, 20000); await k.waitForTimeout(1800);
@@ -303,7 +280,7 @@ async function run(name) {
     const heldOk = await until(k, (s) => window.__lobby.held() === s, posts[1].slug, 120000);
     chk(8, heldOk, 'Enter on a volume brings it', await k.evaluate(() => window.__lobby.held()));
     await until(k, () => window.__lobby.picks.find((x) => x.reads).live(), null, 20000); await k.waitForTimeout(1200);
-    const mark = (await log(k)).length; await k.keyboard.press('Enter');         // with the volume's button still focused
+    const mark = (await log(k)).length; await k.keyboard.press('Enter');
     const op = await until(k, () => window.__lobby.reader.state() === 'open', null, 60000); const kl = (await log(k)).slice(mark);
     const ks = await snap(k);
     chk(8, op, 'with a book open at the terminal, Enter starts reading and the article opens', op ? '' : { state: ks.state, trail: kl.map((e) => `${e.state}:${e.held}`).join(' > ') });
@@ -321,10 +298,9 @@ async function run(name) {
       const s = await snap(k);
       chk(8, cl && s.path === '/blog/' && s.listShown, 'Escape closes: state closed, address /blog/, the list shown', s);
       console.log(`  after Escape the focus is on: ${await k.evaluate(() => document.activeElement?.tagName + '.' + document.activeElement?.className)}`);
-      // ---- 6 (again): leaving while the scan is still running, with nothing focused (so Enter reaches the page itself)
       await k.keyboard.press('Enter');
       const sc = await until(k, () => window.__lobby.reader.state() === 'scanning', null, 15000); await k.keyboard.press('Escape');
-      const stopped = await until(k, () => window.__lobby.reader.state() === 'closed', null, 5000); await k.waitForTimeout(4000);       // long enough for the scan to have ended
+      const stopped = await until(k, () => window.__lobby.reader.state() === 'closed', null, 5000); await k.waitForTimeout(4000);
       const s2 = await snap(k);
       chk(6, sc && stopped && s2.state === 'closed' && !s2.readerShown && s2.path === '/blog/' && s2.slug === null, 'Escape during the scan stops it: closed, nothing shown, address /blog/, and it stays so', { scanning: sc, ...s2 });
       await k.keyboard.press('Enter');
@@ -333,7 +309,6 @@ async function run(name) {
     await k.close();
   }
 
-  // ---- 9. reduced motion: READ without the show
   if (P.reducedMotion) {
     const m = await p.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
     chk(9, m, 'prefers-reduced-motion: reduce is in effect');
@@ -355,7 +330,6 @@ async function run(name) {
     }
   }
 
-  // ---- 10. errors
   const errs = [...new Set(P.errs)];
   chk(10, errs.length === 0, 'no pageerror, console error or failed request', errs.slice(0, 8));
   await ctx.close();

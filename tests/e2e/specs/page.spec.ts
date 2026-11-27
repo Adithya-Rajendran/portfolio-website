@@ -1,3 +1,4 @@
+// End-to-end spec for the generated pages
 import type { BrowserContext, TestInfo } from '@playwright/test';
 import { expect, test } from '../fixtures/site.ts';
 

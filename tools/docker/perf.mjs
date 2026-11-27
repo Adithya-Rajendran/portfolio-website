@@ -1,5 +1,4 @@
-// Frame-time benchmark on the real GPU.  node perf.mjs <url> [w] [h] [seconds] [dpr]
-// env UNTIL: a JavaScript condition to wait for before measuring, e.g. "__lobby.reader.state() === 'open'"
+// Frame time benchmark on the real GPU
 import { chromium } from 'playwright';
 const [url, w = 1920, h = 1080, secs = 8, dpr = 1] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
@@ -14,7 +13,6 @@ const r = await p.evaluate((secs) => new Promise((res) => {
   const L = window.__lobby, gl = L.renderer.getContext(), dt = []; let last = performance.now(), t0 = last;
   const e = gl.getExtension('WEBGL_debug_renderer_info');
   const px = new Uint8Array(4);
-  // readPixels blocks until the GPU has really finished the frame, so the rAF interval is the true frame cost
   function f(now) { gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); dt.push(now - last); last = now;
     if (now - t0 < secs * 1000) requestAnimationFrame(f);
     else { dt.shift(); const worst = dt.map((v, i) => [Math.round(v), i]).sort((a, c) => c[0] - a[0]).slice(0, 6); dt.sort((a, c) => a - c); const avg = dt.reduce((a, c) => a + c, 0) / dt.length;

@@ -1,4 +1,4 @@
-// Checks the room loader's streamed textures: layers, holds, retries, aborts.     node layers.mjs   (ORIGIN: the site)
+// Check of the streamed textures of the room loader
 import { chromium } from 'playwright';
 import { streamAbort } from './reqfail.mjs';
 

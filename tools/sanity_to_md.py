@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Sanity documents -> the files the site reads from now on, which are edited by hand:
+# Converter from Sanity documents to the files the site reads
+USAGE = """Sanity documents -> the files the site reads from now on, which are edited by hand:
     data/posts/<slug>.json     -> data/posts/<slug>.md          (docs/v1-contracts.md §2)
     data/projects/<slug>.json  -> data/projects/<slug>.md       (§6)
     data/profile/profile.json  -> data/profile.json             (§7)
@@ -30,11 +31,10 @@ PROFILE_FIELDS = {'availability', 'bio', 'contactIntro', 'contactInvitation', 'c
                   'currentCuriosities', 'featuredPost', 'focusAreas', 'headline', 'introduction', 'location', 'name', 'projectsIntro',
                   'resume', 'seoDescription', 'skillGroups', 'socialLinks', 'tagline', 'talksAndPapers', 'timeline', 'workSummary',
                   'writingDescription'}
-TOP_BOOKKEEPING = ('_id', '_type', '_rev', '_createdAt', '_updatedAt', '_system')   # a document's own
-BOOKKEEPING = ('_key', '_type', '_weak')                     # inside records: Sanity's own, carried nowhere
+TOP_BOOKKEEPING = ('_id', '_type', '_rev', '_createdAt', '_updatedAt', '_system')
+BOOKKEEPING = ('_key', '_type', '_weak')
 STYLES = {'normal': '', 'h2': '## ', 'h3': '### ', 'blockquote': '> '}
-DECORATORS = ('strong', 'em', 'code')                       # outermost first, inside any link: [**_x_ `y`**](url)
-# a line that starts like this would be read as a heading, quotation, list item, thematic break or code fence
+DECORATORS = ('strong', 'em', 'code')
 LINE_START = re.compile(r'^(#{1,6}(?=[ \t]|$)|>|[-+](?=[ \t]|$)|-(?=-)|~(?=~~))')
 LIST_NUMBER = re.compile(r'^(\d{1,9})([.)])(?=[ \t]|$)')
 
@@ -51,11 +51,7 @@ def load(folder):
     return out
 
 
-# ---------- text -> Markdown source that reads back as the same text
-
 def esc(t):
-    """Escape what Markdown would read as markup inside a line. `_` inside a word (snake_case) is not markup;
-    a backslash only matters before punctuation."""
     def one(m):
         c, i = m.group(), m.start()
         if c == '_' and 0 < i < len(t) - 1 and t[i - 1].isalnum() and t[i + 1].isalnum():
@@ -67,16 +63,12 @@ def esc(t):
 
 
 def line_start(line, heading=False):
-    """The escapes that depend on the place in the line: its start (a heading's text can start with anything), and the
-    end of a heading, where a run of # would be its closing sequence."""
     if heading:
         return re.sub(r'(?:(?<= )|^)#+$', lambda m: '\\' + m.group(), line)
-    return LINE_START.sub(r'\\\1', LIST_NUMBER.sub(r'\1\\\2', line))      # 1. -> 1\.   # -> \#
+    return LINE_START.sub(r'\\\1', LIST_NUMBER.sub(r'\1\\\2', line))
 
 
 def code_span(t):
-    """A delimiter longer than any run of backticks inside; padded by a space when the text touches a backtick or is
-    framed by spaces."""
     runs = {len(r) for r in re.findall(r'`+', t)}
     d = '`' * next(n for n in range(1, len(t) + 2) if n not in runs)
     pad = ' ' if t[0] == '`' or t[-1] == '`' or (t[0] == t[-1] == ' ' and t.strip()) else ''
@@ -84,7 +76,6 @@ def code_span(t):
 
 
 def wrap(body, left, right):
-    """left + body + right, with the body's edge spaces moved outside: a delimiter next to a space is not a delimiter."""
     core = body.strip()
     if not core:
         return body
@@ -93,8 +84,6 @@ def wrap(body, left, right):
 
 
 def rewrite(href, where, posts, projects, files):
-    """Links to the old site and to the Sanity CDN become the site's own forms (contract §2); the rest stays as it is,
-    except that characters that cannot sit inside (...) are percent-encoded."""
     for old, new, known in ((SITE + '/blog/', '/blog/%s/', posts), (SITE + '/portfolio/', '/portfolio/%s/', projects)):
         m = href.startswith(old) and re.match(r'^([a-z0-9-]+?)/?([?#].*)?$', href[len(old):])
         if m:
@@ -109,8 +98,6 @@ def rewrite(href, where, posts, projects, files):
 
 
 def inline(block, where, ctx):
-    """A block's spans -> one line of Markdown. Neighbouring spans that share a mark are grouped, so that a strong
-    run holding some code is one `**a `b` c**`, not three."""
     defs = {d['_key']: d for d in block.get('markDefs', [])}
     spans = []
     for s in block['children']:
@@ -123,7 +110,7 @@ def inline(block, where, ctx):
                 raise ConvertError(f'{where}: unknown mark {m!r} on the span {s["text"]!r}')
         if s['text']:
             spans.append((s['text'], list(s.get('marks') or [])))
-    links = []                                              # link keys in order of appearance
+    links = []
     for _, ms in spans:
         links += [m for m in ms if m not in DECORATORS and m not in links]
 
@@ -178,7 +165,7 @@ def image(b, where, files_ok):
 
 def body(slug, doc, ctx, image_ok):
     parts, prev_item, count = [], False, {}
-    fresh = False                                           # this item starts a list
+    fresh = False
     for n, b in enumerate(doc['body'], 1):
         where = f'{slug}.json: body block {n} (_key {b.get("_key")}, type {b.get("_type")})'
         t = b.get('_type')
@@ -201,7 +188,7 @@ def body(slug, doc, ctx, image_ok):
                     raise ConvertError(f'{where}: a level 2 list item that is not inside a list')
                 fresh = not prev_item or (level == 1 and count.get(1, (li,))[0] != li)
                 if fresh:
-                    count = {}                              # a new list (a blank line before it); a nested one restarts under each parent
+                    count = {}
                 k, c = count.get(level, (li, 0))
                 c = c + 1 if k == li else 1
                 count[level] = (li, c)
@@ -223,8 +210,6 @@ def body(slug, doc, ctx, image_ok):
         prev_item = item
     return '\n\n'.join(parts) + '\n'
 
-
-# ---------- header
 
 def q(s):
     return json.dumps(s, ensure_ascii=False)
@@ -299,23 +284,18 @@ def ref_image(ref, where, image_ok):
     return name
 
 
-# ---------- projects (data/projects/<slug>.md, §6) and the profile (data/profile.json, §7)
-
-# Not carried, and why (data/README.md says the same). Every other field of a document is carried or refused by name.
 DROPPED = {
     'model': 'the homelab rack for a 3D viewer (hotspots, poster, real-world size): the new site has no such viewer',
 }
 
 
 def line(v, what, where):
-    """A text of one line with nothing to trim, written exactly as it is, so a hand edit starts from the true text."""
     if not isinstance(v, str) or not v or v != v.strip() or re.search(r'[\x00-\x1f\x7f]', v):
         raise ConvertError(f'{where}: {what} must be one line of text with no space at its ends, it is {v!r}')
     return v
 
 
 def paragraphs(v, what, where):
-    """The same for a text of several paragraphs: lines, blank lines between paragraphs only."""
     if not isinstance(v, str) or not v or v != v.strip() or '\r' in v or re.search(r'\n\n\n|[\x00-\x09\x0b-\x1f\x7f]', v) \
             or any(not l or l != l.strip() for l in v.split('\n\n')):
         raise ConvertError(f'{where}: {what} must be paragraphs separated by one blank line, it is {v!r}')
@@ -345,7 +325,6 @@ def boolean(v, what, where):
 
 
 def listing(v, what, where):
-    """A list that may be absent, null or empty (all three mean nothing): its items."""
     if v is None:
         return []
     if not isinstance(v, list):
@@ -354,7 +333,6 @@ def listing(v, what, where):
 
 
 def only(d, allowed, what, where, extra=BOOKKEEPING):
-    """d is a record with no field but these (and Sanity's own bookkeeping, which is never carried)."""
     if not isinstance(d, dict):
         raise ConvertError(f'{where}: {what} must be a record, it is {d!r}')
     for k in d:
@@ -367,7 +345,6 @@ def snake(k):
 
 
 def flow(items):
-    """`[a, b]` when every item is a plain word, else a JSON list: what content.py's header reader takes."""
     return '[' + ', '.join(items) + ']' if all(SLUG.match(t) for t in items) else json.dumps(items, ensure_ascii=False)
 
 
@@ -386,8 +363,6 @@ def ref_doc(r, by_id, what, where):
 
 
 def link(l, where, ctx):
-    """A link record -> {label, kind, and one of url, post, project, file}. A link to this site's own post or project, or
-    to a file of the Sanity CDN that is in data/assets/files/, names it by slug or file name instead of by address."""
     posts, projects, files = ctx
     only(l, {'kind', 'label', 'url'}, 'a link', where)
     out = {'label': line(l.get('label'), 'a link label', where), 'kind': line(l.get('kind'), 'a link kind', where)}
@@ -455,7 +430,7 @@ def project_header(slug, doc, ctx, image_ok, notes):
                 put(k, q(line(brief[k], 'brief.' + k, where)))
     for k, name in (('highlights', 'highlights'), ('lessons', 'lessons'), ('next', 'next_steps')):
         v = [line(t, f'an item of {k}', where) for t in listing(doc.get(k), k, where)]
-        if v:                                               # sentences: inline Markdown, so what Markdown reads is escaped
+        if v:
             h.append(name + ':')
             h += ['  - ' + q(line_start(esc(t))) for t in v]
     for k, fields in (('parameters', ('label', 'value')), ('results', ('metric', 'value', 'note'))):
@@ -479,7 +454,6 @@ def project_header(slug, doc, ctx, image_ok, notes):
 
 
 def timestamp_date(v, what, where):
-    """The date of an ISO timestamp as it is written (2026-10-26T01:47:15.863282+00:00 -> 2026-10-26)."""
     m = re.fullmatch(r'(\d{4}-\d{2}-\d{2})T\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)', v if isinstance(v, str) else '')
     if not m:
         raise ConvertError(f'{where}: {what} must be a timestamp like 2026-10-26T01:47:15Z, it is {v!r}')
@@ -496,7 +470,6 @@ def image_pair(img, base, where, image_ok):
 
 
 def profile_json(doc, ids, ctx, image_ok, notes):
-    """The profile as the new file's text. ids = (post ids -> slug, project ids -> slug)."""
     where, posts_by_id, projects_by_id = 'profile.json', *ids
     files = ctx[2]
     only(doc, PROFILE_FIELDS, 'the profile', where, TOP_BOOKKEEPING)
@@ -534,7 +507,7 @@ def profile_json(doc, ids, ctx, image_ok, notes):
             only(r, {'label'}, 'an opening', at)
             seeking.append(line(r.get('label'), 'an opening label', at))
         if seeking:
-            o['seeking'] = seeking                          # a record with only a label is that label
+            o['seeking'] = seeking
         take(o, a, 'updatedAt', 'date', at)
     if 'contactRoutes' in doc:
         out['contact_routes'] = o = {}
@@ -622,7 +595,6 @@ def profile_json(doc, ids, ctx, image_ok, notes):
 
 
 def convert_all():
-    """-> ({path under data/: text}, [notes about what is deliberately not carried])."""
     posts, projects = load('posts'), load('projects')
     with open(os.path.join(DATA, 'assets', 'images.json'), encoding='utf-8') as f:
         known_images = {a['_id'] for a in json.load(f)}
@@ -647,7 +619,7 @@ def convert_all():
 def main(argv):
     force = '--force' in argv
     if [a for a in argv if a != '--force']:
-        sys.exit(__doc__)
+        sys.exit(USAGE)
     try:
         out, notes = convert_all()
     except ConvertError as e:

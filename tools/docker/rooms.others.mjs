@@ -1,8 +1,4 @@
-// rooms.others.mjs [desktop|phone|all]: the other rooms' content, as the profile fills it (docs/v1-contracts.md §8).
-//   4  Navigation: one route-map station per timeline entry, the wall cards (the newest entries; not picks, not sources) say theirs; reading a station opens /experience/#<id> at that entry; the contents rail
-//   5  the Lounge: the hero's button reads /about/; the text has the profile's name and introduction; the wall says who
-//   (Comms is contact.mjs; the opening ways, opening.mjs; the wall screens that do nothing, rooms.text.mjs)
-// Prints FAIL lines (and ok lines with -v) and a summary per item. A failure is a finding about the site unless the message says the test could not set up.
+// Check of the content of the other rooms from the profile, on desktop and phone
 import { PROFILES, ORIGIN, load, suite, launch, context, spy, open, until, poke, tapAt, snap, sources, frameChecks, canvasTexts, planePoint, readPick, leaveAndSnap, focus } from './rooms.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.others'), { chk, note } = S;
 const D = await load(), { profile, content } = D;
@@ -13,17 +9,15 @@ async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, W = P.viewport.width, H = P.viewport.height, errs = [];
   console.log(`\n=== ${name} ${W}x${H}`);
   const ctx = await context(b, P), external = [], requests = []; await ctx.addInitScript(spy); ctx.on('request', (q) => requests.push(q.url()));
-  await ctx.route((u) => u.origin !== ORIGIN, (r) => { external.push(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: '<title>external</title>' }); });     // no network: a link to another site gets an empty page
+  await ctx.route((u) => u.origin !== ORIGIN, (r) => { external.push(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: '<title>external</title>' }); });
   const shot = (p, n) => p.screenshot({ path: `/out/rooms-${name}-${n}.png` }).catch(() => {});
 
-  // ---------------------------------------------------------------- 4. Navigation
   {
     const p = await open(ctx, '/experience/', 'experience', errs), src = await sources(p), tl = profile.timeline, N = tl.length;
     const stations = src.filter((q) => q.kind === 'sphere'), cards = src.filter((q) => q.kind === 'screen');
     chk(4, stations.length === N, `one route-map station per timeline entry (${N})`, stations.map((q) => q.url));
     chk(4, tl.every((e) => stations.filter((q) => q.url === e.url).length === 1), 'every entry has exactly one station, at /experience/#<id>', { want: tl.map((e) => e.url), got: stations.map((q) => q.url) });
     chk(4, cards.length === 0 && await p.evaluate(() => window.__lobby.picks.every((q) => q.mesh.userData?.screen === undefined)), 'the wall cards are not picks and offer nothing to read (the stations are the only sources)', cards.map((q) => q.url));
-    // what the wall cards say (they are still drawn: the newest entries, oldest of them first)
     const cv = await canvasTexts(p), all = flat(cv), wallN = content.rooms.experience.screens.list.length, wall = [...tl].reverse().slice(-wallN);
     for (const e of wall) {
       const want = [up(e.org_short), e.current ? content.rooms.experience.now : up(e.kind), e.year, norm(e.title).slice(0, 20), up(e.period)];
@@ -31,7 +25,6 @@ async function run(name) {
     }
     chk(4, tl.every((e) => all.includes(up(e.org_short)) && all.includes(up(e.period)) && all.toLowerCase().includes(norm(e.title).slice(0, 12).toLowerCase())), "the route map's stations carry each entry's organization, period and role", { missing: tl.filter((e) => !all.includes(up(e.period)) || !all.includes(up(e.org_short))).map((e) => e.id) });
     await shot(p, 'experience');
-    // reading each of them: the stations and the cards
     const order = stations.map((q) => ({ ...q, what: 'station' }));
     for (const [n, q] of order.entries()) {
       const e = tl.find((x) => x.url === q.url), tag = `${q.what} ${e.id}`;
@@ -67,12 +60,10 @@ async function run(name) {
       const back = await leaveAndSnap(p, phone);
       chk(4, back.ok && back.s.path === '/experience/' && back.s.hash === '' && back.s.count === r.before.count, `${tag}: Escape closes it: address /experience/ (no #fragment), the same pick offers READ again`, { path: back.s.path + back.s.hash, count: back.s.count, before: r.before.count });
     }
-    // the plain page and the room agree on the entries: each section the room scrolls to is there
     chk(4, errs.length === 0, 'no pageerror, console error or failed request', [...new Set(errs)].slice(0, 6));
     await p.close();
   }
 
-  // ---------------------------------------------------------------- 5. the Lounge
   {
     errs.length = 0;
     const p = await open(ctx, '/about/', 'about', errs), cta = await p.evaluate(() => document.querySelector('.hero .cta')?.textContent);

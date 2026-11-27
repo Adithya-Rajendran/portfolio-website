@@ -1,6 +1,4 @@
-# Live-reflection masters on the bake machine: build the room, render its probes, bake.
-#   live.ps1 build|probe|bake|draft <room> [Root]
-# 'bake' = 1.0 scale, 192 spp; 'draft' = 0.25, 24 spp. The exterior backdrop is unchanged and reused from git.
+# Live reflection masters on the bake machine
 param([ValidateSet('build','probe','bake','draft')]$Phase,[ValidateSet('lobby','about','projects','experience','writing')]$Room,
       [string]$Root = "$HOME/lobby-bake")
 $ErrorActionPreference = 'Stop'

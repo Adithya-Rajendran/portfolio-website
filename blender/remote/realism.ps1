@@ -1,4 +1,4 @@
-# Build and review first; bake the same .blend afterwards. Exit nonzero on Python errors.
+# Room build and review render on the bake machine
 param([ValidateSet('review','bake','draft')]$Phase,[ValidateSet('lobby','about','projects','experience','writing')]$Room,
       [string]$Root = "$HOME/lobby-bake")
 $ErrorActionPreference = 'Stop'

@@ -1,5 +1,4 @@
-// Short, reproducible films of the packed renderer, not offline renders. No autoplay on the review page.
-// node light-clips.mjs URL outdir /ms-playwright/ffmpeg-.../ffmpeg-linux [experience|about]
+// Short films of the packed renderer
 import {chromium} from 'playwright';import {spawn} from 'node:child_process';import {once} from 'node:events';
 import { ROOM_PATH } from './roompath.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';

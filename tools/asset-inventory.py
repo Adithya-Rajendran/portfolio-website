@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Produce the TSV placement catalogue from the five outputs of blender/audit_assets.py.
-Usage: python3 tools/asset-inventory.py /path/to/traces > docs/asset-placements.tsv
-The trace directory must contain lobby.json, about.json, projects.json, experience.json, writing.json.
-"""
+# TSV placement catalogue made from the five outputs of blender/audit_assets.py
 import ast
 import csv
 import json

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# queue.ps1 for an ARM64 Linux GPU machine: blender/remote/arm64/queue.sh build|review|probe|backdrop|geom|draft|bake <room>..., each step through live.sh and timed; BACKDROP=1 also redraws window backdrops.
+# Room build, path trace and export queue for an ARM64 Linux GPU machine
 set -euo pipefail
 usage() { echo "usage: queue.sh build|review|probe|backdrop|geom|draft|bake <room> [room ...]" >&2; exit 2; }
 [[ $# -ge 2 ]] || usage

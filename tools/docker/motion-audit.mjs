@@ -1,5 +1,4 @@
-// Sample the running site without instrumenting its frame loop. Usage: node motion-audit.mjs URL
-// Count local, not world, transform changes: 3 blades following one rotor are not 3 mechanisms.
+// Samples of the running site without instruments in its frame loop
 import { chromium } from 'playwright';
 import { ROOM_PATH } from './roompath.mjs';
 import { streamAbort } from './reqfail.mjs';

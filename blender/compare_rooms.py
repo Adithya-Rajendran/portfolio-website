@@ -1,8 +1,4 @@
-"""Regression check for asset extractions; run in Blender with -- before.blend after.blend.
-Compares generated rooms BEFORE joining/baking (no renderer, images or Razer required).
-Positions in Blender metres, after modifiers. Shaders, Cycles images and atlas packing
-are not compared here. Exit nonzero on mismatch with --python-exit-code 2.
-"""
+# Regression check that compares two room .blend files after an asset extraction
 import hashlib
 import sys
 
@@ -23,8 +19,6 @@ def topology(mesh, exterior):
     mats = column(mesh.polygons, 'material_index', 1, 'i4')
     smooth = column(mesh.polygons, 'use_smooth', 1, '?')
     if exterior and not mesh.uv_layers:
-        # create_uvsphere does not guarantee face enumeration between Blender processes.
-        # Compare the same oriented faces, incl. per-face settings, ignoring only ordering.
         starts = column(mesh.polygons, 'loop_start', 1, 'i4')
         for n in np.unique(sides):
             rows = sides == n

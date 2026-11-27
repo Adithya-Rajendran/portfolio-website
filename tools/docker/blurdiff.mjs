@@ -1,5 +1,4 @@
-// The difference of two pictures after each is averaged over 8x8 px (film grain and dither average out; a real change stays).
-//   node blurdiff.mjs <dirA> <dirB> | <a1.png> <b1.png> ...
+// Difference of two pictures after each is averaged over 8x8 px
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';

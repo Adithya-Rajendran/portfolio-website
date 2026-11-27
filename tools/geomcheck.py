@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reports the faces of a room's geometry that lie on each other (coplanar overlapping triangles, exact duplicates)."""
+# Report of the coplanar overlapping triangles and exact duplicates in the geometry of a room
 import json, math, multiprocessing, os, struct, sys
 
 COMP = {5120: 'b', 5121: 'B', 5122: 'h', 5123: 'H', 5125: 'I', 5126: 'f'}

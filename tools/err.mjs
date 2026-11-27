@@ -1,3 +1,4 @@
+// SwiftShader page load that prints console errors
 import { chromium } from 'playwright';
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 640, height: 360 } });

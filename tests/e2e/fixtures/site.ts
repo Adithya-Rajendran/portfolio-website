@@ -1,3 +1,4 @@
+// Playwright fixtures, site data types and init scripts for the end-to-end specs
 import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export interface ProjectEntry {
@@ -148,7 +149,6 @@ export function attachErrorCollector(page: Page, errors: string[] = []): string[
   return errors;
 }
 
-/** Browser init script: logs canvas 2D text on each canvas (canvas.__t) and tracks canvases in window.__canvases. */
 export const canvasSpyInitScript = () => {
   const P = CanvasRenderingContext2D.prototype;
   const ft = P.fillText;
@@ -180,7 +180,6 @@ export const canvasSpyInitScript = () => {
   };
 };
 
-/** Browser init script: 25ms poller recording reader states and opening meshes in window.__w. */
 export const waysRecorderInitScript = () => {
   const NAMES = ['ReadGlyph', 'ReadFrame', 'ReadBeam', 'ReadAnchor', 'ScanSheet', 'ScanFan', 'ScanBody', 'ReadFlow', 'ReadPrint'];
   const fresh = () => ({
@@ -252,7 +251,6 @@ export const waysRecorderInitScript = () => {
   }, 25);
 };
 
-/** Browser init script: requestAnimationFrame gate in window.__gate. */
 export const frameGateInitScript = () => {
   const raf = window.requestAnimationFrame.bind(window);
   const g = ((window as unknown as Record<string, unknown>).__gate = { open: true, n: 0, stamp: -1 });

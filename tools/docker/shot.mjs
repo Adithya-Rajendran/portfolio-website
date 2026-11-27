@@ -1,4 +1,4 @@
-// Runs inside mcr.microsoft.com/playwright.  node shot.mjs <url> <out.png> [engine] [w] [h] [mouseX] [mouseY] [hud 0|1]
+// Screenshot of a URL in the Playwright container, with engine, size, pointer and HUD options
 import { chromium, webkit, firefox } from 'playwright';
 const [url, out, eng = 'chromium', w = 1600, h = 900, mx = '', my = '', hud = '1'] = process.argv.slice(2);
 const b = await ({ chromium, webkit, firefox })[eng].launch(eng === 'chromium' ? { args: process.env.SOFT ? ['--enable-unsafe-swiftshader'] : ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] } : {});

@@ -1,4 +1,4 @@
-"""Cycles vs ray_cast at single points: is the sun visible there? (QA)  blender -b room.blend -P sun_point.py -- x,y,z ..."""
+# Comparison of Cycles and ray_cast at single points
 import bpy, sys, math, os, tempfile
 import numpy as np
 from mathutils import Vector

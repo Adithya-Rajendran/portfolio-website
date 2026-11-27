@@ -1,7 +1,4 @@
-// Live reflections on an ordinary baked surface (an Atrium planter's lacquered face), through the real render path.
-// 1. Same world points from two eyes: how much of their light is reflection, and how much that changes with the eye.
-// 2. A temporary red sphere lamp: its highlight must land where mirror geometry puts it, for each eye.
-// node reflect-check.mjs URL [out-dir]
+// Check of live reflections on an ordinary baked surface through the real render path
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -16,8 +13,7 @@ try {
   await p.goto(u.href); await p.waitForFunction(() => window.__lobby?.mode().room === 'lobby' && document.querySelector('#loader.done'), null, { timeout: 180000 });
   const r = await p.evaluate(async (wantImages) => {
     const T = await import('three'), l = window.__lobby, gl = l.renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
-    // the planter in the right-hand bay at Blender y = 5: its face toward the hall is the plane x = 6.75
-    const X = 6.75, target = [X, 0.7, -5.0], eyes = [[4.1, 1.0, -2.2], [4.0, 1.0, -7.9]];   // the face spans y .45-.95
+    const X = 6.75, target = [X, 0.7, -5.0], eyes = [[4.1, 1.0, -2.2], [4.0, 1.0, -7.9]];
     let gain, lamp; l.scene.traverse((o) => { const v = o.material?.uniforms; if (v?.tFin) { gain ??= v.uSpecGain; lamp ??= v.uLP && v; } });
     if (!gain) throw new Error('No live-reflection material in this room');
     const read = (eye) => { l.lightFrame(eye, target, 0); const a = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, a); return a; };
@@ -34,7 +30,6 @@ try {
     const spec = (k, i) => views[k].onPts[i].map((c, j) => c - views[k].offPts[i][j]);
     const result = { worldPoints: both.length, meanReflectionA: +mean((i) => mag(spec(0, i))).toFixed(2), meanReflectionB: +mean((i) => mag(spec(1, i))).toFixed(2),
       meanReflectionChange: +mean((i) => mag(spec(0, i).map((c, j) => c - spec(1, i)[j]))).toFixed(2) };
-    // test lamp in front of the face: its mirror image is (2X - x, y, z); the highlight is where the eye sees that image
     if (lamp) {
       const save = ['uLP', 'uLI', 'uLS'].map((k) => lamp[k].value[0].clone()), pos = [5.2, 0.8, -5.0];
       result.lamp = eyes.map((eye) => {
@@ -45,8 +40,6 @@ try {
           g.putImageData(im, 0, 0); images[`lamp-${Object.keys(images).filter((k) => k.startsWith('lamp')).length + 1}`] = c.toDataURL(); }
         const img = new T.Vector3(2 * X - pos[0], pos[1], pos[2]);
         const hit = e.clone().lerp(img, (X - e.x) / (img.x - e.x)), q = hit.clone().project(l.camera), cx = (q.x + 1) * W / 2, cy = (q.y + 1) * H / 2;
-        // Only pixels ON this face count (the lamp also glints on the platform and floor): a pixel is on the face if the
-        // surface it shows is where its view ray meets the plane x = X, within the planter's bounds.
         const rt = new T.WebGLRenderTarget(W, H, { type: T.FloatType }), dist = new Float32Array(W * H * 4), R = l.renderer;
         const dm = new T.ShaderMaterial({ side: T.DoubleSide, vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }',
           fragmentShader: 'varying vec3 vW; void main(){ gl_FragColor = vec4(distance(vW, cameraPosition), 0., 0., 1.); }' });

@@ -1,6 +1,4 @@
-// Frame / memory / load benchmark (tools/bench.sh).  node bench.mjs <url> <w> <h> <secs> <runs>  -> one JSON line per run
-// frame times (rAF interval with a readPixels sync), renderer.info, GPU memory allocated through WebGL (hooked),
-// requests / bytes until the first interactive frame.
+// Frame, memory and load benchmark for tools/bench.sh
 import { chromium } from 'playwright';
 const [url, w = 1920, h = 1080, secs = 8, runs = 3] = process.argv.slice(2);
 const HOOK = () => {
@@ -8,7 +6,7 @@ const HOOK = () => {
   const set = (k, b) => { total += b - (bytes.get(k) || 0); bytes.set(k, b); peak = Math.max(peak, total); };
   const P = WebGL2RenderingContext.prototype, bound = new WeakMap();
   const BPP = { 0x8058: 4, 0x8051: 3, 0x881A: 8, 0x8C3A: 4, 0x81A6: 4, 0x81A5: 2, 0x88F0: 4, 0x8CAC: 4, 0x8CAD: 8, 0x8D48: 1, 0x822F: 4, 0x8229: 1, 0x822B: 2, 0x8814: 16, 0x8C43: 4, 0x8F97: 4,
-    0x8E8C: 1, 0x8E8D: 1, 0x8E8E: 1, 0x8E8F: 1, 0x93B0: 1, 0x93D0: 1, 0x83F3: 1, 0x9278: 1, 0x83F0: 0.5, 0x83F1: 0.5, 0x9274: 0.5 };   // block-compressed: BC7, BC6H, ASTC 4x4, DXT5, ETC2 RGBA; DXT1, ETC2 RGB
+    0x8E8C: 1, 0x8E8D: 1, 0x8E8E: 1, 0x8E8F: 1, 0x93B0: 1, 0x93D0: 1, 0x83F3: 1, 0x9278: 1, 0x83F0: 0.5, 0x83F1: 0.5, 0x9274: 0.5 };
   const fmtBytes = (f) => BPP[f] ?? 4;
   const oBind = P.bindTexture; P.bindTexture = function (t, tex) { bound.set(this, Object.assign(bound.get(this) || {}, { [t]: tex })); return oBind.call(this, t, tex); };
   const oRB = P.bindRenderbuffer; P.bindRenderbuffer = function (t, rb) { bound.set(this, Object.assign(bound.get(this) || {}, { rb })); return oRB.call(this, t, rb); };
@@ -26,7 +24,6 @@ const HOOK = () => {
   const oR = P.renderbufferStorage; P.renderbufferStorage = function (t, fmt, w, h) { set(bound.get(this).rb, w * h * fmtBytes(fmt)); return oR.apply(this, arguments); };
   const oD = P.deleteTexture; P.deleteTexture = function (t) { set(t, 0); return oD.apply(this, arguments); };
   const oDR = P.deleteRenderbuffer; P.deleteRenderbuffer = function (t) { set(t, 0); return oDR.apply(this, arguments); };
-  // every frame waits for the GPU (as the measurement does), so no backlog of queued frames builds up while loading
   const gc = HTMLCanvasElement.prototype.getContext, raf = window.requestAnimationFrame.bind(window), px = new Uint8Array(4); let ctx2 = null;
   HTMLCanvasElement.prototype.getContext = function (t, o) { const c = gc.call(this, t, o); if (t === 'webgl2' && this.id === 'scene') ctx2 = c; return c; };
   window.requestAnimationFrame = (cb) => raf((t) => { cb(t); if (!window.__measuring) ctx2?.readPixels(0, 0, 1, 1, ctx2.RGBA, ctx2.UNSIGNED_BYTE, px); });
@@ -42,7 +39,6 @@ for (let run = 0; run < +runs; run++) {
   await p.waitForFunction(() => window.__lobby?.ready() > 0, null, { polling: 'raf', timeout: 300000 });
   const load = await p.evaluate(() => { const r = performance.getEntriesByType('resource'), n = performance.getEntriesByType('navigation')[0];
     return { ms: Math.round(performance.now()), requests: r.length + 1, kb: Math.round((r.reduce((a, e) => a + e.transferSize, 0) + n.transferSize) / 1024), mem: window.__gpumem() }; });
-  // complete: no request in flight for 1 s (all textures of the room fetched), then 2 s for decode + upload
   let lastReq = Date.now(), inflight = 0; p.on('request', () => { inflight++; lastReq = Date.now(); }); p.on('requestfinished', () => { inflight--; lastReq = Date.now(); }); p.on('requestfailed', () => { inflight--; });
   while (Date.now() - lastReq < 1000 || inflight > 0) await p.waitForTimeout(100);
   const full = await p.evaluate(() => { const r = performance.getEntriesByType('resource'), n = performance.getEntriesByType('navigation')[0];
@@ -50,7 +46,6 @@ for (let run = 0; run < +runs; run++) {
   await p.waitForTimeout(2000);
   const r = await p.evaluate((secs) => new Promise((res) => {
     window.__measuring = true; const L = window.__lobby, R = L.renderer, gl = R.getContext(), dt = [], px = new Uint8Array(4); let last = performance.now(), t0 = last;
-    // GPU time of the whole frame: one timer query from the start of draw() to the end of the final pass
     const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'), gpu = [], pend = [], reset = R.info.reset.bind(R.info), render = L.post.render.bind(L.post);
     R.info.reset = () => { reset(); const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); pend.push(q); };
     L.post.render = (...a) => { render(...a); gl.endQuery(ext.TIME_ELAPSED_EXT);

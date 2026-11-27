@@ -1,4 +1,4 @@
-"""Look-dev render of the view through the portal only.  blender -b lobby.blend --python earth_preview.py -- out.png [fov] [size]"""
+# Look-dev render of the view through the portal only
 import bpy, sys, os, math
 from mathutils import Vector
 a = sys.argv[sys.argv.index('--') + 1:]

@@ -1,3 +1,4 @@
+// Flicker check in WebKit or Chromium
 import { webkit, chromium } from 'playwright';
 const [url, eng = 'webkit', q = '?debug'] = process.argv.slice(2);
 const b = await ({ webkit, chromium })[eng].launch(eng === 'chromium' ? { args: ['--enable-unsafe-swiftshader'] } : {});

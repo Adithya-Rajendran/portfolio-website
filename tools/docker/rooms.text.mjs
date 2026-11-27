@@ -1,10 +1,4 @@
-// rooms.text.mjs [desktop|phone|all]: the page's words, and the wall screens that are not to be pressed (the owner: "the text should just assume that this is a normal website";
-// "I don't want the TVs to be clickable").
-//   T  no explanatory line under the headline in Fabrication, Navigation, the Library and Comms (.sub is hidden, empty, and takes no room); the Atrium's line is "{name}  ·  {headline}"
-//      and the Lounge's "{headline}  ·  {location}", filled from profile.json; with no profile both are empty and hidden; a line whose place cannot be filled is dropped; nothing else
-//      stands in the hero but the kicker, the headline, the room's button; content.json has screens.inspect false in Fabrication and Navigation and no `cta` on their cards
-//   W  Fabrication and Navigation: a wall screen is no pick; pointing at one brings no lock and no pointer cursor; pressing it does nothing (nothing in focus, no bar, the camera stays)
-// "ok" / "FAIL [profile item] what"; exit code 1 if any check failed.
+// Check of the words of the page and of the wall screens that are not picks, on desktop and phone
 import { PROFILES, ORIGIN, load, suite, launch, context, open, until, inRoom } from './rooms.kit.mjs';
 import { sleep, camStill, dstate } from './r2.kit.mjs';
 const which = process.argv.slice(2).find((a) => a !== '-v') || 'all', S = suite('rooms.text'), { chk, note } = S;
@@ -12,11 +6,9 @@ const { profile, content } = await load(), R = content.rooms, norm = (s) => s.re
 const b = await launch();
 
 const goRoom = async (p, id) => { await p.evaluate((id) => window.__lobby.enter(id), id); return until(p, (id) => window.__lobby.mode().room === id && window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0 && document.querySelector('#loader.done'), id, 240000); };
-/** The page's words under the headline: the .sub line (text, hidden, whether it takes room), and every shown element of .hero by class. */
 const hero = (p) => p.evaluate(() => { const s = document.querySelector('.sub'), shown = (e) => !e.hidden && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).display !== 'none';
   return { sub: s.textContent, hidden: s.hidden, takes: shown(s) && s.getBoundingClientRect().height > 0, kids: [...document.querySelector('.hero').children].filter(shown).map((e) => e.className || e.tagName.toLowerCase()), live: s.querySelectorAll('[data-live]').length }; });
 
-/** Points on a wall screen (a mesh with userData.screen) that a visitor could press: on the screen, in front, nearest hit of a ray from the eye, with the canvas there and no pick on that ray. */
 const wallPoints = (p) => p.evaluate(async () => {
   const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), out = [], meshes = []; l.camera.updateMatrixWorld(true);
   l.scene.traverse((o) => { if (o.isMesh && o.userData.screen !== undefined) meshes.push(o); });
@@ -27,7 +19,7 @@ const wallPoints = (p) => p.evaluate(async () => {
       const pt = new THREE.Vector3(min.x + (max.x - min.x) * u, min.y + (max.y - min.y) * v, (min.z + max.z) / 2).applyMatrix4(m.matrixWorld), s = pt.clone().project(l.camera), x = (s.x * 0.5 + 0.5) * innerWidth, y = (-s.y * 0.5 + 0.5) * innerHeight;
       if (s.z > 1 || x < 12 || x > innerWidth - 12 || y < 12 || y > innerHeight - 12 || document.elementFromPoint(x, y)?.id !== 'scene') continue;
       ray.setFromCamera(new THREE.Vector2(s.x, s.y), l.camera); const hit = ray.intersectObjects(all, false)[0]; if (hit?.object !== m) continue;
-      if (ray.intersectObjects(l.picks.filter((q) => !q.live || q.live()).map((q) => q.mesh), false).length) continue;      // (a door or an exhibit in front of it is a pick: a press there is that pick's)
+      if (ray.intersectObjects(l.picks.filter((q) => !q.live || q.live()).map((q) => q.mesh), false).length) continue;
       const d = Math.hypot(u - 0.5, v - 0.5); if (!best || d < best.d) best = { x, y, d };
     }
     out.push({ screen: m.userData.screen, name: m.name, at: best });
@@ -39,7 +31,6 @@ async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, errs = [];
   console.log(`\n=== ${name} ${P.viewport.width}x${P.viewport.height}`);
   const ctx = await context(b, P), p = await open(ctx, '/', 'lobby', errs); await until(p, () => window.__lobby.ready() >= 1 && window.__lobby.picks.length > 0, null, 60000);
-  // ---------------------------------------------------------------- T. the words
   const expect = { lobby: norm(`${profile.name}  ·  ${profile.headline}`), about: norm(`${profile.headline}  ·  ${profile.location}`) };
   chk('T', ['projects', 'experience'].every((k) => R[k].screens.inspect === false) && ['projects', 'experience'].every((k) => R[k].screens.list.every((c) => !('cta' in c))), "content.json: screens.inspect is false in Fabrication and Navigation, and their cards have no `cta` line");
   chk('T', Object.entries(R).every(([k, r]) => Array.isArray(r.sub) && (k === 'lobby' || k === 'about' ? r.sub.length === 1 : r.sub.length === 0)), 'content.json: each room\'s `sub` is [] but the Atrium\'s and the Lounge\'s (one line each)', Object.fromEntries(Object.entries(R).map(([k, r]) => [k, r.sub])));
@@ -50,14 +41,13 @@ async function run(name) {
     else chk('T', h.hidden && !h.takes && h.sub === '', `${id}: nothing under the headline (.sub is hidden, empty and takes no room)`, h);
     chk('T', h.kids.every((k) => /^(kicker|headline|sub|cta)$/.test(k)), `${id}: the hero holds only the kicker, the headline${expect[id] ? ', the line' : ''} and the room's button`, h.kids);
     if (id === 'projects' || id === 'experience') {
-      // ---------------------------------------------------------------- W. the wall screens
       await camStill(p); const walls = await wallPoints(p), reach = walls.filter((w) => w.at);
       chk('W', walls.length >= 2, `${id}: the room has wall screens (${walls.length})`);
       chk('W', await p.evaluate(() => window.__lobby.picks.every((q) => q.mesh.userData?.screen === undefined)), `${id}: no pick is a wall screen`);
       if (!reach.length) note(`${id}: no wall screen can be pointed at from the room's own view`);
       for (const w0 of reach.slice(0, phone ? 2 : 4)) {
         let w = w0;
-        if (!phone) {         // the view follows the pointer: move it there, look again where the screen is now, until the pointer rests on it
+        if (!phone) {
           for (let i = 0, last = null; i < 10; i++) {
             const now = (await wallPoints(p)).find((q) => q.screen === w0.screen)?.at; if (!now) break; w = { ...w0, at: now };
             if (last && Math.hypot(now.x - last.x, now.y - last.y) < 3) break; await p.mouse.move(now.x, now.y, { steps: 4 }); await sleep(900); last = now;
@@ -75,7 +65,6 @@ async function run(name) {
   chk('T', errs.length === 0, 'no pageerror, console error or failed request', [...new Set(errs)].slice(0, 5));
   await ctx.close();
 
-  // ---------------------------------------------------------------- T. no profile; a profile with a hole
   if (!phone) {
     for (const [what, stub] of [['no profile', (r) => r.fulfill({ status: 404, body: 'not found' })], ['a profile with no location', async (r) => { const res = await r.fetch(), j = await res.json(); delete j.location; await r.fulfill({ response: res, json: j }); }]]) {
       const c2 = await context(b, P); await c2.route('**/profile.json', stub); const e2 = [], q = await open(c2, '/about/', 'about', e2, { pin: true });

@@ -1,3 +1,4 @@
+// End-to-end spec for the static endpoints
 import type { APIRequestContext, APIResponse } from '@playwright/test';
 import { expect, test } from '../fixtures/site.ts';
 
@@ -107,7 +108,6 @@ test('endpoints: feed, sitemap, llms, robots, resume, and JSON contracts match',
   expect(sitemap.includes('<urlset'), 'sitemap.xml has <urlset>').toBe(true);
   expect(robots.includes(`Sitemap: ${SITE}/sitemap.xml`), 'robots.txt names sitemap').toBe(true);
 
-  // The résumé: the link llms.txt gives, served as a PDF.
   const cv = llms.match(/\]\((\S+\/resume\/[^)\s]+)\)/)?.[1];
   expect(cv, 'llms.txt has a résumé link').toBeTruthy();
   const cvRes = await getEndpoint(request, localPath(cv!), /^application\/pdf/, 'résumé');
@@ -175,7 +175,6 @@ test('endpoints: feed, sitemap, llms, robots, resume, and JSON contracts match',
     }
   }
 
-  // Sitemap completeness: feed posts + rooms + projects.
   const posts = links.filter((u) => /\/blog\/[^/]+\/$/.test(u));
   const rooms = ['/', '/blog/', '/about/', '/portfolio/', '/experience/', '/contact/'].map((p) => SITE + p);
   const projects = portfolio.projects.map((p: { url: string }) => SITE + p.url);
