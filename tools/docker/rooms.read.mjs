@@ -92,7 +92,7 @@ async function run(name) {
   await p.evaluate(() => window.__lobby.setFocus(null)); await p.waitForTimeout(1800);
   for (const pl of places) {
     if (!pl.project || !countOf[pl.i]) continue;
-    const at = await p.evaluate(async (i) => { const THREE = await import('three'), l = window.__lobby, m = l.picks[i].mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+    const at = await p.evaluate(async (i) => { const THREE = window.__modules.THREE, l = window.__lobby, m = l.picks[i].mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
       m.geometry.computeBoundingSphere(); const v = m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld).project(l.camera);
       return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, z: v.z }; }, pl.i);
     if (!(at.x > 4 && at.x < W - 4 && at.y > 4 && at.y < H - 4 && at.z < 1)) { note(`${pl.what} is off the screen in the room's own view (${Math.round(at.x)}, ${Math.round(at.y)}): reached with the arrow keys instead`); continue; }

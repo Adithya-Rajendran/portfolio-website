@@ -1,9 +1,9 @@
 // The asset bench: one live-drawn asset alone under a plain studio light.
 import * as THREE from 'three';
-import { setDistanceScale, uTime, V } from './kit.js';
-import { createDrone } from './drone.js';
-import { loadSite } from './site.js';
-import { params } from './dev.js';
+import { setDistanceScale, uTime, V } from '../engine/kit.js';
+import { createDrone } from '../engine/drone.js';
+import { loadSite } from '../engine/site.js';
+import { params } from '../engine/dev.js';
 
 const Q = params(), num = (k, d) => (Q.has(k) ? parseFloat(Q.get(k)) : d);
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('scene'), antialias: true });

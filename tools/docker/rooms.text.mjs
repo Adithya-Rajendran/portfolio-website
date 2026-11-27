@@ -10,7 +10,7 @@ const hero = (p) => p.evaluate(() => { const s = document.querySelector('.sub'),
   return { sub: s.textContent, hidden: s.hidden, takes: shown(s) && s.getBoundingClientRect().height > 0, kids: [...document.querySelector('.hero').children].filter(shown).map((e) => e.className || e.tagName.toLowerCase()), live: s.querySelectorAll('[data-live]').length }; });
 
 const wallPoints = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, ray = new THREE.Raycaster(), out = [], meshes = []; l.camera.updateMatrixWorld(true);
+  const THREE = window.__modules.THREE, l = window.__lobby, ray = new THREE.Raycaster(), out = [], meshes = []; l.camera.updateMatrixWorld(true);
   l.scene.traverse((o) => { if (o.isMesh && o.userData.screen !== undefined) meshes.push(o); });
   const all = []; l.scene.traverse((o) => { if (o.isMesh) all.push(o); });
   for (const m of meshes) {

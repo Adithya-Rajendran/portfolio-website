@@ -83,6 +83,42 @@ def media_url(file):
     return '/blog/media/' + s.media_name(os.path.join(s.DATA, 'assets', 'images', file))
 
 
+class Shell(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix='test-shell-')
+        self.addCleanup(shutil.rmtree, self.tmp)
+        with open(s.SHELL, encoding='utf-8') as f:
+            self.source = f.read()
+
+    def run_with(self, text):
+        shell, out = os.path.join(self.tmp, 'index.html'), os.path.join(self.tmp, 'out')
+        with open(shell, 'w', encoding='utf-8') as f:
+            f.write(text)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            s.main(['--posts', FIXTURE, '--shell', shell, '--out', out])
+        return out
+
+    def test_default_shell_is_the_source_shell(self):
+        self.assertEqual(s.SHELL, os.path.join(s.ROOT, 'index.html'))
+        self.assertIn('<script type="module" src="/src/main.js"></script>', self.source)
+
+    def test_pages_come_from_the_given_shell(self):
+        built = self.source.replace('<script type="module" src="/src/main.js"></script>',
+                                    '<script type="module" crossorigin src="/app/index-test.js"></script>')
+        self.assertNotEqual(built, self.source)
+        out = self.run_with(built)
+        with open(os.path.join(out, 'blog', 'every-construct', 'index.html'), encoding='utf-8') as f:
+            page = f.read()
+        self.assertIn('<script type="module" crossorigin src="/app/index-test.js"></script>', page)
+        self.assertNotIn('/src/main.js', page)
+
+    def test_a_shell_without_a_mark_writes_nothing(self):
+        with self.assertRaises(SystemExit) as e:
+            self.run_with(self.source.replace('<!--site:page-->', ''))
+        self.assertIn('<!--site:page-->', str(e.exception.code))
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, 'out')))
+
+
 class Site(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -163,7 +199,7 @@ class Site(unittest.TestCase):
                     self.assertEqual(t.errors, [], f)
                     self.assertEqual(len(t.ids), len(set(t.ids)), f)
                     scripts = [n.attrs.get('type') or '' for n in t.root.all('script')]
-                    self.assertEqual(sorted(scripts), ['', 'application/ld+json', 'importmap', 'module'], f)
+                    self.assertEqual(sorted(scripts), ['', 'application/ld+json', 'module'], f)
 
     def test_heading_ids(self):
         body = self.tree.one('div', 'post-body')
@@ -187,8 +223,7 @@ class Site(unittest.TestCase):
         self.assertEqual(len(t.ids), len(set(t.ids)))
         self.assertFalse(set(t.ids) & set(s.RUNTIME_IDS))
         made = set()
-        for js in [os.path.join(s.ROOT, 'public', 'main.js')] + [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(s.ROOT, 'public', 'js'))
-                                                                for f in fs if f.endswith('.js') and 'vendor' not in d]:
+        for js in [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(s.ROOT, 'src')) for f in fs if f.endswith('.js')]:
             with open(js, encoding='utf-8') as f:
                 js_text = f.read()
                 made |= set(re.findall(r"(?:createElement|cloneNode)\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))

@@ -12,7 +12,7 @@ try {
   const url=new URL(base);url.pathname=ROOM_PATH[room];url.search=new URLSearchParams({shot:'hero',scale:1,tier:1,roll:120,lightcheck:1,grain:0,chand:0,bloom:0,skip:'dust'});
   await page.goto(url.href);await page.waitForFunction(id=>window.__lobby?.mode().room===id&&document.querySelector('#loader.done'),room,{timeout:120000});
   const measure=await page.evaluate(async ([x,z])=>{
-   const T=await import('three'),{uMirror}=await import('./js/kit.js'),l=window.__lobby,R=l.renderer,gl=R.getContext(),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;
+   const T=window.__modules.THREE,{uMirror}=window.__modules.kit,l=window.__lobby,R=l.renderer,gl=R.getContext(),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;
    const pos=new T.Vector3(x,.34,z),virtual=new T.Vector3(x,-.34,z),target=[x,0,z+.2],eyes=[[x-1.05,1.4,z+2.2],[x+.95,1.55,z+2.3]];
    const mark=new T.Mesh(new T.SphereGeometry(.044,20,12),new T.ShaderMaterial({uniforms:{uMirror},vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform float uMirror;void main(){if(uMirror<.5)discard; gl_FragColor=vec4(10.,0.,0.,1.);}'}));mark.position.copy(pos);l.scene.add(mark);
    const S=256,rt=new T.WebGLRenderTarget(S,S,{depthBuffer:false}),quadScene=new T.Scene(),cam=new T.Camera();let tShadow;

@@ -19,9 +19,9 @@ await p.evaluate(()=>{const root=window.__lobby.scene.getObjectByName('Catalogue
 const delivered=k=>p.waitForFunction(which=>{const s=window.__volumeState();return s.volume===which&&s.count===1&&s.pages===2;},k,{timeout:90000});
 await p.waitForTimeout(2500); await p.screenshot({ path: `${out}/drone0.png` });
 await p.click('#ways button[data-option="1"]');
-const now = () => p.evaluate(async () => (await import('/js/kit.js')).uTime.value);
+const now = () => p.evaluate(async () => (window.__modules.kit).uTime.value);
 const t0 = await now();
-for (const [k, s] of [[1, 1.0], [2, 2.0]]) { await p.waitForFunction(async ([t0, s]) => (await import('/js/kit.js')).uTime.value - t0 >= s, [t0, s], { timeout: 90000, polling: 100 }); await p.screenshot({path:`${out}/drone${k}.png`}); }
+for (const [k, s] of [[1, 1.0], [2, 2.0]]) { await p.waitForFunction(async ([t0, s]) => (window.__modules.kit).uTime.value - t0 >= s, [t0, s], { timeout: 90000, polling: 100 }); await p.screenshot({path:`${out}/drone${k}.png`}); }
 await delivered(1); console.log('Presented 02', ((await now()) - t0).toFixed(2), 's of the station (screenshots included; cue.mjs times the errand without them)',await p.evaluate(()=>window.__volumeState())); await p.screenshot({path:`${out}/drone3.png`});
 await p.click('#ways button[data-option="3"]'); await delivered(3); console.log('Replaced with 04',await p.evaluate(()=>window.__volumeState())); await p.screenshot({path:`${out}/drone4.png`});
 await p.keyboard.press('Escape'); await p.waitForFunction(()=>{const s=window.__volumeState();return s.count===0&&s.dockError<.006&&document.querySelector('#inspectbar').hidden;},null,{timeout:90000});

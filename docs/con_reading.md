@@ -6,7 +6,7 @@ depends: [docs/ref_scene-json.md, docs/ref_test-hooks.md]
 # The reader
 
 The reader shows the article of a page on a reader panel in the room.
-A pick that gives a text to read has the function `source()`, and `public/js/reader.js` gives all its fields.
+A pick that gives a text to read has the function `source()`, and `src/engine/reader.js` gives all its fields.
 
 ## The fields that the tests use
 

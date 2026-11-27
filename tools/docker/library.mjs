@@ -51,7 +51,7 @@ async function run(name) {
   const title = (slug) => posts.find((q) => q.slug === slug)?.title;
   const log = (p) => p.evaluate(() => window.__log);
   const readBox = (p) => p.evaluate(async () => {
-    const THREE = await import('three'), l = window.__lobby, pick = l.picks.find((q) => q.reads), m = pick.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
+    const THREE = window.__modules.THREE, l = window.__lobby, pick = l.picks.find((q) => q.reads), m = pick.mesh; l.camera.updateMatrixWorld(true); m.updateWorldMatrix(true, false);
     const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].map(([x, y]) => { const g = m.geometry.parameters, v = new THREE.Vector3(x * g.width / 2, y * g.height / 2, 0).applyMatrix4(m.matrixWorld).project(l.camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, z: v.z }; });
     const xs = pts.slice(0, 4).map((q) => q.x), ys = pts.slice(0, 4).map((q) => q.y), c = pts[4], top = document.elementFromPoint(c.x, c.y);
     return { live: !!pick.live(), glyph: m.parent.visible, cx: c.x, cy: c.y, left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys), behind: pts.some((q) => q.z > 1),

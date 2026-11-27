@@ -12,10 +12,10 @@ On the CI host, the suite runs for approximately 15 to 35 minutes, and for more 
 
 ## Sequence
 
-- First, the suite runs the static checks, and it makes the pages again.
+- First, the suite runs the static checks. Then it installs the packages and runs `pnpm build`.
 - Then it runs the browser steps that can run in parallel, `CHECK_JOBS` at a time.
 - Last, it runs the steps of motion and stillness, `hud`, `turn` and `cue`, one at a time, because other work on the host can change their times.
-- The browser steps use Docker, because `tools/dtest.sh` serves `public/` inside a container.
+- The browser steps use Docker, because `tools/dtest.sh` serves `dist/` inside a container.
 - [The browser scripts](ref_browser-scripts.md) gives the scripts of the steps.
 
 ## The process groups of the steps

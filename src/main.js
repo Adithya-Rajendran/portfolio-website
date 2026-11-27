@@ -1,14 +1,25 @@
 // The page's shell: the renderer, the camera, the controls, the addresses and the open room.
 import * as THREE from 'three';
-import { Post, Governor } from './js/post.js';
-import { loadRoomMode, saveRoomMode } from './js/governor.js';
-import { Q, SKIP, V, num, uTime, uPx, uMirror, setDistanceScale } from './js/kit.js';
-import { loadRoom } from './js/room.js';
-import { reflectEye } from './js/reflections.js';
-import { initLive, live, fill } from './js/screens.js';
-import { loadSite, furnish } from './js/site.js';
-import { createDisplay } from './js/hud.js';
-import { TURN } from './js/routemap.js';
+import { Post, Governor } from './engine/post.js';
+import { loadRoomMode, saveRoomMode } from './engine/governor.js';
+import { Q, SKIP, V, num, uTime, uPx, uMirror, DSCALE, setDistanceScale } from './engine/kit.js';
+import { loadRoom } from './engine/room.js';
+import { reflectEye } from './engine/reflections.js';
+import { initLive, live, fill } from './engine/screens.js';
+import { loadSite, furnish } from './engine/site.js';
+import { createDisplay } from './engine/hud.js';
+import { TURN } from './engine/routemap.js';
+import { windowShadow } from './engine/sunlight.js';
+import { DEV } from './engine/dev.js';
+
+if (DEV) window.__modules = {
+  THREE: { BoxGeometry: THREE.BoxGeometry, Camera: THREE.Camera, Color: THREE.Color, DataUtils: THREE.DataUtils, DoubleSide: THREE.DoubleSide,
+    FloatType: THREE.FloatType, FrontSide: THREE.FrontSide, HalfFloatType: THREE.HalfFloatType, Mesh: THREE.Mesh, MeshBasicMaterial: THREE.MeshBasicMaterial,
+    PlaneGeometry: THREE.PlaneGeometry, Raycaster: THREE.Raycaster, Scene: THREE.Scene, ShaderMaterial: THREE.ShaderMaterial,
+    SphereGeometry: THREE.SphereGeometry, Vector2: THREE.Vector2, Vector3: THREE.Vector3, WebGLRenderTarget: THREE.WebGLRenderTarget },
+  kit: { uTime, uMirror, get DSCALE() { return DSCALE; } },
+  sunlight: { windowShadow },
+};
 
 const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');

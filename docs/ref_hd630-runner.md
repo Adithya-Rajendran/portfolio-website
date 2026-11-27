@@ -18,7 +18,7 @@ tools/ci/hd630.sh <ref> [perf] <passes|cpuprof|unpinned|load|loadprof|blurdiff|b
 1. It holds the exclusive lock `flock -w 3600 /tmp/arcadia-local-hd630.lock` (`HD630_LOCK`, `HD630_LOCK_WAIT`).
 2. It copies `<ref>` with `git archive` into a temporary source directory, which it deletes at the end.
 3. It uses the `public/assets` that has the same key, or it packs the rooms into `${XDG_CACHE_HOME:-$HOME/.cache}/arcadia/hd630-assets/<key>` under `pack.lock`.
-4. It runs `tools/site.py`.
+4. It runs `pnpm install` and `pnpm build`, and serves `dist/`.
 5. It waits a maximum of `HD630_SETTLE` seconds, by default 120, until the load is below the limit.
 6. It runs the measurement with `timeout -k 10s 300s` (`HD630_TIMEOUT`), without `--foreground`, so the signal goes to all of the process group.
 

@@ -12,12 +12,13 @@ try {
   const ctx = await b.newContext({ javaScriptEnabled: false, viewport: { width: 1000, height: 900 } });
   const p = await ctx.newPage();
   const requests = [];
-  p.on('request', r => requests.push(r.url()));
+  p.on('request', r => requests.push({ url: r.url(), type: r.resourceType() }));
   p.on('requestfailed', r => streamAbort(r) || fail('request failed', r.url(), r.failure()?.errorText));
   p.on('response', r => { if (r.status() >= 400) fail('http', r.status(), r.url()); });
   const res = await p.goto(process.env.ORIGIN + path, { waitUntil: 'load' });
   if (res.status() !== 200) fail('page status', res.status());
-  if (requests.some(u => u.endsWith('/main.js'))) fail('main.js was requested with JavaScript disabled');
+  const scripts = requests.filter(r => r.type === 'script' || /\.m?js$/.test(new URL(r.url).pathname)).map(r => r.url);
+  if (scripts.length) fail('scripts were requested with JavaScript disabled:', scripts.join(' '));
   console.log('kind:', kind);
 
   const root = kind === 'list' ? 'main#page > section.post-list' : kind === 'post' ? 'main#page > article.post'

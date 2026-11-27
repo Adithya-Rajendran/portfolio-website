@@ -24,7 +24,7 @@ This reference gives the files of the Playwright tests in `tests/e2e/`, which us
 | File | Contents |
 |---|---|
 | `tests/e2e/playwright.config.ts` | The projects. |
-| `tests/e2e/serve.mjs` | A static HTTP server for `SITE_DIR` (by default `public/`) on the loopback address, port `${PORT:-8080}`. For `/assets/*`, it uses `ASSETS`, then `<site_dir>/assets`, then the main checkout from `git rev-parse --git-common-dir`. |
+| `tests/e2e/serve.mjs` | A static HTTP server for `SITE_DIR` (by default `dist/`) on the loopback address, port `${PORT:-8080}`. For `/assets/*`, it uses `ASSETS`, then `<site_dir>/assets`, then the main checkout from `git rev-parse --git-common-dir`. |
 | `tests/e2e/run.mjs` | Runs the specs without `@timing` in parallel (`--grep-invert @timing`), then the `@timing` specs one at a time (`--grep @timing --workers=1`). |
 | `tests/e2e/fixtures/site.ts` | The loaders of the data of the site (`/portfolio/index.json`, `/profile.json`, `/content.json`, `/blog/index.json`), the profile fixture, the error collector, and the `addInitScript` helpers `canvasSpyInitScript`, `waysRecorderInitScript` and `frameGateInitScript`. |
 | `tests/e2e/pages/station.ts` | `StationPage` and `ReaderPage`, around the `window.__lobby` hooks, with raycasts, the boxes of the glyph after it settles, frame checks, the frame gate and pen pointer helpers. |

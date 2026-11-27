@@ -24,7 +24,7 @@ tools/ci/run.sh pictures --against origin/prog/ws-infra
 | Variable | Use |
 |---|---|
 | `ASSETS` | The path of the packed rooms. Without it, the tools use `$ROOT/public/assets`. If that directory is not there, a Git worktree uses `public/assets` of the main checkout. |
-| `ORIGIN` | An external origin, for example `http://host:8080`. Without it, the Docker tools mount `$ROOT/public` and `$ASSETS`, and serve the checkout inside the container with `node serve.mjs /site 8080`. |
+| `ORIGIN` | An external origin, for example `http://host:8080`. Without it, the Docker tools mount `$ROOT/dist` and `$ASSETS`, and serve the checkout inside the container with `node serve.mjs /site 8080`. |
 | `OUT` | The directory for the screenshots and the output. The default is `$CI_JOB/out` in CI, `/tmp/arcadia-ci-out` for `run.sh`, `/tmp/dtest` for `dtest.sh`, `/tmp/dshot` for `dshot.sh`, `/tmp/snap` for `dsnap.sh` and `/tmp/detsnap/<name>` for `detsnap.sh`. |
 | `CHECK_JOBS` | The number of browser workers that run at the same time in `tools/check.sh`. The default is 8. |
 | `SNAP` | The base directory of `tools/pdiff.sh`. The default is `/tmp/detsnap`. |

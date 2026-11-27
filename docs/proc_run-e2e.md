@@ -13,13 +13,13 @@ Use this procedure to run [the Playwright tests](ref_e2e-files.md) on a local ma
 
 ## Procedure
 
-1. Make the pages.
-   ```sh
-   python3 tools/site.py
-   ```
-2. Install the packages with `pnpm@12.23.0`.
+1. Install the packages with `pnpm@12.23.0`.
    ```sh
    pnpm install --frozen-lockfile
+   ```
+2. Make the site in `dist/`.
+   ```sh
+   pnpm build
    ```
 3. Run the tests.
    ```sh

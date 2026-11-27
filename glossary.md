@@ -47,6 +47,7 @@ This table gives the approved technical names and technical verbs of the project
 | band | name | bands | A thin line of gilt on the spine of a book. |
 | bar | name | bars | Only in "inspect bar": the part of the display that shows the name and the actions of the pick in focus. |
 | barrel | name | - | The tube that holds the optics of the Oculus. |
+| Basis | name | - | Only in "Basis transcoder": the part of three.js that changes a KTX2 texture into a format that the GPU can use. |
 | batch | name | batches | A group of meshes that the engine draws with one draw call. |
 | Bay | name | - | Only in "Fabrication Bay 02": the full name of Fabrication. |
 | beam | name | - | The light from a thing to the reader panel. |
@@ -69,6 +70,7 @@ This table gives the approved technical names and technical verbs of the project
 | build | name | builds | A run of the Blender script of a room that makes its `.blend` file. |
 | builder | name | builders | A Python function that makes one family of objects in a Blender scene. |
 | bulkhead | name | bulkheads | A wall that closes a compartment and holds the pressure. |
+| bundle | name | bundles | One script that Vite makes from many scripts. |
 | button | name | buttons | A part of a page that a visitor clicks to do an action. |
 | byte | name | bytes | A unit of data, with 256 possible values. |
 | cache | name | caches | A directory that keeps a copy of data for use at a later time. |
@@ -269,7 +271,7 @@ This table gives the approved technical names and technical verbs of the project
 | hologram | name | holograms | A 3D image of light in a room. |
 | home | name | - | Only in "home page": the page at `/`. |
 | homelab | name | - | The name of a project of the owner. |
-| hook | name | hooks | A function on `window.__lobby` that tests call. |
+| hook | name | hooks | A function or a value on `window.__lobby` or `window.__modules` that tests use. |
 | hoop | name | hoops | A part of the hull in the shape of a circle that makes the hull strong. |
 | host | name | hosts | A computer on the network, for example the CI host. |
 | hostile | name | - | Only in "hostile data": data that can break the page. |
@@ -445,6 +447,7 @@ This table gives the approved technical names and technical verbs of the project
 | planet | name | planets | A large body that turns around the sun, for example Earth. |
 | Playwright | name | - | The browser test tool that runs the browser checks. |
 | PNG | name | - | An image format. |
+| pnpm | name | - | The tool that installs the packages of `package.json` and runs its scripts. |
 | pointer | name | - | The mouse, the pen or the finger, and its position on the page. |
 | polished | name | - | With a clear reflection. |
 | polygon | name | polygons | A face of a mesh. |
@@ -658,6 +661,7 @@ This table gives the approved technical names and technical verbs of the project
 | trace | name | traces | A record of the builder calls of a room build. |
 | track | name | - | A line on which a tram goes. |
 | tram | name | - | A vehicle on a track. |
+| transcoder | name | transcoders | A program that changes a texture from one format into a different format. |
 | transform | name | transforms | The position, the direction and the size of a node. |
 | trap | name | - | A shell function that runs when a signal comes. |
 | triangle | name | triangles | A face with three corners. |
@@ -689,6 +693,7 @@ This table gives the approved technical names and technical verbs of the project
 | visible | name | - | That the page or the renderer can show. |
 | visit | name | visits | A period when a visitor is in a room. |
 | visitor | name | visitors | A person who uses the site in a browser. |
+| Vite | name | - | The tool that makes the bundle and the CSS file of the site, and that serves `src/` while a person works on the site. |
 | voice | name | - | The active or passive form of a sentence. |
 | volume | name | volumes | A book of the Library. |
 | wait | verb | waits | To stop until a condition is true. |

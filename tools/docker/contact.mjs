@@ -26,7 +26,7 @@ async function openPage(ctx, path, errs) {
   await p.waitForFunction(() => getComputedStyle(document.querySelector('#hud')).opacity === '1', null, { timeout: 120000, polling: 250 }); return p;
 }
 const fieldTexts = (p) => p.evaluate(async () => {
-  const THREE = await import('three'), l = window.__lobby, pick = l.picks.find((q) => q.cta), hit = pick.mesh, panel = hit.parent.children.find((m) => m.material?.uniforms?.tMap), cv = panel.material.uniforms.tMap.value.image;
+  const THREE = window.__modules.THREE, l = window.__lobby, pick = l.picks.find((q) => q.cta), hit = pick.mesh, panel = hit.parent.children.find((m) => m.material?.uniforms?.tMap), cv = panel.material.uniforms.tMap.value.image;
   l.camera.updateMatrixWorld(true); hit.updateWorldMatrix(true, false);
   const g = hit.geometry.parameters, at = (x, y) => { const v = new THREE.Vector3((x / cv.width - 0.5) * g.width, (0.5 - y / cv.height) * g.height, 0).applyMatrix4(hit.matrixWorld).project(l.camera); return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight]; };
   return (cv.__t ?? []).filter((t) => t[0].trim()).map(([s, x, y, font, w, align]) => { const size = parseFloat(font.match(/([\d.]+)px/)[1]), x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
@@ -47,7 +47,7 @@ const hudWords = (p) => p.evaluate(() => {
 });
 const hideWords = (p, on) => p.evaluate((on) => { let s = document.querySelector('#tmp-hide'); if (!s) { s = document.createElement('style'); s.id = 'tmp-hide'; document.head.append(s); }
   s.textContent = on === 'all' ? '#hud, #inspectbar, #lock { display: none !important; }' : on ? '#hud, #hud *, #inspectbar * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; } #hud .ring, #hud .cta, #hud nav a, #hud nav .sep { border-color: transparent !important; box-shadow: none !important; background-color: transparent !important; }' : ''; }, on);
-async function sky(p, deg, period = 120) { await p.evaluate(async ({ deg, period }) => { const { uTime } = await import('./js/kit.js'); uTime.value = deg / 360 * period + period * 5; }, { deg, period }); await frames(p, 4); }
+async function sky(p, deg, period = 120) { await p.evaluate(async ({ deg, period }) => { const { uTime } = window.__modules.kit; uTime.value = deg / 360 * period + period * 5; }, { deg, period }); await frames(p, 4); }
 async function reader() {
   const p = await b.newPage(); await p.goto('about:blank');
   return (A64, B64, jobs) => p.evaluate(async ({ a, b, jobs }) => {

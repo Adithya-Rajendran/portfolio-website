@@ -7,6 +7,8 @@ depends: [docs/con_suite.md, docs/ref_doc-checks.md, docs/ref_ci-jobs.md, docs/r
 
 This reference gives the tiers that `tools/ci/run.sh <tier> [args]` runs.
 
+Each tier that serves the site first runs `pnpm install` and `pnpm build`, and then serves `dist/`.
+
 | Tier | Arguments | What it runs | Locks |
 |---|---|---|---|
 | `static` | None | `tools/content.py`, `tools/test_*.py`, `node --test tools/test_*.mjs`, [the documentation and comment checks](ref_doc-checks.md) and `tools/site.py` | `quiet.lock`, shared |

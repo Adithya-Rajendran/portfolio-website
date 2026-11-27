@@ -35,6 +35,6 @@ The kit does not make instances at run time, and it does not decrease the downlo
 - A builder uses only local dimensions. The script of the room keeps the fixed positions of the room, the labels on the walls and the data of the picks.
 - The canonical studio of a builder is the set of materials that the builder can use.
 - `blender/build_scene.py`, `room_about.py`, `room_writing.py` and `room_comms.py` set `PEOPLE = False`, so these scripts place no models of persons.
-- The six route stops are in `public/js/routemap.js`, not in the mesh of the table.
+- The six route stops are in `src/engine/routemap.js`, not in the mesh of the table.
 
 [The review pages](ref_review-pages.md) show the builders, their studios and where the rooms use them.

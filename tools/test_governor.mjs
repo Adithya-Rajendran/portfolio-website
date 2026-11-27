@@ -1,7 +1,7 @@
 // Unit tests for the adaptive quality governor and its per-room mode storage (node --test).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Governor, loadRoomMode, saveRoomMode, storageKey } from '../public/js/governor.js';
+import { Governor, loadRoomMode, saveRoomMode, storageKey } from '../src/engine/governor.js';
 
 function simulateTrace(gov, frames) {
   let elapsed = 0;
