@@ -14,7 +14,7 @@ It writes all files into `dist/`, and Git does not keep this directory.
 
 | Command | Output |
 |---|---|
-| `vite build` | `dist/index.html`, one bundle and one CSS file in `dist/app/`, and a copy of each file of `public/` |
+| `vite build` | `dist/index.html`, two bundles and one CSS file in `dist/app/`, and a copy of each file of `public/` |
 | `vite build --mode review` | The review pages `dist/blueprint.html` and `dist/asset.html`, with their scripts in `dist/app/review/` |
 | `python3 tools/site.py --shell dist/index.html --out dist` | The pages, the JSON files and the endpoints, from the shell that Vite wrote |
 
@@ -26,7 +26,7 @@ It writes all files into `dist/`, and Git does not keep this directory.
 Vite makes a small bundle from `src/main.js`.
 Vite makes a second bundle from `src/legacy-shell/shell.js`, the engine and three.js, and `src/main.js` loads it only when the browser has WebGL 2.
 
-The two bundles share a small file with the settings of WebGL. The HTML of a page does not link to this file, so a page without JavaScript requests no script.
+The two bundles share no file, so a page of the station loads the small bundle and then the second bundle. The HTML of a page links to no file that the second bundle uses, so a page without JavaScript requests no script.
 
 Vite makes one CSS file from `src/styles/style.css` and `src/styles/post.css`.
 The name of each file in `/app/` has a hash of its content, so a new version of a file has a new name.
