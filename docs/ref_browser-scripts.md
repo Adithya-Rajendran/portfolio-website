@@ -49,7 +49,24 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `view.mjs` | A WebGL smoke test in `chromium`, `firefox` and `webkit`. |
 | `ringline.mjs`, `door.mjs`, `tour.mjs` | The tour, the doors and the bar of the Ring Line. |
 | `writing-alias.mjs` | `/blog/`, a room query that names no room, and Back and Forward. |
+| `measure-selftest.mjs` | [The measuring scripts](#the-measuring-scripts): a plain `/` fails at once with the switches named, the pinned hero page gives GPU ms, and the deadline stops a hung run. |
 
 - `rooms.kit.mjs` and `r2.kit.mjs` hold what these scripts share: the profiles, a recorder of the meshes of the reader, and a gate on the frames of the page.
 - `r2.kit.mjs` also holds a clock that adds the time of the frames of the page.
 - [The lighting checks](ref_lighting-checks.md) are also scripts in `tools/docker/`.
+
+## The measuring scripts
+
+`passes.mjs` and `bench.mjs` time the GPU with their own timer queries, and a page can have only one timer query active at a time.
+
+| Rule | What the scripts do |
+|---|---|
+| Pinned state | The page must run with a pinned governor, which the query switches `tier=0` (or `tier=1`) and `scale=1` give, for example `/?shot=hero&tier=0&scale=1`. |
+| Unpinned page | The script exits with the code 1 at once, and the message names the needed switches, because the page then wraps each draw in its own timer query. |
+| No GPU sample | The script exits with the code 1 and says that no GPU query result came back. |
+| Deadline | The script stops the browser and exits with the code 3 after 180 s plus 3 s for each second of measuring, and for `bench.mjs` plus 60 s and 3 s for each second of measuring for each run. |
+| Override | The environment variable `MEASURE_TIMEOUT_S` sets the deadline in seconds. |
+
+- `measure-guard.mjs` holds the pinned-state check and the deadline that both scripts use.
+- `tools/test_measure_guard.mjs` tests them without a browser, with `measure-hang.mjs` as a script that never ends.
+- `ci <ref> script measure-selftest.mjs` runs both measuring scripts against a plain page and against the pinned hero page.
