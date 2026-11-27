@@ -38,8 +38,9 @@ const GL_ATTRS = Object.freeze({ antialias: Q.has('aa') ? Q.get('aa') === '1' : 
 function hasWebGL2() {
   try {
     const gl = document.createElement('canvas').getContext('webgl2', GL_ATTRS);
-    gl?.getExtension('WEBGL_lose_context')?.loseContext();
-    return !!gl;
+    if (!(gl instanceof WebGL2RenderingContext)) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
   } catch { return false; }
 }
 if (!hasWebGL2()) { stayPlain(); await halt(); }
