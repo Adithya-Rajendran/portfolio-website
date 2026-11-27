@@ -92,9 +92,33 @@ test('a clean tsc run has no findings and no errors', () => {
   assert.deepEqual(parseTsc('', 0), { findings: [], errors: [] });
 });
 
-test('findings of files that a project does not own are dropped', () => {
-  const owns = (f) => f !== 'src/a.js';
-  assert.equal(parseTsc("src/a.js(3,7): error TS2339: Property 'x' does not exist on type 'Y'.\n", 2, owns).findings.length, 0);
+test('a finding in a file of another project is left to that project', () => {
+  const out = parseTsc("src/a.js(3,7): error TS2339: Property 'x' does not exist on type 'Y'.\n", 2, (f) => f !== 'src/a.js', 'tsconfig.strict.json');
+  assert.deepEqual(out, { findings: [], errors: [] });
+});
+
+test('a finding in a file that no project reports fails', () => {
+  const out = parseTsc("tools/x.ts(1,1): error TS2339: Property 'x' does not exist on type 'Y'.\n", 2, () => false, 'tsconfig.json');
+  assert.equal(out.findings.length, 0);
+  assert.equal(out.errors.length, 1);
+});
+
+test('an unknown compiler option in tsconfig.json fails', () => {
+  const out = parseTsc("tsconfig.json(23,22): error TS5023: Unknown compiler option 'stirct'.\n", 1, () => true, 'tsconfig.json');
+  assert.equal(out.errors.length, 1);
+  assert.match(out.errors[0], /TS5023/);
+});
+
+test('a wrong option value in a tsconfig file fails', () => {
+  const out = parseTsc("tsconfig.node.json(4,15): error TS6046: Argument for '--module' option must be: 'none', 'commonjs'.\n", 1, () => true, 'tsconfig.node.json');
+  assert.equal(out.errors.length, 1);
+  assert.match(out.errors[0], /TS6046/);
+});
+
+test('a syntax error in tsconfig.strict.json fails', () => {
+  const out = parseTsc("tsconfig.strict.json(5,3): error TS1005: ',' expected.\n", 1, () => true, 'tsconfig.strict.json');
+  assert.equal(out.errors.length, 1);
+  assert.match(out.errors[0], /TS1005/);
 });
 
 test('each source file belongs to exactly one project, and src/app is strict', () => {

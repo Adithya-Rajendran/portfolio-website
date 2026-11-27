@@ -22,7 +22,9 @@ const KINDS = {
 const clean = (text) => text.replace(/[\t\r\n]+/g, ' ').trim();
 const slash = (f) => f.replaceAll('\\', '/');
 
-export function parseTsc(text, status, owns = () => true, config = 'tsc') {
+const ownedByAny = (f) => PROJECTS.some((p) => p.owns(f));
+
+export function parseTsc(text, status, owns = () => true, config = 'tsc', anyOwns = ownedByAny) {
   const findings = [], errors = [], seen = new Set();
   let matched = 0;
   for (const line of text.split('\n')) {
@@ -30,6 +32,10 @@ export function parseTsc(text, status, owns = () => true, config = 'tsc') {
     if (m) {
       matched++;
       const [, raw, row, col, code, message] = m, file = slash(raw);
+      if (/(^|\/)tsconfig[^/]*\.json$/.test(file) || !anyOwns(file)) {
+        errors.push(`${config}: an error in a file that no type-check project reports: ${line.trim()}`);
+        continue;
+      }
       if (!owns(file) || seen.has(`${file}:${row}:${col}:${code}`)) continue;
       seen.add(`${file}:${row}:${col}:${code}`);
       findings.push({ key: [file, code, clean(message)].join('\t'), where: `${file}(${row},${col})` });

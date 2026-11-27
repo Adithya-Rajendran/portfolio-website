@@ -40,8 +40,11 @@ This reference gives the commands and the files of the JavaScript checks that th
 - The baseline can have a line only as many times as each base baseline has it.
 - `--update` writes the baseline only if the new baseline obeys these base rules, also after you delete the file.
 - Moved code can keep its problems at a new path only if a line with the same code and message goes from the first path.
+- One problem can move from one path to a different path. The number of lines with that code and message cannot increase.
 - A `tsc` exit code that is not 0 is a failure when the script cannot read a problem in the output of `tsc`.
 - An error of `tsc` without a path is a failure.
+- An error in a `tsconfig` file is a failure.
+- An error in a file that no `tsconfig` file reports is a failure.
 - Each `tsconfig` file reports only the files of its row in the table of files, so each file has one type check.
 
 ## Keys of the lines
@@ -53,7 +56,8 @@ This reference gives the commands and the files of the JavaScript checks that th
 
 ## Base lists
 
-- The `static` tier uses the baselines of `prog/int` and of each `prog/ws-*` branch that has them.
+- The `static` tier uses the baseline of `prog/int` and the baseline of each `prog/ws-*` branch.
+- The base baselines include each `prog/ws-*` branch, not only the branch that the change starts from.
 - Without `--base`, the script reads the same baselines from the branches of the local repository.
 
 ## Output
