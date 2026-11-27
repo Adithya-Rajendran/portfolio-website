@@ -34,7 +34,7 @@ function stayPlain(reason) {
   if (reason) console.warn(reason);
 }
 const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
-const GL_ATTRS = { antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' };
+const GL_ATTRS = Object.freeze({ antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });
 function hasWebGL2() {
   try {
     const gl = document.createElement('canvas').getContext('webgl2', GL_ATTRS);
