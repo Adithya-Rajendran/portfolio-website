@@ -1,5 +1,4 @@
-// Arcadia Station, drawn as an explorable 3D blueprint. The rooms are the real room models (the same .glb files the
-// site renders), reduced to their edges and set out on the deck where the plan puts them.
+// The station as an explorable 3D blueprint, drawn from the edges of the room models.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -20,12 +19,7 @@ const ring = (r, n = 128) => Array.from({ length: n }, (_, i) => V(Math.cos(i / 
 const labelBox = document.getElementById('labels'), tags = [];
 function tag(html, pos, cls, mode) { const el = document.createElement('div'); el.className = 'tag ' + (cls || ''); el.innerHTML = html; labelBox.appendChild(el); tags.push({ el, pos, mode }); return el; }
 
-// ------------------------------------------------------------------ the habitat tube
-// World axes on the deck: x runs along the ring (spinward = +x), y is up (towards the hub), z is across the tube.
-// The pressure hull is a circular tube; the main deck is a chord across it. Rooms are compartments between
-// bulkheads, in a row. HULL_R and HULL_Y are the Atrium's own hull (its ribs are these frames); below the deck there
-// is room for the Ring Line, tanks and shielding.
-const HULL_R = 10.5, HULL_Y = 2.3, X0 = -60, X1 = 96, LINE_Y = -4.5, CORE = [33, 45];     // CORE: the foot of the spoke, between the Atrium and the Lounge
+const HULL_R = 10.5, HULL_Y = 2.3, X0 = -60, X1 = 96, LINE_Y = -4.5, CORE = [33, 45];
 const ROOMS = [
   { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 14, 0], view: [[16, 40, 46], [16, 2, 0]],
     text: 'Beside the foot of the spoke. You come down by lift, step through a door in the bulkhead and the hall opens in front of you. Its side walls are the hull, so the only ways on are in that same bulkhead: back into the spoke core for the Lounge beyond, or down the stair to the Ring Line. The big ring between the doors is the lower end of the periscope.' },
@@ -52,7 +46,7 @@ function plateFor(r, box) { const s = box.getSize(V(0, 0, 0)), c = box.getCenter
   plate.position.set(c.x, -0.05, c.z); deck.add(plate); plate.userData.room = r; picks.push(plate); }
 async function addRoom(r) {
   const g = new THREE.Group(); g.position.set(r.at, 0, 0); g.rotation.y = r.turn * Math.PI / 2; deck.add(g); g.updateMatrixWorld(true);
-  const { v } = await (await fetch(r.glb.replace('room.glb', 'scene.json'), { cache: 'no-cache' })).json();      // the bake's version: see _headers
+  const { v } = await (await fetch(r.glb.replace('room.glb', 'scene.json'), { cache: 'no-cache' })).json();
   const gltf = await loader.loadAsync(`${r.glb}?v=${v}`); gltf.scene.updateMatrixWorld(true); const box = new THREE.Box3();
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return; const u = o.userData = { ...o.parent.userData, ...o.userData }, grp = u.grp || '';
@@ -69,39 +63,32 @@ function addPlanned(r) { const [x0, x1, h] = r.box, m = dashed(CY, 0.7, 0.8), w 
   for (const [x, z] of [[x0, -w], [x1, -w], [x1, w], [x0, w]]) deck.add(poly([V(x, 0, z), V(x, h, z)], m));
   plateFor(r, new THREE.Box3(V(x0, 0, -w), V(x1, h, w))); }
 
-// hull frames every 4 m (the ribs you see in the Atrium are these), longerons, deck edge
 const circ = (x, r, n = 48, a0 = 0, a1 = 6.2832) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return V(x, HULL_Y + Math.sin(a) * r, Math.cos(a) * r); });
-const aDeck = Math.asin(-HULL_Y / HULL_R);                                         // where the deck chord meets the hull
+const aDeck = Math.asin(-HULL_Y / HULL_R);
 for (let x = X0; x <= X1; x += 4) { const below = poly(circ(x, HULL_R, 24, Math.PI - aDeck, 2 * Math.PI + aDeck), line(CY, 0.3)); deck.add(below);
   const above = poly(circ(x, HULL_R, 32, aDeck, Math.PI - aDeck), line(CY, 0.22)); deck.add(above); shell.push(above); above.visible = false; }
 for (let k = 0; k < 12; k++) { const a = k / 12 * 6.2832 + 0.26, up = Math.sin(a) * HULL_R + HULL_Y > 0; const l = poly([V(X0, HULL_Y + Math.sin(a) * HULL_R, Math.cos(a) * HULL_R), V(X1, HULL_Y + Math.sin(a) * HULL_R, Math.cos(a) * HULL_R)], line(CY, up ? 0.22 : 0.3)); deck.add(l); if (up) { shell.push(l); l.visible = false; } }
 { const w = Math.cos(aDeck) * HULL_R; deck.add(poly([V(X0, 0, -w), V(X1, 0, -w), V(X1, 0, w), V(X0, 0, w)], line(CY, 0.6), true)); }
-// pressure bulkheads between compartments (each with a door on the deck and a hatch on the Ring Line)
 for (const x of BULKHEADS) { deck.add(poly(circ(x, HULL_R, 64), line(AM, 0.75), true), poly([V(x, 0, -12), V(x, 0, 12)], line(AM, 0.75)));
   const d = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.6, 2.2), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(x, LINE_Y + 1.3, 0); deck.add(d); }
-// below the deck: the Ring Line (tram + walkway through every compartment), water tanks that double as shielding
 deck.add(poly([V(X0, LINE_Y, -0.8), V(X1, LINE_Y, -0.8)], line(AM, 0.9)), poly([V(X0, LINE_Y, 0.8), V(X1, LINE_Y, 0.8)], line(AM, 0.9)));
 for (let x = X0; x <= X1; x += 2) deck.add(poly([V(x, LINE_Y, -0.8), V(x, LINE_Y, 0.8)], line(AM, 0.35)));
 for (const z of [-4.4, 4.4]) for (let x = X0 + 3; x < X1 - 8; x += 13) { const t = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.6, 1.6, 10, 12).rotateZ(Math.PI / 2), 30), line(CY, 0.3)); t.position.set(x + 5, -5.4, z); deck.add(t); }
 tag('WATER TANKS · RADIATION SHIELD + BALLAST', V(-58, -8.5, 8), 'far', 'deck'); tag('RING LINE · TRAM + WALKWAY', V(96, LINE_Y, 0), 'door', 'deck');
 for (const [name, x] of STOPS) { const p = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.5 })); p.position.set(x, LINE_Y, 3); deck.add(p);
   deck.add(poly([V(x, LINE_Y, 3), V(x, 0.1, 6.5)], dashed(AM, 0.9, 0.5))); }
-// the Atrium's two ways on, both in its spinward bulkhead: a door to the next compartment and a stair down to the Ring Line
 for (const [name, z] of [['LIFTS · LOUNGE', 8.2], ['↓ RING LINE', -8.2]]) {
   const d = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(33, 2.0, z); deck.add(d);
   if (z < 0) deck.add(poly([V(33, 0.4, z), V(36, LINE_Y, -3)], dashed(AM, 0.9, 0.5)));
   tag(name, V(33, 5.0, z), 'door', 'deck'); }
-// the spoke: its foot is a compartment of its own between the Atrium and the Lounge (lifts to the hub, the stair down)
 { const m = line(AM, 0.8), [a, z] = [CORE[0] + 1, CORE[1] - 1];
   for (const [x, w] of [[a, -5], [z, -5], [z, 5], [a, 5]]) deck.add(poly([V(x, 0, w), V(x, 60, w)], m));
   for (let y = 0; y <= 60; y += 6) deck.add(poly([V(a, y, -5), V(z, y, -5), V(z, y, 5), V(a, y, 5)], line(AM, 0.35), true));
   tag('SPOKE CORE<small><br>LIFTS TO THE HUB · STAIR TO THE RING LINE</small>', V(39, 34, 0), 'door', 'deck'); }
-// The periscope. Light from the hub telescope comes down the middle of the spoke; at the foot two mirrors, back to
-// back, turn it into the rooms on either side. The Atrium's Oculus and the Lounge's window are its two eyepieces.
 { const m = line(AM, 0.95), mid = (CORE[0] + CORE[1]) / 2;
-  deck.add(poly(circ(CORE[0], 4.6, 48).map((p) => p.setY(p.y - HULL_Y + 5.65)), m, true));                                 // the Oculus, in the Atrium's bulkhead
-  deck.add(poly([V(CORE[1], 0.55, -6.2), V(CORE[1], 5.9, -6.2), V(CORE[1], 5.9, 6.2), V(CORE[1], 0.55, 6.2)], m, true));   // the Lounge's window
-  for (const w of [-3, 3]) deck.add(poly([V(mid - 2.6, 3.0, w), V(mid, 8.2, w), V(mid + 2.6, 3.0, w)], m));                // the two mirrors
+  deck.add(poly(circ(CORE[0], 4.6, 48).map((p) => p.setY(p.y - HULL_Y + 5.65)), m, true));
+  deck.add(poly([V(CORE[1], 0.55, -6.2), V(CORE[1], 5.9, -6.2), V(CORE[1], 5.9, 6.2), V(CORE[1], 0.55, 6.2)], m, true));
+  for (const w of [-3, 3]) deck.add(poly([V(mid - 2.6, 3.0, w), V(mid, 8.2, w), V(mid + 2.6, 3.0, w)], m));
   deck.add(poly([V(mid - 2.6, 3.0, -3), V(mid - 2.6, 3.0, 3)], m), poly([V(mid, 8.2, -3), V(mid, 8.2, 3)], m), poly([V(mid + 2.6, 3.0, -3), V(mid + 2.6, 3.0, 3)], m));
   deck.add(poly([V(mid, 60, 0), V(mid, 5.65, 0)], dashed(AM, 0.9, 0.7)), poly([V(CORE[0], 5.65, 0), V(mid, 5.65, 0), V(CORE[1], 4.0, 0)], dashed(AM, 0.9, 0.7)));
   tag('PERISCOPE<small><br>ONE VIEW FROM THE HUB, TURNED INTO BOTH ROOMS</small>', V(mid, 11.5, 0), 'door', 'deck'); }
@@ -109,8 +96,6 @@ for (const [name, z] of [['LIFTS · LOUNGE', 8.2], ['↓ RING LINE', -8.2]]) {
 tag('← ANTISPINWARD', V(X0 - 6, 0, 0), 'far', 'deck'); tag('SPINWARD →', V(X1 + 6, 6, 0), 'far', 'deck');
 for (const r of ROOMS) tag(`<b>${r.name}</b><small>${r.page}</small>`, V(...r.label), '', 'deck');
 
-// ------------------------------------------------------------------ the station around the deck
-// Ring axis along z, 224 m above the deck. Hub and truss do not spin; the rings do, in counter-rotating pairs.
 const station = new THREE.Group(); scene.add(station);
 const R = 224 + HULL_Y;
 function hoop(z, r, mat, n = 160) { const l = poly(ring(r, n), mat, true); l.position.set(0, R, z); station.add(l); return l; }
@@ -123,7 +108,6 @@ function hoop(z, r, mat, n = 160) { const l = poly(ring(r, n), mat, true); l.pos
   tag(`RING ${no}${here ? ' · THE DECK IS ITS LOWEST ARC' : ''}`, V(0, 2 * R + 30, z), here ? 'door' : 'far', 'station');
 });
 tag('RINGS 01 + 02 TURN ONE WAY, 03 + 04 THE OTHER:<br>THEIR SPIN CANCELS, SO THE STATION CAN BE STEERED', V(-R - 150, R + 140, 110), 'far', 'station');
-// non-rotating hub on the axis, with the dock at one end and the power truss at the other
 for (const z of [-70, 290]) hoop(z, 24, line(CY, 0.7), 48);
 for (let k = 0; k < 10; k++) { const a = k / 10 * 6.2832; station.add(poly([V(Math.cos(a) * 24, R + Math.sin(a) * 24, -70), V(Math.cos(a) * 24, R + Math.sin(a) * 24, 290)], line(CY, 0.45))); }
 tag('HUB · DOES NOT SPIN · ZERO-G', V(0, R + 46, 110), 'far', 'station');
@@ -131,10 +115,8 @@ tag('HUB · DOES NOT SPIN · ZERO-G', V(0, R + 46, 110), 'far', 'station');
   for (const z of [380, 470, 560]) for (const sx of [-1, 1]) station.add(poly([V(sx * 10, R, z - 30), V(sx * 300, R, z - 30), V(sx * 300, R, z + 30), V(sx * 10, R, z + 30)], line(CY, 0.55), true));
   for (const sy of [-1, 1]) station.add(poly([V(0, R + sy * 10, 600), V(0, R + sy * 220, 600), V(0, R + sy * 220, 640), V(0, R + sy * 10, 640)], line(AM, 0.6), true));
   tag('SOLAR ARRAYS', V(310, R + 30, 470), 'far', 'station'); tag('RADIATORS · EDGE-ON TO THE SUN', V(0, R + 250, 620), 'far', 'station'); }
-// Earth-pointing telescope on the hub: the top of the periscope. Its image goes down the spoke to the deck.
 { const t = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(9, 9, 40, 12), 30), line(AM, 0.9)); t.position.set(0, R - 40, -40); station.add(t);
   station.add(poly([V(0, R - 20, -40), V(0, R - 20, 0), V(4, R - 24, 0), V(37, R - 212, 0)], dashed(AM, 0.9, 6))); tag('OCULUS TELESCOPE', V(0, R - 70, -40), 'door', 'station'); }
-// Ark Aurora, docked nose-on to the hub, on the spin axis (the only place a ship can meet a spinning station)
 { const ark = new THREE.Group(); ark.position.set(0, R, -70); station.add(ark); const m = line(CY, 0.7);
   ark.add(poly([V(0, 0, -40), V(0, 0, -1520)], m));
   for (const z of [-420, -600, -780]) for (const zz of [z - 14, z + 14]) { const l = poly(ring(120, 96), m, true); l.position.z = zz; ark.add(l); }
@@ -143,12 +125,10 @@ tag('HUB · DOES NOT SPIN · ZERO-G', V(0, R + 46, 110), 'far', 'station');
   for (const [x, y] of [[40, 40], [-40, 40], [40, -40], [-40, -40]]) for (const z of [-1000, -1160]) { const l = poly(ring(34, 32), m, true); l.position.set(x, y, z); ark.add(l); }
   station.add(poly([V(0, R, -70), V(0, R, -110)], line(AM, 1)));
   tag('ARK AURORA · 1,480 m · DOCKED ON THE AXIS', V(0, R + 190, -700), 'far', 'station'); tag('DOCK', V(0, R + 40, -90), 'door', 'station'); }
-// the deck patch on Ring 04
 { const a0 = -1.5708 + X0 / R, a1 = -1.5708 + X1 / R; for (const z of [-HULL_R, HULL_R]) station.add(poly(Array.from({ length: 17 }, (_, i) => { const a = a0 + (a1 - a0) * i / 16; return V(Math.cos(a) * (R + 3), R + Math.sin(a) * (R + 3), z); }), line(AM, 1)));
   tag('THE DECK · 8 COMPARTMENTS', V(0, -40, 0), 'door', 'station'); }
 { const g = new THREE.GridHelper(240, 60, 0x12384c, 0x0c2636); g.position.set(12, -HULL_R + HULL_Y - 0.4, 0); deck.add(g); }
 
-// ------------------------------------------------------------------ side panel + camera moves
 const BLURB = {
   station: '<b>Arcadia Station</b>, 717 km up. Four habitat rings spin for gravity; the hub on the axis does not spin, so that is where ships dock, where the solar arrays and radiators sit, and where the telescope that feeds the Oculus points at Earth. <b>Ark Aurora</b> is docked nose-on to the hub. Everything on the website happens on the amber arc of Ring 04.',
   deck: 'That arc, straightened out. The ring is a pressure tube with a flat deck across it. The rooms are <b>compartments in a row</b>, each sealed from the next by a bulkhead (amber rings). You come down the <b>spoke</b> by lift into its core and step through into the Atrium. Light from the hub comes down the same spoke: the <b>periscope</b>. Under the deck runs the <b>Ring Line</b>, a tram and walkway that reaches every room.',
@@ -181,7 +161,7 @@ const v = V(0, 0, 0);
 function frame() {
   if (fly) { fly.k = Math.min(1, fly.k + 0.022); const e = fly.k * fly.k * (3 - 2 * fly.k); camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e); if (fly.k === 1) fly = null; }
   controls.update();
-  const far = camera.position.distanceTo(controls.target) > 460;                 // labels follow how far out we are
+  const far = camera.position.distanceTo(controls.target) > 460;
   station.visible = far;
   for (const t of tags) { v.copy(t.pos).project(camera); const show = v.z < 1 && (t.mode === 'station') === far;
     t.el.style.display = show ? '' : 'none'; if (show) { t.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; t.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px'; } }
