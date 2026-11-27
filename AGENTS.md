@@ -8,7 +8,7 @@ Self-contained instructions for working on the Arcadia Station program (`explore
 - **Canonical program documents:**
   - `docs/program-plan.md` — full architecture, rules (§5), environment (§6), wave order (§7), task cards (§8), gates (§9), PR template (§10).
   - `docs/program/status.md` — active wave, gate status, and task tracker (orchestrator-owned).
-  - `docs/program/decisions.md` — owner decisions (`D1`–`D13`, `U0-contact`) and decision log (orchestrator-owned).
+  - `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` — owner decisions (`D1`–`D13`, `U0-contact`) and decision log (orchestrator-owned).
   - `docs/program/pr-template.md` — required PR body template passed via `--body-file`.
   - `docs/v1-contracts.md` — content schemas, URLs, static page generator, and runtime contracts.
   - `docs/program/ui-spec.md`, `docs/program/baseline.md`, `docs/program/dependencies.md`, `docs/opt-pass-2-report.md` — created and updated by their owning cards (`U0`, `I2`, `D3`, `O0`/`O8`).
@@ -79,7 +79,7 @@ explore/rolling-earth      the owner's line — no agent merges into it
    git fetch origin && git fetch ci
    git worktree add -b prog/<ID>-<slug> /tmp/wt-<ID>-<slug> origin/prog/ws-<name>
    ```
-2. **Read before editing:** Read the card in `docs/program-plan.md` (§8), all files it names, `docs/program/decisions.md`, and `docs/v1-contracts.md` (plus `docs/program/ui-spec.md` after `U0`). If the card asks for numbers, measure the "before" baseline first.
+2. **Read before editing:** Read the card in `docs/program-plan.md` (§8), all files it names, `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)`, and `docs/v1-contracts.md` (plus `docs/program/ui-spec.md` after `U0`). If the card asks for numbers, measure the "before" baseline first.
 3. **Iterate in small commits and run cheap checks on `ci`:**
    ```sh
    git push ci HEAD:prog/<ID>-<slug>
@@ -132,12 +132,12 @@ explore/rolling-earth      the owner's line — no agent merges into it
 | `public/js/**`, `public/main.js`, `tools/pack.py` (until `F1`); `src/engine/**` (after) | `ws-opt` for the functions its cards name; `U6a` for `comms.js`; `ws-found` for everything else |
 | `src/app/**`, `src/styles/**`, `tests/e2e/**` specs | `ws-ui`, one region per task |
 | `tools/site.py` and its tests | `U6a` (contact page & `profile.json`), `F1` (`--shell`), `U10` (runtime ids); nobody else |
-| `docs/program/status.md`, `docs/program/decisions.md` | the orchestrator |
+| `docs/program/status.md`, `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` | the orchestrator |
 | `docs/v1-contracts.md`, `README.md` | each task updates the lines about what it changed; `D1` does the final pass |
 
 - Two open tasks never edit the same function (where two cards share a file/function, §7 sets the order).
 - **Layout freeze (`F1`):** No PR touching `public/main.js`, `public/js/`, `public/index.html`, or `public/*.css` may be open while `F1` is produced and merged.
-- **Boundary freeze (`F3`):** While `F3` is open, nobody else edits `src/main.*` or the files `F3` splits. After `F3`, any change to `src/engine/types.ts` or the `Station` interface (`src/engine/station.ts`) requires an entry in `docs/program/decisions.md` and notice to every open `ws-ui` task.
+- **Boundary freeze (`F3`):** While `F3` is open, nobody else edits `src/main.*` or the files `F3` splits. After `F3`, any change to `src/engine/types.ts` or the `Station` interface (`src/engine/station.ts`) requires an entry in `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` and notice to every open `ws-ui` task.
 - **Engine/app boundary (§4.2):** The engine never reads or writes the DOM (except the canvas and any tracked exceptions until removed) and never imports `src/app/`. The page layer never reads a Solid signal inside `onFrame(...)`; Solid 2 applies writes in a microtask (call `flush()` before asserting DOM changes in tests).
 
 ### Stop-and-ask rules (§5.7)
