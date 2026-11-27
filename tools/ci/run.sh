@@ -321,8 +321,8 @@ case "$tier" in
       python3 tools/content.py &&
       for t in tools/test_*.py; do python3 -m unittest -q "$t" || exit 1; done &&
       node --test tools/test_*.mjs &&
-      js_checks &&
       docs_rules &&
+      js_checks &&
       python3 tools/site.py > /dev/null
     )
     ;;
