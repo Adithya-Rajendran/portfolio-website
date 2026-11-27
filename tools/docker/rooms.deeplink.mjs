@@ -8,7 +8,15 @@ const exhibited = new Set(content.rooms.projects.exhibits), withExhibit = projec
 async function run(name) {
   S.profile(name); const P = PROFILES[name], phone = P.phone, W = P.viewport.width, H = P.viewport.height, errs = [];
   console.log(`\n=== ${name} ${W}x${H}`);
-  const ctx = await context(b, P); await ctx.addInitScript(spy);
+  const ctx = await context(b, P); await ctx.addInitScript(spy); await ctx.addInitScript(() => {
+    const r = window.__placed = { frames: 0, big: 0, shownBig: 0, worst: null }, raf = window.requestAnimationFrame.bind(window);
+    const look = () => { const h = document.querySelector('#reader'), m = h && !h.hidden && /^matrix3d\((.*)\)$/.exec(h.style.transform);
+      if (m) { const e = m[1].split(',').map(Number), w = parseFloat(h.style.width), ht = parseFloat(h.style.height); let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, flat = false;
+        for (const [x, y] of [[0, 0], [w, 0], [0, ht], [w, ht]]) { const q = e[3] * x + e[7] * y + e[15], sx = (e[0] * x + e[4] * y + e[12]) / q, sy = (e[1] * x + e[5] * y + e[13]) / q; if (!(q > 0)) flat = true; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
+        const area = flat ? Infinity : (x1 - x0) * (y1 - y0); r.frames++;
+        if (area > 4 * innerWidth * innerHeight) { r.big++; if (getComputedStyle(h).visibility !== 'hidden') { r.shownBig++; r.worst = flat ? 'w <= 0' : Math.round(area); } } }
+      raf(look); };
+    raf(look); });
   const shot = (p, n) => p.screenshot({ path: `/out/rooms-${name}-deep-${n}.png` }).catch(() => {});
   const page = async () => { const p = await ctx.newPage(); p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`); });
     p.on('requestfailed', (r) => streamAbort(r) || errs.push(`request failed: ${r.url()}`)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()} ${r.url()}`); }); return p; };
@@ -59,6 +67,8 @@ async function run(name) {
       return { h2: h?.textContent, top: h && Math.round(h.getBoundingClientRect().top - r.top), scrollTop: Math.round(sc.scrollTop), max: Math.round(sc.scrollHeight - sc.clientHeight), cls: document.documentElement.className }; }, e.id);
     chk(8, ok && s.url === e.url && s.path === '/experience/' && s.hash === `#${e.id}`, `/experience/#${e.id} opens Navigation with the entry read (${Date.now() - t0} ms)`, { room: s.room, state: s.state, url: s.url, at: s.path + s.hash });
     chk(8, g.cls === 'station', `/experience/#${e.id}: it was the station from the first paint (not a page first)`, g.cls);
+    const placed = await p.evaluate(() => ({ ...window.__placed, rest: getComputedStyle(document.querySelector('#reader')).visibility }));
+    chk(8, placed.shownBig === 0 && placed.rest === 'visible', `/experience/#${e.id}: while the frame flies in, #reader is hidden on every frame whose projected box has a corner behind the eye or covers more than 4 viewports (${placed.big} of ${placed.frames} placed frames), and it is visible at rest`, placed);
     chk(8, g.h2 === e.title && g.scrollTop > 0 && (g.top >= -2 && g.top <= 120 || g.scrollTop >= g.max - 2), `/experience/#${e.id}: that entry's heading ("${e.title}") is at the top of the frame, not the page's top`, g);
     if (e === profile.timeline[0]) { await shot(p, 'experience-1'); for (const [fok, what, detail] of await frameChecks(p, W, H)) chk(8, fok, `/experience/#${e.id}: ${what}`, detail); }
     const back = await leaveAndSnap(p, phone);
