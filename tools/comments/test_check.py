@@ -82,6 +82,38 @@ class StrayCommentTest(unittest.TestCase):
     def test_jsx_text_with_a_url(self):
         src = "// Page.\nexport const P = () => <p>http://x.y</p>;\n"
         self.assertEqual(problems("a.tsx", src), [])
+        src = "// Page.\nexport const P = () => (\n  <div title=\"//x\">\n    {/* c */}\n    <a href=\"http://y\">see http://z</a>\n  </div>\n);\n"
+        self.assertEqual(problems("a.tsx", src), ["line 4: comment /* c */"])
+
+    def test_tsx_colon_slashes_outside_jsx_are_comments(self):
+        src = "// Page.\nconst k = c ? 1 ://why\n  2;\n"
+        self.assertEqual(problems("a.tsx", src), ["line 2: comment //why"])
+        src = "// Page.\nconst f = <T,>(x: T) => x; // c\n"
+        self.assertEqual(problems("a.tsx", src), ["line 2: comment // c"])
+
+    def test_regex_or_division(self):
+        self.assertEqual(problems("a.js", "// M.\nlet a = i++ / 2; // c\n"), ["line 2: comment // c"])
+        self.assertEqual(problems("a.js", "// M.\nconst r = { a: 1 } / 2; // c\n"), ["line 2: comment // c"])
+        self.assertEqual(problems("a.js", "// M.\nif (a) /'/.test(s); // c\n"), ["line 2: comment // c"])
+        self.assertEqual(problems("a.js", "// M.\nconst r = (a) / 2 / b; // c\n"), ["line 2: comment // c"])
+
+    def test_type_comments_take_a_type_or_ignore(self):
+        ok = ["ignore", "ignore[attr-defined]", "int", "List[int]", "Dict[str, int]", "np.ndarray", "(int, str) -> bool", "Optional[Path] | None"]
+        for t in ok:
+            self.assertEqual(problems("a.py", "# Generator.\nx = 1  # type: %s\n" % t), [], t)
+        for t in ["reasons", "ignore because reasons", "int because", "fine"]:
+            self.assertEqual(len(problems("a.py", "# Generator.\nx = 1  # type: %s\n" % t)), 1, t)
+
+    def test_rule_names_must_be_known_or_plugin_rules(self):
+        self.assertEqual(problems("a.js", "// L.\n// eslint-disable-next-line no-console, react/jsx-key, @typescript-eslint/no-explicit-any\nx();\n"), [])
+        self.assertEqual(len(problems("a.js", "// L.\n// eslint-disable-next-line this-is-fine-for-now\nx();\n")), 1)
+        self.assertEqual(problems("a.css", "/* S. */\n/* stylelint-disable-next-line color-no-hex */\na{}\n"), [])
+        self.assertEqual(len(problems("a.css", "/* S. */\n/* stylelint-disable-next-line it-looks-better */\na{}\n")), 1)
+
+    def test_docker_directive_only_at_the_top(self):
+        self.assertEqual(problems("Dockerfile", "# syntax=docker/dockerfile:1\n# Image.\nFROM ubuntu\n"), [])
+        got = problems("Dockerfile", "# Image.\nFROM ubuntu\n# syntax=docker/dockerfile:1\n")
+        self.assertEqual(got, ["line 3: a parser directive must come before any other line"])
 
     def test_strict_directives(self):
         self.assertEqual(problems("a.py", "# Generator.\nx = 1  # type: ignore[attr-defined]\ny = 2  # type: Dict[str, int]\n"), [])
@@ -109,6 +141,10 @@ class StrayCommentTest(unittest.TestCase):
         src = '# Generator.\nx = 1\n"this explains x"\n\n\ndef f():\n    return 1\n    "after"\n'
         self.assertEqual(problems("a.py", src), ["line 3: a string used as a comment", "line 8: a string used as a comment"])
 
+    def test_python_fstring_and_bytes_statements_are_comments(self):
+        src = '# Generator.\nx = 1\nf"note {x}"\nb"bytes note"\n'
+        self.assertEqual(problems("a.py", src), ["line 3: a string used as a comment", "line 4: a string used as a comment"])
+
     def test_python_directives(self):
         src = "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n# Generator.\nx = 1  # type: int\ny = 2  # pragma: no cover\n"
         self.assertEqual(problems("a.py", src), [])
@@ -121,6 +157,10 @@ class StrayCommentTest(unittest.TestCase):
     def test_shell_arithmetic_shift_is_not_a_heredoc(self):
         src = "#!/bin/bash\n# Runner.\necho $((1<<n))\n# real comment\n"
         self.assertEqual(problems("a.sh", src), ["line 4: comment # real comment"])
+
+    def test_shell_comment_in_command_substitution(self):
+        src = "#!/bin/bash\n# Runner.\necho \"$(ls # x\n)\"\necho \"$(date) # not\"\n"
+        self.assertEqual(problems("a.sh", src), ["line 3: comment # x"])
 
     def test_css(self):
         src = "/* Styles. */\na { content: \"/* no */\"; }\n/* stray */\n"
@@ -136,6 +176,10 @@ class StrayCommentTest(unittest.TestCase):
                "<a title=\"<!-- x -->\" href=\"y\">z</a>\n<script type=\"module\">// js\n</script>\n")
         self.assertEqual(problems("a.html", src), ["line 5: comment // js"])
 
+    def test_textarea_and_title_are_text(self):
+        src = "<!doctype html>\n<!-- Shell. -->\n<title><!-- t --></title>\n<textarea><!-- a --></textarea>\n<!-- stray -->\n"
+        self.assertEqual(problems("a.html", src), ["line 5: comment <!-- stray -->"])
+
     def test_dockerfile_heredoc(self):
         src = "# Image.\nFROM ubuntu\nRUN <<EOF\n#!/bin/sh\n# inside\nEOF\n# stray\n"
         self.assertEqual(problems("Dockerfile", src), ["line 7: comment # stray"])
@@ -147,6 +191,14 @@ class StrayCommentTest(unittest.TestCase):
     def test_dockerfile(self):
         src = "# Image.\nFROM ubuntu\n# stray\nRUN echo a#b\n"
         self.assertEqual(problems("Dockerfile", src), ["line 3: comment # stray"])
+
+    def test_exemptions_are_the_agents_list(self):
+        with open(os.path.join(HERE, "..", "..", "AGENTS.md"), encoding="utf-8") as f:
+            agents = f.read()
+        self.assertEqual(cc.EXEMPT_PREFIXES, ("public/vendor/",))
+        for p in cc.EXEMPT_PREFIXES + cc.GENERATED:
+            self.assertIn(BT + p + BT, agents)
+        self.assertFalse(cc.is_exempt("node_modules/x.js"))
 
     def test_exempt_paths(self):
         self.assertTrue(cc.is_exempt("public/vendor/three.module.js"))

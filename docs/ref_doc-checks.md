@@ -15,7 +15,7 @@ This reference gives the commands, the files and the output of the checks for [t
 | `python3 tools/docs/check.py --vale "$(tools/docs/vale.sh)"` | The module check, the dependency graph check and the language check. |
 | `python3 tools/docs/check.py --no-vale` | The module check and the dependency graph check, without the language check. |
 | `--seed` | A legacy line for each file that does not obey the rules. |
-| `--base-legacy <file>` | A failure if a path or a hash on the legacy list is not on the base list. |
+| `--base-legacy <file>` | A failure if a path or a hash on the legacy list is not on the base list. You can give more than one base list. |
 
 ## Files
 
@@ -28,6 +28,11 @@ This reference gives the commands, the files and the output of the checks for [t
 | `.vale/styles/config/dictionaries/ste.dic` | The approved general words. |
 | `.vale/verbs.txt` | The approved general verbs for the first word of a step. |
 | [`tools/docs/vale.sh`](../tools/docs/vale.sh) | The script that copies Vale from GitHub, checks its hash, keeps it in the cache and shows its path. The script holds the Vale version. |
+
+## Base lists in CI
+
+- The `static` tier uses the legacy list of `prog/int` and of each `prog/ws-*` branch that has one.
+- When no branch has a list, the tier uses the list at the merge base of the commit and `prog/int`.
 
 ## Output
 

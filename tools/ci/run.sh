@@ -240,16 +240,30 @@ render_pictures_checkout() {
 }
 
 docs_rules() {
-  local vale base_list="" base_ref="${LEGACY_BASE:-prog/int}" rc=0
+  local vale base_dir="" ref name sha8 mb rc=0
+  local -a bases=()
   vale="$(tools/docs/vale.sh)" || return 1
-  if [ -n "${CI_HOME:-}" ] && git --git-dir="$CI_HOME/repo.git" cat-file -e "$base_ref:tools/ci/legacy.txt" 2>/dev/null; then
-    base_list="$(mktemp)"
-    git --git-dir="$CI_HOME/repo.git" show "$base_ref:tools/ci/legacy.txt" > "$base_list"
+  if [ -n "${CI_HOME:-}" ] && [ -d "$CI_HOME/repo.git" ]; then
+    base_dir="$(mktemp -d)"
+    for ref in $(git --git-dir="$CI_HOME/repo.git" for-each-ref --format='%(refname:short)' refs/heads/prog/int 'refs/heads/prog/ws-*'); do
+      name="$base_dir/${ref//\//_}.txt"
+      if git --git-dir="$CI_HOME/repo.git" show "$ref:tools/ci/legacy.txt" > "$name" 2>/dev/null; then
+        bases+=(--base-legacy "$name")
+      fi
+    done
+    if [ "${#bases[@]}" -eq 0 ] && [ -n "${CI_JOB:-}" ]; then
+      sha8="$(basename "$CI_JOB" | cut -d- -f3)"
+      mb="$(git --git-dir="$CI_HOME/repo.git" merge-base "$sha8" prog/int 2>/dev/null)" || mb=""
+      if [ -n "$mb" ] && git --git-dir="$CI_HOME/repo.git" show "$mb:tools/ci/legacy.txt" > "$base_dir/merge-base.txt" 2>/dev/null; then
+        bases+=(--base-legacy "$base_dir/merge-base.txt")
+      fi
+    fi
   fi
+  echo "ci: legacy base lists: $(( ${#bases[@]} / 2 ))"
   VALE="$vale" python3 -m unittest -q tools/comments/test_check.py tools/docs/test_check.py || rc=1
-  python3 tools/comments/check.py ${base_list:+--base-legacy "$base_list"} || rc=1
-  python3 tools/docs/check.py --vale "$vale" ${base_list:+--base-legacy "$base_list"} || rc=1
-  [ -z "$base_list" ] || rm -f "$base_list"
+  python3 tools/comments/check.py "${bases[@]}" || rc=1
+  python3 tools/docs/check.py --vale "$vale" "${bases[@]}" || rc=1
+  [ -z "$base_dir" ] || rm -rf "$base_dir"
   return "$rc"
 }
 

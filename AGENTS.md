@@ -66,11 +66,11 @@ The modules follow the Red Hat modular documentation guide.
 4. Start each module with a front matter block. Use only the keys `type`, `title` and `depends`.
 5. Use one first-level heading, at the start. Make it the same as the title.
 6. In a concept, tell what a thing is and how it works. Do not write steps in a concept.
-7. In a procedure, write the section "Procedure". You can also write these sections, in this sequence: "Prerequisites" before it, and "Verification", "Troubleshooting", "Next steps" and "Additional resources" after it.
-8. In the "Procedure" section, write only a numbered list of steps. You can put a code block under a step. Write one action in each step, in one sentence. Do not put "and" or "then" between two actions.
+7. In a procedure, write the section "Procedure". You can start with one short paragraph of introduction. You can also write these sections, in this sequence: "Prerequisites" before it, and "Verification", "Troubleshooting", "Next steps" and "Additional resources" after it.
+8. In the "Procedure" section, write only a numbered list of steps. You can put a code block under a step. Write one action in each step, in one sentence. Do not put "and", "or", "then" or a comma between two actions.
 9. In a reference, give the facts in tables or lists. Use only one sentence in a paragraph.
 10. In an assembly, write the title, one sentence that tells the purpose, and a list of links to modules. Do not add other text.
-11. Do not write comments in a module.
+11. Do not write comments in a module. A link definition with no target, or that no link uses, is a comment.
 
 This block is an example of front matter:
 
@@ -96,7 +96,7 @@ depends: [AGENTS.md, docs/ref_doc-checks.md]
 Write in ASD-STE100 Simplified Technical English (STE), with the project glossary.
 These rules are a subset of STE that a tool or a review can check.
 
-1. Use only approved words. The approved words are the general words in `.vale/styles/config/dictionaries/ste.dic` and the terms in [the glossary](glossary.md).
+1. Use only approved words. In a word with a hyphen, use an approved word for each part. The approved words are the general words in `.vale/styles/config/dictionaries/ste.dic` and the terms in [the glossary](glossary.md).
 2. Use each word with its one meaning.
 3. Before you use a new technical name or technical verb, add it to the glossary with one meaning.
 4. Write a maximum of 20 words in a sentence of a procedure. Write a maximum of 25 words in a sentence of other text.
@@ -121,7 +121,7 @@ This table shows the rules that a tool checks and the rules that a review checks
 | Modules 1 to 11 | `tools/docs/check.py` |
 | Dependency graph 2 to 6 | `tools/docs/check.py` |
 | Dependency graph 1 | Review. `tools/docs/check.py` finds the duplicates that rule 6 tells about. |
-| Language 1, 4, 5 and 9 | Vale, with the rules in `.vale/` |
+| Language 1, 4, 5 and 9 | Vale, with the rules in `.vale/`. `tools/docs/check.py` checks the parts of words with a hyphen. |
 | Language 7 | Vale finds some forms of the passive. Review finds the other forms. |
 | Language 6 and 8, in the steps of a procedure | `tools/docs/check.py` |
 | Language 2, 3, 10, 11 and 12 | Review |

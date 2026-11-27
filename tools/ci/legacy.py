@@ -4,7 +4,7 @@ import os
 import subprocess
 
 KINDS = ("docs", "comments")
-SKIP_DIRS = (".git", "node_modules", "dist", "__pycache__", ".agent-chat")
+SKIP_DIRS = (".git",)
 
 
 def tracked_files(root):
@@ -43,7 +43,11 @@ def read(path, kind):
     return entries
 
 
-def apply(results, digests, legacy, base, legacy_name):
+def read_bases(paths, kind):
+    return [(os.path.basename(p), read(p, kind)) for p in paths or []]
+
+
+def apply(results, digests, legacy, bases, legacy_name):
     errors = []
     for path in sorted(results):
         problems = results[path]
@@ -57,10 +61,11 @@ def apply(results, digests, legacy, base, legacy_name):
     for path in sorted(legacy):
         if path not in results:
             errors.append("%s: %s is not a checked file: remove its line" % (legacy_name, path))
-        if base is not None and path not in base:
-            errors.append("%s: %s is not on the base list: the list must not grow" % (legacy_name, path))
-        elif base is not None and legacy[path] != base[path]:
-            errors.append("%s: the line of %s is not the same as on the base list: a line may only be removed" % (legacy_name, path))
+        for name, base in bases or []:
+            if path not in base:
+                errors.append("%s: %s is not on the base list %s: the list must not grow" % (legacy_name, path, name))
+            elif legacy[path] != base[path]:
+                errors.append("%s: the line of %s is not the same as on the base list %s: a line may only be removed" % (legacy_name, path, name))
     return errors
 
 

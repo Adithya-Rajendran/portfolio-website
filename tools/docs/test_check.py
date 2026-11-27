@@ -151,8 +151,15 @@ class DocsCheckTest(unittest.TestCase):
         self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": code, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
         loose = good.replace("1. Bake the room.\n", "1. Bake the room.\n\n" + fence + "sh\npython3 tools/pack.py\n" + fence + "\n\n")
         self.assertProblem(base_files(**{"docs/proc_bake.md": loose, "docs/assembly_index.md": index}), "docs/proc_bake.md", "indented under a step")
-        bad = good.replace("2. Check the textures.", "2. Open the file and run the check.")
-        self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "one action")
+        for joined in ["Open the file and run the check.", "Open the file, run the check.", "Open the file or run the check."]:
+            bad = good.replace("2. Check the textures.", "2. " + joined)
+            self.assertProblem(base_files(**{"docs/proc_bake.md": bad, "docs/assembly_index.md": index}), "docs/proc_bake.md", "one action")
+        intro = good.replace("# Bake a room\n\n", "# Bake a room\n\nThis procedure bakes one room.\n\n")
+        self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": intro, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
+        long_intro = good.replace("# Bake a room\n\n", "# Bake a room\n\nThis bakes a room. It takes time. It uses the GPU.\n\n")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": long_intro, "docs/assembly_index.md": index}), "docs/proc_bake.md", "one short introduction")
+        two = good.replace("# Bake a room\n\n", "# Bake a room\n\nThis bakes a room.\n\nIt uses the GPU.\n\n")
+        self.assertProblem(base_files(**{"docs/proc_bake.md": two, "docs/assembly_index.md": index}), "docs/proc_bake.md", "one short introduction")
         fine = good.replace("2. Check the textures.", "2. Compare the old and new textures.")
         self.assertEqual(self.problems(base_files(**{"docs/proc_bake.md": fine, "docs/assembly_index.md": index}), "docs/proc_bake.md"), [])
         bad = good.replace("2. Check the textures.", "2. The textures are good.")
@@ -246,6 +253,54 @@ class DocsCheckTest(unittest.TestCase):
         finally:
             t.close()
 
+    def test_hidden_comments_in_link_definitions_fail(self):
+        for hidden in ["[//]: # (hidden)", "[note]: <> (hidden)", "[note]: #"]:
+            files = base_files(**{"docs/con_station.md": CONCEPT + "\n" + hidden + "\n"})
+            self.assertProblem(files, "docs/con_station.md", "hidden comment")
+        files = base_files(**{"docs/con_station.md": CONCEPT.replace("depends: []", "depends: [glossary.md]") + "\n[g]: ../glossary.md\n"})
+        self.assertProblem(files, "docs/con_station.md", "no link uses the link definition [g]")
+        files = base_files(**{"docs/con_station.md": CONCEPT.replace("depends: []", "depends: [glossary.md]") + "\nSee [the glossary][g].\n\n[g]: ../glossary.md\n"})
+        self.assertEqual(self.problems(files, "docs/con_station.md"), [])
+        files = base_files(**{"docs/con_station.md": CONCEPT.replace("depends: []", "depends: [glossary.md]") + "\nSee [g].\n\n[g]: ../glossary.md\n"})
+        self.assertEqual(self.problems(files, "docs/con_station.md"), [])
+
+    def test_setext_headings_are_headings(self):
+        files = base_files(**{"docs/con_station.md": CONCEPT.replace("# The station\n", "The station\n===========\n")})
+        self.assertEqual(self.problems(files, "docs/con_station.md"), [])
+        files = base_files(**{"docs/con_station.md": CONCEPT + "\nUse\n---\n\nThe room has a path.\n",
+                              "docs/con_b.md": fm("concept", "Beta", "docs/con_station.md") + "See [use](con_station.md#use).\n"})
+        files["docs/assembly_index.md"] = INDEX.replace("depends: [glossary.md, docs/con_station.md]", "depends: [glossary.md, docs/con_station.md, docs/con_b.md]") + "- [Beta](con_b.md)\n"
+        results, _ = self.check(files)
+        self.assertEqual(results["docs/con_b.md"], [])
+        files = base_files(**{"docs/con_station.md": CONCEPT + "\nMore\n====\n"})
+        self.assertProblem(files, "docs/con_station.md", "exactly one first-level heading")
+
+    def test_concept_steps_in_other_forms_fail(self):
+        for extra in ["> 1. Bake the room.", "## Steps\n\nThe room has a path.", "Step 1: bake the room."]:
+            files = base_files(**{"docs/con_station.md": CONCEPT + "\n" + extra + "\n"})
+            self.assertProblem(files, "docs/con_station.md", "no steps")
+
+    def test_hyphenated_words_need_approved_parts(self):
+        t = Tree(base_files(**{"docs/con_station.md": CONCEPT + "\nThe station has a six-room path.\n"}), vale_style=True)
+        try:
+            results, _ = dc.check(t.root, sorted(t.files), language=True)
+            self.assertEqual(results["docs/con_station.md"], [])
+        finally:
+            t.close()
+        t = Tree(base_files(**{"docs/con_station.md": CONCEPT + "\nThe station has a room-xyzzy path.\n"}), vale_style=True)
+        try:
+            results, _ = dc.check(t.root, sorted(t.files), language=True)
+            self.assertTrue(any("'xyzzy' of 'room-xyzzy'" in p for p in results["docs/con_station.md"]), results)
+        finally:
+            t.close()
+
+    def test_exclusions_are_the_agents_list(self):
+        with open(os.path.join(REPO, "AGENTS.md"), encoding="utf-8") as f:
+            agents = f.read()
+        for p in dc.EXCLUDED + dc.RULE_FILES:
+            self.assertIn(BT + p + BT, agents)
+        self.assertTrue(dc.in_scope("node_modules/x.md"))
+
     def test_comment_in_module_fails(self):
         files = base_files(**{"docs/con_station.md": CONCEPT + "\n<!-- more -->\n"})
         self.assertProblem(files, "docs/con_station.md", "comments")
@@ -295,8 +350,13 @@ class DocsCheckTest(unittest.TestCase):
             stale = {"docs/old.md": "0" * 16}
             errors = dc.legacy_list.apply(results, digests, stale, None, "legacy.txt")
             self.assertTrue(any("front matter" in e for e in errors))
-            grown = dc.legacy_list.apply(results, digests, legacy, {}, "legacy.txt")
+            grown = dc.legacy_list.apply(results, digests, legacy, [("int.txt", {})], "legacy.txt")
             self.assertTrue(any("must not grow" in e for e in grown))
+            strict = [("int.txt", dict(legacy)), ("ws-opt.txt", {})]
+            self.assertTrue(any("ws-opt.txt" in e and "must not grow" in e for e in dc.legacy_list.apply(results, digests, legacy, strict, "legacy.txt")))
+            changed = [("int.txt", {"docs/old.md": "1" * 16})]
+            self.assertTrue(any("may only be removed" in e for e in dc.legacy_list.apply(results, digests, legacy, changed, "legacy.txt")))
+            self.assertEqual(dc.legacy_list.apply(results, digests, legacy, [("int.txt", dict(legacy)), ("ws-ui.txt", dict(legacy))], "legacy.txt"), [])
             clean = {"docs/con_station.md": digests["docs/con_station.md"]}
             results, digests = t.run(legacy=clean)
             self.assertTrue(any("obeys the rules now" in e for e in dc.legacy_list.apply(results, digests, dict(clean, **legacy), None, "legacy.txt")))

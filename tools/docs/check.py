@@ -18,7 +18,7 @@ FIXED = {"glossary.md": "reference"}
 RULE_FILES = ("AGENTS.md", "CLAUDE.md")
 INDEX = "docs/assembly_index.md"
 GLOSSARY = "glossary.md"
-EXCLUDED = ("data/posts/", "data/projects/", "tools/testdata/", "public/vendor/", "node_modules/", "dist/", ".agent-chat/")
+EXCLUDED = ("data/posts/", "data/projects/", "tools/testdata/", "public/vendor/")
 KEYS = ("type", "title", "depends")
 PROCEDURE_SECTIONS = ["Prerequisites", "Procedure", "Verification", "Troubleshooting", "Next steps", "Additional resources"]
 GLOSSARY_HEADER = ["Term", "Kind", "Forms", "Meaning"]
@@ -29,7 +29,13 @@ NEAR_SENTENCE = 0.85
 MIN_PARAGRAPH_WORDS = 15
 NEAR_PARAGRAPH = 0.6
 LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
-REF_DEF = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*<?([^\s>]+)>?(?:\s+[\"'(].*)?$")
+REF_DEF = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S*))(?:\s+.*)?$")
+REF_FULL = re.compile(r"\[([^\]]+)\]\[([^\]]*)\]")
+REF_SHORT = re.compile(r"\[([^\]]+)\](?![(\[:])")
+SETEXT = re.compile(r"^\s{0,3}(=+|-+)\s*$")
+BLOCKQUOTE = re.compile(r"^\s{0,3}(?:>\s?)+")
+STEP_HEADING = re.compile(r"^(?:step\s+\d+|steps|procedure)\b", re.IGNORECASE)
+HYPHENATED = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+")
 HTML_LINK = re.compile(r"<a\s[^>]*?\bhref\s*=\s*[\"']([^\"']+)[\"']", re.IGNORECASE)
 REF_USE = re.compile(r"\[([^\]]+)\]\[[^\]]*\]")
 FENCE = re.compile(r"^\s*(" + BT * 3 + r"|~~~)")
@@ -38,7 +44,7 @@ SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\[(\"'" + BT + r"])")
 NUMBERED = re.compile(r"^\s*\d+[.)]\s+")
 BULLET = re.compile(r"^\s*[-*+]\s+")
 MULTI_ACTION = re.compile(r";")
-JOINED = re.compile(r"\b(?:and|then)\s+(?:then\s+)?([A-Za-z]+)", re.IGNORECASE)
+JOINED = re.compile(r"(?:\b(?:and|or|then)\b|,)\s+(?:then\s+)?([A-Za-z]+)", re.IGNORECASE)
 
 
 class Doc:
@@ -118,8 +124,9 @@ def parse_body(doc, start):
     lines = doc.text.split("\n")
     in_fence = False
     current = None
+    defs, used = [], set()
     for n in range(start, len(lines)):
-        line = lines[n]
+        line = BLOCKQUOTE.sub("", lines[n])
         if FENCE.match(line):
             if not in_fence:
                 current = None
@@ -131,10 +138,17 @@ def parse_body(doc, start):
         spaced = INLINE_CODE.sub(lambda x: " " * len(x.group(0)), line)
         d = REF_DEF.match(spaced)
         if d:
-            doc.links.append((n + 1, d.group(2)))
+            target = d.group(2) if d.group(2) is not None else d.group(3)
+            defs.append((n + 1, d.group(1).strip().lower(), target))
+            if target and target != "#":
+                doc.links.append((n + 1, target))
             current = None
             doc.blocks.append({"kind": "linkdef", "line": n + 1, "text": ""})
             continue
+        for m in REF_FULL.finditer(spaced):
+            used.add((m.group(2) or m.group(1)).strip().lower())
+        for m in REF_SHORT.finditer(REF_FULL.sub(" ", LINK.sub(" ", spaced))):
+            used.add(m.group(1).strip().lower())
         for m in LINK.finditer(spaced):
             doc.links.append((n + 1, m.group(3)))
         for m in HTML_LINK.finditer(spaced):
@@ -142,6 +156,12 @@ def parse_body(doc, start):
         if "<!--" in INLINE_CODE.sub("", line):
             doc.problems.append("line %d: a module must not contain comments" % (n + 1))
         if not line.strip():
+            current = None
+            continue
+        if SETEXT.match(line) and current is not None and current["kind"] == "paragraph":
+            current["kind"] = "heading"
+            current["level"] = 1 if line.strip()[0] == "=" else 2
+            doc.headings.append(current["text"])
             current = None
             continue
         h = re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", line)
@@ -169,6 +189,11 @@ def parse_body(doc, start):
             continue
         current = {"kind": "paragraph", "line": n + 1, "text": line.strip()}
         doc.blocks.append(current)
+    for line, label, target in defs:
+        if not target or target == "#":
+            doc.problems.append("line %d: a link definition with no target is a hidden comment" % line)
+        elif label not in used:
+            doc.problems.append("line %d: no link uses the link definition [%s], so it is a hidden comment" % (line, label))
 
 
 def sentences(text):
@@ -236,6 +261,10 @@ def check_type(doc, verbs):
         order = [PROCEDURE_SECTIONS.index(x) if x in PROCEDURE_SECTIONS else -1 for x in names]
         if "Procedure" not in names or -1 in order or order != sorted(set(order)):
             doc.problems.append("line %d: a procedure has a Procedure section, and only these sections in this sequence: %s (found %s)" % (h2[0]["line"] if h2 else doc.meta_end + 1, ", ".join(PROCEDURE_SECTIONS), ", ".join(names) or "none"))
+        intro = body[:body.index(h2[0])] if h2 else body
+        for x, b in enumerate(intro):
+            if x > 0 or b["kind"] != "paragraph" or len(sentences(b["text"])) > 2:
+                doc.problems.append("line %d: a procedure can start with one short introduction paragraph (two sentences at most) and nothing else" % b["line"])
         if "Procedure" in names:
             k = names.index("Procedure")
             i = body.index(h2[k])
@@ -266,6 +295,10 @@ def check_type(doc, verbs):
         for b in body:
             if b["kind"] == "item" and b["numbered"]:
                 doc.problems.append("line %d: a concept has no steps (numbered lists)" % b["line"])
+            elif b["kind"] == "heading" and STEP_HEADING.match(b["text"]):
+                doc.problems.append("line %d: a concept has no steps (a heading for steps)" % b["line"])
+            elif b["kind"] in ("paragraph", "item") and re.match(r"^step\s+\d+\b", strip_code(b["text"]), re.IGNORECASE):
+                doc.problems.append("line %d: a concept has no steps (Step N)" % b["line"])
     elif t == "reference":
         if not any(b["kind"] in ("table", "item") for b in body):
             doc.problems.append("line %d: a reference gives its facts in tables or lists" % (doc.meta_end + 1))
@@ -486,7 +519,36 @@ def run_vale(vale, root, paths, terms):
     return out
 
 
-def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/legacy.txt", exists=None):
+def approved_words(root, terms):
+    words = set()
+    path = os.path.join(root, ".vale", "styles", "config", "dictionaries", "ste.dic")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            words |= {w.strip().lower() for w in f.read().split("\n")[1:] if w.strip()}
+    for term, _, forms in terms:
+        for w in [term] + forms:
+            words |= {x.lower() for x in w.split()}
+    return words
+
+
+def hyphen_problems(doc, approved):
+    found = []
+    for b in doc.blocks:
+        texts = [b.get("text", "")] + [c for _, cells in b.get("rows", []) for c in cells]
+        for text in texts:
+            plain = strip_code(LINK.sub(lambda m: m.group(2), text))
+            plain = re.sub(r"https?://\S+|\S+\.(?:md|py|sh|txt|json|yml|ini)\b", " ", plain)
+            for m in HYPHENATED.finditer(plain):
+                whole = m.group(0)
+                if whole.lower() in approved:
+                    continue
+                for part in whole.split("-"):
+                    if not part.isdigit() and part.lower() not in approved:
+                        found.append("line %d: the part %r of %r is not an approved word" % (b["line"], part, whole))
+    return found
+
+
+def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/legacy.txt", exists=None, language=False):
     legacy = legacy or {}
     file_set = set(files)
     exists = exists or (lambda p: p in file_set or os.path.exists(os.path.join(root, p)))
@@ -557,6 +619,10 @@ def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/
                     docs[p].problems.append("no link path from %s goes to this module" % INDEX)
     for d, msg in duplicates(list(docs.values()), set(active)):
         d.problems.append(msg)
+    if vale or language:
+        approved = approved_words(root, terms)
+        for p, d in docs.items():
+            d.problems += hyphen_problems(d, approved)
     if vale:
         for p, alerts in run_vale(vale, root, paths, terms).items():
             if p in docs:
@@ -580,7 +646,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Check the documentation rules of AGENTS.md.")
     ap.add_argument("--root", default=".")
     ap.add_argument("--legacy", default="tools/ci/legacy.txt")
-    ap.add_argument("--base-legacy")
+    ap.add_argument("--base-legacy", action="append", default=[])
     ap.add_argument("--vale")
     ap.add_argument("--no-vale", action="store_true")
     ap.add_argument("--seed", action="store_true")
@@ -589,7 +655,7 @@ def main(argv=None):
         ap.error("give --vale <path> or --no-vale")
     root = os.path.abspath(a.root)
     legacy = legacy_list.read(os.path.join(root, a.legacy), "docs")
-    base = legacy_list.read(a.base_legacy, "docs") if a.base_legacy else None
+    base = legacy_list.read_bases(a.base_legacy, "docs")
     files = legacy_list.tracked_files(root)
     results, digests = check(root, files, None if a.no_vale else a.vale, {} if a.seed else legacy, base, a.legacy)
     if a.seed:

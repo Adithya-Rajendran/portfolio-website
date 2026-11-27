@@ -24,6 +24,7 @@ This table gives the approved technical names and technical verbs of the project
 | CI | name | - | The checks that the CI host runs on a commit. |
 | class | name | classes | A Python type of object, with its functions. |
 | cluster | name | clusters | A group of nouns that come one after the other in a sentence. |
+| comma | name | commas | The mark "," in a sentence. |
 | comment | name | comments | Text in a source file that a program does not read as code. |
 | commit | name | commits | A recorded change to the files of the repository. |
 | Comms | name | - | The room at the path `/contact/`. |
@@ -31,6 +32,7 @@ This table gives the approved technical names and technical verbs of the project
 | container | name | containers | A set of programs and files that Docker runs apart from the other programs of the machine. |
 | CSS | name | - | The language of the styles of the pages. |
 | cycle | name | cycles | A path of links that comes back to its start. |
+| definition | name | definitions | Only in "link definition": a line that gives the target of a link with a label. |
 | dependency | name | dependencies | A link from one module to a module that it uses. |
 | depends | name | - | The front matter key that lists the Markdown files that a module links to. |
 | directive | name | directives | A comment that a tool reads as an instruction, for example `eslint-disable`. |
@@ -57,6 +59,7 @@ This table gives the approved technical names and technical verbs of the project
 | heading | name | headings | A line that starts with `#` and gives the name of a section in Markdown. |
 | host | name | hosts | A computer on the network, for example the CI host. |
 | HTML | name | - | The language of the pages of the site. |
+| hyphen | name | hyphens | The mark "-" between two parts of a word. |
 | idiom | name | idioms | A group of words with a meaning that is different from the meanings of its words. |
 | imperative | name | - | The form of a verb that gives an instruction, for example "Run". |
 | index | name | - | The assembly `docs/assembly_index.md`, where the links to all modules start. |
@@ -107,6 +110,7 @@ This table gives the approved technical names and technical verbs of the project
 | string | name | strings | A sequence of characters in code. |
 | style | name | styles | A CSS rule for the color, the size or the position of a part of a page. |
 | suite | name | - | The tier that runs all browser checks with `tools/check.sh`. |
+| target | name | targets | The file or the heading that a link goes to. |
 | Technical | name | - | Only in "Simplified Technical English". |
 | tense | name | tenses | The form of a verb that shows the time of the action. |
 | texture | name | textures | An image that gives the color or the light of a surface. |

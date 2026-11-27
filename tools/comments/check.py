@@ -17,7 +17,7 @@ EXTENSIONS = {
     ".js": "js", ".mjs": "js", ".cjs": "js", ".ts": "js", ".tsx": "js", ".jsx": "js",
     ".py": "py", ".sh": "sh", ".bash": "sh", ".css": "css", ".html": "html", ".htm": "html", ".ps1": "ps1",
 }
-EXEMPT_PREFIXES = ("public/vendor/", "node_modules/", "dist/", ".agent-chat/")
+EXEMPT_PREFIXES = ("public/vendor/",)
 GENERATED = (
     "public/asset-catalogue/",
     "public/lighting-review/index.html",
@@ -27,22 +27,42 @@ HEADER_BANNED = re.compile(
     r"no longer|used to|was|were|reason|history|note)\b|\bD\d+\b|#\d+",
     re.IGNORECASE,
 )
-SINGLE_WORD_RULES = {"camelcase", "complexity", "curly", "eqeqeq", "indent", "quotes", "radix", "semi", "strict", "yoda", "indentation"}
-RULE_NAME = re.compile(r"(?:@[\w-]+/)?[a-z][\w-]*(?:/[\w-]+)?")
+HERE = os.path.dirname(os.path.abspath(__file__))
+PLUGIN_RULE = re.compile(r"@[\w-]+(?:/[\w-]+)?/[\w-]+|[\w-]+/[\w-]+")
+PY_BUILTIN_TYPES = {"int", "float", "complex", "str", "bytes", "bytearray", "bool", "object", "list", "dict", "set",
+                    "frozenset", "tuple", "type", "None", "Any", "memoryview", "range", "slice"}
 
 
-def rule_names(m):
-    rest = (m.group(1) or "").strip()
-    if not rest:
+def load_rules(name):
+    with open(os.path.join(HERE, name), encoding="utf-8") as f:
+        return {x.strip() for x in f if x.strip()}
+
+
+ESLINT_RULES = load_rules("eslint-rules.txt")
+STYLELINT_RULES = load_rules("stylelint-rules.txt")
+
+
+def rule_names(known):
+    def valid(m):
+        rest = (m.group(1) or "").strip()
+        if not rest:
+            return True
+        names = [x.strip() for x in rest.split(",")]
+        return all(x in known or PLUGIN_RULE.fullmatch(x) for x in names)
+    return valid
+
+
+def py_type(m):
+    text = m.group(1).strip()
+    if re.fullmatch(r"ignore(?:\[[\w-]+(?:,\s*[\w-]+)*\])?", text):
         return True
-    names = [x.strip() for x in rest.split(",")]
-    return all(RULE_NAME.fullmatch(x) and ("-" in x or "/" in x or x in SINGLE_WORD_RULES) for x in names)
-
-
-PY_TYPE = r"[\w.]+(?:\[[\w.\[\], |]*\])?"
+    if not re.fullmatch(r"[\w.\[\], |()*>-]+", text) or re.search(r"\w\s+\w", text):
+        return False
+    names = re.findall(r"[A-Za-z_][\w.]*", text)
+    return bool(names) and all(x in PY_BUILTIN_TYPES or x[0].isupper() or "." in x for x in names)
 DIRECTIVES = {
     "js": [
-        (re.compile(r"^eslint-(?:disable|enable|disable-line|disable-next-line)(?:\s+(.+))?$"), rule_names),
+        (re.compile(r"^eslint-(?:disable|enable|disable-line|disable-next-line)(?:\s+(.+))?$"), rule_names(ESLINT_RULES)),
         (re.compile(r"^@ts-(?:expect-error|nocheck|check)$"), None),
         (re.compile(r"^@vite-ignore$"), None),
         (re.compile(r"^[@#]__PURE__$"), None),
@@ -50,12 +70,12 @@ DIRECTIVES = {
         (re.compile(r"^prettier-ignore$"), None),
     ],
     "css": [
-        (re.compile(r"^stylelint-(?:disable|enable|disable-line|disable-next-line)(?:\s+(.+))?$"), rule_names),
+        (re.compile(r"^stylelint-(?:disable|enable|disable-line|disable-next-line)(?:\s+(.+))?$"), rule_names(STYLELINT_RULES)),
         (re.compile(r"^prettier-ignore$"), None),
     ],
     "py": [
         (re.compile(r"^noqa(?::\s*[A-Z]+\d+(?:\s*,\s*[A-Z]+\d+)*)?$"), None),
-        (re.compile(r"^type:\s*(?:ignore(?:\[[\w-]+(?:,\s*[\w-]+)*\])?|" + PY_TYPE + r"(?:\s*\|\s*" + PY_TYPE + r")*)$"), None),
+        (re.compile(r"^type:\s*(.+)$"), py_type),
         (re.compile(r"^pragma: no cover$"), None),
         (re.compile(r"^-\*- coding: [\w-]+ -\*-$"), None),
         (re.compile(r"^fmt: (?:off|on|skip)$"), None),
@@ -75,6 +95,7 @@ GLSL_COMMENT = re.compile(r"(?<![:\\])//[^\n]*|/\*.*?(?:\*/|$)", re.DOTALL)
 REGEX_BEFORE = set("(,=:[!&|?{};+-*%<>~^")
 REGEX_KEYWORDS = {"return", "typeof", "instanceof", "in", "of", "new", "delete", "void", "throw", "case", "do", "else", "yield", "await"}
 SCRIPT_TAG = re.compile(r"<(script|style)\b([^>]*)>", re.IGNORECASE)
+RAW_TEXT_TAG = re.compile(r"<(textarea|title)\b[^>]*>", re.IGNORECASE)
 SCRIPT_TYPE = re.compile(r"\btype\s*=\s*[\"']?([^\"'\s>]+)")
 JS_TYPES = ("", "module", "text/javascript", "application/javascript", "text/ecmascript", "application/ecmascript")
 
@@ -111,13 +132,16 @@ def scan_js(src, base_line=1, jsx=False):
     comments, strings = [], []
     i, n = 0, len(src)
     prev = None
+    word = None
     modes = ["code"]
     depth = [0]
+    parens = []
     tpl = []
     groups = 0
     while i < n:
         c = src[i]
-        if modes[-1] == "tpl":
+        mode = modes[-1]
+        if mode == "tpl":
             start = i
             while i < n:
                 if src[i] == "\\":
@@ -141,23 +165,67 @@ def scan_js(src, base_line=1, jsx=False):
             else:
                 strings.append((start, src[start:n], tpl[-1]))
             continue
-        if c in " \t\r\n":
+        if mode == "jsxtag":
+            if c in "'\"":
+                j = src.find(c, i + 1)
+                i = n if j < 0 else j + 1
+            elif c == "{":
+                modes.append("code")
+                depth.append(0)
+                prev = "("
+                i += 1
+            elif src.startswith("/>", i):
+                modes.pop()
+                i += 2
+                prev = "id"
+            elif c == ">":
+                modes[-1] = "jsxtext"
+                i += 1
+            elif src.startswith("//", i) or src.startswith("/*", i):
+                modes.append("code")
+                depth.append(-1)
+            else:
+                i += 1
+            continue
+        if mode == "jsxclose":
+            if c == ">":
+                modes.pop()
+                modes.pop()
+                prev = "id"
             i += 1
             continue
-        if jsx and src.startswith("//", i) and i > 0 and src[i - 1] == ":":
-            i += 2
+        if mode == "jsxtext":
+            if c == "{":
+                modes.append("code")
+                depth.append(0)
+                prev = "("
+            elif src.startswith("</", i):
+                modes.append("jsxclose")
+                i += 1
+            elif c == "<" and i + 1 < n and (src[i + 1].isalpha() or src[i + 1] == ">"):
+                modes.append("jsxtag")
+            i += 1
+            continue
+        if c in " \t\r\n":
+            i += 1
             continue
         if src.startswith("//", i):
             j = src.find("\n", i)
             j = n if j < 0 else j
             comments.append(Comment(base_line + line_of(src, i) - 1, src[i:j], "line", lang="js"))
             i = j
+            if depth[-1] == -1:
+                modes.pop()
+                depth.pop()
             continue
         if src.startswith("/*", i):
             j = src.find("*/", i + 2)
             j = n if j < 0 else j + 2
             comments.append(Comment(base_line + line_of(src, i) - 1, src[i:j], "block", base_line + line_of(src, j - 1) - 1, lang="js"))
             i = j
+            if depth[-1] == -1:
+                modes.pop()
+                depth.pop()
             continue
         if c in "'\"":
             j = i + 1
@@ -166,16 +234,25 @@ def scan_js(src, base_line=1, jsx=False):
             groups += 1
             strings.append((i + 1, src[i + 1:min(j, n)], -groups))
             i = j + 1
-            prev = "str"
+            prev, word = "str", None
             continue
         if c == BT:
             groups += 1
             modes.append("tpl")
             tpl.append(groups)
             i += 1
+            word = None
+            continue
+        expr_start = prev is None or prev in REGEX_BEFORE or prev in REGEX_KEYWORDS
+        if jsx and c == "<" and expr_start and i + 1 < n and (src[i + 1].isalpha() or src[i + 1] == ">") \
+                and not re.match(r"<[A-Za-z_$][\w$]*\s*(?:,|extends\b)", src[i:i + 80]):
+            modes.append("jsxtag")
+            i += 1
+            word = None
             continue
         if c == "/":
-            if prev is None or prev in REGEX_BEFORE or prev in REGEX_KEYWORDS:
+            division = prev == "}" and i + 1 < n and (src[i + 1] in " \t" or src[i + 1].isdigit())
+            if expr_start and not division:
                 j = i + 1
                 in_class = False
                 while j < n and src[j] != "\n":
@@ -193,9 +270,9 @@ def scan_js(src, base_line=1, jsx=False):
                 while j < n and src[j].isalnum():
                     j += 1
                 i = j
-                prev = "re"
+                prev, word = "re", None
                 continue
-            prev = "/"
+            prev, word = "/", None
             i += 1
             continue
         if c.isalnum() or c in "_$":
@@ -206,6 +283,18 @@ def scan_js(src, base_line=1, jsx=False):
             prev = word if word in REGEX_KEYWORDS else "id"
             i = j
             continue
+        if c in "+-" and src.startswith(c * 2, i):
+            prev = "id" if prev in ("id", "str") else c
+            word = None
+            i += 2
+            continue
+        if c == "(":
+            parens.append(word)
+        elif c == ")":
+            kw = parens.pop() if parens else None
+            prev, word = ("(" if kw in ("if", "while", "for", "with") else "id"), None
+            i += 1
+            continue
         if c == "{":
             depth[-1] += 1
         elif c == "}":
@@ -215,7 +304,8 @@ def scan_js(src, base_line=1, jsx=False):
                 i += 1
                 continue
             depth[-1] -= 1
-        prev = "id" if c in ")]" else c
+        prev = "id" if c == "]" else c
+        word = None
         i += 1
     glsl = {g for _, text, g in strings if GLSL_MARK.search(text)}
     for start, text, g in strings:
@@ -257,6 +347,11 @@ def scan_html(src):
             comments.append(Comment(line_of(src, i), src[i:j], "block", line_of(src, j - 1), lang="html"))
             i = j
             continue
+        r = RAW_TEXT_TAG.match(src, i) if src[i] == "<" else None
+        if r:
+            end = low.find("</" + r.group(1).lower(), r.end())
+            i = n if end < 0 else end
+            continue
         m = SCRIPT_TAG.match(src, i) if src[i] == "<" else None
         if m:
             tag, attrs = m.group(1).lower(), m.group(2).lower()
@@ -297,11 +392,11 @@ def scan_sh(src):
     comments = []
     lines = src.split("\n")
     heredocs = []
-    in_single = in_double = False
+    stack = ["code"]
     k = 0
     while k < len(lines):
         line = lines[k]
-        if heredocs and not in_single and not in_double:
+        if heredocs and stack[-1] in ("code", "paren", "sub"):
             delim, strip = heredocs[0]
             if (line.lstrip("\t") if strip else line) == delim:
                 heredocs.pop(0)
@@ -310,18 +405,33 @@ def scan_sh(src):
         i, n = 0, len(line)
         while i < n:
             c = line[i]
-            if in_single:
+            top = stack[-1]
+            if top == "sq":
                 if c == "'":
-                    in_single = False
+                    stack.pop()
                 i += 1
                 continue
-            if in_double:
-                if c == "\\":
+            if top == "arith":
+                if line.startswith("))", i):
+                    stack.pop()
                     i += 2
                     continue
-                if c == '"':
-                    in_double = False
                 i += 1
+                continue
+            if top == "dq":
+                if c == "\\":
+                    i += 2
+                elif c == '"':
+                    stack.pop()
+                    i += 1
+                elif line.startswith("$((", i):
+                    stack.append("arith")
+                    i += 3
+                elif line.startswith("$(", i):
+                    stack.append("sub")
+                    i += 2
+                else:
+                    i += 1
                 continue
             if c == "\\":
                 i += 2
@@ -333,17 +443,34 @@ def scan_sh(src):
                         j += 2 if line[j] == "\\" else 1
                     i = j + 1
                     continue
-                in_single = True
+                stack.append("sq")
                 i += 1
                 continue
             if c == '"':
-                in_double = True
+                stack.append("dq")
+                i += 1
+                continue
+            if line.startswith("$((", i) or line.startswith("((", i):
+                stack.append("arith")
+                i += 3 if c == "$" else 2
+                continue
+            if line.startswith("$(", i):
+                stack.append("sub")
+                i += 2
+                continue
+            if c == "(":
+                stack.append("paren")
+                i += 1
+                continue
+            if c == ")":
+                if top in ("paren", "sub"):
+                    stack.pop()
                 i += 1
                 continue
             if c == "#" and (i == 0 or line[i - 1] in " \t;&|()"):
                 comments.append(Comment(k + 1, line[i:], "line", lang="sh"))
                 break
-            if line.startswith("<<", i) and not line.startswith("<<<", i) and line[:i].count("((") <= line[:i].count("))"):
+            if line.startswith("<<", i) and not line.startswith("<<<", i):
                 m = re.match(r"<<(-?)\s*(['\"]?)([A-Za-z_][\w.-]*)\2", line[i:])
                 if m:
                     heredocs.append((m.group(3), m.group(1) == "-"))
@@ -426,8 +553,11 @@ def scan_py(src):
         if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and node.body:
             docs.add(id(node.body[0]))
     for node in ast.walk(tree):
-        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
-            kind = "docstring" if id(node) in docs else "string"
+        value = getattr(node, "value", None)
+        text = isinstance(value, ast.Constant) and isinstance(value.value, (str, bytes))
+        if isinstance(node, ast.Expr) and (text or isinstance(value, ast.JoinedStr)):
+            plain = isinstance(value, ast.Constant) and isinstance(value.value, str)
+            kind = "docstring" if plain and id(node) in docs else "string"
             comments.append(Comment(node.lineno, kind, kind, node.end_lineno, lang="py"))
     return comments, []
 
@@ -503,6 +633,9 @@ def check_source(path, src):
     for c in comments:
         if c is header:
             continue
+        if lang == "docker" and c.line > first and is_directive(c, lang):
+            errors.append("line %d: a parser directive must come before any other line" % c.line)
+            continue
         if c.kind == "docstring":
             errors.append("line %d: docstring" % c.line)
         elif c.kind == "string":
@@ -528,7 +661,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Check the comment rule of AGENTS.md.")
     ap.add_argument("--root", default=".")
     ap.add_argument("--legacy", default="tools/ci/legacy.txt")
-    ap.add_argument("--base-legacy")
+    ap.add_argument("--base-legacy", action="append", default=[])
     ap.add_argument("--seed", action="store_true")
     a = ap.parse_args(argv)
     root = os.path.abspath(a.root)
@@ -537,7 +670,7 @@ def main(argv=None):
         print("\n".join(legacy_list.seed_lines("comments", results, digests)))
         return 0
     legacy = legacy_list.read(os.path.join(root, a.legacy), "comments")
-    base = legacy_list.read(a.base_legacy, "comments") if a.base_legacy else None
+    base = legacy_list.read_bases(a.base_legacy, "comments")
     errors = legacy_list.apply(results, digests, legacy, base, a.legacy)
     for e in errors:
         print(e)
