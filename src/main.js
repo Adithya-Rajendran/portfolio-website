@@ -33,9 +33,11 @@ function stayPlain(reason) {
   note.hidden = false;
   if (reason) console.warn(reason);
 }
+const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
+const GL_ATTRS = { antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' };
 function hasWebGL2() {
   try {
-    const gl = document.createElement('canvas').getContext('webgl2');
+    const gl = document.createElement('canvas').getContext('webgl2', GL_ATTRS);
     gl?.getExtension('WEBGL_lose_context')?.loseContext();
     return !!gl;
   } catch { return false; }
@@ -54,12 +56,11 @@ const [content, site] = await Promise.all([fetch('content.json').then((r) => r.j
 furnish(content, site);
 const titles = new Map([...site.posts, ...site.projects].map((p) => [p.url, p.title]));
 
-const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ canvas, ...GL_ATTRS });
 } catch (e) {
-  stayPlain('WebGL 2 did not start: ' + (e?.message ?? e));
+  stayPlain('WebGL2 did not start: ' + (e?.message ?? e));
   await halt();
 }
 renderer.toneMapping = THREE.NoToneMapping;

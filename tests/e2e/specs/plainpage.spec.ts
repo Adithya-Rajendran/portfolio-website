@@ -243,8 +243,16 @@ test.describe('plainpage: no-JS, no-WebGL, and 404', () => {
             cls: document.documentElement.className,
             loader: getComputedStyle(document.querySelector('#loader')!).display,
             nav: (document.querySelector('#pagenav') as HTMLElement).getClientRects().length,
+            tall: document.scrollingElement!.scrollHeight,
+            window: innerHeight,
+            landmark: (() => {
+              const n = document.querySelector('#nogl');
+              return n?.tagName === 'SECTION' && n.getAttribute('aria-label') ? 'section' : (n?.tagName.toLowerCase() ?? 'missing');
+            })(),
           }));
           if (o.cls !== '') failures.push(`/ ${size}: html class "${o.cls}"`);
+          if (o.tall > o.window) failures.push(`/ ${size}: the page scrolls (${o.tall} px in a ${o.window} px window)`);
+          if (o.landmark !== 'section') failures.push(`/ ${size}: the notice is a ${o.landmark}, not a named section`);
           if (o.loader !== 'none') failures.push(`/ ${size}: the loader shows (display ${o.loader})`);
           if (!o.nav) failures.push(`/ ${size}: #pagenav is not shown`);
           const note = await webglNotice(p);
@@ -258,6 +266,46 @@ test.describe('plainpage: no-JS, no-WebGL, and 404', () => {
       }
     } finally {
       await b.close();
+    }
+    expect(failures, failures.join('\n')).toEqual([]);
+  });
+
+  test('15: when the renderer cannot get its context, the page stays plain with the notice and throws nothing', async ({ browser, baseURL }) => {
+    const failures: string[] = [];
+    for (const path of ['/', '/about/']) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, baseURL });
+      await ctx.addInitScript(() => {
+        const getContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+          if (this.id === 'scene' && type === 'webgl2') return null;
+          return (getContext as (...a: unknown[]) => unknown).call(this, type, ...rest);
+        } as typeof HTMLCanvasElement.prototype.getContext;
+      });
+      const p = await ctx.newPage();
+      const errs: string[] = [];
+      p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
+      p.on('console', (m) => {
+        if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 200)}`);
+      });
+      try {
+        await p.goto(path, { waitUntil: 'load' });
+        const done = await p
+          .waitForFunction(() => !!document.querySelector('#loader')?.getAttribute('data-failed'), undefined, { timeout: 60_000 })
+          .then(
+            () => true,
+            () => false,
+          );
+        if (!done) failures.push(`${path}: #loader[data-failed] was not set`);
+        await p.waitForTimeout(1200);
+        const cls = await p.evaluate(() => document.documentElement.className);
+        if (cls !== '') failures.push(`${path}: html class "${cls}"`);
+        const note = await webglNotice(p);
+        if (!/WebGL2/.test(note.text)) failures.push(`${path}: no visible notice #nogl`);
+        if (note.covered) failures.push(`${path}: the notice #nogl is covered by ${note.covered}`);
+        for (const e of new Set(errs)) failures.push(`${path}: the renderer failed and: ${e}`);
+      } finally {
+        await ctx.close();
+      }
     }
     expect(failures, failures.join('\n')).toEqual([]);
   });
