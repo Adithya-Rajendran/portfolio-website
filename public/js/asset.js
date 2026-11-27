@@ -1,4 +1,4 @@
-// Asset bench: shows one of the live-drawn assets alone under a plain studio light, so it can be judged without the room.
+// The asset bench: one live-drawn asset alone under a plain studio light.
 import * as THREE from 'three';
 import { setDistanceScale, uTime, V } from './kit.js';
 import { createDrone } from './drone.js';
@@ -10,7 +10,6 @@ const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('scen
 renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight); renderer.toneMapping = THREE.AgXToneMapping; renderer.toneMappingExposure = num('exp', 1.1);
 setDistanceScale(1);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x15171b);
-// studio: a warm soft box overhead, a cool window to one side, a dim grey room
 const studio = new THREE.Scene(), panel = (w, h, col, pos) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.position.copy(pos); m.lookAt(0, 0, 0); studio.add(m); };
 studio.background = new THREE.Color(0.05, 0.05, 0.06); panel(3, 3, new THREE.Color(5, 3.6, 2.4), V(0, 4, 1)); panel(2.5, 4, new THREE.Color(2.2, 3.0, 4.2), V(-4, 1, -2)); panel(4, 2, new THREE.Color(0.8, 0.7, 0.6), V(3, 0.5, 3));
 const env = new THREE.PMREMGenerator(renderer).fromScene(studio, 0.03).texture;
