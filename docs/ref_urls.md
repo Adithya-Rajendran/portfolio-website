@@ -19,7 +19,7 @@ This reference gives the paths that the site serves and the paths of the first v
 | `/blog/media/<name>`, `/blog/files/<name>` | The images and the files of the posts |
 | `/media/<name>` | The images of the projects and of the profile |
 | `/feed.xml`, `/sitemap.xml`, `/robots.txt`, `/llms.txt` | The static endpoints. See [the endpoints](ref_endpoints.md). |
-| `/resume/<file>.pdf` | The resume that the profile names |
+| `/resume/<file>.pdf` | The résumé that the profile names |
 
 ## Rules
 
@@ -29,7 +29,7 @@ This reference gives the paths that the site serves and the paths of the first v
 
 ## Paths of the first version
 
-`tools/site_extras.py` writes `public/_redirects`, because the file name of the resume comes from the data.
+`tools/site_extras.py` writes `public/_redirects`, because the file name of the résumé comes from the data.
 
 | First path | New path |
 |---|---|

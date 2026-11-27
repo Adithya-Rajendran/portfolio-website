@@ -502,7 +502,7 @@ This table gives the approved technical names and technical verbs of the project
 | repository | name | - | The Git copy of the files of the site, with their history. |
 | resolution | name | - | The number of pixels of an image. |
 | resource | name | resources | A file or a page that gives more information. |
-| resume | name | - | The PDF of the work history of the owner. |
+| résumé | name | - | The PDF of the work history of the owner. |
 | retention | name | - | The Sanity settings for the time that it keeps versions. |
 | revision | name | - | A change to a post after the date of the post. |
 | rim | name | - | The part of a ring that is at the maximum distance from the spine. |

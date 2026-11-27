@@ -1,4 +1,4 @@
-# Tests for the feed, the sitemap, llms.txt, the resume, the redirects and the headers that site_extras.py writes.
+# Tests for the feed, the sitemap, llms.txt, the résumé, the redirects and the headers that site_extras.py writes.
 import contextlib, importlib.util, io, json, os, re, shutil, tempfile, unittest
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser

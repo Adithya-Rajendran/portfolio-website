@@ -12,7 +12,7 @@ This reference gives the `<main>` element of the pages that the page generator w
 | `/about/` | Lounge | `article.post.page[data-slug="about"]`: who, what and where |
 | `/portfolio/` | Fabrication | `section.post-list`: all projects |
 | `/portfolio/<slug>/` | Fabrication, with that project open | `article.post.project[data-slug]` |
-| `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, the skills, the credentials, the talks and the resume |
+| `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, the skills, the credentials, the talks and the résumé |
 | `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, the links and the availability |
 
 ## Shared markup

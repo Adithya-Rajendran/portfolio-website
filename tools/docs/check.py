@@ -8,15 +8,17 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ci"))
 import legacy as legacy_list  # noqa: E402
 
 BT = chr(96)
 TYPES = {"concept": "con_", "procedure": "proc_", "reference": "ref_", "assembly": "assembly_"}
-FIXED = {"glossary.md": "reference"}
+FIXED = {"glossary.md": "reference", "README.md": "assembly"}
 RULE_FILES = ("AGENTS.md", "CLAUDE.md")
 INDEX = "docs/assembly_index.md"
+ENTRY = "README.md"
 GLOSSARY = "glossary.md"
 EXCLUDED = ("data/posts/", "data/projects/", "tools/testdata/", "public/vendor/")
 KEYS = ("type", "title", "depends")
@@ -307,6 +309,10 @@ def check_type(doc, verbs):
                 doc.problems.append("line %d: a paragraph in a reference is one sentence" % b["line"])
 
 
+def sort_key(term):
+    return "".join(c for c in unicodedata.normalize("NFKD", term) if not unicodedata.combining(c)).lower()
+
+
 def glossary_terms(doc):
     terms, problems = [], []
     tables = [b for b in doc.blocks if b["kind"] == "table"]
@@ -322,7 +328,7 @@ def glossary_terms(doc):
             problems.append("line %d: a glossary row has four cells" % line)
             continue
         term, kind, forms, meaning = cells
-        key = term.lower()
+        key = sort_key(term)
         if key in seen:
             problems.append("line %d: %r is in the glossary two times" % (line, term))
         if key < last:
@@ -615,8 +621,10 @@ def check(root, files, vale=None, legacy=None, base=None, legacy_name="tools/ci/
                         reach.add(nxt)
                         todo.append(nxt)
             for p in sorted(modules):
-                if p not in reach:
+                if p not in reach and p != ENTRY:
                     docs[p].problems.append("no link path from %s goes to this module" % INDEX)
+            if ENTRY in modules and INDEX not in check_links_targets(docs[ENTRY]):
+                docs[ENTRY].problems.append("line 1: %s links to the docs index %s" % (ENTRY, INDEX))
     for d, msg in duplicates(list(docs.values()), set(active)):
         d.problems.append(msg)
     if vale or language:

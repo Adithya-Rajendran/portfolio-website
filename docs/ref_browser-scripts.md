@@ -31,7 +31,7 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `opening.mjs` | The ways that a thing opens for [the reader](con_reading.md): Fabrication (scan, receive), the books of the Lounge and a station that unfolds. |
 | `turn.mjs` | The turn of the route map with a mouse, a pen, touch and a wheel, the tour and the hint of Navigation. |
 | `cue.mjs` | The cue of the Library and the errand of the drone. |
-| `contact.mjs` | The three links of Comms: LinkedIn as the way to write, GitHub and the resume. Also the keyboard, the new tabs and the contrast of the text. |
+| `contact.mjs` | The three links of Comms: LinkedIn as the way to write, GitHub and the résumé. Also the keyboard, the new tabs and the contrast of the text. |
 | `rooms.read.mjs` | Each room at its path. |
 | `rooms.others.mjs` | The things that the visitor reads in Fabrication, Navigation and the Lounge, from the profile. |
 | `rooms.cross.mjs` | The links from one article in `#reader` to a different article. |

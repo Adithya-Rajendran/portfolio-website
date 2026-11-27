@@ -23,7 +23,7 @@ See [the browser scripts](ref_browser-scripts.md) for what each script tests.
 | `plainpage.mjs` | No JavaScript (`desktop`, `phone`), no WebGL, the 404 pages | `tests/e2e/specs/plainpage.spec.ts` |
 | `opening.mjs all` | The ways that a thing opens: `scan`, `receive`, `unfold` | `tests/e2e/specs/opening.spec.ts` (`@timing`) |
 | `turn.mjs all` | The turn of the route map, and the hint | `tests/e2e/specs/turn.spec.ts` (`@timing`) |
-| `endpoints.mjs` | The feeds, the sitemap, `llms.txt`, the resume PDF and the JSON files | `tests/e2e/specs/endpoints.spec.ts` |
+| `endpoints.mjs` | The feeds, the sitemap, `llms.txt`, the résumé PDF and the JSON files | `tests/e2e/specs/endpoints.spec.ts` |
 | `errs.mjs`, for 6 paths | The same errors and the same load check as the script | `tests/e2e/specs/errs.spec.ts` |
 | `view.mjs` | A WebGL smoke test in `chromium`, `firefox` and `webkit` | `tests/e2e/specs/view.spec.ts` |
 | `rooms.text.mjs all, rooms.others.mjs, hostile.mjs, hud.mjs all, library.mjs all, rooms.read.mjs all, ringline.mjs, door.mjs, tour.mjs, cue.mjs all, rooms.cross.mjs, rooms.deeplink.mjs, contact.mjs all, deeplink.mjs, writing-alias.mjs, history.mjs` | These scripts check the display, the bar, the reader, the picks, Comms, the offer and the addresses | No spec. The script in `tools/docker/` is the test. |
