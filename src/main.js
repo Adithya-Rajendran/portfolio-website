@@ -25,6 +25,25 @@ if (DEV) window.__modules = {
 const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
 const html = document.documentElement, plain = () => !html.classList.contains('station');
+const halt = () => new Promise(() => {});
+function stayPlain(reason) {
+  html.className = ''; loader.dataset.failed = 'true';
+  const note = $('#nogl');
+  $('#page')?.prepend(note);
+  note.hidden = false;
+  if (reason) console.warn(reason);
+}
+const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
+const GL_ATTRS = Object.freeze({ antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });
+function hasWebGL2() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2', GL_ATTRS);
+    if (!(gl instanceof WebGL2RenderingContext)) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch { return false; }
+}
+if (!hasWebGL2()) { stayPlain(); await halt(); }
 function fail(msg) {
   if (loader.dataset.failed) return;
   if ($('#page')) { loader.dataset.failed = 'true'; html.className = ''; console.error(msg); return; }
@@ -38,13 +57,12 @@ const [content, site] = await Promise.all([fetch('content.json').then((r) => r.j
 furnish(content, site);
 const titles = new Map([...site.posts, ...site.projects].map((p) => [p.url, p.title]));
 
-const WEBKIT = /AppleWebKit/.test(navigator.userAgent) && !/Chrom(e|ium)|Edg\//.test(navigator.userAgent);
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.has('aa') ? Q.get('aa') === '1' : WEBKIT, alpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ canvas, ...GL_ATTRS });
 } catch (e) {
-  fail('THIS BROWSER CANNOT START WEBGL 2 — ENABLE HARDWARE ACCELERATION');
-  throw e;
+  stayPlain('WebGL2 did not start: ' + (e?.message ?? e));
+  await halt();
 }
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.info.autoReset = false;
