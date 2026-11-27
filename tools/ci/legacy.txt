@@ -1,8 +1,0 @@
-docs 99191ada9b93c4cd README.md
-docs 8ffafbbcec78b26b data/README.md
-docs 996f0b9b49555ce4 docs/blueprint.md
-docs 9083d8a67187969b docs/finish-lighting.md
-docs 1067d4e364746b05 docs/scene-assets.md
-docs 73337f4eb13707c1 docs/v1-contracts.md
-docs e087d3f49cd39114 tests/e2e/README.md
-docs 57a33848d144100f tools/ci/README.md

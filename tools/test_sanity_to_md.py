@@ -611,7 +611,7 @@ class ProjectsFaithful(unittest.TestCase):
     def test_every_field_is_carried_or_listed_as_dropped(self):
         seen = {k for _, doc, _ in projects() for k in doc}
         self.assertEqual(seen - PROJECT_CARRIED - PROJECT_DROPPED, set())
-        readme = read(os.path.join(DATA, 'README.md'))
+        readme = read(os.path.join(os.path.dirname(DATA), 'docs', 'ref_sanity-conversion.md'))
         for k in PROJECT_DROPPED - {'_type', '_rev', '_createdAt', '_updatedAt', '_system', '_id'}:
             self.assertIn(f'`{k}`', readme)
         for k in ('_id', '_rev', '_createdAt', '_updatedAt', '_system'):
