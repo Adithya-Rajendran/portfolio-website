@@ -1,16 +1,8 @@
-// Holographic mission display above the dais. Its wording comes from content.json ("hologram").
-//   Earth:      coastlines + land drawn from the NASA land mask, city lights from the Black Marble map (they glow on
-//               the night side, which follows the real sun outside the window), atmosphere shell, graticule, scan sweep
-//   Station:    orbit ring with a comet-tail marker and label
-//   Moon:       dotted orbit + body
-//   Ark Aurora: departure trajectory spiralling out of orbit and rising towards the window, with flowing chevrons
-//   Projector:  light cone with rising motes, instrument rings with tick marks at the base
-//   Opened up:  named cities, relay constellation, mission panel (the "detail layer")
-// Everything is additive HDR geometry: ~20k points and a dozen small meshes, a handful of draw calls.
+// The holographic mission display above the dais: Earth, the orbit of the station and their labels.
 import * as THREE from 'three';
 import { GLOW, VERT_XZ, CY, GOLD, V, cy, gold, uTime, uPx, lineMat, glow, glsl, cloud, label, sheet, spring } from './kit.js';
 
-const maps = {};                                               // decoded data maps, kept between visits
+const maps = {};
 const pixels = (src) => (maps[src] ??= (async () => {
   const img = new Image(); img.src = src; await img.decode();
   const cv = Object.assign(document.createElement('canvas'), { width: img.width, height: img.height });
@@ -20,20 +12,18 @@ const pixels = (src) => (maps[src] ??= (async () => {
 const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 
 export async function createHologram({ scene, position, sunDir, text, base, ver = '', lensY = 0.52, gain = 1.5, radius = 0.62 }) {
-  const R = radius, K = R / 0.62, DEG = Math.PI / 180;         // K scales the things laid out around the globe
+  const R = radius, K = R / 0.62, DEG = Math.PI / 180;
   const root = new THREE.Group(); root.position.copy(position); scene.add(root);
   const U = { uTime, uPx, uSun: { value: sunDir }, uScan: { value: 0 }, uGain: { value: 1 } };
   const ll = (lat, lon, r = R) => V(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon));
 
-  // ------------------------------------------------------------------ Earth
-  const tilt = new THREE.Group(); tilt.rotation.z = 0.41; root.add(tilt);            // 23.4 degree axial tilt
+  const tilt = new THREE.Group(); tilt.rotation.z = 0.41; root.add(tilt);
   const spin = new THREE.Group(); tilt.add(spin);
   {
     const [land, city] = await Promise.all([pixels(`${base}/tex/landmask.png${ver}`), pixels(`${base}/tex/citylights.png${ver}`)]);
     const P = [], kind = [], seed = [];
     const isLand = (x, y) => land.d[(Math.min(land.h - 1, Math.max(0, y)) * land.w + ((x + land.w) % land.w)) * 4] > 127;
     const add = (v, k, i) => { P.push(v.x, v.y, v.z); kind.push(k); seed.push(i); };
-    // coastlines: every land pixel that touches sea (thinned towards the poles, where the map oversamples)
     for (let y = 0; y < land.h; y++) {
       const lat = (0.5 - (y + 0.5) / land.h) * Math.PI; if (Math.abs(lat) > 1.45) continue;
       for (let x = 0; x < land.w; x++) {
@@ -42,12 +32,10 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
         add(ll(lat, ((x + 0.5) / land.w - 0.5) * 2 * Math.PI), 1, hash(y, x));
       }
     }
-    // land interior: even coverage from a Fibonacci sphere
     for (let i = 0, N = 12000; i < N; i++) {
       const lat = Math.asin(1 - 2 * (i + 0.5) / N), lon = ((i * 2.399963) % (2 * Math.PI)) - Math.PI;
       if (isLand(Math.floor((lon / (2 * Math.PI) + 0.5) * land.w), Math.floor((0.5 - lat / Math.PI) * land.h))) add(ll(lat, lon), 0, hash(i, 1));
     }
-    // cities: importance-sampled from the night-lights map
     for (let y = 0; y < city.h; y++) {
       const lat = (0.5 - (y + 0.5) / city.h) * Math.PI, c = Math.cos(lat);
       for (let x = 0; x < city.w; x++) {
@@ -62,25 +50,25 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
           vec4 w = modelMatrix*vec4(position, 1.0);
           vec3 n = normalize(mat3(modelMatrix)*position), v = normalize(cameraPosition - w.xyz);
           float facing = dot(n, v), day = smoothstep(-0.15, 0.25, dot(n, uSun));
-          float front = smoothstep(-0.3, 0.12, facing);                       // the far side shows through, dimmer
+          float front = smoothstep(-0.3, 0.12, facing);
           float rim = 1.0 + 1.5*pow(1.0 - abs(facing), 3.0);
           float scan = exp(-pow((n.y - uScan)/0.06, 2.0));
           vec3 col; float size;
-          if (aKind > 1.5) {                                                   // city: gold, twinkling, only on the night side
+          if (aKind > 1.5) {
             float tw = 0.7 + 0.3*sin(uTime*(1.5 + aI*4.0) + aI*57.0);
             col = ${GOLD}*(0.5 + 2.2*aI)*tw*(1.0 - 0.9*day); size = 0.009 + 0.012*aI;
-          } else if (aKind > 0.5) { col = ${CY}*(0.5 + 0.7*day); size = 0.0085; }   // coastline
-          else { col = ${CY}*(0.10 + 0.32*day); size = 0.008; }                      // land fill
+          } else if (aKind > 0.5) { col = ${CY}*(0.5 + 0.7*day); size = 0.0085; }
+          else { col = ${CY}*(0.10 + 0.32*day); size = 0.008; }
           col = col*mix(0.16, 1.0, front)*rim + ${CY}*scan*0.8*front;
           vec4 mv = viewMatrix*w; gl_Position = projectionMatrix*mv;
           float px = size*uPx/max(-mv.z, 0.01);
           gl_PointSize = max(px, 1.6);
-          vCol = col*uGain*min(1.0, px*px/2.56);                               // keep energy when clamped to the minimum sprite size
+          vCol = col*uGain*min(1.0, px*px/2.56);
         }`,
       fragmentShader: `varying vec3 vCol; void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(vCol*smoothstep(0.5, 0.15, d), 1.0); }`,
     }), { aKind: kind, aI: seed }));
   }
-  { // graticule + axis
+  {
     const p = [];
     for (let la = -60; la <= 60; la += 30) for (let i = 0; i < 96; i++) p.push(ll(la * DEG, i / 96 * 6.2832), ll(la * DEG, (i + 1) / 96 * 6.2832));
     for (let lo = 0; lo < 360; lo += 30) for (let i = 0; i < 48; i++) p.push(ll((i / 48 - 0.5) * Math.PI, lo * DEG), ll(((i + 1) / 48 - 0.5) * Math.PI, lo * DEG));
@@ -89,7 +77,6 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
       new THREE.LineDashedMaterial({ color: cy(1.2), dashSize: 0.03, gapSize: 0.025, opacity: 0.6, ...GLOW }));
     axis.computeLineDistances(); tilt.add(axis);
   }
-  // atmosphere shell: bright at the limb, with fine scan lines
   const shellMat = new THREE.ShaderMaterial({ ...GLOW, uniforms: U,
     vertexShader: `varying vec3 vN, vW;
       void main(){ vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix)*normal); gl_Position = projectionMatrix*viewMatrix*w; }`,
@@ -99,23 +86,21 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
         float lines = 0.8 + 0.2*sin(vW.y*230.0 - uTime*2.5);
         gl_FragColor = vec4(${CY}*(0.025 + 0.8*f)*(0.4 + 0.6*day)*lines*uGain, 1.0); }` });
   root.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.045, 48, 32), shellMat));
-  // scan plane sweeping through the globe
   const scanDisc = new THREE.Mesh(new THREE.RingGeometry(0.001, 1, 72).rotateX(-Math.PI / 2), glsl(`uniform float uGain; varying vec2 vP;
     void main(){ float r = length(vP), a = smoothstep(0.84, 0.985, r)*(1.0 - smoothstep(0.985, 1.0, r))*0.5 + 0.025;
       gl_FragColor = vec4(${CY}*a*uGain, 1.0); }`, U, { vertexShader: VERT_XZ, side: THREE.DoubleSide }));
   root.add(scanDisc);
 
-  // ------------------------------------------------------------------ orbits
-  const ringGeo = (r, tube) => new THREE.TorusGeometry(r, tube, 6, 220).rotateX(Math.PI / 2);     // lies in the XZ plane, uv.x runs along it
+  const ringGeo = (r, tube) => new THREE.TorusGeometry(r, tube, 6, 220).rotateX(Math.PI / 2);
   const trailMat = (color, dots) => glsl(`uniform float uPhase, uGain; uniform vec3 uColor; varying vec2 vUv;
-    void main(){ float d = fract(uPhase - vUv.x);                                  // 0 at the marker, growing behind it
+    void main(){ float d = fract(uPhase - vUv.x);
       float b = 0.2 + 1.9*exp(-d*9.0); ${dots ? 'b *= step(0.5, fract(vUv.x*150.0));' : ''}
       gl_FragColor = vec4(uColor*b*uGain, 1.0); }`, { uPhase: { value: 0 }, uColor: { value: color }, uGain: U.uGain });
   const marker = (r, color) => {
     const g = new THREE.Group(); g.halo = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.OctahedronGeometry(r * 2.4)), lineMat(color, 0.7));
     g.add(new THREE.Mesh(new THREE.OctahedronGeometry(r), glow(color)), g.halo); return g;
   };
-  const orbit = new THREE.Group(); orbit.rotation.set(0.45, 0, 0); root.add(orbit);    // station orbit, inclined
+  const orbit = new THREE.Group(); orbit.rotation.set(0.45, 0, 0); root.add(orbit);
   const RO = 0.78 * K, orbitMat = trailMat(cy(1.3), false);
   const station = marker(0.02, new THREE.Color(1.6, 2.6, 3.2)), stationLabel = label(text.station);
   orbit.add(new THREE.Mesh(ringGeo(RO, 0.0032), orbitMat), station, stationLabel);
@@ -126,8 +111,6 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
     new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(0.08 * K, 1)), lineMat(cy(1.0), 0.35)));
   moonOrbit.add(new THREE.Mesh(ringGeo(RM, 0.0026), moonMat), moon);
 
-  // ------------------------------------------------------------------ Ark Aurora: the way out
-  // Leaves the station orbit in a widening spiral; in the tilted orbit frame the far end rises towards the window.
   const way = new THREE.CatmullRomCurve3(Array.from({ length: 81 }, (_, i) => {
     const s = i / 80, a = 0.6 + 4.2 * Math.pow(s, 0.75), r = RO + 1.25 * K * Math.pow(s, 1.7);
     return V(r * Math.cos(a), 0.75 * K * s * s, r * Math.sin(a));
@@ -140,7 +123,6 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
     void main(){ float flow = smoothstep(0.3, 0.5, fract(vUv.x*64.0 - uTime*0.55)), fade = smoothstep(0.0, 0.05, vUv.x)*smoothstep(1.0, 0.93, vUv.x);
       gl_FragColor = vec4(${GOLD}*(0.3 + 1.5*flow)*fade*uGain, 1.0); }`, U)));
 
-  // ------------------------------------------------------------------ projector: cone of light, rising motes, instrument rings
   const y0 = lensY - position.y, y1 = -R * 0.78;
   const cone = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.92, 0.42, y1 - y0, 56, 1, true), glsl(`uniform float uTime, uGain; varying vec2 vUv;
     void main(){ float a = pow(clamp(1.0 - vUv.y, 0.0, 1.0), 1.7)*0.2;
@@ -168,14 +150,13 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
   });
   root.add(cone, motes, ...dials);
 
-  // ------------------------------------------------------------------ detail layer: only shown when the display is opened up
-  const details = [];                                          // groups that unfold from nothing
+  const details = [];
   const detail = (parent, ...children) => {
     const g = new THREE.Group(); g.scale.setScalar(1e-4); g.visible = false; parent.add(g); details.push(g);
     if (children.length) g.add(...children);
     return g;
   };
-  { // where the messages come from: named cities with leader lines, turning with the globe
+  {
     const leaders = [], cities = detail(spin);
     for (const [name, lat, lon] of text.cities) {
       const a = ll(lat * DEG, lon * DEG, R * 1.01), b = ll(lat * DEG, lon * DEG, R * 1.2); leaders.push(a, b);
@@ -185,23 +166,22 @@ export async function createHologram({ scene, position, sunDir, text, base, ver 
     }
     cities.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(leaders), lineMat(gold(1.6), 0.8)));
   }
-  // relay constellation in a higher, steeper orbit
   const RR = R * 1.24, relayTag = label(text.relay, undefined, 0.5); relayTag.position.set(RR, 0.06, 0);
   const relay = detail(root, relayTag, new THREE.Mesh(ringGeo(RR, 0.0018), glow(cy(0.5))),
     cloud(Array.from({ length: 24 }, (_, i) => [Math.cos(i / 24 * 6.2832) * RR, 0, Math.sin(i / 24 * 6.2832) * RR]).flat(), new THREE.PointsMaterial({ color: cy(2.2), size: 0.028, ...GLOW })));
   relay.rotation.set(-0.9, 0, 0.5);
   detail(moon, label(text.moon, undefined, 0.5)).position.set(0.12, 0.1, 0);
-  detail(root, sheet(text.panel)).position.set(-R * 1.75, R * 0.55, 0.2);     // mission panel beside the globe
+  detail(root, sheet(text.panel)).position.set(-R * 1.75, R * 0.55, 0.2);
 
   const open = spring(0.07), baseY = root.position.y;
   function update(t) {
-    if (Math.abs(open.to - open.x) > 1e-3) {                              // opening up: the whole display grows and lifts, details unfold
+    if (Math.abs(open.to - open.x) > 1e-3) {
       const k = open.step();
       root.scale.setScalar(1 + 0.55 * k); root.position.y = baseY + 0.55 * k;
       for (const g of details) { g.visible = k > 0.02; g.scale.setScalar(Math.max(1e-4, k)); }
     }
     relay.rotation.y = t * 0.07;
-    U.uGain.value = gain * (0.95 + 0.05 * Math.sin(t * 23.0) * Math.sin(t * 5.1));         // faint projector shimmer (no dropouts)
+    U.uGain.value = gain * (0.95 + 0.05 * Math.sin(t * 23.0) * Math.sin(t * 5.1));
     spin.rotation.y = t * 0.09;
     const s = Math.sin(t * 0.42) * 0.97; U.uScan.value = s;
     scanDisc.position.y = s * R; scanDisc.scale.setScalar(R * Math.sqrt(1 - s * s) * 1.07);
