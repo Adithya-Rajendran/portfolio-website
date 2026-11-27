@@ -6,6 +6,7 @@ docs 1067d4e364746b05 docs/scene-assets.md
 docs 73337f4eb13707c1 docs/v1-contracts.md
 docs e087d3f49cd39114 tests/e2e/README.md
 docs 57a33848d144100f tools/ci/README.md
+comments 082ae25d8dc07c88 blender/build_scene.py
 comments 20899205b1e80ff5 public/404.html
 comments 91aa61e0c0d525c9 public/blueprint.html
 comments 2112dc5fac581755 public/index.html
