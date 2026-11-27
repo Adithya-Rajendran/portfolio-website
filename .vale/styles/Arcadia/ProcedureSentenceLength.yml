@@ -1,0 +1,6 @@
+extends: occurrence
+message: "The sentence has more than 20 words (procedure)."
+level: error
+scope: sentence
+max: 20
+token: '\b\w[\w''-]*\b'

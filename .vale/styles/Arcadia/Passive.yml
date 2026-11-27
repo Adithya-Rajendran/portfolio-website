@@ -1,0 +1,7 @@
+extends: existence
+message: "'%s' is in the passive voice: use the active voice."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\b(?:am|is|are|was|were|be|been|being|get|gets|got|getting)\s+(?:(?:not|then|also|now|still|only|always|never|often|first|again|\w+ly)\s+){0,2}(?:\w+ed|built|chosen|done|drawn|found|given|gone|held|hidden|kept|known|left|made|meant|put|read|run|seen|sent|set|shown|split|taken|told|written|begun|broken|brought|caught|cut|felt|got|gotten|grown|hit|led|lost|met|paid|said|shut|sold|spent|thrown|understood|won|worn)\b'

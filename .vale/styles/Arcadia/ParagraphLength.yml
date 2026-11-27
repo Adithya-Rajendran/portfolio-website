@@ -1,0 +1,6 @@
+extends: occurrence
+message: "The paragraph has more than six sentences."
+level: error
+scope: paragraph
+max: 6
+token: '[.!?](?=\s|$)'
