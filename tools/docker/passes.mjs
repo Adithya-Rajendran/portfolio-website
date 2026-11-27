@@ -1,11 +1,13 @@
 // GPU ms, JS ms, draw calls and triangles of each render pass, per frame
 import { chromium } from 'playwright';
+import { deadline, fail, requirePinned } from './measure-guard.mjs';
 
 const origin = (process.env.ORIGIN || 'http://127.0.0.1:8080').replace(/\/$/, '');
 const [rawUrl = '/', secs = 6, w = 1920, h = 1080] = process.argv.slice(2);
 const url = new URL(rawUrl, origin + '/').href;
 
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
+const done = deadline('passes', 180000 + secs * 3000, () => b.close());
 try {
   const p = await b.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1 });
   p.on('pageerror', (e) => { process.exitCode = 1; console.log('[pageerror]', e.message); });
@@ -18,6 +20,7 @@ try {
   await p.waitForFunction(() => window.__lobby?.ready() > 0, null, { polling: 'raf', timeout: 300000 });
   if (process.env.SETUP) await p.evaluate(process.env.SETUP);
   if (process.env.UNTIL) await p.waitForFunction(process.env.UNTIL, null, { timeout: 120000 });
+  await requirePinned(p);
   await p.waitForTimeout(4000);
   const r = await p.evaluate((secs) => new Promise((res, rej) => {
     window.__measuring = true;
@@ -64,6 +67,7 @@ try {
         return rej(new Error(`passes: 0 frames captured (frames=${frames}, dt=${dt.length})`));
       }
       dt.sort((a, c) => a - c);
+      if (!Object.values(S).some((s) => s.q)) return rej(new Error('passes: no GPU query result came back (the timer query gave no sample)'));
       const out = {}; let gsum = 0, csum = 0;
       for (const [k, s] of Object.entries(S)) {
         const g = s.q ? s.gpu / s.q * (s.renders / frames) : 0; gsum += g; csum += s.cpu / frames;
@@ -75,6 +79,9 @@ try {
     requestAnimationFrame(f);
   }), +secs);
   console.log(JSON.stringify(r));
+} catch (e) {
+  fail('passes', e);
 } finally {
+  done();
   await b.close();
 }
