@@ -32,6 +32,7 @@ For this reason, the cache rule of `/app/*` is `immutable`. See [the cache rules
 - The Basis transcoder is not in the bundle. The KTX2 loader reads its two files from `public/vendor/basis/`.
 - `public/404.html` does not move. After `vite build`, `pnpm build` changes its two links to CSS files into the link to the CSS file in `dist/app/`.
 - `vite.config.ts` holds the configuration of the two Vite commands.
+- Vite also writes a source map of the bundle in `dist/app/`. The page does not link to it, and `public/.assetsignore` keeps it out of the upload. The pictures tier reads it to find the source file of each call to `Math.random`, because each source file has its own seeded sequence.
 - `package.json` gives the scripts `dev`, `build` and `preview`, and the versions of the packages.
 - `pnpm-lock.yaml` records the versions of all packages.
 - The CI host installs the packages with `pnpm install --frozen-lockfile --ignore-scripts`, so no package runs a script when it installs.
