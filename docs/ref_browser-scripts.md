@@ -49,7 +49,25 @@ Each script shows `ok` or `FAIL [item] what`, and it stops with the exit code 1 
 | `view.mjs` | A WebGL smoke test in `chromium`, `firefox` and `webkit`. |
 | `ringline.mjs`, `door.mjs`, `tour.mjs` | The tour, the doors and the bar of the Ring Line. |
 | `writing-alias.mjs` | `/blog/`, a room query that names no room, and Back and Forward. |
+| `measure-selftest.mjs` | [The measure scripts](#the-measure-scripts): a plain page fails at once, the hero page with a pin gives GPU ms, and the deadline stops a script. |
 
 - `rooms.kit.mjs` and `r2.kit.mjs` hold what these scripts share: the profiles, a recorder of the meshes of the reader, and a gate on the frames of the page.
 - `r2.kit.mjs` also holds a clock that adds the time of the frames of the page.
 - [The lighting checks](ref_lighting-checks.md) are also scripts in `tools/docker/`.
+
+## The measure scripts
+
+`passes.mjs` and `bench.mjs` use a timer query of the GPU, and a page can have only one timer query at a time.
+
+| Rule | What the scripts do |
+|---|---|
+| Pin | The query of the page must pin the governor with `tier=0` or `tier=1`, and with `scale=1`, for example `/?shot=hero&tier=0&scale=1`. |
+| Page without a pin | The script stops at once with the exit code 1, and its message names `tier` and `scale`. |
+| No sample | The script stops with the exit code 1 when no GPU result comes. |
+| Deadline | After 180 seconds and 3 seconds for each second of measure, the script stops the browser and ends with the exit code 3. |
+| Deadline of `bench.mjs` | The time is 180 seconds, and 60 seconds and 3 seconds for each second of measure, for each run. |
+| Variable | `MEASURE_TIMEOUT_S` sets the deadline in seconds. |
+
+- `measure-guard.mjs` holds the pin check and the deadline that both scripts use.
+- `tools/test_measure_guard.mjs` tests them without a browser, with `measure-hang.mjs` as a script that does not stop.
+- `ci <ref> script measure-selftest.mjs` runs both scripts on a plain page and on the hero page with a pin.

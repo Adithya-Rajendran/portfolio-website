@@ -1,5 +1,6 @@
 // Frame, memory and load benchmark for tools/bench.sh
 import { chromium } from 'playwright';
+import { deadline, fail, requirePinned } from './measure-guard.mjs';
 const [url, w = 1920, h = 1080, secs = 8, runs = 3] = process.argv.slice(2);
 const HOOK = () => {
   const bytes = new Map(); let total = 0, peak = 0;
@@ -30,6 +31,8 @@ const HOOK = () => {
   window.__gpumem = () => ({ mb: +(total / 2 ** 20).toFixed(1), peak_mb: +(peak / 2 ** 20).toFixed(1), objects: [...bytes.values()].filter(Boolean).length, formats: [...(window.__fmts || [])].map((f) => '0x' + f.toString(16)).join(' ') });
 };
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
+const done = deadline('bench', 180000 + +runs * (+secs * 3000 + 60000), () => b.close());
+try {
 for (let run = 0; run < +runs; run++) {
   const ctx = await b.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1 });
   const p = await ctx.newPage(); await p.addInitScript(HOOK);
@@ -43,8 +46,9 @@ for (let run = 0; run < +runs; run++) {
   while (Date.now() - lastReq < 1000 || inflight > 0) await p.waitForTimeout(100);
   const full = await p.evaluate(() => { const r = performance.getEntriesByType('resource'), n = performance.getEntriesByType('navigation')[0];
     return { ms: Math.round(Math.max(...r.map((e) => e.responseEnd))), requests: r.length + 1, kb: Math.round((r.reduce((a, e) => a + e.transferSize, 0) + n.transferSize) / 1024) }; });
+  await requirePinned(p);
   await p.waitForTimeout(2000);
-  const r = await p.evaluate((secs) => new Promise((res) => {
+  const r = await p.evaluate((secs) => new Promise((res, rej) => {
     window.__measuring = true; const L = window.__lobby, R = L.renderer, gl = R.getContext(), dt = [], px = new Uint8Array(4); let last = performance.now(), t0 = last;
     const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'), gpu = [], pend = [], reset = R.info.reset.bind(R.info), render = L.post.render.bind(L.post);
     R.info.reset = () => { reset(); const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); pend.push(q); };
@@ -54,10 +58,16 @@ for (let run = 0; run < +runs; run++) {
       if (now - t0 < secs * 1000) requestAnimationFrame(f);
       else { dt.shift(); const s = [...dt].sort((a, c) => a - c), q = (x) => +s[Math.min(s.length - 1, Math.floor(s.length * x))].toFixed(1);
         const g = gpu.sort((a, c) => a - c);
+        if (!g.length) return rej(new Error('bench: no GPU query result came back (the timer query gave no sample)'));
         res({ gpu: +g[g.length >> 1].toFixed(2), med: q(0.5), p95: q(0.95), max: q(1), n: dt.length, calls: L.renderer.info.render.calls, tris: L.renderer.info.render.triangles,
           tex: L.renderer.info.memory.textures, mem: window.__gpumem(), mode: L.mode() }); } }
     requestAnimationFrame(f); }), +secs);
   console.log(JSON.stringify({ ...r, load, full }));
   await ctx.close();
 }
-await b.close();
+} catch (e) {
+  fail('bench', e);
+} finally {
+  done();
+  await b.close();
+}
