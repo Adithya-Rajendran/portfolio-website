@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""Do the hand-edited files say what the Sanity documents said?   python3 -m unittest tools/test_sanity_to_md.py
-  data/posts/<slug>.md vs .json, data/projects/<slug>.md vs .json (class Faithful, ProjectsFaithful),
-  data/profile.json vs data/profile/profile.json (ProfileFaithful).
-It is the proof of the conversion: once a file is edited by hand on purpose, these tests say where it differs.
-
-The comparison does not use the converter's code: the Markdown is read by the small parser below (written from the format
-in docs/v1-contracts.md §2, not from the converter), the JSON by reading Portable Text directly, and both are reduced to
-the same list of blocks to compare; the header fields and the profile are compared by tables written here. The converter
-is imported only by the tests of escaping, of refusing, and of overwriting. The Mutations classes break the output in
-memory in many ways and require the comparison to notice each.
-"""
+# Tests that the Markdown and JSON content files keep what the Sanity documents held.
 import collections, copy, glob, json, os, re, shutil, sys, tempfile, unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,7 +21,6 @@ def jload(path):
         return json.load(f)
 
 
-# ---------- the Markdown side: text -> [(character, marks, link target)], whitespace left out
 
 def inl(s, link=None):
     out, i = [], 0
@@ -55,7 +44,7 @@ def inl(s, link=None):
         elif c == '*':
             marks ^= {'em'}; i += 1
         elif c == '[':
-            j, depth = i + 1, 0                             # the ] that closes this [ , skipping code and escapes
+            j, depth = i + 1, 0
             while j < len(s):
                 if s[j] == '\\': j += 2; continue
                 if s[j] == '`':
@@ -89,7 +78,6 @@ def plain(s):
 
 
 def md_blocks(body):
-    """Markdown body -> [(kind, ...)] with the same shapes as json_blocks()."""
     out, lines, i = [], body.split('\n'), 0
     para = []
 
@@ -127,7 +115,6 @@ def md_blocks(body):
     return out
 
 
-# ---------- the JSON side
 
 def expected_target(h):
     for old, new in ((SITE_URL + '/blog/', '/blog/'), (SITE_URL + '/portfolio/', '/portfolio/')):
@@ -152,7 +139,7 @@ def json_blocks(doc):
         if b['_type'] == 'code':
             out.append(('code', b['language'], b['code']))
         elif b['_type'] == 'image':
-            ref = b['asset']['_ref']                        # image-<sha1>-<w>x<h>-<ext>
+            ref = b['asset']['_ref']
             stem, ext = ref[len('image-'):].rsplit('-', 1)
             out.append(('image', f'{stem}.{ext}', b['alt'], b['caption']))
         elif b.get('listItem'):
@@ -164,7 +151,7 @@ def json_blocks(doc):
     return out
 
 
-def link_runs(blocks):                                      # [(target, text)] for each linked run of characters
+def link_runs(blocks):
     out = []
     for k in blocks:
         cur = None
@@ -192,7 +179,6 @@ class Faithful(unittest.TestCase):
         self.assertEqual(len(content.load_posts()), 4)
 
     def test_blocks_in_order(self):
-        """Every block, in order: its kind, level, text, and the code / strong / emphasis / link on every character."""
         for slug, doc, _, body in posts():
             a, b = md_blocks(body), json_blocks(doc)
             self.assertEqual(len(a), len(b), slug)
@@ -296,7 +282,6 @@ class Faithful(unittest.TestCase):
                                          'takeaways', 'changelog', 'next', 'next_reason', 'projects'}, slug)
 
 
-# ---------- the converter's own cases: escaping, errors, the overwrite rule
 
 def span(text, *marks):
     return {'_type': 'span', 'text': text, 'marks': list(marks)}
@@ -382,7 +367,6 @@ class Escaping(unittest.TestCase):
 
 
 class Refuses(unittest.TestCase):
-    """The converter stops, naming the document and the field, on anything it does not know (projects and the profile)."""
     CTX = ({'my-homelab'}, {'homelab', 'other'}, {'f.pdf'})
 
     def project(self, **kw):
@@ -448,7 +432,7 @@ class Refuses(unittest.TestCase):
 
     def test_markdown_in_sentences_is_escaped(self):
         text, _ = self.convert(highlights=['Uses *star* and snake_case and [x](y)'], lessons=['1. first'])
-        self.assertIn('  - "Uses \\\\*star\\\\* and snake_case and \\\\[x\\\\](y)"\n', text)      # JSON writes each backslash twice
+        self.assertIn('  - "Uses \\\\*star\\\\* and snake_case and \\\\[x\\\\](y)"\n', text)
         self.assertIn('  - "1\\\\. first"\n', text)
 
     def test_the_profile(self):
@@ -495,7 +479,7 @@ class Overwrite(unittest.TestCase):
         os.makedirs(os.path.join(self.tmp, 'data', 'posts'))
         for f in glob.glob(os.path.join(DATA, 'posts', '*.json')):
             shutil.copy(f, os.path.join(self.tmp, 'data', 'posts'))
-        for d in ('projects', 'profile'):                    # copies: the converter writes .md files beside the .json ones
+        for d in ('projects', 'profile'):
             os.makedirs(os.path.join(self.tmp, 'data', d))
             for f in glob.glob(os.path.join(DATA, d, '*.json')):
                 shutil.copy(f, os.path.join(self.tmp, 'data', d))
@@ -518,10 +502,10 @@ class Overwrite(unittest.TestCase):
     def test_overwrite_rules(self):
         posts_dir = os.path.join(self.tmp, 'data', 'posts')
         rc, out = self.run_main()
-        self.assertEqual((rc, out.count('wrote')), (0, 15))     # 4 posts, 10 projects, the profile
+        self.assertEqual((rc, out.count('wrote')), (0, 15))
         written = {f: read(os.path.join(posts_dir, f), 'rb') for f in os.listdir(posts_dir) if f.endswith('.md')}
         self.assertEqual(len(written), 4)
-        rc, out = self.run_main()                           # twice in a row: nothing changes
+        rc, out = self.run_main()
         self.assertEqual((rc, out.count('unchanged')), (0, 15))
         self.assertEqual(read(os.path.join(self.tmp, 'data', 'projects/homelab.md'), 'rb'), read(os.path.join(DATA, 'projects/homelab.md'), 'rb'))
         repo_profile = json.loads(read(os.path.join(DATA, 'profile.json')))
@@ -549,12 +533,11 @@ class Overwrite(unittest.TestCase):
             rc, out = self.run_main()
             self.assertEqual(rc, 1, rel)
             self.assertIn('DIFFERS    ' + os.path.join('data', rel), out)
-            self.assertNotEqual(read(path, 'rb'), good)         # left alone
+            self.assertNotEqual(read(path, 'rb'), good)
             self.assertEqual(self.run_main('--force')[0], 0)
             self.assertEqual(read(path, 'rb'), good, rel)
 
 
-# ---------- projects: data/projects/<slug>.md against data/projects/<slug>.json
 
 PROJECT_CARRIED = {'title', 'name', 'summary', 'status', 'statusNote', 'myRole', 'startDate', 'endDate', 'datePrecision', 'datesApproximate',
                    'featured', 'quiet', 'designation', 'types', 'technologies', 'highlights', 'lessons', 'next', 'brief', 'cover',
@@ -568,7 +551,6 @@ def image_name(ref):
 
 
 def expected_link(l):
-    """The link record the file must hold for a Sanity link: its address, or the post, project or file it names."""
     out = {'label': l['label'], 'kind': l['kind'], 'url': None, 'post': None, 'project': None, 'file': None}
     for old, k in ((SITE_URL + '/blog/', 'post'), (SITE_URL + '/portfolio/', 'project')):
         if l['url'].startswith(old):
@@ -579,7 +561,6 @@ def expected_link(l):
 
 
 def project_diffs(doc, p):
-    """What differs between a Sanity project and the loader's dict for its .md file (a list of sentences; [] = faithful)."""
     d = []
 
     def eq(what, got, want):
@@ -634,7 +615,7 @@ class ProjectsFaithful(unittest.TestCase):
     def test_every_field_is_carried_or_listed_as_dropped(self):
         seen = {k for _, doc, _ in projects() for k in doc}
         self.assertEqual(seen - PROJECT_CARRIED - PROJECT_DROPPED, set())
-        readme = read(os.path.join(DATA, 'README.md'))
+        readme = read(os.path.join(os.path.dirname(DATA), 'docs', 'ref_sanity-conversion.md'))
         for k in PROJECT_DROPPED - {'_type', '_rev', '_createdAt', '_updatedAt', '_system', '_id'}:
             self.assertIn(f'`{k}`', readme)
         for k in ('_id', '_rev', '_createdAt', '_updatedAt', '_system'):
@@ -642,7 +623,6 @@ class ProjectsFaithful(unittest.TestCase):
         self.assertEqual(conv.PROJECT_FIELDS, PROJECT_CARRIED | {'model'})
 
     def test_the_counts_nothing_was_lost(self):
-        """Every prose word, highlight, lesson, link, parameter and result is in the loader's data."""
         tot = collections.Counter()
         for slug, doc, p in projects():
             tot['words'] += sum(len(s['text'].split()) for b in doc['body'] for s in b['children'])
@@ -659,7 +639,6 @@ class ProjectsFaithful(unittest.TestCase):
             with open(os.path.join(DATA, 'projects', slug + '.md'), encoding='utf-8') as f:
                 head, _ = content.split(f.read(), slug)
             self.assertLessEqual(set(head), set(content.PROJECT_KNOWN), slug)
-            # fields the document has, written under their file names
             self.assertEqual({'title', 'name', 'summary', 'order', 'status'} <= set(head), True)
             self.assertEqual('model' in doc, slug == 'homelab')
 
@@ -672,8 +651,6 @@ class ProjectsFaithful(unittest.TestCase):
 
 
 class ProjectsMutations(unittest.TestCase):
-    """Break what the loader returns in a way a faulty conversion could, and require project_diffs to notice. A change
-    returns True when it applied to that project (some have no links, no results, ...); it must apply to at least one."""
 
     def mutated(self, change):
         n = 0
@@ -723,7 +700,7 @@ class ProjectsMutations(unittest.TestCase):
             with self.subTest(k):
                 self.mutated(pop_last(k))
 
-        def swap(k):                                        # two items trade places
+        def swap(k):
             def change(q):
                 if len(q[k]) < 2:
                     return False
@@ -757,23 +734,21 @@ class ProjectsMutations(unittest.TestCase):
                 q['body'] = new
                 return changed
             return change
-        self.mutated(body(lambda b: b.replace(' the ', ' a ', 1)))                               # one word
-        self.mutated(body(lambda b: b.split('\n\n', 1)[1]))                                      # the first block is lost
-        self.mutated(body(lambda b: b.rsplit('\n\n', 1)[0] + '\n'))                              # the last block is lost
-        self.mutated(body(lambda b: b.replace('## ', '### ', 1)))                                # a heading's level
-        self.mutated(body(lambda b: re.sub(r'\]\(/(blog|portfolio)/[^)]*\)', '](https://example.org/)', b, count=1)))   # a link's target
+        self.mutated(body(lambda b: b.replace(' the ', ' a ', 1)))
+        self.mutated(body(lambda b: b.split('\n\n', 1)[1]))
+        self.mutated(body(lambda b: b.rsplit('\n\n', 1)[0] + '\n'))
+        self.mutated(body(lambda b: b.replace('## ', '### ', 1)))
+        self.mutated(body(lambda b: re.sub(r'\]\(/(blog|portfolio)/[^)]*\)', '](https://example.org/)', b, count=1)))
         self.mutated(body(lambda b: b + '\nExtra words.\n'))
-        self.mutated(body(lambda b: re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', b, count=1)))                # a link lost, its text kept
+        self.mutated(body(lambda b: re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', b, count=1)))
 
 
-# ---------- the profile: data/profile.json against data/profile/profile.json
 
 def snake_name(k):
     return re.sub(r'([A-Z])', lambda m: '_' + m.group(1).lower(), k)
 
 
 def resolve(ref):
-    """A Sanity reference's target as the new file names it: an image or file name, or a post's or project's slug."""
     if ref.startswith('image-'):
         return image_name(ref)
     if ref.startswith('file-'):
@@ -786,8 +761,6 @@ def resolve(ref):
 
 
 def sanity_leaves(node, key=None, out=None):
-    """Every leaf of a Sanity document, as (type, value), without Sanity's bookkeeping (keys starting with _), with a
-    reference replaced by its target and the one timestamp by its date."""
     out = collections.Counter() if out is None else out
     if isinstance(node, dict):
         for k, v in node.items():
@@ -801,7 +774,7 @@ def sanity_leaves(node, key=None, out=None):
     else:
         if key == 'curiositiesUpdatedAt':
             node = node[:10]
-        elif key == 'url' and node.startswith(CDN):         # a link to a CDN file names the file instead
+        elif key == 'url' and node.startswith(CDN):
             node = node[len(CDN):]
         out[(type(node).__name__, node)] += 1
     return out
@@ -811,7 +784,7 @@ def new_leaves(node, out=None):
     out = collections.Counter() if out is None else out
     if isinstance(node, dict):
         for k, v in node.items():
-            if k not in ('id', 'contact_links'):             # the timeline's ids and contact_links selection are new
+            if k not in ('id', 'contact_links'):
                 new_leaves(v, out)
     elif isinstance(node, list):
         for v in node:
@@ -822,9 +795,8 @@ def new_leaves(node, out=None):
 
 
 def expected_value(k, v):
-    """What the new file holds for the Sanity field k = v, as {new field: value} (references and images flattened)."""
     n = snake_name(k)
-    if isinstance(v, dict) and 'asset' in v:                # an image {alt, asset}, or the resume {asset}
+    if isinstance(v, dict) and 'asset' in v:
         out = {n: resolve(v['asset']['_ref'])}
         if 'alt' in v:
             out[n + '_alt'] = v['alt']
@@ -855,7 +827,6 @@ def expected_record(rec):
 
 
 def subset(want, got, path='profile'):
-    """Differences where `want` (a nested value) is not what `got` holds; fields in got that want lacks are fine (ids)."""
     if isinstance(want, dict):
         if not isinstance(got, dict):
             return [f'{path}: not a record']
@@ -894,7 +865,6 @@ class ProfileFaithful(unittest.TestCase):
         self.assertGreater(n, 150)
 
     def test_leaf_types_survive(self):
-        """Numbers stay numbers and booleans stay booleans."""
         types = collections.Counter(t for t, _ in sanity_leaves(self.old).elements())
         self.assertEqual(types, collections.Counter(t for t, _ in new_leaves(self.new).elements()))
         self.assertEqual((types['int'], types['bool']), (1, 5))
@@ -909,7 +879,7 @@ class ProfileFaithful(unittest.TestCase):
         def keys(node, path=()):
             if isinstance(node, dict):
                 for k, v in node.items():
-                    if path[-1:] != ('contact_routes',):    # the route names are data, and happen to be words too
+                    if path[-1:] != ('contact_routes',):
                         yield k
                     yield from keys(v, path + (k,))
             elif isinstance(node, list):
@@ -951,7 +921,7 @@ class ProfileFaithful(unittest.TestCase):
     def test_the_loader_returns_it(self):
         prof = content.load_profile()
         self.assertEqual(prof['name'], self.old['name'])
-        def bare(node):                                     # without the None and [] the loader adds for what is absent
+        def bare(node):
             if isinstance(node, dict):
                 return {k: bare(v) for k, v in node.items() if v not in (None, [])}
             return [bare(v) for v in node] if isinstance(node, list) else node
@@ -960,7 +930,6 @@ class ProfileFaithful(unittest.TestCase):
 
 
 class ProfileMutations(unittest.TestCase):
-    """Break the new file in memory and require profile_diffs to notice: a leaf changed, lost, invented or moved."""
 
     def setUp(self):
         self.old, self.new = jload(os.path.join(DATA, 'profile', 'profile.json')), jload(os.path.join(DATA, 'profile.json'))

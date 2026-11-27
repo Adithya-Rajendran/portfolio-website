@@ -1,14 +1,11 @@
-"""Tests for tools/site_extras.py (feed.xml, sitemap.xml, llms.txt, the résumé, _redirects, and the committed robots.txt and
-_headers), on the fixture tools/testdata/posts/ and one more post written here, in temporary folders.
-    python3 -m unittest tools/test_site_extras.py          (from the repository root; -v lists each test)
-Needs cwebp under ~/.local/opt/webp like site.py itself; the image is encoded once and copied between runs."""
+# Tests for the feed, the sitemap, llms.txt, the resume, the redirects and the headers that site_extras.py writes.
 import contextlib, importlib.util, io, json, os, re, shutil, tempfile, unittest
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 from urllib.parse import unquote
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
-spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))   # `import site` is Python's
+spec = importlib.util.spec_from_file_location('sitegen', os.path.join(TOOLS, 'site.py'))
 s = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s)
 import site_extras as x
@@ -17,11 +14,8 @@ PUBLIC = os.path.join(s.ROOT, 'public')
 SITE = s.SITE
 NS = {'atom': 'http://www.w3.org/2005/Atom', 'content': 'http://purl.org/rss/1.0/modules/content/',
       'dc': 'http://purl.org/dc/elements/1.1/', 'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-# The old URLs of docs/v1-contracts.md §1 that are not pages again (§8: /about, /contact and /portfolio* are). Each must
-# be redirected, and nothing else (a trailing slash aside).
 OLD = {'/blog/tags/*', '/resume', '/resume/view', '/resume/download'}
 PAGES = {'/about', '/about/', '/contact', '/contact/', '/portfolio', '/portfolio/', '/portfolio/*'}
-# A second post that is newer than the fixture, with every character an XML or Markdown writer must get right.
 NASTY_TITLE = 'Tom & Jerry: <b>"bold"</b> [brackets] \\ and \'quotes\''
 OTHER = ('---\ntitle: %s\ndescription: %s\npublished: 2026-03-01\ntags: ["a-tag", "b & c"]\n---\n'
          'Body with a [post link](/blog/every-construct/), [a project](/portfolio/homelab/) and <i>no html</i> & more.\n'
@@ -29,7 +23,6 @@ OTHER = ('---\ntitle: %s\ndescription: %s\npublished: 2026-03-01\ntags: ["a-tag"
 
 
 class Links(HTMLParser):
-    """Every href and src in a piece of HTML."""
     def __init__(self, text):
         super().__init__(convert_charrefs=True)
         self.urls, self.text = [], []
@@ -43,7 +36,6 @@ class Links(HTMLParser):
 
 
 def generate(posts, out):
-    """Run site.py's main(); return what it printed."""
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
         s.main(['--posts', posts, '--out', out])
@@ -64,15 +56,15 @@ class Extras(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp(prefix='test-extras-')
-        cls.one = os.path.join(cls.tmp, 'one')              # the fixture alone
+        cls.one = os.path.join(cls.tmp, 'one')
         cls.log = generate(FIXTURE, cls.one)
-        cls.posts2 = os.path.join(cls.tmp, 'posts2')       # the fixture and a newer post
+        cls.posts2 = os.path.join(cls.tmp, 'posts2')
         os.makedirs(cls.posts2)
         shutil.copy(os.path.join(FIXTURE, 'every-construct.md'), cls.posts2)
         with open(os.path.join(cls.posts2, 'other.md'), 'w', encoding='utf-8') as f:
             f.write(OTHER)
         cls.two = os.path.join(cls.tmp, 'two')
-        shutil.copytree(cls.one, cls.two)                  # the encoded image comes along
+        shutil.copytree(cls.one, cls.two)
         generate(cls.posts2, cls.two)
         cls.profile = s.load_profile()
         cls.projects = s.load_projects()
@@ -90,7 +82,6 @@ class Extras(unittest.TestCase):
     def feed(self, out):
         return ET.fromstring(read(out, 'feed.xml', 'rb')).find('channel')
 
-    # ------------------------------------------------------------ feed.xml
 
     def test_feed_items_in_order(self):
         ch = self.feed(self.two)
@@ -106,9 +97,9 @@ class Extras(unittest.TestCase):
         me = ch.find('atom:link', NS)
         self.assertEqual((me.get('rel'), me.get('href'), me.get('type')), ('self', f'{SITE}/feed.xml', 'application/rss+xml'))
         other, fixture = ch.findall('item')
-        self.assertEqual(ch.findtext('lastBuildDate'), 'Sun, 01 Mar 2026 00:00:00 GMT')   # the newest published or revised date
+        self.assertEqual(ch.findtext('lastBuildDate'), 'Sun, 01 Mar 2026 00:00:00 GMT')
         self.assertEqual(other.findtext('pubDate'), 'Sun, 01 Mar 2026 00:00:00 GMT')
-        self.assertEqual(fixture.findtext('pubDate'), 'Thu, 15 Jan 2026 00:00:00 GMT')     # published, not revised
+        self.assertEqual(fixture.findtext('pubDate'), 'Thu, 15 Jan 2026 00:00:00 GMT')
         for item in (other, fixture):
             g = item.find('guid')
             self.assertEqual((g.get('isPermaLink'), g.text), ('true', item.findtext('link')))
@@ -118,7 +109,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(fixture.findtext('description'), self.all_posts['every-construct']['description'])
 
     def test_last_build_date_is_the_newest_revision(self):
-        # one post, published 15 January and revised 1 February: the revision dates the channel, the publication the item
         ch = self.feed(self.one)
         self.assertEqual(ch.findtext('lastBuildDate'), 'Sun, 01 Feb 2026 00:00:00 GMT')
         self.assertEqual(ch.find('item').findtext('pubDate'), 'Thu, 15 Jan 2026 00:00:00 GMT')
@@ -133,13 +123,13 @@ class Extras(unittest.TestCase):
                 self.assertRegex(u, r'^(https?://|mailto:)', f'relative URL in content:encoded: {u}')
         fixture = self.feed(self.two).findall('item')[1].findtext('content:encoded', namespaces=NS)
         urls = Links(fixture).urls
-        self.assertIn(f'{SITE}/blog/every-construct/', urls)                                 # a link to a post
-        self.assertIn(f'{SITE}/portfolio/homelab/', urls)                        # a link to a project
-        self.assertIn('https://example.org/path?x=1&y=2#frag', urls)                         # an external link is untouched
+        self.assertIn(f'{SITE}/blog/every-construct/', urls)
+        self.assertIn(f'{SITE}/portfolio/homelab/', urls)
+        self.assertIn('https://example.org/path?x=1&y=2#frag', urls)
         self.assertIn(f'{SITE}/blog/files/gui-lxd-profile.yaml', urls)
         self.assertTrue(any(u.startswith(f'{SITE}/blog/media/') and u.endswith('.webp') for u in urls))
         self.assertIn('<h2 id="lists">Lists</h2>', fixture)
-        self.assertIn('Corrected a figure in the second section.', fixture)                  # the changes follow the body
+        self.assertIn('Corrected a figure in the second section.', fixture)
         self.assertIn('<b>Correction</b>', fixture)
 
     def test_special_characters_survive(self):
@@ -147,7 +137,7 @@ class Extras(unittest.TestCase):
         self.assertEqual(item.findtext('title'), NASTY_TITLE)
         self.assertEqual(item.findtext('description'), 'Plain <angle> & "quoted"\nover two lines.')
         links = Links(item.findtext('content:encoded', namespaces=NS))
-        self.assertIn('<i>no html</i> & more.', ''.join(links.text))                         # raw HTML is text, and arrives as typed
+        self.assertIn('<i>no html</i> & more.', ''.join(links.text))
         fixture = self.feed(self.one).find('item')
         self.assertEqual(fixture.findtext('description'), self.all_posts['every-construct']['description'])
         self.assertIn('< > & " \'', ''.join(Links(fixture.findtext('content:encoded', namespaces=NS)).text))
@@ -156,7 +146,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(x.esc('a\x00b\x0bc\x1fd￾e'), 'abcde')
         self.assertEqual(x.esc('<&>"\''), '&lt;&amp;&gt;&quot;&#x27;')
 
-    # ------------------------------------------------------------ sitemap.xml
 
     def sitemap(self, out):
         return [(u.findtext('sm:loc', namespaces=NS), u.findtext('sm:lastmod', namespaces=NS))
@@ -167,22 +156,21 @@ class Extras(unittest.TestCase):
         self.assertEqual(sorted(listed), sorted(p['slug'] for p in self.projects))
         self.assertEqual(self.sitemap(self.two), [
             (f'{SITE}/', '2026-03-01'), (f'{SITE}/blog/', '2026-03-01'),
-            (f'{SITE}/blog/other/', '2026-03-01'), (f'{SITE}/blog/every-construct/', '2026-02-01'),   # revised, else published
+            (f'{SITE}/blog/other/', '2026-03-01'), (f'{SITE}/blog/every-construct/', '2026-02-01'),
             (f'{SITE}/about/', None), (f'{SITE}/portfolio/', None)] + [(f'{SITE}/portfolio/{p}/', None) for p in listed]
-            + [(f'{SITE}/experience/', None), (f'{SITE}/contact/', None)])                         # no date of change
+            + [(f'{SITE}/experience/', None), (f'{SITE}/contact/', None)])
 
     def test_sitemap_lists_exactly_the_pages_that_exist(self):
         for out in (self.one, self.two):
             pages = {'/' if os.path.dirname(r) == '' else '/' + os.path.dirname(r) + '/'
                      for r in (os.path.relpath(os.path.join(d, f), out) for d, _, fs in os.walk(out) for f in fs)
                      if os.path.basename(r) == 'index.html'}
-            pages.add('/')                                  # the shell, public/index.html, is not copied into a test's output
+            pages.add('/')
             self.assertTrue(os.path.isfile(os.path.join(PUBLIC, 'index.html')))
             locs = [loc for loc, _ in self.sitemap(out)]
             self.assertEqual(sorted(locs), sorted(SITE + p for p in pages))
             self.assertEqual(len(locs), len(set(locs)))
 
-    # ------------------------------------------------------------ llms.txt and robots.txt
 
     def test_llms_txt(self):
         text = read(self.two, 'llms.txt')
@@ -209,10 +197,9 @@ class Extras(unittest.TestCase):
     def test_robots_txt(self):
         text = read(PUBLIC, 'robots.txt')
         rules = [l for l in text.splitlines() if l and not l.startswith('#')]
-        self.assertEqual(rules, ['User-agent: *', 'Allow: /', f'Sitemap: {SITE}/sitemap.xml'])    # everything, and the sitemap
+        self.assertEqual(rules, ['User-agent: *', 'Allow: /', f'Sitemap: {SITE}/sitemap.xml'])
         self.assertEqual(re.findall(r'https?://\S+', text), [f'{SITE}/llms.txt', f'{SITE}/sitemap.xml'])
 
-    # ------------------------------------------------------------ the résumé
 
     def test_resume_is_the_file_the_profile_points_to(self):
         m = re.fullmatch(r'([0-9a-f]{40})\.pdf', self.profile['resume'])
@@ -236,11 +223,9 @@ class Extras(unittest.TestCase):
         self.assertNotIn(b'/resume', files['_redirects'])
         self.assertNotIn('Résumé', files['llms.txt'].decode())
 
-    # ------------------------------------------------------------ _redirects
 
     @staticmethod
     def old(source):
-        """A rule's source as the contract writes it: without a trailing slash (but /blog/tags/* keeps its splat)."""
         return source if source.endswith('*') else source.rstrip('/')
 
     def rules(self, out=None):
@@ -251,13 +236,13 @@ class Extras(unittest.TestCase):
         rules = self.rules()
         self.assertEqual(len(set(r[0] for r in rules)), len(rules))
         for r in rules:
-            self.assertEqual(len(r), 3, r)                  # source target status: no spaces inside, one rule per line
+            self.assertEqual(len(r), 3, r)
             self.assertEqual(r[2], '301')
             self.assertTrue(r[0].startswith('/') and r[1].startswith('/'), r)
-            self.assertIn(self.old(r[0]), OLD, r)           # a trailing slash is the only addition
-        self.assertEqual({self.old(r[0]) for r in rules}, OLD)   # and every old URL has a rule
-        self.assertFalse({r[0] for r in rules} & PAGES)          # and a page has none
-        contract = read(s.ROOT, 'docs/v1-contracts.md')
+            self.assertIn(self.old(r[0]), OLD, r)
+        self.assertEqual({self.old(r[0]) for r in rules}, OLD)
+        self.assertFalse({r[0] for r in rules} & PAGES)
+        contract = read(s.ROOT, 'docs/ref_urls.md')
         for old in OLD:
             self.assertIn(f'`{old}`', contract)
 
@@ -269,7 +254,6 @@ class Extras(unittest.TestCase):
                                            else os.path.join(self.one, path.lstrip('/'))), target)
         self.assertEqual(dict((a, b) for a, b, _ in self.rules())['/resume/view'], '/resume/' + os.listdir(os.path.join(self.one, 'resume'))[0])
 
-    # ------------------------------------------------------------ every URL
 
     def test_every_url_is_absolute(self):
         for out in (self.one, self.two):
@@ -281,7 +265,6 @@ class Extras(unittest.TestCase):
             for u in urls:
                 self.assertTrue(u.startswith(SITE + '/'), u)
 
-    # ------------------------------------------------------------ _headers
 
     def header_rules(self):
         rules, cur = [], None
@@ -298,24 +281,23 @@ class Extras(unittest.TestCase):
         return rules
 
     def cache(self, path):
-        """The Cache-Control values the rules give a path (Cloudflare joins the values of every rule that matches)."""
         return [r[2]['Cache-Control'] for r in self.header_rules() if r[0].match(path) and 'Cache-Control' in r[2]]
 
     def test_headers(self):
         media = os.listdir(os.path.join(self.one, 'blog', 'media'))
         webp = [m for m in media if m.endswith('.webp')]
         self.assertTrue(webp and len(webp) < len(media))
-        for m in webp:                                      # what the immutable rule relies on: a hash in the name
+        for m in webp:
             self.assertRegex(m, r'^.+\.[0-9a-f]{8}\.webp$')
         for m in media:
             want = ['public, max-age=31536000, immutable'] if m.endswith('.webp') else []
             self.assertEqual(self.cache('/blog/media/' + m), want, m)
-        self.assertEqual(self.cache('/blog/files/gui-lxd-profile.yaml'), [])                  # original name: Cloudflare's default
+        self.assertEqual(self.cache('/blog/files/gui-lxd-profile.yaml'), [])
         for page in ('/blog/', '/blog/every-construct/', '/blog/index.json', '/portfolio/', '/portfolio/homelab/',
                      '/portfolio/index.json', '/about/', '/experience/', '/contact/', '/profile.json'):
             self.assertEqual(self.cache(page), ['no-cache'], page)
         self.assertTrue(os.listdir(os.path.join(self.one, 'media')))
-        for m in os.listdir(os.path.join(self.one, 'media')):   # every image of a project or the profile is re-encoded
+        for m in os.listdir(os.path.join(self.one, 'media')):
             self.assertRegex(m, r'^.+\.[0-9a-f]{8}\.webp$')
             self.assertEqual(self.cache('/media/' + m), ['public, max-age=31536000, immutable'], m)
         for path in ('/about', '/portfolio', '/portfolio/homelab', '/media/', '/media/x.png', '/profile.json.bak'):
@@ -323,18 +305,17 @@ class Extras(unittest.TestCase):
         for path in ('/feed.xml', '/sitemap.xml', '/llms.txt', '/robots.txt'):
             self.assertEqual(self.cache(path), ['public, max-age=3600'], path)
         self.assertEqual(self.cache('/resume/Adithya-Rajendran-Research-CV.pdf'), ['no-cache'])
-        self.assertEqual(self.cache('/assets/lobby/scene.glb'), ['public, max-age=31536000, immutable'])   # the earlier rules are untouched
+        self.assertEqual(self.cache('/assets/lobby/scene.glb'), ['public, max-age=31536000, immutable'])
         for path in ('/blog/media/x.1234abcd.webp', '/blog/media/'):
             self.assertLessEqual(len(self.cache(path)), 1, path)
 
-    # ------------------------------------------------------------ determinism
 
     def test_second_run_writes_nothing(self):
         out = self.fresh()
         before = snapshot(out)
         self.assertIn('wrote feed.xml', self.log)
         log = generate(FIXTURE, out)
-        self.assertRegex(log, r'^0 written, \d+ unchanged, 0 removed\n$')       # site.py's summary and nothing from the extras
+        self.assertRegex(log, r'^0 written, \d+ unchanged, 0 removed\n$')
         self.assertEqual(snapshot(out), before)
 
     def test_the_same_bytes_wherever_and_whenever(self):
@@ -343,7 +324,6 @@ class Extras(unittest.TestCase):
         self.assertEqual(a, b)
         for name in ('feed.xml', 'sitemap.xml', 'llms.txt', '_redirects'):
             self.assertEqual(a[name], read(self.one, name, 'rb'))
-        # nothing in them is the time of the run: the only dates are the fixture's
         self.assertEqual(set(re.findall(r'\d{4}-\d\d-\d\d', a['sitemap.xml'].decode())), {'2026-02-01'})
         self.assertEqual(set(re.findall(r'\d\d \w{3} \d{4} [\d:]+ GMT', a['feed.xml'].decode())),
                          {'15 Jan 2026 00:00:00 GMT', '01 Feb 2026 00:00:00 GMT'})

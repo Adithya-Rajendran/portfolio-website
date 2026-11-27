@@ -1,11 +1,3 @@
-docs 99191ada9b93c4cd README.md
-docs 8ffafbbcec78b26b data/README.md
-docs 996f0b9b49555ce4 docs/blueprint.md
-docs 9083d8a67187969b docs/finish-lighting.md
-docs 1067d4e364746b05 docs/scene-assets.md
-docs 73337f4eb13707c1 docs/v1-contracts.md
-docs e087d3f49cd39114 tests/e2e/README.md
-docs 57a33848d144100f tools/ci/README.md
 comments 32f91eae5755a5f5 blender/assets_exhibits.py
 comments 5a44d8f6a12cfe7c blender/assets_lounge.py
 comments ead2638736890ef3 blender/assets_projection.py
@@ -176,7 +168,5 @@ comments f6da1bfc699fba3d tools/site_extras.py
 comments d80a13d233f24123 tools/test_content.py
 comments 06c55e3553e6747d tools/test_dev.mjs
 comments 6a55e15255a27d4f tools/test_geomcheck.py
-comments 3246297455022957 tools/test_sanity_to_md.py
 comments 8fd30a81d2441c62 tools/test_site.py
-comments f502677236e5d995 tools/test_site_extras.py
 comments 0329574c1add57df tools/test_site_pages.py
