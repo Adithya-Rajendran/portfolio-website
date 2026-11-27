@@ -1,17 +1,17 @@
 # Agent Working Guide
 
-Self-contained instructions for working on the Arcadia Station program (`explore/rolling-earth` line). Read this file and your task card from `docs/program-plan.md` before making changes.
+Self-contained instructions for working on the Arcadia Station program (`explore/rolling-earth` line). Read this file and your task card from `/srv/arcadia/work/orch/program-plan.md` before making changes.
 
 ## 1. Overview and Program Pointers
 
 - **Line vs. default branch:** This work lives on the `explore/rolling-earth` line. GitHub's default branch is `v2-rewrite` (a different site) — never merge into or target `v2-rewrite` or `main`.
 - **Canonical program documents:**
-  - `docs/program-plan.md` — full architecture, rules (§5), environment (§6), wave order (§7), task cards (§8), gates (§9), PR template (§10).
-  - `docs/program/status.md` — active wave, gate status, and task tracker (orchestrator-owned).
-  - `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` — owner decisions (`D1`–`D13`, `U0-contact`) and decision log (orchestrator-owned).
-  - `docs/program/pr-template.md` — required PR body template passed via `--body-file`.
+  - `/srv/arcadia/work/orch/program-plan.md` — full architecture, rules (§5), environment (§6), wave order (§7), task cards (§8), gates (§9), PR template (§10).
+  - `/srv/arcadia/work/orch/status.md` — active wave, gate status, and task tracker (orchestrator-owned).
+  - `/srv/arcadia/work/orch/decisions.md` — owner decisions (`D1`–`D13`, `U0-contact`) and decision log (orchestrator-owned).
+  - `/srv/arcadia/work/orch/pr-template.md` — required PR body template passed via `--body-file`.
   - `docs/v1-contracts.md` — content schemas, URLs, static page generator, and runtime contracts.
-  - `docs/program/ui-spec.md`, `docs/program/baseline.md`, `docs/program/dependencies.md`, `docs/opt-pass-2-report.md` — created and updated by their owning cards (`U0`, `I2`, `D3`, `O0`/`O8`).
+  - `/srv/arcadia/work/orch/ui-spec.md`, `/srv/arcadia/work/orch/baseline.md`, `/srv/arcadia/work/orch/dependencies.md`, `docs/opt-pass-2-report.md` — created and updated by their owning cards (`U0`, `I2`, `D3`, `O0`/`O8`).
 
 ## 2. Repository Layout (Target & Pre-F1 Transition)
 
@@ -79,7 +79,7 @@ explore/rolling-earth      the owner's line — no agent merges into it
    git fetch origin && git fetch ci
    git worktree add -b prog/<ID>-<slug> /tmp/wt-<ID>-<slug> origin/prog/ws-<name>
    ```
-2. **Read before editing:** Read the card in `docs/program-plan.md` (§8), all files it names, `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)`, and `docs/v1-contracts.md` (plus `docs/program/ui-spec.md` after `U0`). If the card asks for numbers, measure the "before" baseline first.
+2. **Read before editing:** Read the card in `/srv/arcadia/work/orch/program-plan.md` (§8), all files it names, `/srv/arcadia/work/orch/decisions.md`, and `docs/v1-contracts.md` (plus `/srv/arcadia/work/orch/ui-spec.md` after `U0`). If the card asks for numbers, measure the "before" baseline first.
 3. **Iterate in small commits and run cheap checks on `ci`:**
    ```sh
    git push ci HEAD:prog/<ID>-<slug>
@@ -93,7 +93,7 @@ explore/rolling-earth      the owner's line — no agent merges into it
    # plus every other tier required by the card
    ```
 5. **Push to `origin` and open the PR with `--base` and `--body-file`:**
-   GitHub only auto-loads `.github/` PR templates from its default branch (`v2-rewrite`), so copy `docs/program/pr-template.md` to an untracked/gitignored path (e.g., `.agent-chat/pr-<ID>.md`), fill every section, and pass `--body-file`:
+   GitHub only auto-loads `.github/` PR templates from its default branch (`v2-rewrite`), so copy `/srv/arcadia/work/orch/pr-template.md` to an untracked/gitignored path (e.g., `.agent-chat/pr-<ID>.md`), fill every section, and pass `--body-file`:
    ```sh
    git push -u origin prog/<ID>-<slug>
    gh pr create --base prog/ws-<name> --title "<plain sentence>" --body-file .agent-chat/pr-<ID>.md
@@ -112,7 +112,7 @@ explore/rolling-earth      the owner's line — no agent merges into it
 
 - **Commit messages:** Use a plain-sentence subject describing what the site or tool now does (match `git log`). **Do NOT use prefixes** such as `feat:`, `fix:`, or `chore:`. Explain why and include measurements in the body. Keep the `Co-Authored-By:` trailer.
 - **Public-repo secrecy:** Never write any `10.x.x.x` IP address, private hostname, token, secret, email address, or network detail into commits, files, pull requests, or comments. Always write `"the CI host"` and use the SSH alias `arcadia-ci`. Never read, print, or commit `.env` or `.dev.vars`. Never write the address returned by `ssh -G arcadia-ci` into any file, commit, PR, or comment.
-- **Working scratch vs. tracked docs:** Keep any repo-local agent chat, scratch notes, or draft `--body-file` files inside `.agent-chat/` (already in `.gitignore`). Keep `docs/program/` tracked.
+- **Working scratch vs. tracked docs:** Keep any repo-local agent chat, scratch notes, or draft `--body-file` files inside `.agent-chat/` (already in `.gitignore`). Keep `/srv/arcadia/work/orch/` tracked.
 
 ## 6. Evidence, Ownership, Freezes, Stop Rules, and Done Criteria (§5.5–§5.9)
 
@@ -132,12 +132,12 @@ explore/rolling-earth      the owner's line — no agent merges into it
 | `public/js/**`, `public/main.js`, `tools/pack.py` (until `F1`); `src/engine/**` (after) | `ws-opt` for the functions its cards name; `U6a` for `comms.js`; `ws-found` for everything else |
 | `src/app/**`, `src/styles/**`, `tests/e2e/**` specs | `ws-ui`, one region per task |
 | `tools/site.py` and its tests | `U6a` (contact page & `profile.json`), `F1` (`--shell`), `U10` (runtime ids); nobody else |
-| `docs/program/status.md`, `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` | the orchestrator |
+| `/srv/arcadia/work/orch/status.md`, `/srv/arcadia/work/orch/decisions.md` | the orchestrator |
 | `docs/v1-contracts.md`, `README.md` | each task updates the lines about what it changed; `D1` does the final pass |
 
 - Two open tasks never edit the same function (where two cards share a file/function, §7 sets the order).
 - **Layout freeze (`F1`):** No PR touching `public/main.js`, `public/js/`, `public/index.html`, or `public/*.css` may be open while `F1` is produced and merged.
-- **Boundary freeze (`F3`):** While `F3` is open, nobody else edits `src/main.*` or the files `F3` splits. After `F3`, any change to `src/engine/types.ts` or the `Station` interface (`src/engine/station.ts`) requires an entry in `/srv/arcadia/work/orch/decisions.md (on the CI host, outside the repository)` and notice to every open `ws-ui` task.
+- **Boundary freeze (`F3`):** While `F3` is open, nobody else edits `src/main.*` or the files `F3` splits. After `F3`, any change to `src/engine/types.ts` or the `Station` interface (`src/engine/station.ts`) requires an entry in `/srv/arcadia/work/orch/decisions.md` and notice to every open `ws-ui` task.
 - **Engine/app boundary (§4.2):** The engine never reads or writes the DOM (except the canvas and any tracked exceptions until removed) and never imports `src/app/`. The page layer never reads a Solid signal inside `onFrame(...)`; Solid 2 applies writes in a microtask (call `flush()` before asserting DOM changes in tests).
 
 ### Stop-and-ask rules (§5.7)
