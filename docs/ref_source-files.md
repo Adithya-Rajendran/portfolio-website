@@ -12,7 +12,9 @@ This reference gives the directories of the repository and the files that the si
 | Directory | Contents |
 |---|---|
 | `src/` | The scripts and the CSS files of the site. See [the Vite output](con_vite-output.md). |
-| `src/engine/` | The scripts of the 3D station that `src/main.js` uses. |
+| `src/engine/` | The scripts of the 3D station. `src/engine/station.ts` gives the `Station` that the page uses. |
+| `src/legacy-shell/` | The page code of the station, which uses only the `Station`. |
+| `src/content/` | The scripts that make the words of the rooms from the data, for the engine and for the page. |
 | `src/pages/` | The review pages and their scripts. See [the review pages](ref_review-pages.md). |
 | `src/styles/` | The CSS files. |
 | `public/` | The files that `pnpm build` copies into `dist/` with no change. |
@@ -38,14 +40,16 @@ The Blender scripts make the `.blend` files.
 |---|---|
 | `index.html` | The shell of the site. [The page generator](con_page-generator.md) makes each page from the copy that Vite writes to `dist/index.html`. |
 | `public/content.json` | All words of the rooms: the text of the pages, the wall screens, the hologram labels and the route stops. Change the words of the rooms in this file. |
-| `src/main.js` | The renderer, the camera, the controls and the moves from room to room. |
+| `src/main.js` | The entry of the page. Without WebGL 2 it keeps the plain page. With WebGL 2 it loads three.js, the engine and `src/legacy-shell/shell.js`. |
+| `src/engine/station.ts` | The renderer, the camera, the draw of each frame, the governor and the moves from room to room. |
+| `src/legacy-shell/shell.js` | The head-up display, the inspect bar, the keys, the pointer, the addresses and the loader. |
 | `src/engine/room.js` | The loader that makes a room from its packed files. |
 | `src/engine/screens.js`, `src/engine/hologram.js`, `src/engine/routemap.js` | The wall screens, the hologram and the route map. |
 | `src/engine/post.js` | The image passes after the render. |
-| `src/engine/hud.js` | The display of the visitor: the display lock, the cue, the caption of the bar and the hint. |
+| `src/legacy-shell/display.js` | The display of the visitor: the display lock, the cue, the caption of the bar and the hint. |
 | `src/engine/comms.js` | The links of Comms. |
 | `src/engine/kit.js` | The functions that the other scripts share. |
-| `src/engine/site.js` | The function that fills the rooms from the data: the placards, the route stops and the shelves of the Library. |
+| `src/content/site.js` | The function that fills the rooms from the data: the placards, the route stops and the shelves of the Library. |
 | `src/engine/reader.js` | The reader, which shows the article of a page on the reader panel. |
 | `src/engine/opening/scan.js`, `receive.js`, `unfold.js` | The three ways that a thing opens for the reader. |
 | `src/styles/post.css` | The styles of the pages that a visitor reads without the station. |

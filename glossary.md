@@ -339,6 +339,7 @@ This table gives the approved technical names and technical verbs of the project
 | LinkedIn | name | - | A social network. |
 | lint | name | - | Only in "lint check" and "lint problem": a check that finds code that is not safe or not used, with `oxlint`. |
 | Linux | name | - | An operating system. |
+| listener | name | listeners | A function that the browser calls when an event is on an element, on the document or on the window. |
 | lit | name | - | With light on it. |
 | live | name | - | Only in "live pick", "live part" and "live element": a part that the engine changes while the page runs. |
 | loader | name | loaders | A function that loads a room or data. |
@@ -509,6 +510,7 @@ This table gives the approved technical names and technical verbs of the project
 | reflectance | name | - | The part of the light that a surface reflects. |
 | reflection | name | reflections | An image of a thing on a mirror or on a polished surface. |
 | refuse | verb | refuses, refused | To stop and not accept a value. |
+| regex | name | - | A text that tells which lines a search finds. |
 | release | name | - | The end of a drag, when the visitor stops the push. |
 | remote | name | remotes | Only in "Git remote": a different repository that Git can send commits to. |
 | render | verb | renders, rendered, rendering | To draw an image of a scene. |
