@@ -133,6 +133,7 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     else if (href.startsWith('/') && onLink(href) !== false) e.preventDefault();
   });
 
+  let placed = '';
   const px = { w: 800, h: 500, top: 76 }, pose = { pos: V(), tgt: V() }, rest = { p: V(), q: new THREE.Quaternion(), s: V(1, 1, 1) }, _m = new THREE.Matrix4(), _n = new THREE.Matrix4(), _v = V(), _a = V(), _b = V(), _c = V(), UP = V(0, 1, 0);
   let offer = null, offeredBy = null, src = null, laid = null;
   const current = () => src ?? offer?.() ?? null;
@@ -166,7 +167,7 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     for (const [x, y] of [[0, 0], [px.w, 0], [0, px.h], [px.w, px.h]]) { const q = e[3] * x + e[7] * y + e[15], sx = (e[0] * x + e[4] * y + e[12]) / q, sy = (e[1] * x + e[5] * y + e[13]) / q; if (!(q > 0)) flat = true; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
     host.style.visibility = flat || (x1 - x0) * (y1 - y0) > 4 * W * H ? 'hidden' : '';
     const rest = Math.abs(e[0] / w - 1) < 2e-3 && Math.abs(e[5] / w - 1) < 2e-3 && Math.abs(e[1]) + Math.abs(e[4]) + Math.abs(e[3]) + Math.abs(e[7]) < 2e-5 * w;
-    host.style.transform = rest ? `translate(${Math.round(e[12] / w)}px, ${Math.round(e[13] / w)}px)` : `matrix3d(${Array.from(e, (x) => +x.toFixed(6)).join(',')})`;
+    host.style.transform = placed = rest ? `translate(${Math.round(e[12] / w)}px, ${Math.round(e[13] / w)}px)` : `matrix3d(${Array.from(e, (x) => +x.toFixed(6)).join(',')})`;
   }
 
   let state = 'closed', t0 = 0, folding = 0, ready = false, shut = null;
@@ -251,6 +252,7 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     settled: () => state === 'open' && uTime.value - t0 > way.REVEAL[1] + 0.8,
     jump(id) { const h = id && scroll.querySelector(`#${CSS.escape(id)}`); if (h) h.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); else scroll.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' }); },
     scrollTo(id) { goTo = id; },
+    frame: () => (state === 'closed' || host.hidden ? null : { width: px.w, height: px.h, transform: placed, reveal: Math.max(uReveal.value, still ? 1 : 0) }),
     dispose() { removeEventListener('resize', onResize); removeEventListener('pointermove', onPointer); document.removeEventListener('pointerout', onOut); host.remove(); for (const w of words.values()) w.dispose(); for (const w of Object.values(ways)) w.dispose(); anchor.removeFromParent(); },
   };
 }

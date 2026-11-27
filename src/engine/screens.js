@@ -1,23 +1,11 @@
 // The wall screens: Canvas 2D drawings of their words from content.json, shown as emissive panels.
 import * as THREE from 'three';
 import { VERT, DIST, uMirror } from './kit.js';
+import { live, fill, counter } from '../content/live.js';
 
 const W = 1024, H = 696, CYCLE = 7, FADE = 0.8;
 const SANS = '"Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif', MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 const INK = { cy: '#6fdcff', amber: '#ffb057', faint: 'rgba(255,176,87,0.35)', dim: '#4d7f95', fg: '#d9f3ff', white: '#fff' };
-
-let depart = 0, counters = {};
-export function initLive({ depart: clock, live }) {
-  const [h, m, s] = clock.split(':').map(Number);
-  depart = Date.now() + ((h * 60 + m) * 60 + s) * 1000; counters = live;
-}
-export function live(t = performance.now() / 1000) {
-  const s = Math.max(0, Math.floor((depart - Date.now()) / 1000)), two = (n) => String(n).padStart(2, '0');
-  const v = { tminus: `${two(Math.floor(s / 3600))}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}` };
-  for (const [k, c] of Object.entries(counters)) v[k] = Math.min(c.max ?? Infinity, c.from + Math.floor(t * c.per));
-  return v;
-}
-export const fill = (str, v) => str.replace(/\{(\w+)\}/g, (_, k) => (typeof v[k] === 'number' ? v[k].toLocaleString('en-US') : v[k] ?? ''));
 
 function put(c, str, x, y, style) {
   const [weight, size, ink, ...opt] = style.split(' ');
@@ -99,7 +87,7 @@ const LAYOUTS = {
   bars(c, s, T, t, v) {
     FIGURES[s.figure]?.(c, s, t);
     s.bars.forEach(([k, level, text], i) => {
-      const y = 346 + i * 56, x = typeof level === 'string' ? v[level] / counters[level].max : level;
+      const y = 346 + i * 56, x = typeof level === 'string' ? v[level] / counter(level).max : level;
       put(c, k, 48, y, '500 20 dim s3'); c.fillStyle = 'rgba(111,220,255,0.14)'; c.fillRect(360, y - 7, 440, 14);
       c.fillStyle = INK[x < 1 ? 'amber' : 'cy']; c.fillRect(360, y - 7, 440 * x, 14); put(c, T(text), 976, y, '500 24 fg right');
     });

@@ -1,9 +1,4 @@
-// loadSite() and furnish(): what the rooms say from the published posts, projects and profile.
-const get = (url, none) => fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : none)).catch(() => none);
-export async function loadSite() {
-  const [blog, portfolio, profile] = await Promise.all([get('blog/index.json', { posts: [] }), get('portfolio/index.json', { projects: [] }), get('profile.json', null)]);
-  return { posts: blog?.posts ?? [], projects: portfolio?.projects ?? [], profile: profile?.timeline && profile.contact ? profile : null };
-}
+// furnish(): what the rooms say from the published posts, projects and profile.
 const up = (s) => s.toUpperCase(), cut = (s, n) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s), join = (...parts) => parts.filter(Boolean).join('  ·  ');
 const role = (e) => (e.title.length > 44 ? e.title.split(' (')[0] : e.title);
 const fill = (v, from) => (typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (m, k) => (from[k] != null && from[k] !== '' ? String(from[k]).replace(/[{}]/g, '') : m)) : Array.isArray(v) ? v.map((x) => fill(x, from)) : v);
