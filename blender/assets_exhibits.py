@@ -126,7 +126,7 @@ def a_cargo_bulkhead(M=I4):
     DW, DH = 5.2, 5.2
     box('doorframe_l', -DW - 0.5, -DW, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
     box('doorframe_r', DW, DW + 0.5, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
-    box('doorframe_t', -DW - 0.5, DW + 0.5, -0.5, 0, DH, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
+    box('doorframe_t', -DW - 0.5 - PROUD, DW + 0.5 + PROUD, -0.5 - PROUD, 0, DH, DH + 0.5 + PROUD, 'steel', 'center', bevel=0.03, M=M)
     for d in (-1, 1):
         box(f'door{d}', d * 0.06, d * DW, -0.3, -0.12, 0.02, DH, 'wall2', 'center', bevel=0.02, M=M)
         for i in range(4):
@@ -193,7 +193,7 @@ def a_gantry(M=I4):
             block('trolley_hanger', x-.077, x+.077, s*.35, s*.445, 6.38, 6.82, 'yellow', .013)
             lathe('gantry_trolley_wheel', [(0, -.075), (.079, -.075), (.079, -.064), (.105, -.064),
                                          (.105, .064), (.079, .064), (.079, .075), (0, .075)],
-                  't_steel', g, segs=20, closed=False, M=y_axis(x, s*.521, 6.765))
+                  't_steel', g, segs=20, closed=False, M=y_axis(x, s*(.521 + PROUD), 6.765))
             rod('gantry_trolley_axle', (x, s*.33, 6.765), (x, s*.562, 6.765), .044, 't_light', g, M=M, n=12)
 
     # The parked hoist is shown in section-like silhouette: drum, dead-end
@@ -254,7 +254,7 @@ def a_gantry(M=I4):
 
     # The swivel and forged hook carry a separate master link. Its lower bar
     # encloses the unchanged room sling apex at (0, 0, 4.45).
-    block('hook_crosshead', -.077, .077, -.149, .149, 4.731, 4.775, 'steel', .008)
+    block('hook_crosshead', -.077, .077, -.149 + PROUD, .149 - PROUD, 4.731, 4.775, 'steel', .008)
     lathe('gantry_hook_swivel', [(0, 4.721), (.068, 4.721), (.076, 4.731), (.076, 4.766), (0, 4.766)],
           't_light', g, segs=20, closed=False, M=M)
     prism('gantry_forged_hook', [(-.065, 4.753), (-.151, 4.696), (-.218, 4.624), (-.208, 4.544),
@@ -286,7 +286,7 @@ def a_solar_wing(M=I4, *, d=1):
                           (.118, .235), (.091, .258), (0, .258)], 'steel', g, segs=24, closed=False, M=W)
     for s in (-1, 1):
         prism('array_root_fork', [(d*1.019, s*.04), (d*1.08, s*.055), (d*1.32, s*.44),
-                                 (d*1.32, s*.563), (d*1.21, s*.563), (d*1.012, s*.085)],
+                                 (d*1.32, s*.563), (d*(1.21 + PROUD), s*.563), (d*1.012, s*.085)],
               'Y', -.014, .068, 't_light', g, M=M, bevel=.008)
 
     for i in range(3):
@@ -294,13 +294,13 @@ def a_solar_wing(M=I4, *, d=1):
         part('backplane', (1.016, .042, 1.516), (cx, .012, 0), 't_paint')
         part('cell_face', (1.0, .012, 1.5), (cx, -.015, 0), 'solar')
         for s in (-1, 1):
-            part('edge_rail', (.026, .069, 1.54), (cx+s*.507, .010, 0), 't_light', .003)
-            part('edge_rail', (.99, .069, .023), (cx, .010, s*.758), 't_light', .003)
+            part('edge_rail', (.026, .069 + 2 * PROUD, 1.54), (cx+s*.507, .010, 0), 't_light', .003)
+            part('edge_rail', (.99, .069 + PROUD, .023), (cx, .010, s*.758), 't_light', .003)
             part('rear_spar', (1.03, .033, .076), (cx, .045, s*.52), 't_steel', .006)
         # The diagonal and hinge spars read as a lightweight panel, not a solid slab.
         a = d * (-1)**i
-        prism('array_diagonal', [(cx-.46, -.50*a), (cx-.46, -.44*a), (cx+.46, .50*a),
-                                 (cx+.46, .44*a)], 'Y', .030, .054, 't_light', g, M=M)
+        prism('array_diagonal', [(cx-.46, -(.50+PROUD)*a), (cx-.46, -(.44+PROUD)*a), (cx+.46, (.50+PROUD)*a),
+                                 (cx+.46, (.44+PROUD)*a)], 'Y', .030, .054, 't_light', g, M=M)
         for j in range(1, 6):
             part('cell_busbar', (1.0, .005, .005), (cx, -.021, -.75 + j*.25), 't_light')
         for j in range(1, 4):
@@ -314,7 +314,7 @@ def a_solar_wing(M=I4, *, d=1):
             for side, offsets in ((-1, (-.057, .057)), (1, (0,))):
                 for dz in offsets:
                     part('hinge_leaf', (.139, .043, .048), (seam+side*.068, .062, z+dz), 't_light')
-                    rod('array_hinge_knuckle', (seam, .082, z+dz-.024), (seam, .082, z+dz+.024),
+                    rod('array_hinge_knuckle', (seam, .082, z+dz-.024+PROUD), (seam, .082, z+dz+.024-PROUD),
                         .027, 'steel', g, M=M, n=12)
             rod('array_hinge_pin', (seam, .082, z-.093), (seam, .082, z+.093), .014, 'chrome', g, M=M, n=12)
 

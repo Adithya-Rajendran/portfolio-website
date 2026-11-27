@@ -71,7 +71,7 @@ def a_drape(M=I4, grp='props', w=0.9, h=5.6):
     # A lightmap has one value per face. Give the window and room sides their own
     # surfaces, including a small closing hem, instead of baking the back of a sheet.
     cloth = finish('drape', bm, 'drape', grp, M=M)
-    lining = cloth.modifiers.new('Lined velvet', 'SOLIDIFY'); lining.thickness = .004; lining.offset = 0
+    lining = cloth.modifiers.new('Lined velvet', 'SOLIDIFY'); lining.thickness = .004; lining.offset = 0; lining.use_even_offset = True
     torus('drape_tie', w * .302, .012, M @ T((0, 0, h * .42)) @ Matrix.Diagonal((1., .35, 1., 1.)), 'gilt', grp, segs=32)
     # The room's pole runs along X, 50 mm above the gathered header.
     for i in (2, 8, 14, 20, 26):
@@ -90,7 +90,7 @@ def a_sofa_trim(M=I4, grp='props', L=2.8):
             (.514, .451, .16), (.512, .398, .07), (.511, .352, 0))
     widths = (-1, -.95, -.90, -.82, -.775, -.66, -.50, -.29, -.12, .06,
               .23, .39, .54, .70, .78, .825, .91, .96, 1)
-    face, lining = [], []
+    face, lining, ns = [], [], []
     for i, (x, z, support) in enumerate(path):
         xa, za, _ = path[max(0, i - 1)]
         xb, zb, _ = path[min(len(path) - 1, i + 1)]
@@ -106,9 +106,15 @@ def a_sofa_trim(M=I4, grp='props', L=2.8):
             p = Vector((x + .014 * v * v * max(0, 1 - 5*s), L / 2 + (.219 + .016*s) * v + .006*s,
                         z - sag + hem)) + n * lift
             row.append(p)
-            inner.append(p - n * (.0045 if abs(v) >= .95 or i in (0, len(path) - 1) else .0028))
+            inner.append(.0045 if abs(v) >= .95 or i in (0, len(path) - 1) else .0028)
         face.append(row)
         lining.append(inner)
+        ns.append(n)
+    R, C = len(face), len(widths)
+    for i in range(R):
+        for j in range(C):
+            m = (face[min(R - 1, i + 1)][j] - face[max(0, i - 1)][j]).cross(face[i][min(C - 1, j + 1)] - face[i][max(0, j - 1)]).normalized()
+            lining[i][j] = face[i][j] - (m if m.dot(ns[i]) > 0 else -m) * lining[i][j]
     bm = bmesh.new()
     _reading_patch(bm, face, accent_cols=(3, 14))
     _reading_patch(bm, lining, accent_cols=(3, 14))
@@ -143,7 +149,7 @@ quad('backwall', [(-WD, Y0, 0), (WD, Y0, 0), (WD, Y0, H), (-WD, Y0, H)], 'plaste
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'
     quad(f'wall_{g}', [(s * WD, Y0, 0), (s * WD, Y1, 0), (s * WD, Y1, H), (s * WD, Y0, H)], 'plaster', g)
-    box(f'skirt_{g}', s * (WD - 0.03), s * WD, Y0, Y1, 0, 0.14, 'wood', g)
+    for a, b in (((Y0, 6.0 - 1.08), (6.0 + 1.08, Y1)) if s > 0 else ((Y0, Y1),)): box(f'skirt_{g}', s * (WD - 0.03), s * WD, a, b, 0, 0.14, 'wood', g)
 # ---- Timber ceiling: beams, slats and concealed lighting
 for k, y in enumerate((-4.0, 0.0, 4.0, 8.0)):          # the timber beams case the hull frames, which are 4 m apart everywhere on the ring
     box(f'beam{k}', -WD, WD, y - 0.14, y + 0.14, H - 0.55, H, 'wood', 'archC', bevel=0.012)
@@ -167,17 +173,17 @@ def frame_piece(name, x0, x1, z0, z1, depth=0.55, m='wood'):
     box(name, x0, x1, Y1 - depth, Y1, z0, z1, m, 'center', bevel=0.015)
 frame_piece('win_l', -WD, -WIN_W, 0, H); frame_piece('win_r', WIN_W, WD, 0, H)
 frame_piece('win_t', -WIN_W, WIN_W, WIN_Z1, H); frame_piece('win_b', -WIN_W, WIN_W, 0, WIN_Z0)
-box('sill', -WIN_W, WIN_W, Y1 - 0.85, Y1 - 0.5, WIN_Z0 - 0.06, WIN_Z0, 'wood_l', 'center', bevel=0.015)
+box('sill', -WIN_W, WIN_W, Y1 - 0.85, Y1 - 0.5, WIN_Z0 - 0.06, WIN_Z0 + PROUD, 'wood_l', 'center', bevel=0.015)
 for x in (-3.1, 0.0, 3.1):
     box('mullion', x - 0.035, x + 0.035, Y1 - 0.2, Y1 - 0.08, WIN_Z0, WIN_Z1, 'frame', 'center')
-box('transom', -WIN_W, WIN_W, Y1 - 0.2, Y1 - 0.08, 5.05, 5.11, 'frame', 'center')
+box('transom', -WIN_W, WIN_W, Y1 - 0.2 - PROUD, Y1 - 0.08, 5.05, 5.11, 'frame', 'center')
 for dd in (-1, 1): a_drape(T((dd * (WIN_W + 0.35), Y1 - 0.7, 0.3)), 'center', w=1.0, h=H - 0.9)
 rod('drape_pole', (-WD + 0.2, Y1 - 0.7, H - 0.55), (WD - 0.2, Y1 - 0.7, H - 0.55), 0.025, 'brass', 'center')
 box('win_cove', -WIN_W + 0.1, WIN_W - 0.1, Y1 - 0.5, Y1 - 0.46, WIN_Z0 - 0.1, WIN_Z0 - 0.085, em='cool')      # faint cool line under the sill
 
 # ================================================================= LEFT WALL: the library of a life (four bookcase bays, a ladder)
 SX = -WD
-for k in range(4): a_bay(T((SX, -4.6 + k * 2.75, 0)), 'archL', -1, 0, L=2.75, rows=8)
+for k in range(4): a_bay(T((SX, -4.6 + k * 2.75, 0)), 'archL', -1, 0, L=2.75, rows=8, ends=(k == 0, k == 3))
 tube('ladder_rail', SX + 0.62, 4.75, 0.02, -4.6, 6.4, 'brass', 'archL', n=8)
 a_ladder(T((SX + 1.6, 2.6, 0)), 'props', h=4.85)
 
@@ -202,7 +208,7 @@ finish('sb_plant', bm, 'leaf', 'props')
 for y, z, w, h in ((-3.0, 2.45, 0.7, 0.9), (-2.05, 2.75, 0.5, 0.5), (-2.1, 1.95, 0.55, 0.6), (-1.2, 2.4, 0.8, 1.1)):
     a_frame(T((RX, y, z)), 'archR', w, h)
 a_wainscot(T((RX, 5.0, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=11.0); a_wainscot(T((RX, Y1 - 0.55, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=1.45)
-a_wainscot(T((WD, Y0, 0)) @ Matrix.Rotation(pi / 2, 4, 'Z'), 'back', L=2 * WD)
+a_wainscot(T((WD - 0.09, Y0, 0)) @ Matrix.Rotation(pi / 2, 4, 'Z'), 'back', L=2 * WD - 0.09)
 a_drinks(T((RX - 0.32, -1.0, 0.89))); a_stack(T((RX - 0.3, -0.2, 0.89), (0, 0, 0.3)), n=3)
 for i, yc in enumerate((1.1, 3.2)):
     box(f'bezel{i}', RX - 0.06, RX, yc - 0.92, yc + 0.92, 1.45, 2.75, 'frame', 'archR', bevel=0.01)

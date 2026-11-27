@@ -54,18 +54,18 @@ def a_table(M=I4, grp='props'):
     box('table_under', -TW + 0.03, TW - 0.03, 0.03, L - 0.03, TZ - 0.06, TZ - 0.045, 'wood_d', grp, M=M)
     box('table_inlay', -TW + 0.13, TW - 0.13, 0.13, L - 0.13, TZ, TZ + 0.002, 'leather_g', grp, M=M)
     for d in (-1, 1):                                                                   # gilt line round the leather
-        box('table_gilt', d * (TW - 0.135), d * (TW - 0.128), 0.128, L - 0.128, TZ + 0.002, TZ + 0.0026, 'gilt', grp, M=M)
+        box('table_gilt', d * (TW - 0.135), d * (TW - 0.128), 0.1245, L - 0.1245, TZ + 0.002, TZ + 0.0035, 'gilt', grp, M=M)
         box('table_frieze', d * (TW - 0.07), d * (TW - 0.1), 0.08, L - 0.08, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
         for k in range(8):                                                              # drawer fronts and their pulls
             y = 0.5 + k * (L - 1.0) / 7
             box('table_drawer', d * (TW - 0.062), d * (TW - 0.07), y - 0.36, y + 0.36, TZ - 0.17, TZ - 0.08, 'wood_l', grp, bevel=0.004, M=M)
             lathe('table_pull', [(0, 0.02), (0.012, 0.02), (0.016, 0.012), (0.006, 0.006), (0.006, 0), (0, 0)], 'brass', grp, segs=10, closed=False, M=M @ T((d * (TW - 0.062), y, TZ - 0.125), (0, d * pi / 2, 0)))
-    for yy in (0.128, L - 0.128): box('table_gilt', -TW + 0.128, TW - 0.128, yy - 0.0035, yy + 0.0035, TZ + 0.002, TZ + 0.0026, 'gilt', grp, M=M)
-    for yy in (0.08, L - 0.08): box('table_frieze', -TW + 0.07, TW - 0.07, yy - 0.015, yy + 0.015, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
+    for yy in (0.128, L - 0.128): box('table_gilt', -TW + 0.135, TW - 0.135, yy - 0.0035, yy + 0.0035, TZ + 0.002, TZ + 0.0035, 'gilt', grp, M=M)
+    for yy in (0.08, L - 0.08): box('table_frieze', -TW + 0.07 + PROUD, TW - 0.07 - PROUD, yy - 0.015, yy + 0.015, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
     for y in (0.35, L / 2, L - 0.35):
         for d in (-1, 1):
             turned('table_leg', TZ - 0.19, 0.055, 'wood', grp, M=M @ T((d * (TW - 0.12), y, 0)))
-            box('table_block', d * (TW - 0.17), d * (TW - 0.07), y - 0.05, y + 0.05, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
+            box('table_block', d * (TW - 0.17), d * (TW - 0.07 - PROUD), y - 0.05, y + 0.05, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
         box('table_stretcher', -TW + 0.12, TW - 0.12, y - 0.02, y + 0.02, 0.12, 0.16, 'wood', grp, bevel=0.006, M=M)
     box('table_rail', -0.025, 0.025, 0.35, L - 0.35, 0.115, 0.165, 'wood', grp, bevel=0.006, M=M)
 
@@ -147,7 +147,7 @@ def a_catalogue(M=I4, grp='props'):
         for c in range(6):
             y, z = -0.55 + c * 0.22, 0.585 + r * 0.142
             box('cat_drawer', 0.24, 0.252, y - 0.098, y + 0.098, z - 0.058, z + 0.058, 'wood_l', grp, bevel=0.004, M=M)
-            box('cat_label', 0.252, 0.256, y - 0.045, y + 0.045, z + 0.004, z + 0.04, 'brass', grp, M=M); box('cat_card', 0.2562, 0.257, y - 0.037, y + 0.037, z + 0.01, z + 0.034, 'paper', grp, M=M)
+            box('cat_label', 0.252, 0.256, y - 0.045, y + 0.045, z + 0.004, z + 0.04, 'brass', grp, M=M); box('cat_card', 0.256, 0.258, y - 0.037, y + 0.037, z + 0.01, z + 0.034, 'paper', grp, M=M)
             lathe('cat_pull', [(0, 0.016), (0.011, 0.016), (0.013, 0.01), (0.005, 0.005), (0.005, 0), (0, 0)], 'brass', grp, segs=8, closed=False, M=M @ T((0.252, y, z - 0.028), (0, pi / 2, 0)))
 
 def a_cart(M=I4, grp='props'):
@@ -158,7 +158,7 @@ def a_cart(M=I4, grp='props'):
         for sy in (-1, 1):
             lathe('cart_wheel', [(0, -0.012), (0.04, -0.012), (0.04, 0.012), (0, 0.012)], 'frame', grp, segs=14, M=M @ T((d * 0.4, sy * 0.2, 0.04), (pi / 2, 0, 0))); rod('cart_fork', (d * 0.4, sy * 0.2, 0.04), (d * 0.4, sy * 0.2, 0.12), 0.008, 'brass', grp, M=M)
     for z in (0.22, 0.6):
-        box('cart_shelf', -0.4, 0.4, -0.21, 0.21, z, z + 0.02, 'wood', grp, bevel=0.005, M=M); box('cart_lip', -0.4, 0.4, -0.21, -0.2, z, z + 0.07, 'wood', grp, M=M)
+        box('cart_shelf', -0.4, 0.4, -0.21, 0.21, z, z + 0.02, 'wood', grp, bevel=0.005, M=M); box('cart_lip', -0.4 - PROUD, 0.4 + PROUD, -0.21 - PROUD, -0.2, z, z + 0.07, 'wood', grp, M=M)
         x = -0.36
         while x < 0.3:
             t = random.uniform(0.03, 0.06); hh = random.uniform(0.2, 0.3)
@@ -166,7 +166,7 @@ def a_cart(M=I4, grp='props'):
     for b in range(3):
         a_closed_book(M @ T((0.1, 0, 0.99 + b * 0.041), (0, 0, random.uniform(-0.3, 0.3))), grp,
                       size=(0.2, 0.27, 0.04), material=random.choice(BOOKS),
-                      cover_name='cart_flat', bevel=0.0, pages_name=None)
+                      cover_name='cart_flat', bevel=0.001, pages_name=None)
     box('cart_top', -0.4, 0.4, -0.21, 0.21, 0.95, 0.97, 'wood', grp, bevel=0.005, M=M)
 
 def a_globe(M=I4, grp='props'):
@@ -211,7 +211,7 @@ def a_coffer(M=I4, grp='archC', w=4.4, d=3.0):
     for k, (inset, z) in enumerate(((0.0, -0.1), (0.14, -0.05))):
         x, y = w / 2 - inset, d / 2 - inset
         for sx in (-1, 1): box('coffer_frame', sx * x, sx * (x - 0.12), -y, y, z, 0, 'wood', grp, M=M)
-        for sy in (-1, 1): box('coffer_frame', -x, x, sy * y, sy * (y - 0.12), z, 0, 'wood', grp, M=M)
+        for sy in (-1, 1): box('coffer_frame', -x + 0.12, x - 0.12, sy * y, sy * (y - 0.12), z, 0, 'wood', grp, M=M)
     box('coffer_panel', -w / 2 + 0.26, w / 2 - 0.26, -d / 2 + 0.26, d / 2 - 0.26, -0.012, 0, 'wood_l', grp, M=M)
     lathe('coffer_rosette', [(0, -0.05), (0.03, -0.05), (0.06, -0.03), (0.12, -0.025), (0.16, -0.012), (0.16, 0), (0, 0)], 'gilt', grp, segs=20, closed=False, M=M)
     for a in range(8): blob('coffer_petal', M @ Vector((0.1 * math.cos(a * pi / 4), 0.1 * math.sin(a * pi / 4), -0.03)), 0.03, 'gilt', grp, squash=(1, 1, 0.4))
@@ -224,16 +224,16 @@ def a_window(M=I4, grp='center'):
     def bx(n, x0, x1, y0, y1, z0, z1, m, **kw): box(n, x0, x1, y0, y1, z0, z1, m, grp, M=M, **kw)
     bx('end_l', -WD, -WIN_W, -0.5, 0, 0, H, 'plaster'); bx('end_r', WIN_W, WD, -0.5, 0, 0, H, 'plaster'); bx('end_b', -WIN_W, WIN_W, -0.5, 0, 0, WIN_Z0, 'plaster')
     band('end_t', [(x, H) for x, _ in arch], arch, -0.5, 0, 'plaster', grp, M=M)
-    for k0, k1, y0, y1, m in ((1.0, 1.05, -0.5, -0.1, 'wood_d'), (1.05, 1.13, -0.6, -0.42, 'wood'), (1.13, 1.17, -0.56, -0.44, 'wood_l'), (1.17, 1.2, -0.53, -0.46, 'wood')):   # reveal, then three steps of architrave
+    for k0, k1, y0, y1, m in ((1.0 - PROUD / WIN_W, 1.05, -0.5 - PROUD, -0.1, 'wood_d'), (1.05, 1.13, -0.6, -0.42, 'wood'), (1.13, 1.17, -0.56, -0.44, 'wood_l'), (1.17, 1.2, -0.53, -0.46, 'wood')):
         band('win_arch', sc(k1), sc(k0), y0, y1, m, grp, M=M)
         for d in (-1, 1): bx('win_jamb', d * WIN_W * k0, d * WIN_W * k1, y0, y1, WIN_Z0 - 0.12, WIN_ZS, m)
     prism('win_key', [(-0.16, WIN_ZS + WIN_W * 0.99), (0.16, WIN_ZS + WIN_W * 0.99), (0.24, WIN_ZS + WIN_W * 1.26), (-0.24, WIN_ZS + WIN_W * 1.26)], 'Y', -0.66, -0.44, 'wood_l', grp, bevel=0.01, M=M)
     for d in (-1, 1): bx('win_impost', d * WIN_W * 1.0, d * WIN_W * 1.22, -0.64, -0.42, WIN_ZS - 0.1, WIN_ZS + 0.08, 'wood_l', bevel=0.012)
-    bx('sill', -WIN_W * 1.2, WIN_W * 1.2, -0.95, -0.42, WIN_Z0 - 0.1, WIN_Z0, 'wood_l', bevel=0.02, seg=3); bx('sill_apron', -WIN_W * 1.13, WIN_W * 1.13, -0.6, -0.5, WIN_Z0 - 0.4, WIN_Z0 - 0.1, 'wood')
+    bx('sill', -WIN_W * 1.2 - PROUD, WIN_W * 1.2 + PROUD, -0.95, -0.42, WIN_Z0 - 0.1, WIN_Z0 + PROUD, 'wood_l', bevel=0.02, seg=3); bx('sill_apron', -WIN_W * 1.13 + PROUD, WIN_W * 1.13 - PROUD, -0.6 + PROUD, -0.5, WIN_Z0 - 0.4, WIN_Z0 - 0.1, 'wood')
     for x in (-2.4, -0.8, 0.8, 2.4): prism('sill_bracket', [(-0.95 + 0.06, WIN_Z0 - 0.1), (-0.5, WIN_Z0 - 0.1), (-0.5, WIN_Z0 - 0.5), (-0.62, WIN_Z0 - 0.42), (-0.72, WIN_Z0 - 0.2)], 'X', x - 0.05, x + 0.05, 'wood', grp, M=M)
     # glazing bars: no pane wider than 1.3 m (cabin pressure on a single 5 m sheet would be about 200 tonnes)
     for x in (-1.3, 0.0, 1.3): bx('mullion', x - 0.035, x + 0.035, -0.22, -0.1, WIN_Z0, WIN_ZS, 'frame')
-    for z in (3.15, WIN_ZS): bx('transom', -WIN_W, WIN_W, -0.22, -0.1, z - 0.035, z + 0.035, 'frame')
+    for z in (3.15, WIN_ZS): bx('transom', -WIN_W, WIN_W, -0.22 - PROUD, -0.1, z - 0.035, z + 0.035, 'frame')
     for a in (pi / 4, pi / 2, 3 * pi / 4): rod('fan_bar', (0, -0.16, WIN_ZS), (WIN_W * math.cos(a), -0.16, WIN_ZS + WIN_W * math.sin(a)), 0.03, 'frame', grp, M=M, n=6)
     half = [(0.9 * math.cos(pi * i / 16), WIN_ZS + 0.9 * math.sin(pi * i / 16)) for i in range(17)]
     band('fan_hub', [(x * 1.07, WIN_ZS + (z - WIN_ZS) * 1.07) for x, z in half], half, -0.2, -0.12, 'frame', grp, M=M)
@@ -244,8 +244,8 @@ def a_endwall(M=I4, grp='center', d_=1):
     """Beside the window (origin on the end wall at the floor, reaching x = 0 .. d_ * w): raised-and-fielded panelling, a framed chart, a sconce."""
     w = GAL_X - (WIN_W * 1.2 + 0.2); X = lambda a: d_ * a
     def bx(n, a, b, y0, y1, z0, z1, m, **kw): box(n, X(a), X(b), y0, y1, z0, z1, m, grp, M=M, **kw)
-    bx('end_panel', 0, w, -0.06, 0, 0.14, 3.44, 'wood'); bx('end_plinth', 0, w, -0.1, 0, 0, 0.16, 'wood_l', bevel=0.006)
-    bx('end_cornice', 0, w, -0.14, 0, 3.44, 3.58, 'wood', bevel=0.02)
+    bx('end_panel', PROUD, w - PROUD, -0.06, 0, 0.14, 3.44, 'wood'); bx('end_plinth', 0, w, -0.1, 0, 0, 0.16, 'wood_l', bevel=0.006)
+    bx('end_cornice', 0, w + PROUD, -0.14, 0, 3.44, 3.58, 'wood', bevel=0.02)
     bx('end_dado', 0, w, -0.09, 0, 1.05, 1.12, 'wood_l', bevel=0.008)
     for k in range(3):
         a, b = w * (k + 0.1) / 3, w * (k + 0.9) / 3
@@ -300,7 +300,8 @@ for d_ in (-1, 1): a_endwall(T((d_ * (WIN_W * 1.2 + 0.2), Y1 - 0.5, 0)), 'center
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'; SX = s * WD
     for bi, (y0, y1) in enumerate(BAYS):
-        a_bay(T((SX, y0, 0)), g, s, 0, shelves=not (s < 0 and bi == DOOR_BAY)); a_bay(T((SX, y0, GAL_Z)), g, s, 1)
+        ends = (bi == 0, bi == len(BAYS) - 1)
+        a_bay(T((SX, y0, 0)), g, s, 0, shelves=not (s < 0 and bi == DOOR_BAY), ends=ends); a_bay(T((SX, y0, GAL_Z)), g, s, 1, ends=ends)
         a_gallery(T((SX, y0, GAL_Z)), g, s)
     for y0, y1 in ((Y0, BAYS[0][0]), (BAYS[-1][1], Y1 - 0.5)): a_gallery(T((SX, y0, GAL_Z)), g, s, L=y1 - y0)
     tube('ladder_rail', SX - s * 0.62, 3.3, 0.02, BAYS[0][0], BAYS[-1][1], 'brass', g, n=8)
@@ -310,7 +311,7 @@ pressure_door('door', T((-WD + 0.02, sum(BAYS[DOOR_BAY]) / 2, 0)), 'archL', 'ATR
 # ---- Reading table, lamps, chairs and the bordered runner
 box('runner', -1.9, 1.9, -3.4, 11.6, 0.0, 0.016, 'runner', 'props')
 for a, b, m in ((1.78, 1.7, 'runner2'), (1.62, 1.5, 'runner3'), (1.44, 1.4, 'runner2')):
-    for d in (-1, 1): box('runner_line', d * a, d * b, -3.4 + (1.9 - a), 11.6 - (1.9 - a), 0.016, 0.019, m, 'props')
+    for d in (-1, 1): box('runner_line', d * a, d * b, -3.4 + (1.9 - a) + (a - b) / 2, 11.6 - (1.9 - a) - (a - b) / 2, 0.016, 0.019, m, 'props')
     for y in (-3.4 + (1.9 - a), 11.6 - (1.9 - a)): box('runner_line', -a, a, y - (a - b) / 2, y + (a - b) / 2, 0.016, 0.019, m, 'props')
 a_table(T((0, TY0, 0)))
 for k, y in enumerate((1.6, 3.6, 5.6, 7.6)):
