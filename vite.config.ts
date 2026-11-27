@@ -62,6 +62,6 @@ export default defineConfig(({ mode }) => mode === 'review'
     }
   : {
       root: ROOT,
-      build: { ...common, emptyOutDir: true, assetsDir: 'app' },
+      build: { ...common, emptyOutDir: true, assetsDir: 'app', sourcemap: 'hidden' },
       plugins: [publicPages(), notFoundStyles()],
     });

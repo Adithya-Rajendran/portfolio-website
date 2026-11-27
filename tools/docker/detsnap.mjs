@@ -20,8 +20,58 @@ const SEED = () => {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  const maps = {}, sites = {}, B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const sourceMap = (url) => {
+    if (url in maps) return maps[url];
+    maps[url] = null;
+    try {
+      const x = new XMLHttpRequest();
+      x.open('GET', url + '.map', false);
+      x.send();
+      if (x.status !== 200) return null;
+      const { sources, mappings } = JSON.parse(x.responseText), lines = [];
+      let src = 0;
+      for (const text of mappings.split(';')) {
+        const segs = [];
+        let col = 0;
+        for (const seg of text.split(',')) {
+          if (!seg) continue;
+          const v = [];
+          let value = 0, shift = 0;
+          for (const ch of seg) {
+            const d = B64.indexOf(ch);
+            value += (d & 31) << shift;
+            if (d & 32) shift += 5; else { v.push(value & 1 ? -(value >>> 1) : value >>> 1); value = 0; shift = 0; }
+          }
+          col += v[0];
+          if (v.length > 1) src += v[1];
+          segs.push([col, v.length > 1 ? src : -1]);
+        }
+        lines.push(segs);
+      }
+      return (maps[url] = { sources, lines });
+    } catch { return null; }
+  };
+  const sourceOf = (url, line, col) => {
+    const map = sourceMap(url), segs = map?.lines[line - 1];
+    if (!segs) return null;
+    let lo = 0, hi = segs.length - 1, at = -1;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (segs[mid][0] <= col - 1) { at = mid; lo = mid + 1; } else hi = mid - 1; }
+    const i = at < 0 ? -1 : segs[at][1];
+    return i < 0 ? null : map.sources[i].split('/').pop();
+  };
+  const keyOf = (line) => {
+    const b = line.match(/(https?:\/\/[^\s()]+\/app\/[^\s()]+\.js):(\d+):(\d+)/);
+    if (b) {
+      const site = b[1] + ':' + b[2] + ':' + b[3];
+      if (!(site in sites)) sites[site] = sourceOf(b[1], +b[2], +b[3]);
+      if (sites[site]) return sites[site];
+    }
+    const m = line.match(/\/([\w.-]+\.js)/);
+    return m ? m[1] : '?';
+  };
   Math.random = function () {
-    const line = (new Error().stack.split('\n')[2] || ''), m = line.match(/\/([\w.-]+\.js)/), key = m ? m[1] : '?';
+    const key = keyOf(new Error().stack.split('\n')[2] || '');
     if (!streams[key]) { let h = 7; for (const c of key) h = (h * 31 + c.charCodeAt(0)) | 0; streams[key] = mulberry(h); }
     return streams[key]();
   };
